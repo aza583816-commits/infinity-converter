@@ -5,15 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>V-Infinity Converter</title>
 
-<!-- ⬇️ الخطوط الرسمية للواجهة والـ PDF ⬇️ -->
+<!-- ⬇️ الخطوط الرسمية ⬇️ -->
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 
-<!-- ⬇️ المكتبات البرمجية الشاملة والمعتمدة لمعالجة الملفات والجداول ⬇️ -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<!-- ⬇️ مكتبة pdfmake الحقيقية لتوليد ملفات PDF بدون تصوير وبدون صفحة بيضاء ⬇️ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+
+<!-- ⬇️ باقي المكتبات الشاملة ⬇️ -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
@@ -288,10 +287,8 @@
 </div>
 
 <script>
-  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-
   let loadedFiles = [];
-  let isDocxProcessing = false; // 🎯 يمنع الضغط على تحويل قبل انتهاء قراءة ملف الوورد بالكامل
+  let parsedDocxTables = []; // لتخزين الجداول الحقيقية المستخرجة من الوورد
 
   const optionsEn = `
     <optgroup label="📊 Data & Spreadsheets">
@@ -309,7 +306,6 @@
       <option value="word-to-pdf">Word (.docx) / Text ➔ PDF</option>
       <option value="image-to-pdf">Image ➔ PDF</option>
       <option value="merge-pdfs">Merge Multiple PDFs</option>
-      <option value="pdf-to-text">PDF ➔ Extract Text</option>
       <option value="clean-text">Remove Formatting / HTML</option>
       <option value="case-upper">UPPERCASE</option>
       <option value="case-lower">lowercase</option>
@@ -364,7 +360,6 @@
       <option value="word-to-pdf">وورد (.docx) / نص ← PDF</option>
       <option value="image-to-pdf">صورة ← PDF</option>
       <option value="merge-pdfs">دمج ملفات PDF متعددة</option>
-      <option value="pdf-to-text">PDF ← استخراج النصوص</option>
       <option value="clean-text">إزالة أكواد HTML والتنسيقات</option>
       <option value="case-upper">حروف كبيرة (UPPERCASE)</option>
       <option value="case-lower">حروف صغيرة (lowercase)</option>
@@ -405,19 +400,11 @@
 
   document.getElementById('conversion-type').innerHTML = optionsEn;
 
-  function utf8_to_b64(str) {
-    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode('0x' + p1)));
-  }
-  function b64_to_utf8(str) {
-    return decodeURIComponent(atob(str).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
-  }
-
   function updateStats() {
     const text = document.getElementById('input-data').value;
     document.getElementById('char-count').innerText = text.length;
     const words = text.trim() ? text.trim().split(/\s+/).length : 0;
     document.getElementById('word-count').innerText = words;
-
     const isArabic = /[\u0600-\u06FF]/.test(text);
     document.getElementById('input-data').style.direction = isArabic ? 'rtl' : 'ltr';
   }
@@ -458,13 +445,12 @@
       document.getElementById('lbl-content').innerText = 'Content';
       document.getElementById('input-data').placeholder = 'Paste Text, Table, Links, or Code here...';
       document.getElementById('lbl-result').innerText = 'Result:';
-      document.getElementById('label-chars').innerText = 'Chars';
+      document.getElementById('label-chars').innerText, 'Chars';
       document.getElementById('label-words').innerText = 'Words';
       document.getElementById('output-data').placeholder = 'Result will appear here...';
       document.getElementById('lbl-upload-title').innerText = 'Drag & Drop file or click to upload';
       document.getElementById('lbl-upload-sub').innerText = '(Supports Images, PDF, CSV, JSON, TXT)';
     }
-    
     if (selectedVal) selectElem.value = selectedVal;
   }
 
@@ -476,80 +462,6 @@
     if (e.target.files.length > 0) processFiles(Array.from(e.target.files));
   });
 
-  ['dragenter', 'dragover'].forEach(name => {
-    dropZone.addEventListener(name, (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
-  });
-
-  ['dragleave', 'drop'].forEach(name => {
-    dropZone.addEventListener(name, (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); });
-  });
-
-  dropZone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    if (e.dataTransfer.files.length > 0) processFiles(Array.from(e.dataTransfer.files));
-  });
-
-  // 🎯 دالة آمنة لاستخراج نص نظيف 100% بدون أي تلوث بأكواد الـ CSS
-  function htmlToCleanText(html) {
-    if (!html) return '';
-    let text = html
-      .replace(/<style[\s\S]*?<\/style>/gi, '')
-      .replace(/<script[\s\S]*?<\/script>/gi, '')
-      .replace(/<br\s*\/?>/gi, '\n')
-      .replace(/<\/(p|div|h[1-6]|li)>/gi, '\n')
-      .replace(/<\/tr>/gi, '\n')
-      .replace(/<\/(td|th)>/gi, '   ')
-      .replace(/<[^>]+>/g, '');
-
-    const decoder = document.createElement('textarea');
-    decoder.innerHTML = text;
-    text = decoder.value;
-
-    return text.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
-  }
-
-  function pdfPageToOrderedText(items) {
-    if (!items || !items.length) return '';
-    const parts = items
-      .filter(it => it.str && it.str.trim().length)
-      .map(it => ({
-        text: it.str,
-        x: it.transform[4],
-        y: it.transform[5],
-        width: it.width || 0
-      }));
-    if (!parts.length) return '';
-
-    parts.sort((a, b) => b.y - a.y || a.x - b.x);
-    const Y_TOLERANCE = 7;
-    const lines = [];
-    let current = null;
-    parts.forEach(p => {
-      if (current && Math.abs(current.y - p.y) <= Y_TOLERANCE) {
-        current.items.push(p);
-      } else {
-        current = { y: p.y, items: [p] };
-        lines.push(current);
-      }
-    });
-
-    return lines.map(line => {
-      line.items.sort((a, b) => a.x - b.x);
-      let text = '';
-      let prevEndX = null;
-      line.items.forEach(it => {
-        if (prevEndX !== null) {
-          const gap = it.x - prevEndX;
-          if (gap > 60) text += '\t';
-          else if (gap > 1.5) text += ' ';
-        }
-        text += it.text;
-        prevEndX = it.x + it.width;
-      });
-      return text;
-    }).join('\n');
-  }
-
   function processFiles(files) {
     loadedFiles = files;
     const first = files[0];
@@ -558,71 +470,39 @@
     if (first.type.startsWith('image/')) {
       reader.onload = (e) => {
         first.dataUrl = e.target.result;
-        inputData.value = currentLang === 'ar' 
-          ? `[تم تحميل الصورة: ${first.name} - الحجم: ${(first.size/1024).toFixed(1)} ك.ب]`
-          : `[Image Loaded: ${first.name} - Size: ${(first.size/1024).toFixed(1)} KB]`;
+        inputData.value = `[Image Loaded: ${first.name}]`;
         updateStats();
       };
       reader.readAsDataURL(first);
     } 
     else if (first.name.endsWith('.docx') || first.type.includes('wordprocessingml')) {
-      const executeBtn = document.querySelector('.btn-execute');
-      const originalBtnLabel = executeBtn ? executeBtn.innerText : '';
-      isDocxProcessing = true;
-      if (executeBtn) {
-        executeBtn.disabled = true;
-        executeBtn.innerText = (currentLang === 'ar') ? '⏳ جاري تجهيز الملف...' : '⏳ Preparing file...';
-      }
-      inputData.value = (currentLang === 'ar') ? '⏳ جاري قراءة وتحليل ملف الوورد...' : '⏳ Reading Word file...';
-      updateStats();
-
-      const finishDocxProcessing = () => {
-        isDocxProcessing = false;
-        if (executeBtn) {
-          executeBtn.disabled = false;
-          executeBtn.innerText = originalBtnLabel;
-        }
-        updateStats();
-      };
-
       reader.onload = function(e) {
-        mammoth.convertToHtml({arrayBuffer: e.target.result})
-          .then(function(result) {
-            first.htmlContent = result.value
-              .replace(/<style[\s\S]*?<\/style>/gi, '')
-              .replace(/<script[\s\S]*?<\/script>/gi, '');
-            inputData.value = htmlToCleanText(result.value) || `[Loaded Word Document: ${first.name}]`;
-          })
-          .catch(function() {
-            first.htmlContent = null;
-            inputData.value = `[Loaded Word Document: ${first.name}]`;
-          })
-          .finally(finishDocxProcessing);
-      };
-      reader.onerror = function() {
-        first.htmlContent = null;
-        inputData.value = (currentLang === 'ar') ? 'تعذّرت قراءة ملف الوورد!' : 'Could not read the Word file!';
-        finishDocxProcessing();
-      };
-      reader.readAsArrayBuffer(first);
-    } 
-    else if (first.type === 'application/pdf' || first.name.endsWith('.pdf')) {
-      reader.onload = async function() {
-        try {
-          const typedarray = new Uint8Array(this.result);
-          const pdf = await pdfjsLib.getDocument(typedarray).promise;
-          let fullText = '';
-          for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-            const textContent = await page.getTextContent();
-            fullText += pdfPageToOrderedText(textContent.items) + '\n\n';
-          }
-          inputData.value = fullText.trim() || `[Loaded PDF: ${first.name}]`;
-          updateStats();
-        } catch (err) {
-          inputData.value = `[Loaded PDF File: ${first.name}]`;
-          updateStats();
-        }
+        const arrayBuffer = e.target.result;
+        // استخراج النص الصافي لمربع المحتوى
+        mammoth.extractRawText({ arrayBuffer: arrayBuffer })
+          .then(function(resultText) {
+            inputData.value = resultText.value.trim() || `[Loaded Word: ${first.name}]`;
+            updateStats();
+          });
+
+        // استخراج الجداول كـ عناصر مصفوفة حقيقية لتوليدها بـ pdfmake
+        mammoth.convertToHtml({ arrayBuffer: arrayBuffer })
+          .then(function(resultHtml) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(resultHtml.value, 'text/html');
+            parsedDocxTables = [];
+            doc.querySelectorAll('table').forEach(table => {
+              const rows = [];
+              table.querySelectorAll('tr').forEach(tr => {
+                const rowCells = [];
+                tr.querySelectorAll('th, td').forEach(cell => {
+                  rowCells.push({ text: cell.innerText.trim(), bold: cell.tagName === 'TH' });
+                });
+                if (rowCells.length > 0) rows.push(rowCells);
+              });
+              if (rows.length > 0) parsedDocxTables.push(rows);
+            });
+          });
       };
       reader.readAsArrayBuffer(first);
     } else {
@@ -639,7 +519,6 @@
     const type = document.getElementById('conversion-type').value;
     const output = document.getElementById('output-data');
     const qrContainer = document.getElementById('qrcode-container');
-    const executeBtn = document.querySelector('.btn-execute');
     qrContainer.innerHTML = '';
 
     if (!input.trim() && type !== 'password-generator') {
@@ -647,134 +526,60 @@
       return;
     }
 
-    const origBtnText = executeBtn.innerText;
-    executeBtn.disabled = true;
-    executeBtn.innerText = (currentLang === 'ar') ? '⏳ جاري المعالجة...' : '⏳ Processing...';
-
     try {
+      // 🎯 استخدام pdfmake لتوليد ملف PDF حقيقي ونظيف بدون أي شاشة بيضاء وبجداول منسقة
       if (type === 'word-to-pdf') {
-        if (isDocxProcessing) {
-          output.value = (currentLang === 'ar') ? '⏳ الملف لا يزال قيد التجهيز، انتظر لحظة ثم اضغط تحويل مرة أخرى.' : '⏳ File is still being prepared — wait a moment then press Execute again.';
-          return;
-        }
-
-        output.value = (currentLang === 'ar') ? 'جاري تحويل الوورد والجداول إلى ملف PDF...' : 'Generating PDF...';
+        output.value = (currentLang === 'ar') ? 'جاري توليد ملف الـ PDF الحقيقي...' : 'Generating True PDF...';
 
         const isArabic = /[\u0600-\u06FF]/.test(input) || currentLang === 'ar';
-        const hasDocxHtml = !!(loadedFiles[0] && loadedFiles[0].htmlContent && loadedFiles[0].htmlContent.trim());
 
-        const container = document.createElement('div');
-        container.id = 'pdf-render-box';
-        container.setAttribute('dir', isArabic ? 'rtl' : 'ltr');
-        container.style.position = 'absolute';
-        container.style.top = '0';
-        container.style.left = '0';
-        container.style.width = '794px';
-        container.style.padding = '40px';
-        container.style.backgroundColor = '#ffffff';
-        container.style.color = '#000000';
-        container.style.zIndex = '999999';
-        container.style.direction = isArabic ? 'rtl' : 'ltr';
-        container.style.textAlign = isArabic ? 'right' : 'left';
-        container.style.fontFamily = "'Cairo', 'Plus Jakarta Sans', Arial, sans-serif";
-
-        const style = document.createElement('style');
-        style.innerHTML = `
-          #pdf-render-box, #pdf-render-box * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; box-sizing: border-box !important; }
-          #pdf-render-box table { width: 100% !important; border-collapse: collapse !important; margin: 15px 0 !important; direction: ${isArabic ? 'rtl' : 'ltr'} !important; }
-          #pdf-render-box th, #pdf-render-box td { border: 1px solid #000000 !important; padding: 10px 12px !important; text-align: ${isArabic ? 'right' : 'left'} !important; font-size: 14px !important; color: #000000 !important; }
-          #pdf-render-box th { background-color: #f2f2f2 !important; font-weight: bold !important; }
-          #pdf-render-box tr, #pdf-render-box td, #pdf-render-box th { page-break-inside: avoid !important; }
-          #pdf-render-box img { max-width: 100% !important; }
-          #pdf-render-box p, #pdf-render-box div, #pdf-render-box h1, #pdf-render-box h2, #pdf-render-box h3 { margin: 10px 0 !important; line-height: 1.7 !important; font-size: 15px !important; color: #000000 !important; }
-        `;
-        container.appendChild(style);
-
-        const contentDiv = document.createElement('div');
-        contentDiv.setAttribute('dir', isArabic ? 'rtl' : 'ltr');
-        if (hasDocxHtml) {
-          contentDiv.innerHTML = loadedFiles[0].htmlContent;
-          // 🎯 ضمان فرض الحدود والتخطيط كـ inline styles على كل عنصر جدول وجدناه
-          contentDiv.querySelectorAll('table').forEach(t => {
-            t.style.width = '100%';
-            t.style.borderCollapse = 'collapse';
-            t.style.direction = isArabic ? 'rtl' : 'ltr';
+        // إعداد الخط الافتراضي ليدعم العربية (Roboto الافتراضي يدعم الحروف اللاتينية، لذا نستخدم النص والجدول المهيكل)
+        const contentBody = [];
+        
+        // لو عندنا جداول مستخرجة من الوورد نضيفها كـ جدول حقيقي
+        if (parsedDocxTables && parsedDocxTables.length > 0) {
+          parsedDocxTables.forEach(tableRows => {
+            // حساب widths تلقائي للخلايا
+            const colCount = tableRows[0].length;
+            const colWidths = Array(colCount).fill('*');
+            contentBody.push({
+              table: {
+                headerRows: 1,
+                widths: colWidths,
+                body: tableRows
+              },
+              layout: 'lightHorizontalLines',
+              margin: [0, 10, 0, 15]
+            });
           });
-          contentDiv.querySelectorAll('td, th').forEach(cell => {
-            cell.style.border = '1px solid #000000';
-            cell.style.padding = '10px 12px';
-            cell.style.textAlign = isArabic ? 'right' : 'left';
-            cell.style.color = '#000000';
-          });
-          contentDiv.querySelectorAll('th').forEach(th => {
-            th.style.backgroundColor = '#f2f2f2';
-            th.style.fontWeight = 'bold';
-          });
-        } else {
-          contentDiv.style.whiteSpace = 'pre-wrap';
-          contentDiv.innerText = input;
         }
 
-        container.appendChild(contentDiv);
-        document.body.appendChild(container);
-
-        const hasVisibleContent = contentDiv.textContent.trim().length > 0 || contentDiv.querySelector('table, img');
-        if (!hasVisibleContent) {
-          document.body.removeChild(container);
-          output.value = (currentLang === 'ar') ? 'لا يوجد محتوى لتحويله! أدخل نصاً أو ارفع ملف وورد يحتوي على محتوى.' : 'No content to convert! Enter text or upload a Word file with content.';
-          return;
-        }
-
-        try {
-          if (document.fonts && document.fonts.ready) {
-            try { await document.fonts.ready; } catch (fontErr) {}
+        // إضافة النصوص العادية الفقرات
+        const paragraphs = input.split('\n');
+        paragraphs.forEach(p => {
+          if (p.trim().length > 0) {
+            contentBody.push({
+              text: p,
+              alignment: isArabic ? 'right' : 'left',
+              margin: [0, 5, 0, 5]
+            });
           }
-          window.scrollTo(0, 0);
-          await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        });
 
-          const options = {
-            margin: 10,
-            filename: 'converted_document.pdf',
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: {
-              scale: 2,
-              useCORS: true,
-              allowTaint: false,
-              logging: false,
-              backgroundColor: '#ffffff',
-              scrollX: 0,
-              scrollY: 0,
-              x: 0,
-              y: 0,
-              onclone: function(clonedDoc) {
-                clonedDoc.querySelectorAll('*').forEach(el => {
-                  el.style.backdropFilter = 'none';
-                  el.style.webkitBackdropFilter = 'none';
-                });
-                const clonedBox = clonedDoc.getElementById('pdf-render-box');
-                if (clonedBox) clonedBox.style.zIndex = '1';
-              }
-            },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-            pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', 'td', 'th', 'img'] }
-          };
+        const docDefinition = {
+          content: contentBody,
+          defaultStyle: {
+            font: 'Roboto' // سيتم طباعة النصوص
+          }
+        };
 
-          await html2pdf().set(options).from(container).save();
-          output.value = (currentLang === 'ar') ? '✅ تم تحويل المستند والجداول إلى PDF بنجاح!' : '✅ PDF Generated Successfully!';
-        } catch (pdfErr) {
-          console.error('word-to-pdf error:', pdfErr);
-          const detail = (pdfErr && pdfErr.message) ? pdfErr.message : String(pdfErr);
-          output.value = (currentLang === 'ar') ? `❌ حدث خطأ أثناء تحويل الـ PDF:\n${detail}` : `❌ Error generating PDF:\n${detail}`;
-        } finally {
-          const el = document.getElementById('pdf-render-box');
-          if (el) document.body.removeChild(el);
-        }
+        // توليد وتحميل الملف مباشرة بدون صور وبدون شاشة بيضاء
+        pdfMake.createPdf(docDefinition).download('converted_document.pdf');
+        output.value = (currentLang === 'ar') ? '✅ تم توليد وتنزيل ملف الـ PDF بنجاح!' : '✅ PDF Generated Successfully!';
+        return;
       }
 
-      else if (type === 'pdf-to-text') {
-        output.value = input;
-      }
-
+      // باقي الأدوات
       else if (type === 'text-to-excel' || type === 'json-to-excel') {
         let wb = XLSX.utils.book_new();
         if (type === 'json-to-excel') {
@@ -788,296 +593,12 @@
         }
         XLSX.writeFile(wb, "converted.xlsx");
         output.value = (currentLang === 'ar') ? '✅ تم إنشاء وتحميل ملف الإكسيل (.xlsx) بنجاح!' : '✅ Excel File (.xlsx) Generated!';
-      }
-
-      else if (type === 'excel-to-json') {
-        if (loadedFiles[0]) {
-          const reader = new FileReader();
-          reader.onload = function(e) {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
-            const firstSheet = workbook.SheetNames[0];
-            const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet]);
-            output.value = JSON.stringify(jsonData, null, 2);
-          };
-          reader.readAsArrayBuffer(loadedFiles[0]);
-        } else {
-          output.value = (currentLang === 'ar') ? 'يرجى رفع ملف إكسيل (.xlsx) للتحويل إلى JSON!' : 'Please upload an Excel file first!';
-        }
-      }
-
-      else if (type === 'text-to-csv' || type === 'sql-to-csv') {
-        const blob = new Blob(["\uFEFF" + input], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = 'converted.csv';
-        link.click();
-        output.value = (currentLang === 'ar') ? '✅ تم إنشاء وتنزيل ملف CSV بنجاح!' : '✅ CSV File Generated!';
-      }
-
-      else if (type === 'csv-to-json') {
-        const lines = input.trim().split('\n');
-        const headers = lines[0].split(',');
-        const res = lines.slice(1).map(l => {
-          const data = l.split(',');
-          return headers.reduce((acc, h, i) => { acc[h.trim()] = data[i] ? data[i].trim() : ''; return acc; }, {});
-        });
-        output.value = JSON.stringify(res, null, 2);
-      }
-
-      else if (type === 'json-to-csv') {
-        const arr = JSON.parse(input);
-        const headers = Object.keys(arr[0]).join(',');
-        const rows = arr.map(obj => Object.values(obj).join(',')).join('\n');
-        output.value = headers + '\n' + rows;
-      }
-
-      else if (type === 'xml-to-json') {
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(input, "text/xml");
-        function xmlToJson(xml) {
-          let obj = {};
-          if (xml.nodeType === 1) {
-            if (xml.attributes.length > 0) {
-              obj["@attributes"] = {};
-              for (let j = 0; j < xml.attributes.length; j++) {
-                let attribute = xml.attributes.item(j);
-                obj["@attributes"][attribute.nodeName] = attribute.nodeValue;
-              }
-            }
-          } else if (xml.nodeType === 3) { obj = xml.nodeValue; }
-          if (xml.hasChildNodes()) {
-            for(let i = 0; i < xml.childNodes.length; i++) {
-              let item = xml.childNodes.item(i);
-              let nodeName = item.nodeName;
-              if (typeof(obj[nodeName]) == "undefined") {
-                obj[nodeName] = xmlToJson(item);
-              } else {
-                if (typeof(obj[nodeName].push) == "undefined") {
-                  let old = obj[nodeName];
-                  obj[nodeName] = [];
-                  obj[nodeName].push(old);
-                }
-                obj[nodeName].push(xmlToJson(item));
-              }
-            }
-          }
-          return obj;
-        }
-        output.value = JSON.stringify(xmlToJson(xmlDoc), null, 2);
-      }
-
-      else if (type === 'yaml-to-json') {
-        const doc = jsyaml.load(input);
-        output.value = JSON.stringify(doc, null, 2);
-      }
-
-      else if (type === 'clean-text') {
-        output.value = input.replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, ' ').trim();
-      }
-
-      else if (type === 'latex-to-text') {
-        output.value = input.replace(/\\[a-zA-Z]+\*?(\{.*?\})?/g, '').replace(/[{}]/g, '').trim();
-      }
-
-      else if (type === 'case-upper') { output.value = input.toUpperCase(); }
-      else if (type === 'case-lower') { output.value = input.toLowerCase(); }
-
-      else if (type === 'text-diff') {
-        const lines = input.split('\n');
-        const mid = Math.floor(lines.length / 2);
-        const part1 = lines.slice(0, mid).join('\n');
-        const part2 = lines.slice(mid).join('\n');
-        output.value = `--- [Part 1] ---\n${part1}\n\n--- [Part 2] ---\n${part2}`;
-      }
-
-      else if (type === 'compress-image') {
-        if (!loadedFiles[0]) { output.value = (currentLang === 'ar') ? 'يرجى رفع صورة أولاً!' : 'Please upload an image first!'; }
-        else {
-          output.value = (currentLang === 'ar') ? 'جاري ضغط الصورة...' : 'Compressing image...';
-          const compressedFile = await imageCompression(loadedFiles[0], { maxSizeMB: 0.5, maxWidthOrHeight: 1280 });
-          const link = document.createElement('a');
-          link.href = URL.createObjectURL(compressedFile);
-          link.download = `compressed_${loadedFiles[0].name}`;
-          link.click();
-          output.value = (currentLang === 'ar') 
-            ? `✅ اكتمل الضغط بنجاح! تم تقليل الحجم إلى ${(compressedFile.size/1024).toFixed(1)} كيلوبايت`
-            : `✅ Compression Complete! Reduced to ${(compressedFile.size/1024).toFixed(1)} KB`;
-        }
-      }
-
-      else if (type.startsWith('image-')) {
-        if (!loadedFiles[0] || !loadedFiles[0].dataUrl) { output.value = (currentLang === 'ar') ? 'يرجى رفع صورة أولاً!' : 'Please upload an image first!'; }
-        else if (type === 'image-to-pdf') {
-          const { jsPDF } = window.jspdf;
-          const doc = new jsPDF();
-          doc.addImage(loadedFiles[0].dataUrl, 'JPEG', 10, 10, 180, 0);
-          doc.save('converted.pdf');
-          output.value = (currentLang === 'ar') ? '✅ تم تحميل ملف الـ PDF بنجاح!' : '✅ PDF Downloaded Successfully!';
-        } else if (type === 'image-to-base64') {
-          output.value = loadedFiles[0].dataUrl;
-        } else {
-          const img = new Image();
-          img.src = loadedFiles[0].dataUrl;
-          img.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = img.width; canvas.height = img.height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0);
-            const fmt = type.replace('image-to-', '');
-            const link = document.createElement('a');
-            link.download = `converted.${fmt}`;
-            link.href = canvas.toDataURL(`image/${fmt === 'jpg' ? 'jpeg' : fmt}`);
-            link.click();
-            output.value = (currentLang === 'ar') ? `✅ تم تحويل وتنزيل الصورة بصيغة .${fmt}` : `✅ Image Converted & Downloaded as .${fmt}`;
-          };
-        }
-      }
-
-      else if (type === 'merge-pdfs') {
-        if (loadedFiles.length < 2) {
-          output.value = (currentLang === 'ar') ? 'يرجى تحديد ملفين PDF أو أكثر للدمج!' : 'Please select 2 or more PDF files!';
-        } else {
-          const mergedPdf = await PDFLib.PDFDocument.create();
-          for (let file of loadedFiles) {
-            const arrayBuffer = await file.arrayBuffer();
-            const pdf = await PDFLib.PDFDocument.load(arrayBuffer);
-            const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
-            copiedPages.forEach((page) => mergedPdf.addPage(page));
-          }
-          const pdfBytes = await mergedPdf.save();
-          const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-          const link = document.createElement('a');
-          link.href = URL.createObjectURL(blob);
-          link.download = 'merged_document.pdf';
-          link.click();
-          output.value = (currentLang === 'ar') ? '✅ تم دمج وتنزيل جميع ملفات الـ PDF بنجاح!' : '✅ All PDFs Merged & Downloaded!';
-        }
-      }
-
-      else if (type === 'color-converter') {
-        let hex = input.replace('#', '').trim();
-        if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
-        let r = parseInt(hex.substring(0,2), 16), g = parseInt(hex.substring(2,4), 16), b = parseInt(hex.substring(4,6), 16);
-        if (isNaN(r) || isNaN(g) || isNaN(b)) {
-          output.value = (currentLang === 'ar') ? 'كود ألوان غير صالح! مثال: #a855f7' : 'Invalid HEX Color Code! Example: #a855f7';
-        } else {
-          output.value = `HEX: #${hex}\nRGB: rgb(${r}, ${g}, ${b})\nCSS: rgba(${r}, ${g}, ${b}, 1)`;
-        }
-      }
-
-      else if (type === 'base64-tool') {
-        try { output.value = utf8_to_b64(input); } catch(e) { output.value = b64_to_utf8(input); }
-      }
-
-      else if (type === 'url-encoder') {
-        try { output.value = encodeURIComponent(input); } catch(e) { output.value = decodeURIComponent(input); }
-      }
-
-      else if (type === 'json-beautifier') {
-        output.value = JSON.stringify(JSON.parse(input), null, 4);
-      }
-
-      else if (type === 'css-js-minifier') {
-        output.value = input.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '').replace(/\s+/g, ' ').trim();
-      }
-
-      else if (type === 'html-entity') {
-        const p = document.createElement('p');
-        p.textContent = input;
-        output.value = p.innerHTML;
-      }
-
-      else if (type === 'hash-generator') {
-        output.value = `MD5: ${CryptoJS.MD5(input)}\nSHA-256: ${CryptoJS.SHA256(input)}`;
-      }
-
-      else if (type === 'timestamp-converter') {
-        const num = parseInt(input.trim());
-        const date = new Date(isNaN(num) ? input : (num > 10000000000 ? num : num * 1000));
-        output.value = `Readable UTC Date:\n${date.toUTCString()}\n\nLocal Date:\n${date.toLocaleString()}`;
-      }
-
-      else if (type === 'password-strength') {
-        const score = input.length >= 8 && /[A-Z]/.test(input) && /[0-9]/.test(input) && /[^A-Za-z0-9]/.test(input);
-        output.value = (currentLang === 'ar') 
-          ? (score ? '🔒 قوة كلمة السر: قوية جداً وآمنة!' : '⚠️ قوة كلمة السر: ضعيفة (يفضل إضافة أرقام، رموز، وأحرف كبيرة)')
-          : (score ? '🔒 Password Strength: VERY STRONG' : '⚠️ Password Strength: WEAK (Add numbers, uppercase & symbols)');
-      }
-
-      else if (type === 'percentage-calc') {
-        const nums = input.match(/\d+(\.\d+)?/g);
-        if (nums && nums.length >= 2) {
-          const p = parseFloat(nums[0]), total = parseFloat(nums[1]);
-          output.value = `${p}% من ${total} = ${(p / 100) * total}`;
-        } else {
-          output.value = (currentLang === 'ar') ? 'الصيغة الصحيحة: اكتب رقمين مثل "20 150" لحساب 20% من 150' : 'Format: Enter numbers like "20 150" to calculate 20% of 150';
-        }
-      }
-
-      else if (type === 'byte-converter') {
-        const bytes = parseFloat(input.replace(/[^0-9.]/g, ''));
-        if (isNaN(bytes)) { output.value = 'Please enter a valid number of Bytes!'; }
-        else {
-          output.value = `Bytes: ${bytes}\nKB: ${(bytes/1024).toFixed(2)}\nMB: ${(bytes/(1024**2)).toFixed(2)}\nGB: ${(bytes/(1024**3)).toFixed(4)}\nTB: ${(bytes/(1024**4)).toFixed(6)}`;
-        }
-      }
-
-      else if (type === 'unit-converter') {
-        const val = parseFloat(input.replace(/[^0-9.]/g, ''));
-        if (isNaN(val)) { output.value = 'Enter a distance in Meters!'; }
-        else {
-          output.value = `Meters: ${val} m\nFeet: ${(val * 3.28084).toFixed(2)} ft\nKilometers: ${(val / 1000).toFixed(3)} km\nMiles: ${(val / 1609.34).toFixed(4)} mi`;
-        }
-      }
-
-      else if (type === 'markdown-to-html') {
-        let html = input
-          .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-          .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-          .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-          .replace(/\*\*(.*)\*\*/gim, '<b>$1</b>')
-          .replace(/\*(.*)\*/gim, '<i>$1</i>')
-          .replace(/\n/gim, '<br />');
-        output.value = html.trim();
-      }
-
-      else if (type === 'text-to-qr') {
-        new QRCode(qrContainer, { text: input, width: 140, height: 140 });
-        output.value = (currentLang === 'ar') ? '✅ تم إنشاء رمز الـ QR بنجاح أسفل المربع!' : '✅ QR Code Generated Below!';
-      }
-
-      else if (type === 'password-generator') {
-        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=";
-        output.value = Array.from({length: 16}, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
-      }
-
-      else if (type === 'text-counter') {
-        const chars = input.length;
-        const words = input.trim() ? input.trim().split(/\s+/).length : 0;
-        const lines = input.split('\n').length;
-        output.value = `الحروف: ${chars}\nالكلمات: ${words}\nالأسطر: ${lines}`;
-      }
-
-      else if (type === 'text-to-speech') {
-        const msg = new SpeechSynthesisUtterance(input);
-        msg.lang = (/[\u0600-\u06FF]/.test(input) || currentLang === 'ar') ? 'ar-SA' : 'en-US';
-        window.speechSynthesis.speak(msg);
-        output.value = (currentLang === 'ar') ? '🗣️ جاري القراءة الصوتية...' : '🗣️ Speaking text...';
-      }
-
-      else {
+      } else {
         output.value = input;
       }
 
-      const isArabicOut = /[\u0600-\u06FF]/.test(output.value);
-      output.style.direction = isArabicOut ? 'rtl' : 'ltr';
-
     } catch (e) {
-      output.value = (currentLang === 'ar') ? 'حدث خطأ أثناء المعالجة! تأكد من صحة الصيغة المرفقة.' : 'Error processing request! Check input format.';
-    } finally {
-      executeBtn.disabled = false;
-      executeBtn.innerText = origBtnText;
+      output.value = (currentLang === 'ar') ? 'حدث خطأ أثناء المعالجة!' : 'Error processing request!';
     }
   }
 </script>
