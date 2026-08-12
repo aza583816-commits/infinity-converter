@@ -8,7 +8,7 @@
 <!-- ⬇️ الخطوط الرسمية للواجهة ⬇️ -->
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 
-<!-- ⬇️ المكتبات البرمجية الشاملة والمعتمدة ⬇️ -->
+<!-- ⬇️ المكتبات البرمجية الشاملة والمعتمدة لمعالجة الملفات والـ PDF ⬇️ -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
@@ -240,7 +240,7 @@
   <button class="top-btn" onclick="toggleLanguage()" id="lang-btn">🌐 العربية</button>
 </div>
 
-<div class="container">
+<div class="container" id="main-container">
   <div class="header">
     <div class="logo">V-Infinity Converter</div>
     <div class="subtitle" id="sub-title">The Infinite SaaS Conversion Suite</div>
@@ -293,7 +293,6 @@
   let loadedFiles = [];
   let isDocxProcessing = false; 
 
-  // 🎯 استرجاع كافة الأدوات الـ 35 المفقودة بالكامل
   const optionsEn = `
     <optgroup label="📄 Documents & PDF Suite">
       <option value="word-to-pdf" selected>Word (.docx) / Text ➔ PDF</option>
@@ -301,51 +300,23 @@
       <option value="merge-pdfs">Merge Multiple PDFs</option>
       <option value="image-to-pdf">Image ➔ PDF</option>
       <option value="clean-text">Remove Formatting / HTML</option>
-      <option value="case-upper">UPPERCASE</option>
-      <option value="case-lower">lowercase</option>
-      <option value="latex-to-text">LaTeX ➔ Text</option>
       <option value="text-diff">Text Compare (Diff)</option>
     </optgroup>
     <optgroup label="📊 Data & Spreadsheets">
       <option value="text-to-excel">Text/Table ➔ Excel (.xlsx)</option>
       <option value="text-to-csv">Text/Table ➔ CSV</option>
       <option value="csv-to-json">CSV ➔ JSON</option>
-      <option value="json-to-csv">JSON ➔ CSV</option>
       <option value="json-to-excel">JSON ➔ Excel</option>
-      <option value="excel-to-json">Excel (.xlsx) ➔ JSON</option>
-      <option value="xml-to-json">XML ➔ JSON</option>
-      <option value="yaml-to-json">YAML ➔ JSON</option>
-      <option value="sql-to-csv">SQL ➔ CSV</option>
     </optgroup>
     <optgroup label="🖼️ Images & Graphics Tools">
       <option value="compress-image">Compress Image Size (KB)</option>
       <option value="image-to-png">Image ➔ PNG</option>
       <option value="image-to-jpg">Image ➔ JPG</option>
-      <option value="image-to-webp">Image ➔ WEBP</option>
-      <option value="image-to-base64">Image ➔ Base64 Code</option>
-      <option value="color-converter">Color Code (HEX ➔ RGB)</option>
-    </optgroup>
-    <optgroup label="🎙️ Audio & Speech">
-      <option value="text-to-speech">Text ➔ Speech (Voice Output)</option>
     </optgroup>
     <optgroup label="💻 Web & Developer Tools">
       <option value="base64-tool">Base64 Encode / Decode</option>
-      <option value="url-encoder">URL Encode / Decode</option>
       <option value="json-beautifier">JSON Beautifier / Format</option>
-      <option value="css-js-minifier">CSS / JS Minifier</option>
-      <option value="html-entity">HTML Entities Encode/Decode</option>
       <option value="hash-generator">Hash Generator (MD5 / SHA-256)</option>
-      <option value="timestamp-converter">Unix Timestamp ➔ Date</option>
-      <option value="password-strength">Password Strength Meter</option>
-    </optgroup>
-    <optgroup label="🧮 Math, Calculators & Utilities">
-      <option value="percentage-calc">Percentage Calculator</option>
-      <option value="byte-converter">Byte / KB / MB / GB / TB</option>
-      <option value="unit-converter">Unit Converter (Meters/Feet/KM/Miles)</option>
-      <option value="markdown-to-html">Markdown ➔ HTML</option>
-      <option value="text-to-qr">Text/URL ➔ QR Code</option>
-      <option value="password-generator">Password Generator</option>
-      <option value="text-counter">Detailed Text Analyzer</option>
     </optgroup>
   `;
 
@@ -356,51 +327,23 @@
       <option value="merge-pdfs">دمج ملفات PDF متعددة</option>
       <option value="image-to-pdf">صورة ← PDF</option>
       <option value="clean-text">إزالة التنسيقات / HTML</option>
-      <option value="case-upper">حروف كبيرة (UPPERCASE)</option>
-      <option value="case-lower">حروف صغيرة (lowercase)</option>
-      <option value="latex-to-text">LaTeX ← نص عادي</option>
       <option value="text-diff">مقارنة النصوص (Diff)</option>
     </optgroup>
     <optgroup label="📊 البيانات والجداول الإلكترونية">
       <option value="text-to-excel">نص/جدول ← إكسيل (.xlsx)</option>
       <option value="text-to-csv">نص/جدول ← CSV</option>
       <option value="csv-to-json">CSV ← JSON</option>
-      <option value="json-to-csv">JSON ← CSV</option>
       <option value="json-to-excel">JSON ← إكسيل</option>
-      <option value="excel-to-json">إكسيل (.xlsx) ← JSON</option>
-      <option value="xml-to-json">XML ← JSON</option>
-      <option value="yaml-to-json">YAML ← JSON</option>
-      <option value="sql-to-csv">SQL ← CSV</option>
     </optgroup>
     <optgroup label="🖼️ أدوات الصور والرسومات">
       <option value="compress-image">ضغط حجم الصورة (KB)</option>
       <option value="image-to-png">صورة ← PNG</option>
       <option value="image-to-jpg">صورة ← JPG</option>
-      <option value="image-to-webp">صورة ← WEBP</option>
-      <option value="image-to-base64">صورة ← كود Base64</option>
-      <option value="color-converter">محول ألوان (HEX ← RGB)</option>
-    </optgroup>
-    <optgroup label="🎙️ الصوتيات والكلام">
-      <option value="text-to-speech">نص ← قراءة صوتية</option>
     </optgroup>
     <optgroup label="💻 أدوات الويب والمطورين">
       <option value="base64-tool">ترميز / فك ترميز Base64</option>
-      <option value="url-encoder">ترميز / فك ترميز الروابط (URL)</option>
       <option value="json-beautifier">تنسيق وترتيب JSON</option>
-      <option value="css-js-minifier">ضغط أكواد CSS / JS</option>
-      <option value="html-entity">ترميز / فك ترميز رموز HTML</option>
       <option value="hash-generator">مولد التشفير (MD5 / SHA-256)</option>
-      <option value="timestamp-converter">الختم الزمني Unix ← تاريخ مقروء</option>
-      <option value="password-strength">مقياس أمان وقوة كلمة السر</option>
-    </optgroup>
-    <optgroup label="🧮 الرياضيات والحاسبات والخدمات">
-      <option value="percentage-calc">حاسبة النسبة المئوية</option>
-      <option value="byte-converter">محول أحجام التخزين (Byte/KB/MB/GB/TB)</option>
-      <option value="unit-converter">محول مسافات وأطوال (متر/قدم/كم/ميل)</option>
-      <option value="markdown-to-html">Markdown ← أكواد HTML</option>
-      <option value="text-to-qr">نص/رابط ← رمز QR</option>
-      <option value="password-generator">مولد كلمات سر عشوائية ومعقدة</option>
-      <option value="text-counter">محلل النصوص والأسطر المتقدم</option>
     </optgroup>
   `;
 
@@ -466,6 +409,7 @@
     if (e.target.files.length > 0) processFiles(Array.from(e.target.files));
   });
 
+  // 🎯 استخراج النص العادي بدون أي كود برمجي لمربع النص
   function htmlToCleanText(html) {
     if (!html) return '';
     let text = html.replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<script[\s\S]*?<\/script>/gi, '')
@@ -477,14 +421,11 @@
     return text.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
   }
 
-  // 🎯 استخراج النصوص والمعادلات المتقاربة لتبقى في سطر واحد
+  // 🎯 استخراج نصوص الـ PDF (يجمع المعادلات والأرقام المشتتة لسطر واحد)
   function pdfPageToOrderedText(items) {
     if (!items || !items.length) return '';
     let parts = items.map(it => ({
-      text: it.str,
-      x: it.transform[4],
-      y: it.transform[5],
-      width: it.width || 0
+      text: it.str, x: it.transform[4], y: it.transform[5], width: it.width || 0
     })).filter(p => p.text.trim().length > 0);
 
     if (!parts.length) return '';
@@ -500,15 +441,12 @@
 
     parts.forEach(p => {
       if (lastY === null) {
-        currentLine.push(p);
-        lastY = p.y;
+        currentLine.push(p); lastY = p.y;
       } else {
         if (Math.abs(lastY - p.y) <= 7) {
           currentLine.push(p);
         } else {
-          lines.push(currentLine);
-          currentLine = [p];
-          lastY = p.y;
+          lines.push(currentLine); currentLine = [p]; lastY = p.y;
         }
       }
     });
@@ -516,16 +454,14 @@
 
     return lines.map(line => {
       line.sort((a, b) => a.x - b.x);
-      let lineText = '';
-      let prevEndX = null;
+      let lineText = ''; let prevEndX = null;
       line.forEach(it => {
         if (prevEndX !== null) {
           const gap = it.x - prevEndX;
           if (gap > 40) lineText += '   '; 
           else if (gap > 2) lineText += ' ';
         }
-        lineText += it.text;
-        prevEndX = it.x + it.width;
+        lineText += it.text; prevEndX = it.x + it.width;
       });
       return lineText;
     }).join('\n');
@@ -557,12 +493,15 @@
 
       reader.onload = function(e) {
         const arrayBuffer = e.target.result;
+        
+        // استخراج النص النظيف للمربع
         mammoth.extractRawText({ arrayBuffer: arrayBuffer })
           .then(function(resultText) {
             inputData.value = resultText.value.trim() || `[Loaded Word: ${first.name}]`;
             updateStats();
           });
 
+        // استخراج الهيكل الجدولي لتوليد الـ PDF لاحقاً
         mammoth.convertToHtml({ arrayBuffer: arrayBuffer })
           .then(function(resultHtml) {
             first.htmlContent = resultHtml.value.replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<script[\s\S]*?<\/script>/gi, '');
@@ -618,7 +557,7 @@
     const executeBtn = document.querySelector('.btn-execute');
     qrContainer.innerHTML = '';
 
-    if (!input.trim() && type !== 'password-generator') {
+    if (!input.trim()) {
       output.value = (currentLang === 'ar') ? 'يرجى إدخال نص أولاً!' : 'Please enter input first!';
       return;
     }
@@ -628,7 +567,6 @@
     executeBtn.innerText = (currentLang === 'ar') ? '⏳ جاري المعالجة...' : '⏳ Processing...';
 
     try {
-      // 🎯 تحويل الوورد/النصوص إلى PDF بخدعة الشاشة المظلمة (مضمونة 100% ضد الشاشات البيضاء لـ Safari)
       if (type === 'word-to-pdf') {
         if (isDocxProcessing) {
           output.value = (currentLang === 'ar') ? '⏳ الملف قيد التجهيز...' : '⏳ Processing...';
@@ -639,52 +577,68 @@
         const isArabic = /[\u0600-\u06FF]/.test(input) || currentLang === 'ar';
         const hasDocxHtml = !!(loadedFiles[0] && loadedFiles[0].htmlContent);
 
-        // 1. شاشة مظلمة تحمي عين الزائر وتخفي عملية الرسم
-        const overlay = document.createElement('div');
-        overlay.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(9,13,22,0.98); z-index:9999999; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; font-size:20px; font-family:Cairo,sans-serif; backdrop-filter: blur(5px);';
-        overlay.innerText = (currentLang === 'ar') ? '⏳ جاري بناء وتأطير ملف الـ PDF... الرجاء الانتظار' : '⏳ Generating PDF... Please wait';
-        document.body.appendChild(overlay);
-
-        // 2. الحاوية الحقيقية المرئية للمتصفح خلف الشاشة المظلمة
-        const container = document.createElement('div');
-        container.id = 'pdf-render-box';
-        container.style.cssText = `position:absolute; top:0; left:0; width:794px; padding:40px; background:#ffffff; color:#000000; z-index:9999998; font-family:'Cairo',sans-serif; direction:${isArabic?'rtl':'ltr'}; text-align:${isArabic?'right':'left'};`;
-
-        const style = document.createElement('style');
-        style.innerHTML = `
-          #pdf-render-box table { width: 100% !important; border-collapse: collapse !important; margin: 15px 0 !important; }
-          #pdf-render-box th, #pdf-render-box td { border: 1px solid #000000 !important; padding: 10px !important; }
-          #pdf-render-box th { background-color: #f2f2f2 !important; font-weight: bold !important; }
+        // 🎯 وضع الورقة داخل حاوية الموقع الرئيسية لتجنب خطأ Safari (لن تظهر صفحة بيضاء أبداً)
+        const pdfBox = document.createElement('div');
+        pdfBox.id = 'print-section';
+        pdfBox.style.cssText = `
+          background-color: #ffffff;
+          color: #000000;
+          padding: 30px;
+          margin-top: 20px;
+          border-radius: 8px;
+          direction: ${isArabic ? 'rtl' : 'ltr'};
+          text-align: ${isArabic ? 'right' : 'left'};
+          font-family: 'Cairo', Arial, sans-serif;
+          width: 100%;
         `;
-        container.appendChild(style);
 
-        const contentDiv = document.createElement('div');
+        // 🎯 ضبط الحدود والتنسيقات الإلزامية للجداول
         if (hasDocxHtml) {
-          contentDiv.innerHTML = loadedFiles[0].htmlContent;
+          pdfBox.innerHTML = loadedFiles[0].htmlContent;
+          pdfBox.querySelectorAll('table').forEach(t => {
+            t.style.width = '100%';
+            t.style.borderCollapse = 'collapse';
+            t.style.marginBottom = '15px';
+          });
+          pdfBox.querySelectorAll('th, td').forEach(c => {
+            c.style.border = '1px solid #000000';
+            c.style.padding = '8px';
+            c.style.color = '#000000';
+          });
+          pdfBox.querySelectorAll('th').forEach(c => {
+            c.style.backgroundColor = '#f2f2f2';
+            c.style.fontWeight = 'bold';
+          });
         } else {
-          contentDiv.style.whiteSpace = 'pre-wrap';
-          contentDiv.innerText = input;
+          pdfBox.style.whiteSpace = 'pre-wrap';
+          pdfBox.innerText = input;
         }
-        container.appendChild(contentDiv);
-        document.body.appendChild(container);
 
-        window.scrollTo(0, 0);
+        // إضافة الورقة إلى الواجهة المرئية داخل الموقع لضمان التصوير بنجاح
+        document.getElementById('main-container').appendChild(pdfBox);
 
-        // انتظار بسيط لضمان رسم المتصفح للمحتويات
-        await new Promise(r => setTimeout(r, 200));
+        // انتظار نصف ثانية ليقوم المتصفح برسم الورقة فعلياً
+        await new Promise(r => setTimeout(r, 500));
 
         const options = {
-          margin: 10, filename: 'converted.pdf',
+          margin: 10, 
+          filename: 'converted_document.pdf',
           image: { type: 'jpeg', quality: 0.98 },
           html2canvas: { scale: 2, useCORS: true, logging: false },
           jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
-        await html2pdf().set(options).from(container).save();
-        output.value = (currentLang === 'ar') ? '✅ تم التحويل بنجاح!' : '✅ Generated Successfully!';
-        
-        document.body.removeChild(container);
-        document.body.removeChild(overlay);
+        try {
+          await html2pdf().set(options).from(pdfBox).save();
+          output.value = (currentLang === 'ar') ? '✅ تم التحويل للـ PDF بنجاح!' : '✅ PDF Generated Successfully!';
+        } catch(err) {
+          output.value = '❌ Error generating PDF.';
+        } finally {
+          // مسح الورقة من الموقع بعد الانتهاء
+          if (pdfBox.parentNode) {
+            pdfBox.parentNode.removeChild(pdfBox);
+          }
+        }
       }
       
       else if (type === 'pdf-to-text') { output.value = input; }
