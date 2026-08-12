@@ -6,7 +6,7 @@
 <title>V-Infinity Converter</title>
 
 <!-- ⬇️ الخطوط الرسمية للواجهة والـ PDF ⬇️ -->
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 
 <!-- ⬇️ المكتبات البرمجية الشاملة والمعتمدة لمعالجة الملفات والجداول ⬇️ -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -291,7 +291,7 @@
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
   let loadedFiles = [];
-  let isDocxProcessing = false; // 🎯 يمنع الضغط على تحويل قبل انتهاء قراءة ملف الوورد بالكامل (سبب رئيسي لمشكلة الصفحة البيضاء)
+  let isDocxProcessing = false; // 🎯 يمنع الضغط على تحويل قبل انتهاء قراءة ملف الوورد بالكامل
 
   const optionsEn = `
     <optgroup label="📊 Data & Spreadsheets">
@@ -489,22 +489,18 @@
     if (e.dataTransfer.files.length > 0) processFiles(Array.from(e.dataTransfer.files));
   });
 
-  // 🎯 دالة موحّدة وآمنة لتحويل مخرجات Mammoth (HTML) إلى نص عادي نظيف 100%
-  // لا تعتمد إطلاقاً على innerText (حساسة لعرض/تخطيط العنصر وتتصرف بشكل مختلف بين المتصفحات
-  // خصوصاً مع عناصر غير مضافة فعلياً إلى الصفحة) — بل تعمل على النص الخام مباشرة فتُعطي نفس
-  // النتيجة النظيفة على كل المتصفحات بما فيها Safari.
+  // 🎯 دالة آمنة لاستخراج نص نظيف 100% بدون أي تلوث بأكواد الـ CSS
   function htmlToCleanText(html) {
     if (!html) return '';
     let text = html
-      .replace(/<style[\s\S]*?<\/style>/gi, '')   // إزالة أي أكواد CSS كاملة (وسم + محتوى)
-      .replace(/<script[\s\S]*?<\/script>/gi, '') // إزالة أي أكواد JS كاملة
+      .replace(/<style[\s\S]*?<\/style>/gi, '')
+      .replace(/<script[\s\S]*?<\/script>/gi, '')
       .replace(/<br\s*\/?>/gi, '\n')
       .replace(/<\/(p|div|h[1-6]|li)>/gi, '\n')
       .replace(/<\/tr>/gi, '\n')
       .replace(/<\/(td|th)>/gi, '   ')
-      .replace(/<[^>]+>/g, '');                   // إزالة كل وسوم HTML المتبقية
+      .replace(/<[^>]+>/g, '');
 
-    // فك ترميز رموز HTML مثل &amp; &nbsp; بطريقة لا تعتمد على العرض المرئي للعنصر
     const decoder = document.createElement('textarea');
     decoder.innerHTML = text;
     text = decoder.value;
@@ -512,9 +508,6 @@
     return text.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
   }
 
-  // 🎯 إعادة بناء نص PDF بترتيب قراءة صحيح (سطر بسطر، من الأعلى للأسفل، ومن اليسار لليمين
-  // داخل كل سطر) بدل تجميع كل مقاطع النص بمسافة واحدة عشوائية بحسب ترتيبها الداخلي بالملف
-  // (وهو السبب الرئيسي لتشوّه استخراج ملفات PDF المعقّدة كالامتحانات والجداول والمعادلات).
   function pdfPageToOrderedText(items) {
     if (!items || !items.length) return '';
     const parts = items
@@ -527,11 +520,8 @@
       }));
     if (!parts.length) return '';
 
-    // من أعلى الصفحة للأسفل (Y أكبر = أعلى بإحداثيات PDF)، ثم من اليسار لليمين
     parts.sort((a, b) => b.y - a.y || a.x - b.x);
-
-    const Y_TOLERANCE = 7; // مبني على قياس فعلي: حروف مثل علامة الطرح "−" داخل تعبيرات رياضية
-                            // (LaTeX) تنزاح عن خط الأساس حتى 6pt تقريباً وهي نفس السطر بصرياً
+    const Y_TOLERANCE = 7;
     const lines = [];
     let current = null;
     parts.forEach(p => {
@@ -550,8 +540,8 @@
       line.items.forEach(it => {
         if (prevEndX !== null) {
           const gap = it.x - prevEndX;
-          if (gap > 60) text += '\t';      // فجوة كبيرة فعلاً: عمود جديد بجدول (مقاسة على بيانات حقيقية)
-          else if (gap > 1.5) text += ' '; // فجوة طبيعية بين كلمتين
+          if (gap > 60) text += '\t';
+          else if (gap > 1.5) text += ' ';
         }
         text += it.text;
         prevEndX = it.x + it.width;
@@ -575,7 +565,6 @@
       };
       reader.readAsDataURL(first);
     } 
-    // 🎯 إصلاح شامل لقراءة ملفات الوورد: نص نظيف 100% في المربع + منع سباق التوقيت مع زر التحويل (Execute)
     else if (first.name.endsWith('.docx') || first.type.includes('wordprocessingml')) {
       const executeBtn = document.querySelector('.btn-execute');
       const originalBtnLabel = executeBtn ? executeBtn.innerText : '';
@@ -599,11 +588,9 @@
       reader.onload = function(e) {
         mammoth.convertToHtml({arrayBuffer: e.target.result})
           .then(function(result) {
-            // نسخة HTML نظيفة (بدون style/script) تُستخدم لاحقاً لبناء PDF بجداوله الأصلية
             first.htmlContent = result.value
               .replace(/<style[\s\S]*?<\/style>/gi, '')
               .replace(/<script[\s\S]*?<\/script>/gi, '');
-            // نص عادي نظيف 100% للمربع، مستخرج بطريقة آمنة لا تعتمد على عرض المتصفح للعنصر
             inputData.value = htmlToCleanText(result.value) || `[Loaded Word Document: ${first.name}]`;
           })
           .catch(function() {
@@ -665,9 +652,7 @@
     executeBtn.innerText = (currentLang === 'ar') ? '⏳ جاري المعالجة...' : '⏳ Processing...';
 
     try {
-      // 🎯 التصحيح الجوهري: التصوير المباشر بكسل بكسل في أعلى الصفحة مع scrollTo(0,0) لضمان عدم ظهور أية ورقة بيضاء!
       if (type === 'word-to-pdf') {
-        // 🎯 منع سباق التوقيت: لا نبدأ التحويل قبل اكتمال قراءة ملف الوورد بالكامل
         if (isDocxProcessing) {
           output.value = (currentLang === 'ar') ? '⏳ الملف لا يزال قيد التجهيز، انتظر لحظة ثم اضغط تحويل مرة أخرى.' : '⏳ File is still being prepared — wait a moment then press Execute again.';
           return;
@@ -684,7 +669,7 @@
         container.style.position = 'absolute';
         container.style.top = '0';
         container.style.left = '0';
-        container.style.width = '794px'; // العرض الرسمي لصفحة A4
+        container.style.width = '794px';
         container.style.padding = '40px';
         container.style.backgroundColor = '#ffffff';
         container.style.color = '#000000';
@@ -709,8 +694,7 @@
         contentDiv.setAttribute('dir', isArabic ? 'rtl' : 'ltr');
         if (hasDocxHtml) {
           contentDiv.innerHTML = loadedFiles[0].htmlContent;
-          // 🎯 نضبط حدود الجداول كـ inline style مباشرة على كل خلية، حتى تُلتقط بضمان 100%
-          // بواسطة html2canvas بغض النظر عن أي تعارض أو تجاهل جزئي لأنماط <style> المُحقنة
+          // 🎯 ضمان فرض الحدود والتخطيط كـ inline styles على كل عنصر جدول وجدناه
           contentDiv.querySelectorAll('table').forEach(t => {
             t.style.width = '100%';
             t.style.borderCollapse = 'collapse';
@@ -734,7 +718,6 @@
         container.appendChild(contentDiv);
         document.body.appendChild(container);
 
-        // 🎯 حارس أمان: نتأكد من وجود محتوى فعلي قبل المتابعة، لمنع تنزيل PDF فارغ بصمت
         const hasVisibleContent = contentDiv.textContent.trim().length > 0 || contentDiv.querySelector('table, img');
         if (!hasVisibleContent) {
           document.body.removeChild(container);
@@ -743,13 +726,9 @@
         }
 
         try {
-          // 🎯 التصحيح الجوهري لمشكلة الصفحة البيضاء (يشمل Safari وكذلك Chrome على ويندوز):
-          // 1) ضمان تحميل خط Cairo بالكامل قبل التصوير (وإلا يُلتقط الخط الاحتياطي أو تفشل الطباعة)
           if (document.fonts && document.fonts.ready) {
-            try { await document.fonts.ready; } catch (fontErr) { /* نتجاهل ونكمل */ }
+            try { await document.fonts.ready; } catch (fontErr) {}
           }
-          // 2) تصفير التمرير فعلياً ثم الانتظار حتى يرسم المتصفح إطارين كاملين (يحل مشاكل توقيت
-          //    القياس التي تُنتج صفحة PDF بيضاء رغم وجود محتوى فعلي)
           window.scrollTo(0, 0);
           await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
@@ -767,9 +746,6 @@
               scrollY: 0,
               x: 0,
               y: 0,
-              // 🎯 خاصية backdrop-filter المستخدمة في تصميم الواجهة (الكروت الزجاجية) تُربك عملية
-              // النسخ الداخلية لـ html2canvas في أكثر من متصفح، لذلك نُعطّلها في نسخة الـ DOM
-              // المستنسخة للتصوير فقط (لا تتأثر الواجهة الحقيقية التي يراها المستخدم إطلاقاً)
               onclone: function(clonedDoc) {
                 clonedDoc.querySelectorAll('*').forEach(el => {
                   el.style.backdropFilter = 'none';
@@ -783,35 +759,7 @@
             pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', 'td', 'th', 'img'] }
           };
 
-          // 🎯 فحص تشخيصي اختياري وآمن 100%: لو المتصفح يعرّض دالة html2canvas بشكل مباشر
-          // (بدون المرور بواجهة html2pdf المعقّدة التي سبّبت الخطأ السابق)، نصوّر العنصر مرة
-          // تجريبية أولاً ونتأكد أن اللوحة الناتجة ليست بيضاء بالكامل قبل تنزيل أي شيء. لو هذا
-          // الفحص نفسه غير متاح أو فشل لأي سبب، نتجاهله تماماً ونكمل للمسار العادي المضمون.
-          if (typeof html2canvas === 'function') {
-            try {
-              const testCanvas = await html2canvas(container, options.html2canvas);
-              const ctx = testCanvas.getContext('2d');
-              const sample = ctx.getImageData(0, 0, testCanvas.width, testCanvas.height).data;
-              let hasInk = false;
-              for (let i = 0; i < sample.length; i += 4 * 131) {
-                if (sample[i + 3] > 0 && (sample[i] < 250 || sample[i + 1] < 250 || sample[i + 2] < 250)) { hasInk = true; break; }
-              }
-              if (!hasInk) {
-                throw new Error((currentLang === 'ar')
-                  ? 'تم رسم الصفحة لكنها خرجت بيضاء بالكامل (لا يوجد أي بكسل ملوّن) — مشكلة توافق بين المتصفح ومكتبة html2canvas.'
-                  : 'The page rendered but came out entirely blank (no colored pixel found) — a browser/html2canvas compatibility issue.');
-              }
-            } catch (diagErr) {
-              // لو الخطأ هو اكتشاف صفحة بيضاء فعلاً، نوقف العملية بهذه الرسالة الواضحة
-              if (diagErr instanceof Error && /بيضاء|blank/i.test(diagErr.message)) throw diagErr;
-              // أي خطأ آخر بالفحص نفسه (مثل Canvas Tainted أو أي شيء غير متوقع) — نتجاهله بأمان
-              // ونكمل للتحويل الفعلي، حتى لا يوقف فحص تشخيصي اختياري عملية التحويل الأساسية
-              console.warn('Diagnostic pre-check skipped:', diagErr);
-            }
-          }
-
           await html2pdf().set(options).from(container).save();
-
           output.value = (currentLang === 'ar') ? '✅ تم تحويل المستند والجداول إلى PDF بنجاح!' : '✅ PDF Generated Successfully!';
         } catch (pdfErr) {
           console.error('word-to-pdf error:', pdfErr);
@@ -823,12 +771,10 @@
         }
       }
 
-      // 2. استخراج النص من ملف الـ PDF
       else if (type === 'pdf-to-text') {
         output.value = input;
       }
 
-      // 3. أدوات الجداول والبيانات
       else if (type === 'text-to-excel' || type === 'json-to-excel') {
         let wb = XLSX.utils.book_new();
         if (type === 'json-to-excel') {
@@ -926,7 +872,6 @@
         output.value = JSON.stringify(doc, null, 2);
       }
 
-      // 4. أدوات النصوص والمستندات
       else if (type === 'clean-text') {
         output.value = input.replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, ' ').trim();
       }
@@ -946,7 +891,6 @@
         output.value = `--- [Part 1] ---\n${part1}\n\n--- [Part 2] ---\n${part2}`;
       }
 
-      // 5. أدوات الصور والرسومات
       else if (type === 'compress-image') {
         if (!loadedFiles[0]) { output.value = (currentLang === 'ar') ? 'يرجى رفع صورة أولاً!' : 'Please upload an image first!'; }
         else {
@@ -1022,7 +966,6 @@
         }
       }
 
-      // 6. أدوات المطورين والترميز
       else if (type === 'base64-tool') {
         try { output.value = utf8_to_b64(input); } catch(e) { output.value = b64_to_utf8(input); }
       }
@@ -1062,7 +1005,6 @@
           : (score ? '🔒 Password Strength: VERY STRONG' : '⚠️ Password Strength: WEAK (Add numbers, uppercase & symbols)');
       }
 
-      // 7. الحاسبات والأدوات الذكية
       else if (type === 'percentage-calc') {
         const nums = input.match(/\d+(\.\d+)?/g);
         if (nums && nums.length >= 2) {
@@ -1093,7 +1035,7 @@
         let html = input
           .replace(/^# (.*$)/gim, '<h1>$1</h1>')
           .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-          .replace(/^### (.*$)/gim, '### $1')
+          .replace(/^### (.*$)/gim, '<h3>$1</h3>')
           .replace(/\*\*(.*)\*\*/gim, '<b>$1</b>')
           .replace(/\*(.*)\*/gim, '<i>$1</i>')
           .replace(/\n/gim, '<br />');
@@ -1142,3 +1084,4 @@
 
 </body>
 </html>
+
