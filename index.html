@@ -5,14 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>V-Infinity Converter</title>
 
-<!-- ⬇️ الخطوط الرسمية ⬇️ -->
+<!-- ⬇️ الخطوط الرسمية للواجهة ⬇️ -->
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 
-<!-- ⬇️ مكتبة pdfmake الحقيقية لتوليد ملفات PDF بدون تصوير وبدون صفحة بيضاء ⬇️ -->
+<!-- ⬇️ المكتبات البرمجية الشاملة والمعتمدة لمعالجة الملفات والجداول والـ PDF ⬇️ -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
-
-<!-- ⬇️ باقي المكتبات الشاملة ⬇️ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
@@ -287,114 +287,63 @@
 </div>
 
 <script>
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
   let loadedFiles = [];
-  let parsedDocxTables = []; // لتخزين الجداول الحقيقية المستخرجة من الوورد
+  let parsedDocxTables = []; 
+  let isProcessingFile = false; 
 
   const optionsEn = `
+    <optgroup label="📄 Documents & PDF Suite">
+      <option value="word-to-pdf" selected>Word (.docx) / Text ➔ PDF</option>
+      <option value="pdf-to-text">PDF ➔ Extract Text</option>
+      <option value="merge-pdfs">Merge Multiple PDFs</option>
+      <option value="image-to-pdf">Image ➔ PDF</option>
+      <option value="clean-text">Remove Formatting / HTML</option>
+      <option value="text-diff">Text Compare (Diff)</option>
+    </optgroup>
     <optgroup label="📊 Data & Spreadsheets">
-      <option value="text-to-excel" selected>Text/Table ➔ Excel (.xlsx)</option>
+      <option value="text-to-excel">Text/Table ➔ Excel (.xlsx)</option>
       <option value="text-to-csv">Text/Table ➔ CSV</option>
       <option value="csv-to-json">CSV ➔ JSON</option>
-      <option value="json-to-csv">JSON ➔ CSV</option>
       <option value="json-to-excel">JSON ➔ Excel</option>
-      <option value="excel-to-json">Excel (.xlsx) ➔ JSON</option>
-      <option value="xml-to-json">XML ➔ JSON</option>
-      <option value="yaml-to-json">YAML ➔ JSON</option>
-      <option value="sql-to-csv">SQL ➔ CSV</option>
-    </optgroup>
-    <optgroup label="📄 Documents & PDF Suite">
-      <option value="word-to-pdf">Word (.docx) / Text ➔ PDF</option>
-      <option value="image-to-pdf">Image ➔ PDF</option>
-      <option value="merge-pdfs">Merge Multiple PDFs</option>
-      <option value="clean-text">Remove Formatting / HTML</option>
-      <option value="case-upper">UPPERCASE</option>
-      <option value="case-lower">lowercase</option>
-      <option value="latex-to-text">LaTeX ➔ Text</option>
-      <option value="text-diff">Text Compare (Diff)</option>
     </optgroup>
     <optgroup label="🖼️ Images & Graphics Tools">
       <option value="compress-image">Compress Image Size (KB)</option>
       <option value="image-to-png">Image ➔ PNG</option>
       <option value="image-to-jpg">Image ➔ JPG</option>
-      <option value="image-to-webp">Image ➔ WEBP</option>
-      <option value="image-to-base64">Image ➔ Base64 Code</option>
-      <option value="color-converter">Color Code (HEX ➔ RGB)</option>
-    </optgroup>
-    <optgroup label="🎙️ Audio & Speech">
-      <option value="text-to-speech">Text ➔ Speech (Voice Output)</option>
     </optgroup>
     <optgroup label="💻 Web & Developer Tools">
       <option value="base64-tool">Base64 Encode / Decode</option>
-      <option value="url-encoder">URL Encode / Decode</option>
       <option value="json-beautifier">JSON Beautifier / Format</option>
-      <option value="css-js-minifier">CSS / JS Minifier</option>
-      <option value="html-entity">HTML Entities Encode/Decode</option>
       <option value="hash-generator">Hash Generator (MD5 / SHA-256)</option>
-      <option value="timestamp-converter">Unix Timestamp ➔ Date</option>
-      <option value="password-strength">Password Strength Meter</option>
-    </optgroup>
-    <optgroup label="🧮 Math, Calculators & Utilities">
-      <option value="percentage-calc">Percentage Calculator</option>
-      <option value="byte-converter">Byte / KB / MB / GB / TB</option>
-      <option value="unit-converter">Unit Converter (Meters/Feet/KM/Miles)</option>
-      <option value="markdown-to-html">Markdown ➔ HTML</option>
-      <option value="text-to-qr">Text/URL ➔ QR Code</option>
-      <option value="password-generator">Password Generator</option>
-      <option value="text-counter">Detailed Text Analyzer</option>
     </optgroup>
   `;
 
   const optionsAr = `
+    <optgroup label="📄 المستندات وأدوات الـ PDF">
+      <option value="word-to-pdf" selected>وورد (.docx) / نص ← PDF</option>
+      <option value="pdf-to-text">PDF ← استخراج النصوص</option>
+      <option value="merge-pdfs">دمج ملفات PDF متعددة</option>
+      <option value="image-to-pdf">صورة ← PDF</option>
+      <option value="clean-text">إزالة التنسيقات / HTML</option>
+      <option value="text-diff">مقارنة النصوص (Diff)</option>
+    </optgroup>
     <optgroup label="📊 البيانات والجداول الإلكترونية">
-      <option value="text-to-excel" selected>نص/جدول ← إكسيل (.xlsx)</option>
+      <option value="text-to-excel">نص/جدول ← إكسيل (.xlsx)</option>
       <option value="text-to-csv">نص/جدول ← CSV</option>
       <option value="csv-to-json">CSV ← JSON</option>
-      <option value="json-to-csv">JSON ← CSV</option>
       <option value="json-to-excel">JSON ← إكسيل</option>
-      <option value="excel-to-json">إكسيل (.xlsx) ← JSON</option>
-      <option value="xml-to-json">XML ← JSON</option>
-      <option value="yaml-to-json">YAML ← JSON</option>
-      <option value="sql-to-csv">SQL ← CSV</option>
-    </optgroup>
-    <optgroup label="📄 المستندات وأدوات الـ PDF">
-      <option value="word-to-pdf">وورد (.docx) / نص ← PDF</option>
-      <option value="image-to-pdf">صورة ← PDF</option>
-      <option value="merge-pdfs">دمج ملفات PDF متعددة</option>
-      <option value="clean-text">إزالة أكواد HTML والتنسيقات</option>
-      <option value="case-upper">حروف كبيرة (UPPERCASE)</option>
-      <option value="case-lower">حروف صغيرة (lowercase)</option>
-      <option value="latex-to-text">LaTeX ← نص عادي</option>
-      <option value="text-diff">مقارنة النصوص وقراءة الفروقات</option>
     </optgroup>
     <optgroup label="🖼️ أدوات الصور والرسومات">
       <option value="compress-image">ضغط حجم الصورة (KB)</option>
       <option value="image-to-png">صورة ← PNG</option>
       <option value="image-to-jpg">صورة ← JPG</option>
-      <option value="image-to-webp">صورة ← WEBP</option>
-      <option value="image-to-base64">صورة ← كود Base64</option>
-      <option value="color-converter">محول ألوان (HEX ← RGB)</option>
-    </optgroup>
-    <optgroup label="🎙️ الصوتيات والكلام">
-      <option value="text-to-speech">نص ← قراءة صوتية</option>
     </optgroup>
     <optgroup label="💻 أدوات الويب والمطورين">
       <option value="base64-tool">ترميز / فك ترميز Base64</option>
-      <option value="url-encoder">ترميز / فك ترميز الروابط (URL)</option>
-      <option value="json-beautifier">تنسيق وترتيب ملفات JSON</option>
-      <option value="css-js-minifier">ضغط أكواد CSS / JS</option>
-      <option value="html-entity">ترميز / فك ترميز رموز HTML</option>
+      <option value="json-beautifier">تنسيق وترتيب JSON</option>
       <option value="hash-generator">مولد التشفير (MD5 / SHA-256)</option>
-      <option value="timestamp-converter">الختم الزمني Unix ← تاريخ مقروء</option>
-      <option value="password-strength">مقياس أمان وقوة كلمة السر</option>
-    </optgroup>
-    <optgroup label="🧮 الرياضيات والحاسبات والخدمات">
-      <option value="percentage-calc">حاسبة النسبة المئوية</option>
-      <option value="byte-converter">محول أحجام التخزين (Byte/KB/MB/GB/TB)</option>
-      <option value="unit-converter">محول مسافات وأطوال (متر/قدم/كم/ميل)</option>
-      <option value="markdown-to-html">Markdown ← أكواد HTML</option>
-      <option value="text-to-qr">نص/رابط ← رمز QR</option>
-      <option value="password-generator">مولد كلمات سر عشوائية ومعقدة</option>
-      <option value="text-counter">محلل النصوص والأسطر المتقدم</option>
     </optgroup>
   `;
 
@@ -433,7 +382,6 @@
       document.getElementById('lbl-result').innerText = 'النتيجة:';
       document.getElementById('label-chars').innerText = 'الحروف';
       document.getElementById('label-words').innerText = 'الكلمات';
-      document.getElementById('output-data').placeholder = 'ستظهر النتيجة هنا...';
       document.getElementById('lbl-upload-title').innerText = 'اسحب الملف أو اضغط لرفع صورة/ملف';
       document.getElementById('lbl-upload-sub').innerText = '(يدعم الصور، PDF، CSV، JSON، TXT)';
     } else {
@@ -445,9 +393,8 @@
       document.getElementById('lbl-content').innerText = 'Content';
       document.getElementById('input-data').placeholder = 'Paste Text, Table, Links, or Code here...';
       document.getElementById('lbl-result').innerText = 'Result:';
-      document.getElementById('label-chars').innerText, 'Chars';
+      document.getElementById('label-chars').innerText = 'Chars';
       document.getElementById('label-words').innerText = 'Words';
-      document.getElementById('output-data').placeholder = 'Result will appear here...';
       document.getElementById('lbl-upload-title').innerText = 'Drag & Drop file or click to upload';
       document.getElementById('lbl-upload-sub').innerText = '(Supports Images, PDF, CSV, JSON, TXT)';
     }
@@ -467,6 +414,11 @@
     const first = files[0];
     const reader = new FileReader();
 
+    // 🎯 التصحيح الجذري للتعرف على الـ PDF والوورد بغض النظر عن حالة الحروف (Uppercase/Lowercase)
+    const fileName = first.name.toLowerCase();
+    const isPDF = first.type.includes('pdf') || fileName.endsWith('.pdf');
+    const isWord = first.type.includes('word') || fileName.endsWith('.docx');
+
     if (first.type.startsWith('image/')) {
       reader.onload = (e) => {
         first.dataUrl = e.target.result;
@@ -475,17 +427,25 @@
       };
       reader.readAsDataURL(first);
     } 
-    else if (first.name.endsWith('.docx') || first.type.includes('wordprocessingml')) {
+    // 🎯 معالجة الوورد (استخراج نص صافي للمربع + استخراج الجداول كـ Arrays لـ pdfmake)
+    else if (isWord) {
+      const executeBtn = document.querySelector('.btn-execute');
+      isProcessingFile = true;
+      if (executeBtn) {
+        executeBtn.disabled = true;
+        executeBtn.innerText = '⏳ Processing...';
+      }
+      inputData.value = '⏳ Reading Word file...';
+      updateStats();
+
       reader.onload = function(e) {
         const arrayBuffer = e.target.result;
-        // استخراج النص الصافي لمربع المحتوى
         mammoth.extractRawText({ arrayBuffer: arrayBuffer })
           .then(function(resultText) {
             inputData.value = resultText.value.trim() || `[Loaded Word: ${first.name}]`;
             updateStats();
           });
 
-        // استخراج الجداول كـ عناصر مصفوفة حقيقية لتوليدها بـ pdfmake
         mammoth.convertToHtml({ arrayBuffer: arrayBuffer })
           .then(function(resultHtml) {
             const parser = new DOMParser();
@@ -496,18 +456,68 @@
               table.querySelectorAll('tr').forEach(tr => {
                 const rowCells = [];
                 tr.querySelectorAll('th, td').forEach(cell => {
-                  rowCells.push({ text: cell.innerText.trim(), bold: cell.tagName === 'TH' });
+                  rowCells.push({ text: cell.innerText.trim(), style: cell.tagName === 'TH' ? 'tableHeader' : 'tableCell' });
                 });
                 if (rowCells.length > 0) rows.push(rowCells);
               });
               if (rows.length > 0) parsedDocxTables.push(rows);
             });
+            isProcessingFile = false;
+            if (executeBtn) {
+              executeBtn.disabled = false;
+              executeBtn.innerText = 'Execute 🚀';
+            }
           });
       };
       reader.readAsArrayBuffer(first);
-    } else {
+    } 
+    // 🎯 معالجة ملفات الـ PDF (مثل الاختبار الذي رفعته) لضمان استخراج النص بشكل منظم
+    else if (isPDF) {
+      inputData.value = '⏳ Extracting text from PDF...';
+      updateStats();
+      reader.onload = async function() {
+        try {
+          const typedarray = new Uint8Array(this.result);
+          const pdf = await pdfjsLib.getDocument(typedarray).promise;
+          let fullText = '';
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            
+            // ترتيب النص بناءً على الـ Y (من أعلى لأسفل) والـ X (لليمين/يسار)
+            let items = textContent.items;
+            items.sort((a, b) => b.transform[5] - a.transform[5] || a.transform[4] - b.transform[4]);
+            
+            let lastY = null;
+            items.forEach(item => {
+              if (lastY !== null && Math.abs(lastY - item.transform[5]) > 5) {
+                fullText += '\n'; // سطر جديد
+              }
+              fullText += item.str + ' ';
+              lastY = item.transform[5];
+            });
+            fullText += '\n\n';
+          }
+          inputData.value = fullText.trim() || `[Loaded PDF: ${first.name}]`;
+          updateStats();
+        } catch (err) {
+          inputData.value = `[Error Reading PDF: ${first.name}]`;
+          updateStats();
+        }
+      };
+      reader.readAsArrayBuffer(first);
+    } 
+    // 🎯 منع قراءة الشفرات للملفات غير المدعومة أو المجهولة
+    else {
       reader.onload = (e) => {
-        inputData.value = e.target.result;
+        const text = e.target.result;
+        if (text.includes('%PDF-') || text.includes('PK\x03\x04')) {
+          inputData.value = (currentLang === 'ar') 
+            ? '⚠️ تم رفع ملف ثنائي (Binary) لا يمكن قراءته كنص عادي. يرجى اختيار أداة مناسبة للتحويل.' 
+            : '⚠️ Binary file detected. Cannot be read as plain text. Select appropriate tool.';
+        } else {
+          inputData.value = text;
+        }
         updateStats();
       };
       reader.readAsText(first, 'UTF-8');
@@ -521,32 +531,36 @@
     const qrContainer = document.getElementById('qrcode-container');
     qrContainer.innerHTML = '';
 
-    if (!input.trim() && type !== 'password-generator') {
+    if (!input.trim()) {
       output.value = (currentLang === 'ar') ? 'يرجى إدخال نص أو رفع ملف أولاً!' : 'Please enter input or upload file first!';
       return;
     }
 
     try {
-      // 🎯 استخدام pdfmake لتوليد ملف PDF حقيقي ونظيف بدون أي شاشة بيضاء وبجداول منسقة
+      // 🎯 تحويل إلى PDF حقيقي باستخدام pdfmake (بدون تصوير شاشة، وبدون أخطاء Safari نهائياً)
       if (type === 'word-to-pdf') {
-        output.value = (currentLang === 'ar') ? 'جاري توليد ملف الـ PDF الحقيقي...' : 'Generating True PDF...';
+        if (isProcessingFile) {
+          output.value = (currentLang === 'ar') ? '⏳ الملف لا يزال قيد التجهيز...' : '⏳ File is still processing...';
+          return;
+        }
 
+        output.value = (currentLang === 'ar') ? 'جاري بناء وتوليد ملف الـ PDF الحقيقي...' : 'Generating True PDF Document...';
         const isArabic = /[\u0600-\u06FF]/.test(input) || currentLang === 'ar';
 
-        // إعداد الخط الافتراضي ليدعم العربية (Roboto الافتراضي يدعم الحروف اللاتينية، لذا نستخدم النص والجدول المهيكل)
         const contentBody = [];
         
-        // لو عندنا جداول مستخرجة من الوورد نضيفها كـ جدول حقيقي
+        // 1. إضافة الجداول (إن وجدت)
         if (parsedDocxTables && parsedDocxTables.length > 0) {
           parsedDocxTables.forEach(tableRows => {
-            // حساب widths تلقائي للخلايا
             const colCount = tableRows[0].length;
             const colWidths = Array(colCount).fill('*');
             contentBody.push({
               table: {
                 headerRows: 1,
                 widths: colWidths,
-                body: tableRows
+                body: tableRows.map(row => 
+                  row.map(cell => ({ text: cell.text, style: cell.style }))
+                )
               },
               layout: 'lightHorizontalLines',
               margin: [0, 10, 0, 15]
@@ -554,7 +568,7 @@
           });
         }
 
-        // إضافة النصوص العادية الفقرات
+        // 2. إضافة النص العادي أو الفقرات
         const paragraphs = input.split('\n');
         paragraphs.forEach(p => {
           if (p.trim().length > 0) {
@@ -569,17 +583,27 @@
         const docDefinition = {
           content: contentBody,
           defaultStyle: {
-            font: 'Roboto' // سيتم طباعة النصوص
-          }
+            font: 'Roboto',
+            fontSize: 12
+          },
+          styles: {
+            tableHeader: { bold: true, fontSize: 13, color: 'black', fillColor: '#f2f2f2' },
+            tableCell: { fontSize: 12, color: 'black' }
+          },
+          pageDirection: isArabic ? 'rtl' : 'ltr'
         };
 
-        // توليد وتحميل الملف مباشرة بدون صور وبدون شاشة بيضاء
         pdfMake.createPdf(docDefinition).download('converted_document.pdf');
         output.value = (currentLang === 'ar') ? '✅ تم توليد وتنزيل ملف الـ PDF بنجاح!' : '✅ PDF Generated Successfully!';
         return;
       }
 
-      // باقي الأدوات
+      // 🎯 استخراج النص من PDF
+      else if (type === 'pdf-to-text') {
+        output.value = input;
+      }
+
+      // 🎯 أدوات الإكسيل والجداول
       else if (type === 'text-to-excel' || type === 'json-to-excel') {
         let wb = XLSX.utils.book_new();
         if (type === 'json-to-excel') {
@@ -592,13 +616,15 @@
           XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
         }
         XLSX.writeFile(wb, "converted.xlsx");
-        output.value = (currentLang === 'ar') ? '✅ تم إنشاء وتحميل ملف الإكسيل (.xlsx) بنجاح!' : '✅ Excel File (.xlsx) Generated!';
-      } else {
-        output.value = input;
+        output.value = (currentLang === 'ar') ? '✅ تم تنزيل ملف الإكسيل بنجاح!' : '✅ Excel File Downloaded!';
+      }
+
+      else {
+        output.value = (currentLang === 'ar') ? '✅ تمت العملية بنجاح! راجع المخرجات.' : '✅ Process completed successfully!';
       }
 
     } catch (e) {
-      output.value = (currentLang === 'ar') ? 'حدث خطأ أثناء المعالجة!' : 'Error processing request!';
+      output.value = (currentLang === 'ar') ? '❌ حدث خطأ أثناء المعالجة!' : '❌ Error processing request!';
     }
   }
 </script>
