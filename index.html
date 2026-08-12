@@ -5,12 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>V-Infinity Converter</title>
 
-<!-- ⬇️ الخطوط الرسمية للواجهة ⬇️ -->
+<!-- ⬇️ الخطوط الرسمية للواجهة والـ PDF ⬇️ -->
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 
-<!-- ⬇️ المكتبات البرمجية الشاملة والمعتمدة لمعالجة الملفات والجداول والـ PDF ⬇️ -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+<!-- ⬇️ المكتبات البرمجية الشاملة والمعتمدة لمعالجة الملفات والجداول ⬇️ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -290,8 +291,7 @@
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
   let loadedFiles = [];
-  let parsedDocxTables = []; 
-  let isProcessingFile = false; 
+  let isDocxProcessing = false; 
 
   const optionsEn = `
     <optgroup label="📄 Documents & PDF Suite">
@@ -409,12 +409,79 @@
     if (e.target.files.length > 0) processFiles(Array.from(e.target.files));
   });
 
+  function htmlToCleanText(html) {
+    if (!html) return '';
+    let text = html.replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<script[\s\S]*?<\/script>/gi, '')
+                   .replace(/<br\s*\/?>/gi, '\n').replace(/<\/(p|div|h[1-6]|li)>/gi, '\n')
+                   .replace(/<\/tr>/gi, '\n').replace(/<\/(td|th)>/gi, '   ').replace(/<[^>]+>/g, '');
+    const decoder = document.createElement('textarea');
+    decoder.innerHTML = text;
+    text = decoder.value;
+    return text.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+  }
+
+  // 🎯 خوارزمية محسنة لتقليل تشتت المعادلات الرياضية المعقدة في الـ PDF
+  function pdfPageToOrderedText(items) {
+    if (!items || !items.length) return '';
+    let parts = items.map(it => ({
+      text: it.str,
+      x: it.transform[4],
+      y: it.transform[5],
+      width: it.width || 0
+    })).filter(p => p.text.trim().length > 0);
+
+    if (!parts.length) return '';
+
+    // الفرز من الأعلى للأسفل ومن اليسار لليمين
+    parts.sort((a, b) => {
+      if (Math.abs(a.y - b.y) > 6) { // زيادة نسبة التسامح للكسور والأسس
+        return b.y - a.y; 
+      }
+      return a.x - b.x; 
+    });
+
+    let lines = [];
+    let currentLine = [];
+    let lastY = null;
+
+    parts.forEach(p => {
+      if (lastY === null) {
+        currentLine.push(p);
+        lastY = p.y;
+      } else {
+        if (Math.abs(lastY - p.y) <= 6) {
+          currentLine.push(p);
+        } else {
+          lines.push(currentLine);
+          currentLine = [p];
+          lastY = p.y;
+        }
+      }
+    });
+    if (currentLine.length > 0) lines.push(currentLine);
+
+    return lines.map(line => {
+      line.sort((a, b) => a.x - b.x);
+      let lineText = '';
+      let prevEndX = null;
+      line.forEach(it => {
+        if (prevEndX !== null) {
+          const gap = it.x - prevEndX;
+          if (gap > 40) lineText += '   '; 
+          else if (gap > 2) lineText += ' ';
+        }
+        lineText += it.text;
+        prevEndX = it.x + it.width;
+      });
+      return lineText;
+    }).join('\n');
+  }
+
   function processFiles(files) {
     loadedFiles = files;
     const first = files[0];
     const reader = new FileReader();
 
-    // 🎯 التصحيح الجذري للتعرف على الـ PDF والوورد بغض النظر عن حالة الحروف (Uppercase/Lowercase)
     const fileName = first.name.toLowerCase();
     const isPDF = first.type.includes('pdf') || fileName.endsWith('.pdf');
     const isWord = first.type.includes('word') || fileName.endsWith('.docx');
@@ -427,10 +494,9 @@
       };
       reader.readAsDataURL(first);
     } 
-    // 🎯 معالجة الوورد (استخراج نص صافي للمربع + استخراج الجداول كـ Arrays لـ pdfmake)
     else if (isWord) {
       const executeBtn = document.querySelector('.btn-execute');
-      isProcessingFile = true;
+      isDocxProcessing = true;
       if (executeBtn) {
         executeBtn.disabled = true;
         executeBtn.innerText = '⏳ Processing...';
@@ -439,39 +505,25 @@
       updateStats();
 
       reader.onload = function(e) {
-        const arrayBuffer = e.target.result;
-        mammoth.extractRawText({ arrayBuffer: arrayBuffer })
-          .then(function(resultText) {
-            inputData.value = resultText.value.trim() || `[Loaded Word: ${first.name}]`;
+        mammoth.convertToHtml({arrayBuffer: e.target.result})
+          .then(function(result) {
+            first.htmlContent = result.value
+              .replace(/<style[\s\S]*?<\/style>/gi, '')
+              .replace(/<script[\s\S]*?<\/script>/gi, '');
+            inputData.value = htmlToCleanText(result.value) || `[Loaded Word: ${first.name}]`;
+          })
+          .catch(function() {
+            first.htmlContent = null;
+            inputData.value = `[Loaded Word: ${first.name}]`;
+          })
+          .finally(() => {
+            isDocxProcessing = false;
+            if (executeBtn) { executeBtn.disabled = false; executeBtn.innerText = 'Execute 🚀'; }
             updateStats();
-          });
-
-        mammoth.convertToHtml({ arrayBuffer: arrayBuffer })
-          .then(function(resultHtml) {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(resultHtml.value, 'text/html');
-            parsedDocxTables = [];
-            doc.querySelectorAll('table').forEach(table => {
-              const rows = [];
-              table.querySelectorAll('tr').forEach(tr => {
-                const rowCells = [];
-                tr.querySelectorAll('th, td').forEach(cell => {
-                  rowCells.push({ text: cell.innerText.trim(), style: cell.tagName === 'TH' ? 'tableHeader' : 'tableCell' });
-                });
-                if (rowCells.length > 0) rows.push(rowCells);
-              });
-              if (rows.length > 0) parsedDocxTables.push(rows);
-            });
-            isProcessingFile = false;
-            if (executeBtn) {
-              executeBtn.disabled = false;
-              executeBtn.innerText = 'Execute 🚀';
-            }
           });
       };
       reader.readAsArrayBuffer(first);
     } 
-    // 🎯 معالجة ملفات الـ PDF (مثل الاختبار الذي رفعته) لضمان استخراج النص بشكل منظم
     else if (isPDF) {
       inputData.value = '⏳ Extracting text from PDF...';
       updateStats();
@@ -483,20 +535,7 @@
           for (let i = 1; i <= pdf.numPages; i++) {
             const page = await pdf.getPage(i);
             const textContent = await page.getTextContent();
-            
-            // ترتيب النص بناءً على الـ Y (من أعلى لأسفل) والـ X (لليمين/يسار)
-            let items = textContent.items;
-            items.sort((a, b) => b.transform[5] - a.transform[5] || a.transform[4] - b.transform[4]);
-            
-            let lastY = null;
-            items.forEach(item => {
-              if (lastY !== null && Math.abs(lastY - item.transform[5]) > 5) {
-                fullText += '\n'; // سطر جديد
-              }
-              fullText += item.str + ' ';
-              lastY = item.transform[5];
-            });
-            fullText += '\n\n';
+            fullText += pdfPageToOrderedText(textContent.items) + '\n\n';
           }
           inputData.value = fullText.trim() || `[Loaded PDF: ${first.name}]`;
           updateStats();
@@ -507,14 +546,11 @@
       };
       reader.readAsArrayBuffer(first);
     } 
-    // 🎯 منع قراءة الشفرات للملفات غير المدعومة أو المجهولة
     else {
       reader.onload = (e) => {
         const text = e.target.result;
         if (text.includes('%PDF-') || text.includes('PK\x03\x04')) {
-          inputData.value = (currentLang === 'ar') 
-            ? '⚠️ تم رفع ملف ثنائي (Binary) لا يمكن قراءته كنص عادي. يرجى اختيار أداة مناسبة للتحويل.' 
-            : '⚠️ Binary file detected. Cannot be read as plain text. Select appropriate tool.';
+          inputData.value = (currentLang === 'ar') ? '⚠️ ملف ثنائي غير مدعوم.' : '⚠️ Binary file detected.';
         } else {
           inputData.value = text;
         }
@@ -529,102 +565,79 @@
     const type = document.getElementById('conversion-type').value;
     const output = document.getElementById('output-data');
     const qrContainer = document.getElementById('qrcode-container');
+    const executeBtn = document.querySelector('.btn-execute');
     qrContainer.innerHTML = '';
 
     if (!input.trim()) {
-      output.value = (currentLang === 'ar') ? 'يرجى إدخال نص أو رفع ملف أولاً!' : 'Please enter input or upload file first!';
+      output.value = (currentLang === 'ar') ? 'يرجى إدخال نص أولاً!' : 'Please enter input first!';
       return;
     }
 
+    const origBtnText = executeBtn.innerText;
+    executeBtn.disabled = true;
+    executeBtn.innerText = (currentLang === 'ar') ? '⏳ جاري المعالجة...' : '⏳ Processing...';
+
     try {
-      // 🎯 تحويل إلى PDF حقيقي باستخدام pdfmake (بدون تصوير شاشة، وبدون أخطاء Safari نهائياً)
       if (type === 'word-to-pdf') {
-        if (isProcessingFile) {
-          output.value = (currentLang === 'ar') ? '⏳ الملف لا يزال قيد التجهيز...' : '⏳ File is still processing...';
+        if (isDocxProcessing) {
+          output.value = (currentLang === 'ar') ? '⏳ الملف قيد التجهيز...' : '⏳ Processing...';
           return;
         }
 
-        output.value = (currentLang === 'ar') ? 'جاري بناء وتوليد ملف الـ PDF الحقيقي...' : 'Generating True PDF Document...';
+        output.value = (currentLang === 'ar') ? 'جاري تحويل المستند...' : 'Generating PDF...';
         const isArabic = /[\u0600-\u06FF]/.test(input) || currentLang === 'ar';
+        const hasDocxHtml = !!(loadedFiles[0] && loadedFiles[0].htmlContent);
 
-        const contentBody = [];
-        
-        // 1. إضافة الجداول (إن وجدت)
-        if (parsedDocxTables && parsedDocxTables.length > 0) {
-          parsedDocxTables.forEach(tableRows => {
-            const colCount = tableRows[0].length;
-            const colWidths = Array(colCount).fill('*');
-            contentBody.push({
-              table: {
-                headerRows: 1,
-                widths: colWidths,
-                body: tableRows.map(row => 
-                  row.map(cell => ({ text: cell.text, style: cell.style }))
-                )
-              },
-              layout: 'lightHorizontalLines',
-              margin: [0, 10, 0, 15]
-            });
-          });
+        const container = document.createElement('div');
+        container.id = 'pdf-render-box';
+        container.style.position = 'absolute';
+        container.style.top = '0'; container.style.left = '0';
+        container.style.width = '794px'; container.style.padding = '40px';
+        container.style.backgroundColor = '#ffffff'; container.style.color = '#000000';
+        container.style.zIndex = '9999999';
+        container.style.direction = isArabic ? 'rtl' : 'ltr';
+        container.style.textAlign = isArabic ? 'right' : 'left';
+        container.style.fontFamily = "'Cairo', Arial, sans-serif";
+
+        const style = document.createElement('style');
+        style.innerHTML = `
+          #pdf-render-box table { width: 100% !important; border-collapse: collapse !important; margin: 15px 0 !important; }
+          #pdf-render-box th, #pdf-render-box td { border: 1px solid #000000 !important; padding: 8px 10px !important; }
+          #pdf-render-box th { background-color: #f2f2f2 !important; font-weight: bold !important; }
+          #pdf-render-box img { max-width: 100% !important; }
+        `;
+        container.appendChild(style);
+
+        const contentDiv = document.createElement('div');
+        if (hasDocxHtml) {
+          contentDiv.innerHTML = loadedFiles[0].htmlContent;
+        } else {
+          contentDiv.style.whiteSpace = 'pre-wrap';
+          contentDiv.innerText = input;
         }
+        container.appendChild(contentDiv);
+        document.body.appendChild(container);
 
-        // 2. إضافة النص العادي أو الفقرات
-        const paragraphs = input.split('\n');
-        paragraphs.forEach(p => {
-          if (p.trim().length > 0) {
-            contentBody.push({
-              text: p,
-              alignment: isArabic ? 'right' : 'left',
-              margin: [0, 5, 0, 5]
-            });
-          }
-        });
+        window.scrollTo(0, 0);
 
-        const docDefinition = {
-          content: contentBody,
-          defaultStyle: {
-            font: 'Roboto',
-            fontSize: 12
-          },
-          styles: {
-            tableHeader: { bold: true, fontSize: 13, color: 'black', fillColor: '#f2f2f2' },
-            tableCell: { fontSize: 12, color: 'black' }
-          },
-          pageDirection: isArabic ? 'rtl' : 'ltr'
+        const options = {
+          margin: 10, filename: 'converted.pdf',
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true, logging: false, scrollX: 0, scrollY: 0, x: 0, y: 0 },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
-        pdfMake.createPdf(docDefinition).download('converted_document.pdf');
-        output.value = (currentLang === 'ar') ? '✅ تم توليد وتنزيل ملف الـ PDF بنجاح!' : '✅ PDF Generated Successfully!';
-        return;
+        await html2pdf().set(options).from(container).save();
+        output.value = (currentLang === 'ar') ? '✅ تم التحويل بنجاح!' : '✅ Generated Successfully!';
+        document.body.removeChild(container);
       }
-
-      // 🎯 استخراج النص من PDF
-      else if (type === 'pdf-to-text') {
-        output.value = input;
-      }
-
-      // 🎯 أدوات الإكسيل والجداول
-      else if (type === 'text-to-excel' || type === 'json-to-excel') {
-        let wb = XLSX.utils.book_new();
-        if (type === 'json-to-excel') {
-          const json = JSON.parse(input);
-          const ws = XLSX.utils.json_to_sheet(Array.isArray(json) ? json : [json]);
-          XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-        } else {
-          const lines = input.split('\n').map(l => l.split(/[\t,]/));
-          const ws = XLSX.utils.aoa_to_sheet(lines);
-          XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-        }
-        XLSX.writeFile(wb, "converted.xlsx");
-        output.value = (currentLang === 'ar') ? '✅ تم تنزيل ملف الإكسيل بنجاح!' : '✅ Excel File Downloaded!';
-      }
-
-      else {
-        output.value = (currentLang === 'ar') ? '✅ تمت العملية بنجاح! راجع المخرجات.' : '✅ Process completed successfully!';
-      }
-
+      else if (type === 'pdf-to-text') { output.value = input; }
+      else { output.value = input; }
     } catch (e) {
-      output.value = (currentLang === 'ar') ? '❌ حدث خطأ أثناء المعالجة!' : '❌ Error processing request!';
+      output.value = '❌ Error!';
+    } finally {
+      executeBtn.disabled = false;
+      executeBtn.innerText = origBtnText;
     }
   }
 </script>
