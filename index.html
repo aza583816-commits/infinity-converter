@@ -246,7 +246,7 @@
 <div class="container" id="main-container">
   <div class="header">
     <div class="logo">V-Infinity Converter</div>
-    <div class="subtitle" id="sub-title">الأداة الشاملة للمعلمين والطلاب: تحويل فوري للملفات والبيانات.</div>
+    <div class="subtitle" id="sub-title">الأداة الشاملة للمعلمين والطلاب، بسرعة فائقة وبدون تعقيد.</div>
   </div>
 
   <div class="form-group">
@@ -255,14 +255,14 @@
   </div>
 
   <div class="upload-box" id="dropZone" onclick="document.getElementById('fileInput').click()">
-    <input type="file" id="fileInput" hidden multiple accept="image/*,.json,.csv,.txt,.pdf,.xlsx,.doc,.docx,.xml,.yaml" />
+    <input type="file" id="fileInput" hidden multiple accept="image/*,.json,.csv,.txt,.pdf,.xlsx,.docx,.doc,.xml,.yaml" />
     <div class="upload-icon">📂</div>
     <div class="upload-title" id="lbl-upload-title">اسحب الملف أو اضغط للرفع الفوري</div>
-    <div class="upload-sub" id="lbl-upload-sub">(يدعم Word / Docx، PDF، CSV، Excel، والملفات النصية)</div>
+    <div class="upload-sub" id="lbl-upload-sub">(يدعم Word، docx، PDF، CSV، والملفات النصية)</div>
   </div>
 
   <div class="form-group">
-    <label id="lbl-content">المحتوى / النص</label>
+    <label id="lbl-content">المحتوى</label>
     <textarea id="input-data" rows="4" placeholder="الصق النص، الجدول، أو المحتوى هنا..." oninput="updateStats()"></textarea>
     
     <div class="stats-bar">
@@ -280,7 +280,7 @@
   </div>
 
   <footer>
-    <p id="ft-text">أداة V-Infinity Converter تخدم المعلمين والطلاب لتحويل الملفات والجداول فورياً داخل المتصفح بكل أمان.</p>
+    <p id="ft-text">أداة V-Infinity Converter توفر مجموعة احترافية وشاملة لتحويل المستندات والملفات التعليمية فورياً داخل متصفحك بكل أمان.</p>
     <div class="footer-links">
       <a href="#" onclick="alert('سياسة الخصوصية و AdSense:\nنستخدم الكوكيز ومزودي الإعلانات مثل Google لعرض إعلانات مخصصة استناداً لزياراتك.'); return false;">الخصوصية</a> | 
       <a href="#" onclick="alert('شروط الاستخدام:\nباستخدامك للأداة توافق على الاستخدام العادل للخدمة.'); return false;">الشروط</a> | 
@@ -297,46 +297,64 @@
   let isDocxProcessing = false; 
 
   const optionsAr = `
-    <optgroup label="👩‍🏫 أدوات المعلمين والملفات (Word / Docx / PDF)">
-      <option value="word-to-pdf" selected>Word / Docx ← تحويل إلى PDF</option>
-      <option value="pdf-to-word">PDF ← استخراج نص إلى Word / Docx</option>
-      <option value="pdf-to-text">PDF ← استخراج النصوص العادية</option>
+    <optgroup label="👩‍🏫 أدوات المعلمين والطلاب الخاصة (Word & PDF & CSV)">
+      <option value="doc-to-pdf" selected>Word (.doc) ➔ PDF</option>
+      <option value="pdf-to-doc">PDF ➔ Word (.doc)</option>
+      <option value="docx-to-pdf">Word (.docx) ➔ PDF</option>
+      <option value="pdf-to-docx">PDF ➔ Word (.docx)</option>
+      <option value="csv-to-pdf">CSV ➔ PDF</option>
+      <option value="pdf-to-csv">PDF ➔ CSV</option>
+      <option value="word-to-csv">Word ➔ CSV</option>
+      <option value="csv-to-word">CSV ➔ Word</option>
+      <option value="doc-to-docx">Word (.doc) ➔ Word (.docx)</option>
+      <option value="docx-to-doc">Word (.docx) ➔ Word (.doc)</option>
     </optgroup>
-    <optgroup label="📊 الجداول والبيانات (CSV / Excel / Word)">
-      <option value="csv-to-pdf">CSV ← تحويل إلى PDF</option>
-      <option value="pdf-to-csv">PDF ← استخراج إلى CSV</option>
-      <option value="word-to-csv">Word / Docx ← تحويل إلى CSV</option>
-      <option value="csv-to-word">CSV ← تحويل إلى Word / Docx</option>
-      <option value="text-to-excel">نص / جدول ← إكسيل (.xlsx)</option>
-      <option value="csv-to-json">CSV ← تحويل إلى JSON</option>
-      <option value="json-to-csv">JSON ← تحويل إلى CSV</option>
+    <optgroup label="📄 المستندات العامة والـ PDF">
+      <option value="pdf-to-text">PDF ➔ استخراج النصوص</option>
+      <option value="merge-pdfs">دمج ملفات PDF متعددة</option>
+      <option value="image-to-pdf">صورة ➔ PDF</option>
+      <option value="clean-text">إزالة التنسيقات / HTML</option>
     </optgroup>
-    <optgroup label="🖼️ أدوات إضافية وصور">
-      <option value="compress-image">ضغط حجم الصورة (KB)</option>
-      <option value="image-to-pdf">صورة ← PDF</option>
-      <option value="text-to-qr">توليد باركود QR Code للروابط</option>
+    <optgroup label="📊 البيانات والجداول الإلكترونية">
+      <option value="text-to-excel">نص/جدول ➔ إكسيل (.xlsx)</option>
+      <option value="text-to-csv">نص/جدول ➔ CSV</option>
+      <option value="csv-to-json">CSV ➔ JSON</option>
+    </optgroup>
+    <optgroup label="💻 أدوات إضافية للمطورين والتقنيين">
+      <option value="base64-tool">ترميز / فك ترميز Base64</option>
+      <option value="json-beautifier">تنسيق وترتيب JSON</option>
+      <option value="hash-generator">مولد التشفير (MD5 / SHA-256)</option>
     </optgroup>
   `;
 
   const optionsEn = `
-    <optgroup label="👩‍🏫 Teachers Suite (Word / Docx / PDF)">
-      <option value="word-to-pdf" selected>Word / Docx ➔ PDF</option>
-      <option value="pdf-to-word">PDF ➔ Extract to Word / Docx</option>
-      <option value="pdf-to-text">PDF ➔ Extract Text</option>
-    </optgroup>
-    <optgroup label="📊 Tables & Data (CSV / Excel / Word)">
+    <optgroup label="👩‍🏫 Teachers & Students Suite (Word, PDF, CSV)">
+      <option value="doc-to-pdf" selected>Word (.doc) ➔ PDF</option>
+      <option value="pdf-to-doc">PDF ➔ Word (.doc)</option>
+      <option value="docx-to-pdf">Word (.docx) ➔ PDF</option>
+      <option value="pdf-to-docx">PDF ➔ Word (.docx)</option>
       <option value="csv-to-pdf">CSV ➔ PDF</option>
       <option value="pdf-to-csv">PDF ➔ CSV</option>
-      <option value="word-to-csv">Word / Docx ➔ CSV</option>
-      <option value="csv-to-word">CSV ➔ Word / Docx</option>
-      <option value="text-to-excel">Text / Table ➔ Excel (.xlsx)</option>
-      <option value="csv-to-json">CSV ➔ JSON</option>
-      <option value="json-to-csv">JSON ➔ CSV</option>
+      <option value="word-to-csv">Word ➔ CSV</option>
+      <option value="csv-to-word">CSV ➔ Word</option>
+      <option value="doc-to-docx">Word (.doc) ➔ Word (.docx)</option>
+      <option value="docx-to-doc">Word (.docx) ➔ Word (.doc)</option>
     </optgroup>
-    <optgroup label="🖼️ Utilities & Images">
-      <option value="compress-image">Compress Image (KB)</option>
+    <optgroup label="📄 General Documents & PDF">
+      <option value="pdf-to-text">PDF ➔ Extract Text</option>
+      <option value="merge-pdfs">Merge Multiple PDFs</option>
       <option value="image-to-pdf">Image ➔ PDF</option>
-      <option value="text-to-qr">Generate QR Code</option>
+      <option value="clean-text">Remove Formatting / HTML</option>
+    </optgroup>
+    <optgroup label="📊 Data & Spreadsheets">
+      <option value="text-to-excel">Text/Table ➔ Excel (.xlsx)</option>
+      <option value="text-to-csv">Text/Table ➔ CSV</option>
+      <option value="csv-to-json">CSV ➔ JSON</option>
+    </optgroup>
+    <optgroup label="💻 Developer Tools">
+      <option value="base64-tool">Base64 Encode / Decode</option>
+      <option value="json-beautifier">JSON Beautifier / Format</option>
+      <option value="hash-generator">Hash Generator (MD5 / SHA-256)</option>
     </optgroup>
   `;
 
@@ -368,28 +386,28 @@
       document.dir = 'ltr';
       langBtn.innerText = '🌐 العربية';
       selectElem.innerHTML = optionsEn;
-      document.getElementById('sub-title').innerText = 'All-in-One Converter for Teachers & Students';
+      document.getElementById('sub-title').innerText = 'The Infinite SaaS Conversion Suite for Teachers & Students';
       document.getElementById('lbl-tool').innerText = 'What to do today?';
-      document.getElementById('lbl-content').innerText = 'Content / Text';
-      document.getElementById('input-data').placeholder = 'Paste text, table, or content here...';
+      document.getElementById('lbl-content').innerText = 'Content';
+      document.getElementById('input-data').placeholder = 'Paste Text, Table, or Content here...';
       document.getElementById('lbl-result').innerText = 'Result:';
       document.getElementById('label-chars').innerText = 'Chars';
       document.getElementById('label-words').innerText = 'Words';
       document.getElementById('lbl-upload-title').innerText = 'Drag & Drop file or click to upload';
-      document.getElementById('lbl-upload-sub').innerText = '(Supports Word/Docx, PDF, CSV, Excel, TXT)';
+      document.getElementById('lbl-upload-sub').innerText = '(Supports Word, docx, PDF, CSV, TXT)';
     } else {
       document.dir = 'rtl';
       langBtn.innerText = '🌐 English';
       selectElem.innerHTML = optionsAr;
-      document.getElementById('sub-title').innerText = 'الأداة الشاملة للمعلمين والطلاب: تحويل فوري للملفات والبيانات.';
+      document.getElementById('sub-title').innerText = 'الأداة الشاملة للمعلمين والطلاب، بسرعة فائقة وبدون تعقيد.';
       document.getElementById('lbl-tool').innerText = 'ماذا تريد أن تفعل اليوم؟';
-      document.getElementById('lbl-content').innerText = 'المحتوى / النص';
+      document.getElementById('lbl-content').innerText = 'المحتوى';
       document.getElementById('input-data').placeholder = 'الصق النص، الجدول، أو المحتوى هنا...';
       document.getElementById('lbl-result').innerText = 'النتيجة:';
       document.getElementById('label-chars').innerText = 'الحروف';
       document.getElementById('label-words').innerText = 'الكلمات';
       document.getElementById('lbl-upload-title').innerText = 'اسحب الملف أو اضغط للرفع الفوري';
-      document.getElementById('lbl-upload-sub').innerText = '(يدعم Word / Docx، PDF، CSV، Excel، والملفات النصية)';
+      document.getElementById('lbl-upload-sub').innerText = '(يدعم Word، docx، PDF، CSV، والملفات النصية)';
     }
     if (selectedVal) selectElem.value = selectedVal;
   }
@@ -409,6 +427,7 @@
     })).filter(p => p.text.trim().length > 0);
 
     if (!parts.length) return '';
+
     parts.sort((a, b) => {
       if (Math.abs(a.y - b.y) > 7) { return b.y - a.y; }
       return a.x - b.x; 
@@ -454,28 +473,19 @@
     const fileName = first.name.toLowerCase();
     const isPDF = first.type.includes('pdf') || fileName.endsWith('.pdf');
     const isWord = first.type.includes('word') || fileName.endsWith('.docx') || fileName.endsWith('.doc');
-    const isCSV = fileName.endsWith('.csv');
 
-    if (first.type.startsWith('image/')) {
-      reader.onload = (e) => {
-        first.dataUrl = e.target.result;
-        inputData.value = `[تم تحميل الصورة: ${first.name}]`;
-        updateStats();
-      };
-      reader.readAsDataURL(first);
-    } 
-    else if (isWord) {
+    if (isWord) {
       const executeBtn = document.querySelector('.btn-execute');
       isDocxProcessing = true;
       if (executeBtn) { executeBtn.disabled = true; executeBtn.innerText = '⏳ جاري القراءة...'; }
-      inputData.value = '⏳ جاري قراءة ملف الوورد (Word/Docx)...';
+      inputData.value = '⏳ جاري قراءة مستند الوورد...';
       updateStats();
 
       reader.onload = function(e) {
         const arrayBuffer = e.target.result;
         mammoth.extractRawText({ arrayBuffer: arrayBuffer })
           .then(function(resultText) {
-            inputData.value = resultText.value.trim() || `[ملف وورد: ${first.name}]`;
+            inputData.value = resultText.value.trim() || `[مستند وورد: ${first.name}]`;
             updateStats();
           });
 
@@ -491,7 +501,7 @@
       reader.readAsArrayBuffer(first);
     } 
     else if (isPDF) {
-      inputData.value = '⏳ جاري استخراج النص من الـ PDF...';
+      inputData.value = '⏳ جاري قراءة ملف الـ PDF...';
       updateStats();
       reader.onload = async function() {
         try {
@@ -539,28 +549,31 @@
     executeBtn.innerText = currentLang === 'ar' ? '⏳ جاري المعالجة...' : '⏳ Processing...';
 
     try {
-      // 1. Word / Docx إلى PDF
-      if (type === 'word-to-pdf') {
+      if (type === 'doc-to-pdf' || type === 'docx-to-pdf' || type === 'csv-to-pdf') {
         if (isDocxProcessing) {
           output.value = currentLang === 'ar' ? '⏳ الملف قيد التجهيز...' : '⏳ Processing...';
           return;
         }
-        output.value = currentLang === 'ar' ? 'جاري تحويل المستند وتجهيز الـ PDF...' : 'Generating PDF...';
+
+        output.value = currentLang === 'ar' ? 'جاري تحويل المستند إلى PDF...' : 'Generating PDF...';
         const isArabic = /[\u0600-\u06FF]/.test(input) || currentLang === 'ar';
-        const hasDocxHtml = !!(loadedFiles[0] && loadedFiles[0].htmlContent);
+        const hasHtml = !!(loadedFiles[0] && loadedFiles[0].htmlContent);
 
         const pdfBox = document.createElement('div');
         pdfBox.style.cssText = `
-          background-color: #ffffff; color: #000000; padding: 30px; margin-top: 20px;
-          border-radius: 8px; direction: ${isArabic ? 'rtl' : 'ltr'}; text-align: ${isArabic ? 'right' : 'left'};
-          font-family: 'Cairo', Arial, sans-serif; width: 100%;
+          background-color: #ffffff;
+          color: #000000;
+          padding: 30px;
+          margin-top: 20px;
+          border-radius: 8px;
+          direction: ${isArabic ? 'rtl' : 'ltr'};
+          text-align: ${isArabic ? 'right' : 'left'};
+          font-family: 'Cairo', Arial, sans-serif;
+          width: 100%;
         `;
 
-        if (hasDocxHtml) {
+        if (hasHtml) {
           pdfBox.innerHTML = loadedFiles[0].htmlContent;
-          pdfBox.querySelectorAll('table').forEach(t => { t.style.width = '100%'; t.style.borderCollapse = 'collapse'; t.style.marginBottom = '15px'; });
-          pdfBox.querySelectorAll('th, td').forEach(c => { c.style.border = '1px solid #000'; c.style.padding = '8px'; c.style.color = '#000'; });
-          pdfBox.querySelectorAll('th').forEach(c => { c.style.backgroundColor = '#f2f2f2'; c.style.fontWeight = 'bold'; });
         } else {
           pdfBox.style.whiteSpace = 'pre-wrap';
           pdfBox.innerText = input;
@@ -569,99 +582,61 @@
         document.getElementById('main-container').appendChild(pdfBox);
         await new Promise(r => setTimeout(r, 400));
 
-        await html2pdf().set({ margin: 10, filename: 'converted_document.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true } }).from(pdfBox).save();
-        output.value = currentLang === 'ar' ? '✅ تم إنشاء وتحميل ملف الـ PDF بنجاح!' : '✅ PDF Generated Successfully!';
-        if (pdfBox.parentNode) pdfBox.parentNode.removeChild(pdfBox);
-      }
+        const options = {
+          margin: 10, 
+          filename: 'converted_document.pdf',
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true, logging: false },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
 
-      // 2. PDF إلى Word / Docx (استخراج النص وتحميله بصيغة وورد)
-      else if (type === 'pdf-to-word') {
-        const blob = new Blob(["\uFEFF" + input], { type: 'application/msword;charset=utf-8;' });
-        const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = 'extracted_document.docx'; link.click();
-        output.value = currentLang === 'ar' ? '✅ تم استخراج النصوص وتحميلها كملف Word (Docx) بنجاح!' : '✅ Extracted to Word (.docx) successfully!';
+        try {
+          await html2pdf().set(options).from(pdfBox).save();
+          output.value = currentLang === 'ar' ? '✅ تم تحميل ملف الـ PDF بنجاح!' : '✅ PDF Generated Successfully!';
+        } catch(err) {
+          output.value = '❌ Error generating PDF.';
+        } finally {
+          if (pdfBox.parentNode) pdfBox.parentNode.removeChild(pdfBox);
+        }
       }
-
-      // 3. CSV إلى PDF
-      else if (type === 'csv-to-pdf') {
-        const pdfBox = document.createElement('div');
-        pdfBox.style.cssText = `background-color: #fff; color: #000; padding: 20px; font-family: monospace; white-space: pre-wrap;`;
-        pdfBox.innerText = input;
-        document.getElementById('main-container').appendChild(pdfBox);
-        await html2pdf().set({ margin: 10, filename: 'table_converted.pdf' }).from(pdfBox).save();
-        output.value = currentLang === 'ar' ? '✅ تم تحويل جدول CSV إلى PDF بنجاح!' : '✅ CSV Converted to PDF!';
-        if (pdfBox.parentNode) pdfBox.parentNode.removeChild(pdfBox);
+      else if (type === 'pdf-to-doc' || type === 'pdf-to-docx') {
+        const blob = new Blob(["\ufeff" + input], { type: 'application/msword;charset=utf-8;' });
+        const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = type === 'pdf-to-doc' ? 'converted.doc' : 'converted.docx'; link.click();
+        output.value = currentLang === 'ar' ? '✅ تم استخراج وحفظ ملف الوورد بنجاح!' : '✅ Word file generated!';
       }
-
-      // 4. PDF إلى CSV (تحويل النصوص لصفوف وفواصل)
-      else if (type === 'pdf-to-csv') {
-        const csvContent = input.split('\n').map(line => `"${line.replace(/"/g, '""')}"`).join('\n');
-        const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = 'converted_from_pdf.csv'; link.click();
-        output.value = currentLang === 'ar' ? '✅ تم استخراج البيانات وتحويلها إلى CSV!' : '✅ Extracted to CSV!';
+      else if (type === 'pdf-to-csv' || type === 'word-to-csv') {
+        const blob = new Blob(["\uFEFF" + input], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = 'converted.csv'; link.click();
+        output.value = currentLang === 'ar' ? '✅ تم تحميل ملف CSV بنجاح!' : '✅ CSV Generated!';
       }
-
-      // 5. Word إلى CSV
-      else if (type === 'word-to-csv') {
-        const csvContent = input.split('\n').map(line => `"${line.replace(/"/g, '""')}"`).join('\n');
-        const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = 'word_to_csv.csv'; link.click();
-        output.value = currentLang === 'ar' ? '✅ تم تحويل محتوى الوورد إلى CSV!' : '✅ Word Converted to CSV!';
-      }
-
-      // 6. CSV إلى Word / Docx
-      else if (type === 'csv-to-word') {
-        const blob = new Blob(["\uFEFF" + input], { type: 'application/msword;charset=utf-8;' });
-        const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = 'csv_to_word.docx'; link.click();
-        output.value = currentLang === 'ar' ? '✅ تم تحويل CSV إلى ملف Word بنجاح!' : '✅ CSV Converted to Word!';
-      }
-
-      // بقية الأدوات الأساسية والجاهزة
-      else if (type === 'pdf-to-text') { output.value = input; }
-      else if (type === 'text-to-excel') {
-        let wb = XLSX.utils.book_new();
-        const lines = input.split('\n').map(l => l.split(/[\t,]/));
-        const ws = XLSX.utils.aoa_to_sheet(lines);
-        XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-        XLSX.writeFile(wb, "converted.xlsx");
-        output.value = currentLang === 'ar' ? '✅ تم تحميل ملف الإكسيل (.xlsx) بنجاح!' : '✅ Excel File (.xlsx) Generated!';
-      }
-      else if (type === 'csv-to-json') {
-        const lines = input.trim().split('\n'); const headers = lines[0].split(',');
-        const res = lines.slice(1).map(l => {
-          const data = l.split(','); return headers.reduce((acc, h, i) => { acc[h.trim()] = data[i] ? data[i].trim() : ''; return acc; }, {});
-        });
-        output.value = JSON.stringify(res, null, 2);
-      }
-      else if (type === 'json-to-csv') {
-        const arr = JSON.parse(input); const headers = Object.keys(arr[0]).join(',');
-        const rows = arr.map(obj => Object.values(obj).join(',')).join('\n');
-        output.value = headers + '\n' + rows;
-      }
-      else if (type === 'compress-image') {
-        if (loadedFiles[0]) {
-          output.value = currentLang === 'ar' ? 'جاري ضغط الصورة...' : 'Compressing image...';
-          const compressedFile = await imageCompression(loadedFiles[0], { maxSizeMB: 0.5, maxWidthOrHeight: 1280 });
-          const link = document.createElement('a'); link.href = URL.createObjectURL(compressedFile); link.download = `compressed_${loadedFiles[0].name}`; link.click();
-          output.value = `✅ تم الضغط بنجاح! الحجم الجديد: ${(compressedFile.size/1024).toFixed(1)} KB`;
+      else if (type === 'csv-to-word' || type === 'csv-to-pdf') {
+        output.value = input;
+        if (type === 'csv-to-pdf') {
+          runConversion(); // إعادة توجيه سريعة للتوليد
         } else {
-          output.value = currentLang === 'ar' ? 'يرجى رفع صورة أولاً!' : 'Please upload an image first!';
+          const blob = new Blob(["\ufeff" + input], { type: 'application/msword;charset=utf-8;' });
+          const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = 'converted.docx'; link.click();
+          output.value = currentLang === 'ar' ? '✅ تم تحويل CSV إلى وورد بنجاح!' : '✅ Converted to Word!';
         }
       }
-      else if (type === 'image-to-pdf') {
-        if (loadedFiles[0] && loadedFiles[0].dataUrl) {
-          const { jsPDF } = window.jspdf; const doc = new jsPDF(); doc.addImage(loadedFiles[0].dataUrl, 'JPEG', 10, 10, 180, 0); doc.save('converted.pdf');
-          output.value = '✅ PDF Downloaded Successfully!';
-        }
+      else if (type === 'doc-to-docx' || type === 'docx-to-doc') {
+        const ext = type === 'doc-to-docx' ? 'docx' : 'doc';
+        const blob = new Blob(["\ufeff" + input], { type: 'application/msword;charset=utf-8;' });
+        const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `converted.${ext}`; link.click();
+        output.value = currentLang === 'ar' ? `✅ تم تغيير الصيغة إلى .${ext} بنجاح!` : `✅ Converted to .${ext}!`;
       }
-      else if (type === 'text-to-qr') {
-        new QRCode(qrContainer, { text: input, width: 140, height: 140 });
-        output.value = '✅ تم توليد باركود QR Code للرابط أو النص بنجاح!';
+      else if (type === 'pdf-to-text') { output.value = input; }
+      else if (type === 'clean-text') { output.value = input.replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, ' ').trim(); }
+      else if (type === 'base64-tool') { 
+        try { output.value = btoa(unescape(encodeURIComponent(input))); } catch(e) { output.value = decodeURIComponent(escape(window.atob(input))); } 
       }
+      else if (type === 'json-beautifier') { output.value = JSON.stringify(JSON.parse(input), null, 4); }
+      else if (type === 'hash-generator') { output.value = `MD5: ${CryptoJS.MD5(input)}\nSHA-256: ${CryptoJS.SHA256(input)}`; }
       else {
         output.value = input;
       }
     } catch (e) {
-      output.value = currentLang === 'ar' ? '❌ حدث خطأ أثناء المعالجة، تأكد من صحة المدخلات أو صيغة الملف.' : '❌ Processing error, check input or file format.';
+      output.value = currentLang === 'ar' ? '❌ حدث خطأ أثناء المعالجة، تأكد من صحة المدخلات.' : '❌ Processing error, check your input format.';
     } finally {
       executeBtn.disabled = false;
       executeBtn.innerText = origBtnText;
