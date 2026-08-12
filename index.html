@@ -310,6 +310,24 @@
 
   document.getElementById('conversion-type').innerHTML = optionsEn;
 
+  // === [إصلاح جديد] معالجة اتجاه النصوص المختلطة (Bidi Fix) ===
+  // يعزل كل مقطع لاتيني (PDF, Word, .docx...) داخل تسمية عربية باستخدام
+  // محارف Unicode الخاصة بالعزل الاتجاهي (Isolates) بدلاً من ترك المتصفح
+  // يعيد ترتيب المقاطع تلقائياً بشكل خاطئ. هذا لا يغيّر أي تصميم مرئي،
+  // فقط يضبط ترتيب/اتجاه قراءة النص داخل عناصر <option>.
+  function applyBidiFix(selectElem) {
+    const LRI = '\u2066'; // Left-to-Right Isolate
+    const RLI = '\u2067'; // Right-to-Left Isolate
+    const PDI = '\u2069'; // Pop Directional Isolate
+    const latinRun = /[A-Za-z0-9._\/()%\-]+/g;
+    Array.from(selectElem.querySelectorAll('option')).forEach(opt => {
+      const original = opt.getAttribute('data-original') || opt.textContent;
+      opt.setAttribute('data-original', original);
+      const wrapped = RLI + original.replace(latinRun, m => LRI + m + PDI) + PDI;
+      opt.textContent = wrapped;
+    });
+  }
+
   function updateStats() {
     const text = document.getElementById('input-data').value;
     document.getElementById('char-count').innerText = text.length;
@@ -333,6 +351,8 @@
       document.dir = 'rtl';
       langBtn.innerText = '🌐 English';
       selectElem.innerHTML = optionsAr;
+      selectElem.setAttribute('dir', 'rtl');
+      applyBidiFix(selectElem); // [إصلاح] تطبيق عزل الاتجاه على قائمة الأدوات العربية
       document.getElementById('sub-title').innerText = 'الأداة الشاملة لكل ما تحتاجه، بسرعة فائقة.';
       document.getElementById('lbl-tool').innerText = 'ماذا تريد أن تفعل اليوم؟';
       document.getElementById('lbl-content').innerText = 'المحتوى';
@@ -346,6 +366,7 @@
       document.dir = 'ltr';
       langBtn.innerText = '🌐 العربية';
       selectElem.innerHTML = optionsEn;
+      selectElem.setAttribute('dir', 'ltr');
       document.getElementById('sub-title').innerText = 'The Infinite SaaS Conversion Suite';
       document.getElementById('lbl-tool').innerText = 'What to do today?';
       document.getElementById('lbl-content').innerText = 'Content';
@@ -425,6 +446,9 @@
           .then(function(resultHtml) {
             first.htmlContent = resultHtml.value.replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<script[\s\S]*?<\/script>/gi, '');
           })
+          .catch(function(err) {
+            console.error('Mammoth HTML conversion error:', err);
+          })
           .finally(() => {
             isDocxProcessing = false;
             if (executeBtn) { executeBtn.disabled = false; executeBtn.innerText = (currentLang === 'ar') ? 'تنفيذ العملية 🚀' : 'Execute 🚀'; }
@@ -448,6 +472,7 @@
           inputData.value = fullText.trim() || `[Loaded PDF: ${first.name}]`;
           updateStats();
         } catch (err) {
+          console.error('PDF text extraction error:', err);
           inputData.value = `[Error Reading PDF: ${first.name}]`;
           updateStats();
         }
@@ -466,6 +491,27 @@
       };
       reader.readAsText(first, 'UTF-8');
     }
+  }
+
+  // === [إصلاح جديد] بناء جدول HTML حقيقي من نص CSV بدل طباعته كنص خام مبعثر ===
+  function buildTableFromCsv(csvText) {
+    const rows = csvText.trim().split('\n').map(r => r.split(','));
+    const table = document.createElement('table');
+    table.style.cssText = 'width:100%;border-collapse:collapse;margin-bottom:20px;';
+    rows.forEach((row, ri) => {
+      const tr = document.createElement('tr');
+      row.forEach(cell => {
+        const cellEl = document.createElement(ri === 0 ? 'th' : 'td');
+        cellEl.textContent = cell.trim();
+        cellEl.style.border = '1px solid #000000';
+        cellEl.style.padding = '10px';
+        cellEl.style.color = '#000000';
+        if (ri === 0) { cellEl.style.backgroundColor = '#e2e8f0'; cellEl.style.fontWeight = 'bold'; }
+        tr.appendChild(cellEl);
+      });
+      table.appendChild(tr);
+    });
+    return table;
   }
 
   async function runConversion() {
@@ -499,14 +545,24 @@
 
         const pdfBox = document.createElement('div');
         pdfBox.id = 'print-section';
+        // [إصلاح] العنصر يُبنى خارج شجرة #main-container ويُموضع خارج الشاشة
+        // بدلاً من إضافته داخل الحاوية الأصلية التي تحتوي على backdrop-filter (تأثير الزجاج).
+        // html2canvas معروف بأنه يفشل (يُخرج Canvas فارغ/أبيض) عند وجود
+        // backdrop-filter في أي عنصر أصل (parent) للعنصر الذي يتم تصويره.
         pdfBox.style.cssText = `
+          position: fixed;
+          top: 0;
+          left: -99999px;
           background-color: #ffffff;
           color: #000000;
           padding: 40px;
           direction: ${isArabic ? 'rtl' : 'ltr'};
           text-align: ${isArabic ? 'right' : 'left'};
           font-family: 'Cairo', Arial, sans-serif;
-          width: 100%;
+          width: 700px;
+          backdrop-filter: none;
+          -webkit-backdrop-filter: none;
+          filter: none;
         `;
 
         if (hasDocxHtml) {
@@ -527,19 +583,39 @@
             c.style.backgroundColor = '#e2e8f0';
             c.style.fontWeight = 'bold';
           });
+        } else if (type === 'csv-to-pdf') {
+          // [إصلاح] CSV يُبنى الآن كجدول حقيقي بدل نص خام
+          pdfBox.appendChild(buildTableFromCsv(input));
         } else {
           pdfBox.style.whiteSpace = 'pre-wrap';
           pdfBox.innerText = input;
         }
 
-        document.getElementById('main-container').appendChild(pdfBox);
-        await new Promise(r => setTimeout(r, 600)); // لضمان رسم الجدول بالمتصفح
+        document.body.appendChild(pdfBox);
+
+        // [إصلاح] انتظار تحميل الخطوط والصور فعلياً بدل الاعتماد على مؤقت ثابت فقط
+        try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch (fontErr) { /* تجاهل إن لم يكن مدعوماً */ }
+        const imgs = pdfBox.querySelectorAll('img');
+        if (imgs.length) {
+          await Promise.all(Array.from(imgs).map(img => img.complete ? Promise.resolve() : new Promise(res => { img.onload = img.onerror = res; })));
+        }
+        await new Promise(r => setTimeout(r, 350));
 
         const options = {
           margin: 10, 
-          filename: 'converted_document.pdf',
+          filename: type === 'csv-to-pdf' ? 'converted_table.pdf' : 'converted_document.pdf',
           image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true, logging: false },
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            logging: false,
+            backgroundColor: '#ffffff',
+            // [إصلاح] تعطيل foreignObjectRendering: هذا الوضع يعتمد على SVG foreignObject
+            // الذي يرث خصائص CSS من الأصل (بما فيها backdrop-filter/blur) وقد يسبب صفحة فارغة.
+            // تعطيله يجبر html2canvas على استخدام محرك الرسم اليدوي الأكثر توافقاً.
+            foreignObjectRendering: false
+          },
           jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
@@ -547,15 +623,26 @@
           await html2pdf().set(options).from(pdfBox).save();
           output.value = (currentLang === 'ar') ? '✅ تم التحويل للـ PDF بنجاح مع التنسيق الأصلي!' : '✅ PDF Generated Successfully!';
         } catch(err) {
-          output.value = '❌ Error generating PDF.';
+          console.error('PDF generation error:', err);
+          output.value = (currentLang === 'ar') ? ('❌ خطأ أثناء إنشاء الـ PDF: ' + err.message) : ('❌ Error generating PDF: ' + err.message);
         } finally {
           if (pdfBox.parentNode) pdfBox.parentNode.removeChild(pdfBox);
         }
       }
       
       else if (type === 'pdf-to-doc' || type === 'pdf-to-docx' || type === 'doc-to-docx') {
+        // [إصلاح] تغليف النص كمستند HTML صالح يفتحه Word بشكل صحيح
+        // (يحافظ على الفقرات والاتجاه RTL/LTR) بدل نص خام واحد بلا بنية.
         const ext = type.includes('docx') ? 'docx' : 'doc';
-        const blob = new Blob(["\ufeff" + input], { type: 'application/msword;charset=utf-8;' });
+        const isArabicDoc = /[\u0600-\u06FF]/.test(input);
+        const escapeHtml = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const bodyHtml = input.split('\n').map(line => `<p>${line.trim() ? escapeHtml(line) : '&nbsp;'}</p>`).join('\n');
+        const htmlDoc = `<!DOCTYPE html>
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head><meta charset='utf-8'><title>Document</title>
+<style>body{font-family:Arial, "Traditional Arabic", sans-serif; direction:${isArabicDoc ? 'rtl' : 'ltr'}; text-align:${isArabicDoc ? 'right' : 'left'};}</style>
+</head><body>${bodyHtml}</body></html>`;
+        const blob = new Blob(["\ufeff" + htmlDoc], { type: 'application/msword;charset=utf-8;' });
         const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `converted.${ext}`; link.click();
         output.value = (currentLang === 'ar') ? `✅ تم إنشاء ملف الـ .${ext} بنجاح!` : `✅ Word file (.${ext}) generated!`;
       }
@@ -602,7 +689,12 @@
         output.value = (currentLang === 'ar') ? '✅ تم تنزيل ملف CSV بنجاح!' : '✅ CSV Generated!';
       }
       else if (type === 'csv-to-word') {
-        const blob = new Blob(["\ufeff" + input], { type: 'application/msword;charset=utf-8;' });
+        const isArabicDoc = /[\u0600-\u06FF]/.test(input);
+        const escapeHtml = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const rows = input.trim().split('\n').map(r => r.split(','));
+        const tableHtml = `<table border="1" style="border-collapse:collapse;width:100%;">${rows.map(r => `<tr>${r.map(c => `<td style="padding:6px;">${escapeHtml(c.trim())}</td>`).join('')}</tr>`).join('')}</table>`;
+        const htmlDoc = `<!DOCTYPE html><html><head><meta charset='utf-8'><style>body{direction:${isArabicDoc ? 'rtl' : 'ltr'};font-family:Arial, "Traditional Arabic", sans-serif;}</style></head><body>${tableHtml}</body></html>`;
+        const blob = new Blob(["\ufeff" + htmlDoc], { type: 'application/msword;charset=utf-8;' });
         const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = 'converted.docx'; link.click();
         output.value = (currentLang === 'ar') ? '✅ تم تحويل CSV إلى Word بنجاح!' : '✅ Converted to Word!';
       }
@@ -693,7 +785,8 @@
         output.value = input;
       }
     } catch (e) {
-      output.value = '❌ Error!';
+      console.error('Conversion error:', e);
+      output.value = (currentLang === 'ar') ? ('❌ حدث خطأ: ' + e.message) : ('❌ Error: ' + e.message);
     } finally {
       executeBtn.disabled = false;
       executeBtn.innerText = origBtnText;
