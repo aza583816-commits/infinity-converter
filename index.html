@@ -25,107 +25,111 @@
 
 <style>
   :root {
-    --bg-color: #090d16;
-    --card-bg: rgba(18, 24, 38, 0.85);
+    --bg-color: #0b0f19;
+    --card-bg: rgba(17, 24, 39, 0.75);
     --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-    --accent-glow: rgba(99, 102, 241, 0.25);
+    --accent-glow: rgba(99, 102, 241, 0.15);
     --text-main: #f8fafc;
     --text-sub: #94a3b8;
     --border-color: rgba(255, 255, 255, 0.08);
-    --input-bg: rgba(10, 15, 26, 0.6);
+    --input-bg: rgba(3, 7, 18, 0.5);
   }
 
   body.light-theme {
-    --bg-color: #f1f5f9;
+    --bg-color: #f8fafc;
     --card-bg: #ffffff;
     --text-main: #0f172a;
-    --text-sub: #475569;
-    --border-color: #cbd5e1;
-    --input-bg: #f8fafc;
-    --accent-glow: rgba(99, 102, 241, 0.1);
+    --text-sub: #64748b;
+    --border-color: #e2e8f0;
+    --input-bg: #f1f5f9;
+    --accent-glow: rgba(99, 102, 241, 0.08);
   }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; transition: background 0.3s, color 0.3s; }
+  * { box-sizing: border-box; margin: 0; padding: 0; transition: background 0.3s ease, color 0.3s ease; }
 
   body {
     font-family: 'Cairo', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     background-color: var(--bg-color);
     background-image: 
-      radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
-      radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.12) 0px, transparent 50%);
+      radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.08) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.08) 0px, transparent 50%);
     color: var(--text-main);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     padding: 20px;
   }
 
   .top-bar {
     display: flex;
-    gap: 10px;
+    gap: 12px;
     align-items: center;
     justify-content: center;
     margin-bottom: 20px;
     flex-wrap: wrap;
+    width: 100%;
+    max-width: 640px;
   }
 
   .top-btn {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--card-bg);
     border: 1px solid var(--border-color);
     color: var(--text-main);
     padding: 8px 16px;
-    border-radius: 20px;
+    border-radius: 12px;
     font-size: 13px;
     cursor: pointer;
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(12px);
     display: flex;
     align-items: center;
     gap: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
   }
 
-  .top-btn:hover { border-color: #a855f7; }
+  .top-btn:hover { border-color: #a855f7; transform: translateY(-1px); }
 
   .pwa-banner {
-    background: linear-gradient(135deg, #a855f7, #6366f1);
+    background: var(--primary-gradient);
     color: white;
     border: none;
-    box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+    box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3);
   }
 
   .container {
     width: 100%;
-    max-width: 680px;
+    max-width: 640px;
     background: var(--card-bg);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border: 1px solid var(--border-color);
-    border-radius: 24px;
-    padding: 35px 30px;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3), 0 0 40px var(--accent-glow);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2), 0 0 30px var(--accent-glow);
   }
 
-  .header { text-align: center; margin-bottom: 25px; }
+  .header { text-align: center; margin-bottom: 22px; }
 
   .logo {
-    font-size: 28px;
+    font-size: 26px;
     font-weight: 700;
     background: var(--primary-gradient);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     letter-spacing: -0.5px;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
   }
 
   .subtitle { color: var(--text-sub); font-size: 13px; }
 
-  .form-group { margin-bottom: 16px; }
+  .form-group { margin-bottom: 15px; }
 
   label {
     display: block;
     font-size: 13px;
     color: var(--text-sub);
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     font-weight: 600;
   }
 
@@ -134,7 +138,7 @@
     background: var(--input-bg);
     border: 1px solid var(--border-color);
     border-radius: 12px;
-    padding: 14px;
+    padding: 12px 14px;
     color: var(--text-main);
     font-size: 14px;
     outline: none;
@@ -143,44 +147,43 @@
 
   select:focus, textarea:focus {
     border-color: #6366f1;
-    box-shadow: 0 0 15px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 0 12px rgba(99, 102, 241, 0.2);
   }
 
-  option { background: #0f172a; color: #fff; }
-  optgroup { background: #090d16; color: #a855f7; font-weight: bold; }
+  option { background: var(--bg-color); color: var(--text-main); }
+  optgroup { color: #a855f7; font-weight: bold; }
 
   textarea {
     resize: vertical;
-    min-height: 120px;
+    min-height: 110px;
   }
 
   .upload-box {
-    border: 2px dashed rgba(168, 85, 247, 0.4);
-    background: rgba(168, 85, 247, 0.05);
-    border-radius: 16px;
-    padding: 20px;
+    border: 2px dashed rgba(168, 85, 247, 0.35);
+    background: rgba(168, 85, 247, 0.03);
+    border-radius: 14px;
+    padding: 18px;
     text-align: center;
     cursor: pointer;
-    transition: all 0.3s ease;
-    margin-bottom: 16px;
+    transition: all 0.25s ease;
+    margin-bottom: 15px;
   }
 
   .upload-box:hover, .upload-box.dragover {
     border-color: #a855f7;
-    background: rgba(168, 85, 247, 0.15);
-    box-shadow: 0 0 20px rgba(168, 85, 247, 0.2);
+    background: rgba(168, 85, 247, 0.08);
   }
 
-  .upload-icon { font-size: 28px; margin-bottom: 6px; }
-  .upload-title { font-size: 14px; font-weight: 600; color: var(--text-main); }
+  .upload-icon { font-size: 24px; margin-bottom: 4px; }
+  .upload-title { font-size: 13px; font-weight: 600; color: var(--text-main); }
   .upload-sub { font-size: 11px; color: var(--text-sub); margin-top: 2px; }
 
   .stats-bar {
     display: flex;
     justify-content: space-between;
-    font-size: 12px;
+    font-size: 11px;
     color: var(--text-sub);
-    margin-top: 6px;
+    margin-top: 4px;
     padding: 0 4px;
   }
 
@@ -189,19 +192,19 @@
     background: var(--primary-gradient);
     border: none;
     border-radius: 12px;
-    padding: 15px;
+    padding: 14px;
     color: #fff;
     font-size: 15px;
     font-weight: 600;
     cursor: pointer;
-    box-shadow: 0 4px 20px rgba(168, 85, 247, 0.35);
-    margin-top: 10px;
+    box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3);
+    margin-top: 6px;
     font-family: inherit;
   }
 
   .btn-execute:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 25px rgba(168, 85, 247, 0.5);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(168, 85, 247, 0.4);
   }
 
   .btn-execute:disabled {
@@ -213,77 +216,77 @@
   #qrcode-container {
     display: flex;
     justify-content: center;
-    margin-top: 15px;
+    margin-top: 12px;
   }
 
   footer {
-    margin-top: 30px;
-    padding-top: 20px;
+    margin-top: 22px;
+    padding-top: 15px;
     border-top: 1px solid var(--border-color);
     text-align: center;
-    font-size: 12px;
+    font-size: 11px;
     color: var(--text-sub);
   }
 
-  footer p { line-height: 1.6; margin-bottom: 12px; }
-  .footer-links a { color: #a855f7; text-decoration: none; margin: 0 8px; font-weight: 600; }
-  .copyright { margin-top: 10px; font-size: 11px; color: #64748b; }
+  footer p { line-height: 1.5; margin-bottom: 8px; }
+  .footer-links a { color: #a855f7; text-decoration: none; margin: 0 6px; font-weight: 600; }
+  .copyright { margin-top: 6px; font-size: 10px; color: var(--text-sub); opacity: 0.8; }
 </style>
 </head>
 <body>
 
 <div class="top-bar">
-  <button class="top-btn pwa-banner" onclick="alert('لإضافة التطبيق لشاشتك الرئيسية:\n1. اضغط على زر المشاركة في المتصفح.\n2. اختر إضف إلى الشاشة الرئيسية (Add to Home Screen).');">
-    📱 Add to Home Screen! (Hide)
+  <button class="top-btn pwa-banner" onclick="alert('لإضافة التطبيق لشاشتك الرئيسية:\n1. اضغط على زر المشاركة في المتصفح.\n2. اختر إضافة إلى الشاشة الرئيسية (Add to Home Screen).');">
+    📱 تثبيت التطبيق
   </button>
-  <button class="top-btn" onclick="toggleTheme()" id="theme-btn">☀️ Light</button>
-  <button class="top-btn" onclick="toggleLanguage()" id="lang-btn">🌐 العربية</button>
+  <button class="top-btn" onclick="toggleTheme()" id="theme-btn">☀️ النهاري</button>
+  <button class="top-btn" onclick="toggleLanguage()" id="lang-btn">🌐 English</button>
 </div>
 
 <div class="container" id="main-container">
   <div class="header">
     <div class="logo">V-Infinity Converter</div>
-    <div class="subtitle" id="sub-title">The Infinite SaaS Conversion Suite</div>
+    <div class="subtitle" id="sub-title">الأداة الشاملة لكل ما تحتاجه، بسرعة فائقة وبدون تعقيد.</div>
   </div>
 
   <div class="form-group">
-    <label id="lbl-tool">What to do today?</label>
+    <label id="lbl-tool">ماذا تريد أن تفعل اليوم؟</label>
     <select id="conversion-type"></select>
   </div>
 
   <div class="upload-box" id="dropZone" onclick="document.getElementById('fileInput').click()">
     <input type="file" id="fileInput" hidden multiple accept="image/*,.json,.csv,.txt,.pdf,.xlsx,.docx,.xml,.yaml" />
     <div class="upload-icon">📂</div>
-    <div class="upload-title" id="lbl-upload-title">Drag & Drop file or click to upload</div>
-    <div class="upload-sub" id="lbl-upload-sub">(Supports Images, PDF, CSV, JSON, TXT)</div>
+    <div class="upload-title" id="lbl-upload-title">اسحب الملف أو اضغط للرفع الفوري</div>
+    <div class="upload-sub" id="lbl-upload-sub">(يدعم الصور، PDF، CSV، JSON، Word، والملفات النصية)</div>
   </div>
 
   <div class="form-group">
-    <label id="lbl-content">Content</label>
-    <textarea id="input-data" rows="5" placeholder="Paste Text, Table, Links, or Code here..." oninput="updateStats()"></textarea>
+    <label id="lbl-content">المحتوى</label>
+    <textarea id="input-data" rows="4" placeholder="الصق النص، الجدول، الروابط، أو الأكواد هنا..." oninput="updateStats()"></textarea>
     
     <div class="stats-bar">
-      <span><span id="label-chars">Chars</span>: <strong id="char-count">0</strong></span>
-      <span><span id="label-words">Words</span>: <strong id="word-count">0</strong></span>
+      <span><span id="label-chars">الحروف</span>: <strong id="char-count">0</strong></span>
+      <span><span id="label-words">الكلمات</span>: <strong id="word-count">0</strong></span>
     </div>
   </div>
 
-  <button type="button" class="btn-execute" onclick="runConversion()">Execute 🚀</button>
+  <button type="button" class="btn-execute" onclick="runConversion()">تنفيذ العملية 🚀</button>
 
-  <div class="form-group" style="margin-top: 20px;">
-    <label id="lbl-result">Result:</label>
-    <textarea id="output-data" rows="4" readonly placeholder="Result will appear here..."></textarea>
+  <div class="form-group" style="margin-top: 15px;">
+    <label id="lbl-result">النتيجة:</label>
+    <textarea id="output-data" rows="3" readonly placeholder="ستظهر النتيجة هنا فوراً..."></textarea>
     <div id="qrcode-container"></div>
   </div>
 
   <footer>
-    <p id="ft-text">أداة V-Infinity Converter توفر مجموعة احترافية وشاملة لتحويل البيانات والملفات والوسائط فورياً. نستخدم ملفات الكوكيز وإعلانات Google وفقاً لسياسات AdSense.</p>
+    <p id="ft-text">أداة V-Infinity Converter توفر مجموعة احترافية وشاملة لتحويل البيانات والملفات والوسائط فورياً داخل متصفحك بكل أمان.</p>
     <div class="footer-links">
       <a href="#" onclick="alert('سياسة الخصوصية و AdSense:\nنستخدم الكوكيز ومزودي الإعلانات مثل Google لعرض إعلانات مخصصة استناداً لزياراتك.'); return false;">الخصوصية</a> | 
       <a href="#" onclick="alert('شروط الاستخدام:\nباستخدامك للأداة توافق على الاستخدام العادل للخدمة.'); return false;">الشروط</a> | 
       <a href="mailto:2saree3.tech@gmail.com">اتصل بنا</a>
     </div>
-    <div class="copyright">Every conversion runs inside your browser — no file or text is ever uploaded to a server.</div>
+    <div class="copyright">All conversions run securely inside your browser — zero files uploaded to servers.</div>
   </footer>
 </div>
 
@@ -292,33 +295,6 @@
 
   let loadedFiles = [];
   let isDocxProcessing = false; 
-
-  const optionsEn = `
-    <optgroup label="📄 Documents & PDF Suite">
-      <option value="word-to-pdf" selected>Word (.docx) / Text ➔ PDF</option>
-      <option value="pdf-to-text">PDF ➔ Extract Text</option>
-      <option value="merge-pdfs">Merge Multiple PDFs</option>
-      <option value="image-to-pdf">Image ➔ PDF</option>
-      <option value="clean-text">Remove Formatting / HTML</option>
-      <option value="text-diff">Text Compare (Diff)</option>
-    </optgroup>
-    <optgroup label="📊 Data & Spreadsheets">
-      <option value="text-to-excel">Text/Table ➔ Excel (.xlsx)</option>
-      <option value="text-to-csv">Text/Table ➔ CSV</option>
-      <option value="csv-to-json">CSV ➔ JSON</option>
-      <option value="json-to-excel">JSON ➔ Excel</option>
-    </optgroup>
-    <optgroup label="🖼️ Images & Graphics Tools">
-      <option value="compress-image">Compress Image Size (KB)</option>
-      <option value="image-to-png">Image ➔ PNG</option>
-      <option value="image-to-jpg">Image ➔ JPG</option>
-    </optgroup>
-    <optgroup label="💻 Web & Developer Tools">
-      <option value="base64-tool">Base64 Encode / Decode</option>
-      <option value="json-beautifier">JSON Beautifier / Format</option>
-      <option value="hash-generator">Hash Generator (MD5 / SHA-256)</option>
-    </optgroup>
-  `;
 
   const optionsAr = `
     <optgroup label="📄 المستندات وأدوات الـ PDF">
@@ -347,7 +323,34 @@
     </optgroup>
   `;
 
-  document.getElementById('conversion-type').innerHTML = optionsEn;
+  const optionsEn = `
+    <optgroup label="📄 Documents & PDF Suite">
+      <option value="word-to-pdf" selected>Word (.docx) / Text ➔ PDF</option>
+      <option value="pdf-to-text">PDF ➔ Extract Text</option>
+      <option value="merge-pdfs">Merge Multiple PDFs</option>
+      <option value="image-to-pdf">Image ➔ PDF</option>
+      <option value="clean-text">Remove Formatting / HTML</option>
+      <option value="text-diff">Text Compare (Diff)</option>
+    </optgroup>
+    <optgroup label="📊 Data & Spreadsheets">
+      <option value="text-to-excel">Text/Table ➔ Excel (.xlsx)</option>
+      <option value="text-to-csv">Text/Table ➔ CSV</option>
+      <option value="csv-to-json">CSV ➔ JSON</option>
+      <option value="json-to-excel">JSON ➔ Excel</option>
+    </optgroup>
+    <optgroup label="🖼️ Images & Graphics Tools">
+      <option value="compress-image">Compress Image Size (KB)</option>
+      <option value="image-to-png">Image ➔ PNG</option>
+      <option value="image-to-jpg">Image ➔ JPG</option>
+    </optgroup>
+    <optgroup label="💻 Web & Developer Tools">
+      <option value="base64-tool">Base64 Encode / Decode</option>
+      <option value="json-beautifier">JSON Beautifier / Format</option>
+      <option value="hash-generator">Hash Generator (MD5 / SHA-256)</option>
+    </optgroup>
+  `;
+
+  document.getElementById('conversion-type').innerHTML = optionsAr;
 
   function updateStats() {
     const text = document.getElementById('input-data').value;
@@ -361,30 +364,17 @@
   function toggleTheme() {
     document.body.classList.toggle('light-theme');
     const btn = document.getElementById('theme-btn');
-    btn.innerText = document.body.classList.contains('light-theme') ? '🌙 Dark' : '☀️ Light';
+    btn.innerText = document.body.classList.contains('light-theme') ? '🌙 الليلي' : '☀️ النهاري';
   }
 
-  let currentLang = 'en';
+  let currentLang = 'ar';
   function toggleLanguage() {
-    currentLang = currentLang === 'en' ? 'ar' : 'en';
+    currentLang = currentLang === 'ar' ? 'en' : 'ar';
     const langBtn = document.getElementById('lang-btn');
     const selectElem = document.getElementById('conversion-type');
     const selectedVal = selectElem.value;
     
-    if (currentLang === 'ar') {
-      document.dir = 'rtl';
-      langBtn.innerText = '🌐 English';
-      selectElem.innerHTML = optionsAr;
-      document.getElementById('sub-title').innerText = 'الأداة الشاملة لكل ما تحتاجه، بسرعة فائقة.';
-      document.getElementById('lbl-tool').innerText = 'ماذا تريد أن تفعل اليوم؟';
-      document.getElementById('lbl-content').innerText = 'المحتوى';
-      document.getElementById('input-data').placeholder = 'الصق النص أو الجدول أو الأكواد هنا...';
-      document.getElementById('lbl-result').innerText = 'النتيجة:';
-      document.getElementById('label-chars').innerText = 'الحروف';
-      document.getElementById('label-words').innerText = 'الكلمات';
-      document.getElementById('lbl-upload-title').innerText = 'اسحب الملف أو اضغط لرفع صورة/ملف';
-      document.getElementById('lbl-upload-sub').innerText = '(يدعم الصور، PDF، CSV، JSON، TXT)';
-    } else {
+    if (currentLang === 'en') {
       document.dir = 'ltr';
       langBtn.innerText = '🌐 العربية';
       selectElem.innerHTML = optionsEn;
@@ -397,6 +387,19 @@
       document.getElementById('label-words').innerText = 'Words';
       document.getElementById('lbl-upload-title').innerText = 'Drag & Drop file or click to upload';
       document.getElementById('lbl-upload-sub').innerText = '(Supports Images, PDF, CSV, JSON, TXT)';
+    } else {
+      document.dir = 'rtl';
+      langBtn.innerText = '🌐 English';
+      selectElem.innerHTML = optionsAr;
+      document.getElementById('sub-title').innerText = 'الأداة الشاملة لكل ما تحتاجه، بسرعة فائقة وبدون تعقيد.';
+      document.getElementById('lbl-tool').innerText = 'ماذا تريد أن تفعل اليوم؟';
+      document.getElementById('lbl-content').innerText = 'المحتوى';
+      document.getElementById('input-data').placeholder = 'الصق النص، الجدول، الروابط، أو الأكواد هنا...';
+      document.getElementById('lbl-result').innerText = 'النتيجة:';
+      document.getElementById('label-chars').innerText = 'الحروف';
+      document.getElementById('label-words').innerText = 'الكلمات';
+      document.getElementById('lbl-upload-title').innerText = 'اسحب الملف أو اضغط للرفع الفوري';
+      document.getElementById('lbl-upload-sub').innerText = '(يدعم الصور، PDF، CSV، JSON، Word، والملفات النصية)';
     }
     if (selectedVal) selectElem.value = selectedVal;
   }
@@ -409,19 +412,6 @@
     if (e.target.files.length > 0) processFiles(Array.from(e.target.files));
   });
 
-  // 🎯 استخراج النص العادي بدون أي كود برمجي لمربع النص
-  function htmlToCleanText(html) {
-    if (!html) return '';
-    let text = html.replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<script[\s\S]*?<\/script>/gi, '')
-                   .replace(/<br\s*\/?>/gi, '\n').replace(/<\/(p|div|h[1-6]|li)>/gi, '\n')
-                   .replace(/<\/tr>/gi, '\n').replace(/<\/(td|th)>/gi, '   ').replace(/<[^>]+>/g, '');
-    const decoder = document.createElement('textarea');
-    decoder.innerHTML = text;
-    text = decoder.value;
-    return text.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
-  }
-
-  // 🎯 استخراج نصوص الـ PDF (يجمع المعادلات والأرقام المشتتة لسطر واحد)
   function pdfPageToOrderedText(items) {
     if (!items || !items.length) return '';
     let parts = items.map(it => ({
@@ -479,7 +469,7 @@
     if (first.type.startsWith('image/')) {
       reader.onload = (e) => {
         first.dataUrl = e.target.result;
-        inputData.value = `[Image Loaded: ${first.name}]`;
+        inputData.value = `[تم تحميل الصورة: ${first.name}]`;
         updateStats();
       };
       reader.readAsDataURL(first);
@@ -487,34 +477,31 @@
     else if (isWord) {
       const executeBtn = document.querySelector('.btn-execute');
       isDocxProcessing = true;
-      if (executeBtn) { executeBtn.disabled = true; executeBtn.innerText = '⏳ Processing...'; }
-      inputData.value = '⏳ Reading Word file...';
+      if (executeBtn) { executeBtn.disabled = true; executeBtn.innerText = '⏳ جاري القراءة...'; }
+      inputData.value = '⏳ جاري قراءة ملف الوورد...';
       updateStats();
 
       reader.onload = function(e) {
         const arrayBuffer = e.target.result;
-        
-        // استخراج النص النظيف للمربع
         mammoth.extractRawText({ arrayBuffer: arrayBuffer })
           .then(function(resultText) {
-            inputData.value = resultText.value.trim() || `[Loaded Word: ${first.name}]`;
+            inputData.value = resultText.value.trim() || `[ملف وورد: ${first.name}]`;
             updateStats();
           });
 
-        // استخراج الهيكل الجدولي لتوليد الـ PDF لاحقاً
         mammoth.convertToHtml({ arrayBuffer: arrayBuffer })
           .then(function(resultHtml) {
             first.htmlContent = resultHtml.value.replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<script[\s\S]*?<\/script>/gi, '');
           })
           .finally(() => {
             isDocxProcessing = false;
-            if (executeBtn) { executeBtn.disabled = false; executeBtn.innerText = 'Execute 🚀'; }
+            if (executeBtn) { executeBtn.disabled = false; executeBtn.innerText = currentLang === 'ar' ? 'تنفيذ العملية 🚀' : 'Execute 🚀'; }
           });
       };
       reader.readAsArrayBuffer(first);
     } 
     else if (isPDF) {
-      inputData.value = '⏳ Extracting text from PDF...';
+      inputData.value = '⏳ جاري استخراج النص من الـ PDF...';
       updateStats();
       reader.onload = async function() {
         try {
@@ -526,10 +513,10 @@
             const textContent = await page.getTextContent();
             fullText += pdfPageToOrderedText(textContent.items) + '\n\n';
           }
-          inputData.value = fullText.trim() || `[Loaded PDF: ${first.name}]`;
+          inputData.value = fullText.trim() || `[ملف PDF: ${first.name}]`;
           updateStats();
         } catch (err) {
-          inputData.value = `[Error Reading PDF: ${first.name}]`;
+          inputData.value = `[خطأ في قراءة ملف PDF: ${first.name}]`;
           updateStats();
         }
       };
@@ -537,12 +524,7 @@
     } 
     else {
       reader.onload = (e) => {
-        const text = e.target.result;
-        if (text.includes('%PDF-') || text.includes('PK\x03\x04')) {
-          inputData.value = (currentLang === 'ar') ? '⚠️ ملف ثنائي غير مدعوم للطباعة كنص.' : '⚠️ Binary file detected.';
-        } else {
-          inputData.value = text;
-        }
+        inputData.value = e.target.result;
         updateStats();
       };
       reader.readAsText(first, 'UTF-8');
@@ -558,28 +540,26 @@
     qrContainer.innerHTML = '';
 
     if (!input.trim()) {
-      output.value = (currentLang === 'ar') ? 'يرجى إدخال نص أولاً!' : 'Please enter input first!';
+      output.value = currentLang === 'ar' ? 'يرجى إدخال نص أو رفع ملف أولاً!' : 'Please enter input or upload a file first!';
       return;
     }
 
     const origBtnText = executeBtn.innerText;
     executeBtn.disabled = true;
-    executeBtn.innerText = (currentLang === 'ar') ? '⏳ جاري المعالجة...' : '⏳ Processing...';
+    executeBtn.innerText = currentLang === 'ar' ? '⏳ جاري المعالجة...' : '⏳ Processing...';
 
     try {
       if (type === 'word-to-pdf') {
         if (isDocxProcessing) {
-          output.value = (currentLang === 'ar') ? '⏳ الملف قيد التجهيز...' : '⏳ Processing...';
+          output.value = currentLang === 'ar' ? '⏳ الملف قيد التجهيز...' : '⏳ Processing...';
           return;
         }
 
-        output.value = (currentLang === 'ar') ? 'جاري تحويل المستند...' : 'Generating PDF...';
+        output.value = currentLang === 'ar' ? 'جاري تحويل المستند وتجهيز الـ PDF...' : 'Generating PDF...';
         const isArabic = /[\u0600-\u06FF]/.test(input) || currentLang === 'ar';
         const hasDocxHtml = !!(loadedFiles[0] && loadedFiles[0].htmlContent);
 
-        // 🎯 وضع الورقة داخل حاوية الموقع الرئيسية لتجنب خطأ Safari (لن تظهر صفحة بيضاء أبداً)
         const pdfBox = document.createElement('div');
-        pdfBox.id = 'print-section';
         pdfBox.style.cssText = `
           background-color: #ffffff;
           color: #000000;
@@ -592,7 +572,6 @@
           width: 100%;
         `;
 
-        // 🎯 ضبط الحدود والتنسيقات الإلزامية للجداول
         if (hasDocxHtml) {
           pdfBox.innerHTML = loadedFiles[0].htmlContent;
           pdfBox.querySelectorAll('table').forEach(t => {
@@ -614,11 +593,8 @@
           pdfBox.innerText = input;
         }
 
-        // إضافة الورقة إلى الواجهة المرئية داخل الموقع لضمان التصوير بنجاح
         document.getElementById('main-container').appendChild(pdfBox);
-
-        // انتظار نصف ثانية ليقوم المتصفح برسم الورقة فعلياً
-        await new Promise(r => setTimeout(r, 500));
+        await new Promise(r => setTimeout(r, 400));
 
         const options = {
           margin: 10, 
@@ -630,28 +606,20 @@
 
         try {
           await html2pdf().set(options).from(pdfBox).save();
-          output.value = (currentLang === 'ar') ? '✅ تم التحويل للـ PDF بنجاح!' : '✅ PDF Generated Successfully!';
+          output.value = currentLang === 'ar' ? '✅ تم إنشاء وتحميل ملف الـ PDF بنجاح!' : '✅ PDF Generated Successfully!';
         } catch(err) {
           output.value = '❌ Error generating PDF.';
         } finally {
-          // مسح الورقة من الموقع بعد الانتهاء
-          if (pdfBox.parentNode) {
-            pdfBox.parentNode.removeChild(pdfBox);
-          }
+          if (pdfBox.parentNode) pdfBox.parentNode.removeChild(pdfBox);
         }
       }
-      
       else if (type === 'pdf-to-text') { output.value = input; }
       else if (type === 'clean-text') { output.value = input.replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, ' ').trim(); }
-      else if (type === 'latex-to-text') { output.value = input.replace(/\\[a-zA-Z]+\*?(\{.*?\})?/g, '').replace(/[{}]/g, '').trim(); }
-      else if (type === 'case-upper') { output.value = input.toUpperCase(); }
-      else if (type === 'case-lower') { output.value = input.toLowerCase(); }
       else if (type === 'text-diff') {
         const lines = input.split('\n');
         const mid = Math.floor(lines.length / 2);
-        output.value = `--- [Part 1] ---\n${lines.slice(0, mid).join('\n')}\n\n--- [Part 2] ---\n${lines.slice(mid).join('\n')}`;
+        output.value = `--- [الجزء الأول] ---\n${lines.slice(0, mid).join('\n')}\n\n--- [الجزء الثاني] ---\n${lines.slice(mid).join('\n')}`;
       }
-
       else if (type === 'text-to-excel' || type === 'json-to-excel') {
         let wb = XLSX.utils.book_new();
         if (type === 'json-to-excel') {
@@ -664,26 +632,12 @@
           XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
         }
         XLSX.writeFile(wb, "converted.xlsx");
-        output.value = (currentLang === 'ar') ? '✅ تم إنشاء وتحميل ملف الإكسيل (.xlsx) بنجاح!' : '✅ Excel File (.xlsx) Generated!';
+        output.value = currentLang === 'ar' ? '✅ تم تحميل ملف الإكسيل (.xlsx) بنجاح!' : '✅ Excel File (.xlsx) Generated!';
       }
-      else if (type === 'excel-to-json') {
-        if (loadedFiles[0]) {
-          const reader = new FileReader();
-          reader.onload = function(e) {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
-            const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-            output.value = JSON.stringify(jsonData, null, 2);
-          };
-          reader.readAsArrayBuffer(loadedFiles[0]);
-        } else {
-          output.value = (currentLang === 'ar') ? 'يرجى رفع ملف إكسيل (.xlsx) للتحويل إلى JSON!' : 'Please upload an Excel file first!';
-        }
-      }
-      else if (type === 'text-to-csv' || type === 'sql-to-csv') {
+      else if (type === 'text-to-csv') {
         const blob = new Blob(["\uFEFF" + input], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = 'converted.csv'; link.click();
-        output.value = (currentLang === 'ar') ? '✅ تم تنزيل ملف CSV بنجاح!' : '✅ CSV Generated!';
+        output.value = currentLang === 'ar' ? '✅ تم تنزيل ملف CSV بنجاح!' : '✅ CSV Generated!';
       }
       else if (type === 'csv-to-json') {
         const lines = input.trim().split('\n'); const headers = lines[0].split(',');
@@ -692,20 +646,14 @@
         });
         output.value = JSON.stringify(res, null, 2);
       }
-      else if (type === 'json-to-csv') {
-        const arr = JSON.parse(input); const headers = Object.keys(arr[0]).join(',');
-        const rows = arr.map(obj => Object.values(obj).join(',')).join('\n');
-        output.value = headers + '\n' + rows;
-      }
-      else if (type === 'xml-to-json') { output.value = 'XML to JSON converted (preview only for valid XML objects).'; }
-      else if (type === 'yaml-to-json') { output.value = JSON.stringify(jsyaml.load(input), null, 2); }
-
       else if (type === 'compress-image') {
         if (loadedFiles[0]) {
-          output.value = (currentLang === 'ar') ? 'جاري ضغط الصورة...' : 'Compressing image...';
+          output.value = currentLang === 'ar' ? 'جاري ضغط الصورة...' : 'Compressing image...';
           const compressedFile = await imageCompression(loadedFiles[0], { maxSizeMB: 0.5, maxWidthOrHeight: 1280 });
           const link = document.createElement('a'); link.href = URL.createObjectURL(compressedFile); link.download = `compressed_${loadedFiles[0].name}`; link.click();
-          output.value = `✅ Compression Complete! Reduced to ${(compressedFile.size/1024).toFixed(1)} KB`;
+          output.value = `✅ تم الضغط بنجاح! الحجم الجديد: ${(compressedFile.size/1024).toFixed(1)} KB`;
+        } else {
+          output.value = currentLang === 'ar' ? 'يرجى رفع صورة أولاً!' : 'Please upload an image first!';
         }
       }
       else if (type.startsWith('image-')) {
@@ -713,8 +661,6 @@
           if (type === 'image-to-pdf') {
             const { jsPDF } = window.jspdf; const doc = new jsPDF(); doc.addImage(loadedFiles[0].dataUrl, 'JPEG', 10, 10, 180, 0); doc.save('converted.pdf');
             output.value = '✅ PDF Downloaded Successfully!';
-          } else if (type === 'image-to-base64') {
-            output.value = loadedFiles[0].dataUrl;
           } else {
             const img = new Image(); img.src = loadedFiles[0].dataUrl;
             img.onload = () => {
@@ -727,57 +673,16 @@
           }
         }
       }
-      else if (type === 'merge-pdfs') { output.value = 'Please select 2 or more PDF files... (requires multiselect capability)'; }
-      else if (type === 'color-converter') { output.value = `Converted Color: ${input}`; }
-      
-      else if (type === 'base64-tool') { try { output.value = utf8_to_b64(input); } catch(e) { output.value = b64_to_utf8(input); } }
-      else if (type === 'url-encoder') { try { output.value = encodeURIComponent(input); } catch(e) { output.value = decodeURIComponent(input); } }
+      else if (type === 'base64-tool') { 
+        try { output.value = btoa(unescape(encodeURIComponent(input))); } catch(e) { output.value = decodeURIComponent(escape(window.atob(input))); } 
+      }
       else if (type === 'json-beautifier') { output.value = JSON.stringify(JSON.parse(input), null, 4); }
-      else if (type === 'css-js-minifier') { output.value = input.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '').replace(/\s+/g, ' ').trim(); }
-      else if (type === 'html-entity') { const p = document.createElement('p'); p.textContent = input; output.value = p.innerHTML; }
       else if (type === 'hash-generator') { output.value = `MD5: ${CryptoJS.MD5(input)}\nSHA-256: ${CryptoJS.SHA256(input)}`; }
-      else if (type === 'timestamp-converter') { output.value = new Date(parseInt(input.trim()) * 1000).toUTCString(); }
-      else if (type === 'password-strength') {
-        const score = input.length >= 8 && /[A-Z]/.test(input) && /[0-9]/.test(input) && /[^A-Za-z0-9]/.test(input);
-        output.value = score ? '🔒 Password Strength: VERY STRONG' : '⚠️ Password Strength: WEAK (Add numbers, uppercase & symbols)';
-      }
-      else if (type === 'percentage-calc') {
-        const nums = input.match(/\d+(\.\d+)?/g);
-        if (nums && nums.length >= 2) output.value = `${nums[0]}% من ${nums[1]} = ${(parseFloat(nums[0]) / 100) * parseFloat(nums[1])}`;
-      }
-      else if (type === 'byte-converter') {
-        const bytes = parseFloat(input.replace(/[^0-9.]/g, ''));
-        output.value = `Bytes: ${bytes}\nKB: ${(bytes/1024).toFixed(2)}\nMB: ${(bytes/(1024**2)).toFixed(2)}`;
-      }
-      else if (type === 'unit-converter') {
-        const val = parseFloat(input.replace(/[^0-9.]/g, ''));
-        output.value = `Meters: ${val} m\nFeet: ${(val * 3.28084).toFixed(2)} ft`;
-      }
-      else if (type === 'markdown-to-html') {
-        output.value = input.replace(/^# (.*$)/gim, '<h1>$1</h1>').replace(/\*\*(.*)\*\*/gim, '<b>$1</b>').replace(/\n/gim, '<br />');
-      }
-      else if (type === 'text-to-qr') {
-        new QRCode(qrContainer, { text: input, width: 140, height: 140 });
-        output.value = '✅ QR Code Generated Below!';
-      }
-      else if (type === 'password-generator') {
-        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=";
-        output.value = Array.from({length: 16}, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
-      }
-      else if (type === 'text-counter') {
-        output.value = `الحروف: ${input.length}\nالكلمات: ${input.trim().split(/\s+/).length}\nالأسطر: ${input.split('\n').length}`;
-      }
-      else if (type === 'text-to-speech') {
-        const msg = new SpeechSynthesisUtterance(input);
-        msg.lang = (/[\u0600-\u06FF]/.test(input) || currentLang === 'ar') ? 'ar-SA' : 'en-US';
-        window.speechSynthesis.speak(msg);
-        output.value = '🗣️ Speaking text...';
-      }
       else {
         output.value = input;
       }
     } catch (e) {
-      output.value = '❌ Error!';
+      output.value = currentLang === 'ar' ? '❌ حدث خطأ أثناء المعالجة، تأكد من صحة المدخلات.' : '❌ Processing error, check your input format.';
     } finally {
       executeBtn.disabled = false;
       executeBtn.innerText = origBtnText;
