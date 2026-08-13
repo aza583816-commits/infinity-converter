@@ -8,7 +8,7 @@
 <!-- ⬇️ الخطوط ⬇️ -->
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 
-<!-- ⬇️ المكتبات الأساسية للتنزيل والتحويل ⬇️ -->
+<!-- ⬇️ المكتبات الأساسية ⬇️ -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
@@ -285,7 +285,7 @@
       <option value="excel-to-json">تحويل إكسيل (.xlsx) إلى JSON</option>
       <option value="text-to-csv">تحويل نص/جدول إلى CSV</option>
       <option value="csv-to-json">تحويل CSV إلى JSON</option>
-      <option value="json-to-excel">JSON إلى إكسيل</option>
+      <option value="json-to-excel">تحويل JSON إلى إكسيل</option>
       <option value="word-to-csv">تحويل وورد إلى CSV</option>
       <option value="csv-to-word">تحويل CSV إلى وورد</option>
     </optgroup>
@@ -534,26 +534,22 @@
     if (loadingInterval) { clearInterval(loadingInterval); loadingInterval = null; }
   }
 
-  // دالة تحويل آمنة تماماً للمتصفح لمنع شاشة السيرفر السوداء لأدوات الوورد والـ PDF
+  // تحويل الوورد محلياً بالمتصفح بشكل مضمون وبدون شاشات سوداء أو بيضاء
   async function clientSideWordToPdf(file) {
     const arrayBuffer = await file.arrayBuffer();
-    const result = await mammoth.convertToHtml({ arrayBuffer: arrayBuffer });
-    const htmlContent = `<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8"><style>body{font-family:Tahoma,sans-serif;padding:20px;color:#000;background:#fff;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #000;padding:6px;}</style></head><body>${result.value}</body></html>`;
+    const result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
+    const textContent = result.value.trim() || "No text found in document.";
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
     
-    const element = document.createElement('div');
-    element.innerHTML = htmlContent;
-    document.body.appendChild(element);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(12);
     
-    const opt = {
-      margin: 10,
-      filename: 'converted_document.pdf',
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
+    const splitText = doc.splitTextToSize(textContent, 180);
+    doc.text(splitText, 15, 20);
     
-    await html2pdf().from(element).set(opt).save();
-    document.body.removeChild(element);
+    doc.save('converted_document.pdf');
   }
 
   async function runConversion() {
@@ -578,7 +574,7 @@
       return;
     }
 
-    // تشغيل التحويل محلياً بالمتصفح لمنع مشاكل السيرفر والشاشات السوداء لـ word-to-pdf
+    // تشغيل التحويل محلياً لـ Word to PDF لمنع مشاكل السيرفر نهائياً
     if (type === 'word-to-pdf' && loadedFiles[0]) {
       const origBtnText = executeBtn.innerText;
       executeBtn.disabled = true;
