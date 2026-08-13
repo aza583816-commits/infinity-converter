@@ -610,17 +610,19 @@
       }
 
       if (isBinary) {
-        // [تعديل منع الشاشة السوداء]: استقبال الملف كـ Blob وإجباره على التحميل الفوري
         const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = BINARY_FILENAMES[type];
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setTimeout(() => URL.revokeObjectURL(url), 5000);
-        
+        const reader = new FileReader();
+        reader.onloadend = function() {
+          const base64data = reader.result;
+          const link = document.createElement('a');
+          link.href = base64data;
+          link.download = BINARY_FILENAMES[type];
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        };
+        reader.readAsDataURL(blob);
+
         output.value = (currentLang === 'ar') ? '✅ تمت المعالجة وتحميل الملف بنجاح!' : '✅ Processed and downloaded successfully!';
       } else {
         const data = await res.json();
@@ -639,7 +641,6 @@
       output.value = (currentLang === 'ar') ? ('❌ حدث خطأ: ' + e.message) : ('❌ Error: ' + e.message);
     } finally {
       stopLoadingAnimation();
-      executeBtn.disabled.disabled = false;
       executeBtn.disabled = false;
       executeBtn.innerText = origBtnText;
     }
