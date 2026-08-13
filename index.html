@@ -4,13 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>V-Infinity Converter</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#6366f1">
 
 <!-- ⬇️ الخطوط ⬇️ -->
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 
 <!-- ⬇️ المكتبات الأساسية ⬇️ -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
@@ -20,137 +20,14 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.min.js"></script>
 
-<style>
-  :root {
-    --bg-color: #090d16;
-    --card-bg: rgba(18, 24, 38, 0.85);
-    --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-    --accent-glow: rgba(99, 102, 241, 0.25);
-    --text-main: #f8fafc;
-    --text-sub: #94a3b8;
-    --border-color: rgba(255, 255, 255, 0.08);
-    --input-bg: rgba(10, 15, 26, 0.6);
-  }
-
-  body.light-theme {
-    --bg-color: #f1f5f9;
-    --card-bg: #ffffff;
-    --text-main: #0f172a;
-    --text-sub: #475569;
-    --border-color: #cbd5e1;
-    --input-bg: #f8fafc;
-    --accent-glow: rgba(99, 102, 241, 0.1);
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; transition: background 0.3s, color 0.3s; }
-
-  body {
-    font-family: 'Cairo', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-    background-color: var(--bg-color);
-    background-image: radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.12) 0px, transparent 50%);
-    color: var(--text-main);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px;
-  }
-
-  .top-bar { display: flex; gap: 10px; align-items: center; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
-  .top-btn { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px 16px; border-radius: 20px; font-size: 13px; cursor: pointer; backdrop-filter: blur(10px); display: flex; align-items: center; gap: 6px; }
-  .top-btn:hover { border-color: #a855f7; }
-  .pwa-banner { background: linear-gradient(135deg, #a855f7, #6366f1); color: white; border: none; box-shadow: 0 0 15px rgba(168, 85, 247, 0.4); }
-
-  .container {
-    width: 100%;
-    max-width: 680px;
-    background: var(--card-bg);
-    backdrop-filter: blur(16px);
-    border: 1px solid var(--border-color);
-    border-radius: 24px;
-    padding: 35px 30px;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3), 0 0 40px var(--accent-glow);
-  }
-
-  .header { text-align: center; margin-bottom: 25px; }
-  .logo { font-size: 28px; font-weight: 700; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 6px; }
-  .subtitle { color: var(--text-sub); font-size: 13px; }
-
-  .form-group { margin-bottom: 16px; }
-  label { display: block; font-size: 13px; color: var(--text-sub); margin-bottom: 8px; font-weight: 600; text-align: start; }
-
-  select, textarea {
-    width: 100%;
-    background: var(--input-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 14px;
-    color: var(--text-main);
-    font-size: 14px;
-    outline: none;
-    font-family: inherit;
-    text-align: start;
-  }
-
-  select:focus, textarea:focus { border-color: #6366f1; box-shadow: 0 0 15px rgba(99, 102, 241, 0.3); }
-  option { background: #0f172a; color: #fff; }
-  optgroup { background: #090d16; color: #a855f7; font-weight: bold; }
-  select[dir="rtl"] { direction: rtl; text-align: right; }
-  select[dir="rtl"] option, select[dir="rtl"] optgroup { direction: rtl; text-align: right; unicode-bidi: plaintext; }
-
-  textarea { resize: vertical; min-height: 120px; }
-
-  .upload-box {
-    border: 2px dashed rgba(168, 85, 247, 0.4);
-    background: rgba(168, 85, 247, 0.05);
-    border-radius: 16px;
-    padding: 20px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.3s;
-    margin-bottom: 16px;
-  }
-
-  .upload-box:hover { border-color: #a855f7; background: rgba(168, 85, 247, 0.15); box-shadow: 0 0 20px rgba(168, 85, 247, 0.2); }
-  .upload-icon { font-size: 28px; margin-bottom: 6px; }
-  .upload-title { font-size: 14px; font-weight: 600; color: var(--text-main); }
-  .upload-sub { font-size: 11px; color: var(--text-sub); margin-top: 2px; }
-
-  .stats-bar { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-sub); margin-top: 6px; padding: 0 4px; }
-
-  .btn-execute {
-    width: 100%;
-    background: var(--primary-gradient);
-    border: none;
-    border-radius: 12px;
-    padding: 15px;
-    color: #fff;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    box-shadow: 0 4px 20px rgba(168, 85, 247, 0.35);
-    margin-top: 10px;
-    font-family: inherit;
-  }
-  .btn-execute:hover { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(168, 85, 247, 0.5); }
-  .btn-execute:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
-
-  #qrcode-container { display: flex; justify-content: center; margin-top: 15px; }
-
-  footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color); text-align: center; font-size: 12px; color: var(--text-sub); }
-  footer p { line-height: 1.6; margin-bottom: 12px; }
-  .footer-links a { color: #a855f7; text-decoration: none; margin: 0 8px; font-weight: 600; }
-  .copyright { margin-top: 10px; font-size: 11px; color: #64748b; }
-</style>
+<link rel="stylesheet" href="/assets/css/styles.css">
 </head>
 <body>
 
 <div class="top-bar">
-  <button class="top-btn pwa-banner" onclick="alert('لإضافة التطبيق لشاشتك الرئيسية:\n1. اضغط على زر المشاركة في المتصفح.\n2. اختر إضف إلى الشاشة الرئيسية (Add to Home Screen).');">
-    📱 Add to Home Screen
-  </button>
-  <button class="top-btn" onclick="toggleTheme()" id="theme-btn">☀️ Light</button>
-  <button class="top-btn" onclick="toggleLanguage()" id="lang-btn">🌐 العربية</button>
+  <button class="top-btn pwa-banner" id="pwa-btn">📱 Add to Home Screen</button>
+  <button class="top-btn" id="theme-btn">☀️ Light</button>
+  <button class="top-btn" id="lang-btn">🌐 العربية</button>
 </div>
 
 <div class="container" id="main-container">
@@ -164,7 +41,7 @@
     <select id="conversion-type"></select>
   </div>
 
-  <div class="upload-box" id="dropZone" onclick="document.getElementById('fileInput').click()">
+  <div class="upload-box" id="dropZone">
     <input type="file" id="fileInput" hidden multiple accept="image/*,.heic,.heif,.json,.csv,.txt,.pdf,.xlsx,.docx,.doc,.xml,.yaml" />
     <div class="upload-icon">📂</div>
     <div class="upload-title" id="lbl-upload-title">Drag & Drop file or click to upload</div>
@@ -173,511 +50,61 @@
 
   <div class="form-group">
     <label id="lbl-content">Content</label>
-    <textarea id="input-data" rows="5" dir="auto" placeholder="Paste Text, Table, Links, or Code here..." oninput="updateStats()"></textarea>
+    <textarea id="input-data" rows="5" dir="auto" placeholder="Paste Text, Table, Links, or Code here..."></textarea>
     <div class="stats-bar">
       <span><span id="label-chars">Chars</span>: <strong id="char-count">0</strong></span>
       <span><span id="label-words">Words</span>: <strong id="word-count">0</strong></span>
     </div>
   </div>
 
-  <button type="button" class="btn-execute" onclick="runConversion()">Execute 🚀</button>
+  <button type="button" class="btn-execute">Execute 🚀</button>
 
   <div class="form-group" style="margin-top: 20px;">
     <label id="lbl-result">Result:</label>
     <textarea id="output-data" rows="4" dir="auto" readonly placeholder="Result will appear here..."></textarea>
+    <div class="result-actions">
+      <button type="button" class="btn-secondary" id="copy-btn">Copy</button>
+      <button type="button" class="btn-secondary" id="clear-btn">Clear</button>
+    </div>
     <div id="qrcode-container"></div>
   </div>
 
   <footer>
     <p id="ft-text">V-Infinity Converter provides a comprehensive suite for data and file conversion. Files are processed securely on our servers and are never stored. We use cookies and Google AdSense according to policies.</p>
     <div class="footer-links">
-      <a href="#" onclick="alert('Privacy Policy & AdSense:\nWe use cookies and ad providers like Google to show personalized ads. Uploaded files are processed on our servers to perform the requested conversion and are not stored afterwards.'); return false;">Privacy</a> | 
-      <a href="#" onclick="alert('Terms of Use:\nBy using this tool, you agree to fair use policies.'); return false;">Terms</a> | 
+      <a id="privacy-link">Privacy</a> |
+      <a id="terms-link">Terms</a> |
       <a href="mailto:2saree3.tech@gmail.com">Contact Us</a>
     </div>
     <div class="copyright">Conversions are processed securely through our servers for the best possible quality. No file or text is stored after processing completes.</div>
   </footer>
 </div>
 
+<!-- ⬇️ وحدات التطبيق (Modular Architecture) ⬇️ -->
+<script src="/assets/js/toast.js"></script>
+<script src="/assets/js/i18n.js"></script>
+<script src="/assets/js/theme.js"></script>
+<script src="/assets/js/download.js"></script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/file-handling.js"></script>
+<script src="/assets/js/app.js"></script>
 <script>
-  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-
-  let loadedFiles = [];
-  let isDocxProcessing = false;
-
-  const optionsEn = `
-    <optgroup label="👩‍🏫 Teachers & Students (Word & PDF)">
-      <option value="word-to-pdf" selected>Word (.docx/.doc) ➔ PDF</option>
-      <option value="pdf-to-doc">PDF ➔ Word (.doc)</option>
-      <option value="pdf-to-docx">PDF ➔ Word (.docx)</option>
-      <option value="doc-to-docx">Word (.doc) ➔ Word (.docx)</option>
-      <option value="csv-to-pdf">CSV ➔ PDF</option>
-      <option value="pdf-to-excel">PDF ➔ Excel (.xlsx)</option>
-      <option value="pdf-to-ppt">PDF ➔ PowerPoint (.pptx)</option>
-      <option value="merge-pdf">Merge PDF Files</option>
-      <option value="split-pdf">Split PDF into Pages (ZIP)</option>
-    </optgroup>
-    <optgroup label="📄 General Documents & PDF">
-      <option value="pdf-to-text">PDF ➔ Extract Text</option>
-      <option value="image-to-pdf">Image ➔ PDF</option>
-      <option value="clean-text">Remove Formatting / HTML</option>
-      <option value="text-diff">Text Compare (Diff)</option>
-      <option value="markdown-to-html">Markdown ➔ HTML</option>
-    </optgroup>
-    <optgroup label="📊 Data & Spreadsheets">
-      <option value="text-to-excel">Text/Table ➔ Excel (.xlsx)</option>
-      <option value="excel-to-json">Excel (.xlsx) ➔ JSON</option>
-      <option value="text-to-csv">Text/Table ➔ CSV</option>
-      <option value="csv-to-json">CSV ➔ JSON</option>
-      <option value="json-to-excel">JSON ➔ Excel</option>
-      <option value="word-to-csv">Word ➔ CSV</option>
-      <option value="csv-to-word">CSV ➔ Word</option>
-    </optgroup>
-    <optgroup label="🖼️ Images & Graphics Tools">
-      <option value="compress-image">Compress Image Size (KB)</option>
-      <option value="image-to-png">Image ➔ PNG</option>
-      <option value="image-to-jpg">Image ➔ JPG</option>
-      <option value="image-to-base64">Image ➔ Base64</option>
-      <option value="heic-to-jpg">HEIC (iPhone) ➔ JPG</option>
-    </optgroup>
-    <optgroup label="💻 Web & Developer Tools">
-      <option value="base64-tool">Base64 Encode / Decode</option>
-      <option value="json-beautifier">JSON Beautifier / Format</option>
-      <option value="hash-generator">Hash Generator (MD5 / SHA-256)</option>
-      <option value="url-encoder">URL Encode / Decode</option>
-      <option value="css-js-minifier">Minify CSS/JS</option>
-      <option value="html-entity">HTML Entity Encode</option>
-      <option value="timestamp-converter">Unix Timestamp ➔ Date</option>
-    </optgroup>
-    <optgroup label="🔧 Utilities">
-      <option value="text-to-qr">Generate QR Code</option>
-      <option value="password-generator">Generate Strong Password</option>
-      <option value="password-strength">Check Password Strength</option>
-      <option value="text-counter">Advanced Text Counter</option>
-      <option value="text-to-speech">Text to Speech (Audio)</option>
-      <option value="percentage-calc">Percentage Calculator</option>
-      <option value="byte-converter">Byte / KB / MB Converter</option>
-      <option value="unit-converter">Unit Converter (Meters/Feet)</option>
-    </optgroup>
-  `;
-
-  const optionsAr = `
-    <optgroup label="👩‍🏫 أدوات المعلمين والطلاب">
-      <option value="word-to-pdf" selected>تحويل وورد (.docx/.doc) إلى PDF</option>
-      <option value="pdf-to-doc">تحويل PDF إلى وورد (.doc)</option>
-      <option value="pdf-to-docx">تحويل PDF إلى وورد (.docx)</option>
-      <option value="doc-to-docx">تحويل وورد قديم (.doc) إلى حديث (.docx)</option>
-      <option value="csv-to-pdf">تحويل CSV إلى PDF</option>
-      <option value="pdf-to-excel">تحويل PDF إلى إكسيل (.xlsx)</option>
-      <option value="pdf-to-ppt">تحويل PDF إلى بوربوينت (.pptx)</option>
-      <option value="merge-pdf">دمج عدة ملفات PDF</option>
-      <option value="split-pdf">تقسيم PDF لصفحات (ZIP)</option>
-    </optgroup>
-    <optgroup label="📄 المستندات العامة والـ PDF">
-      <option value="pdf-to-text">استخراج النصوص من PDF</option>
-      <option value="image-to-pdf">تحويل صورة إلى PDF</option>
-      <option value="clean-text">إزالة التنسيقات / HTML</option>
-      <option value="text-diff">مقارنة النصوص (Diff)</option>
-      <option value="markdown-to-html">تحويل Markdown إلى HTML</option>
-    </optgroup>
-    <optgroup label="📊 البيانات والجداول الإلكترونية">
-      <option value="text-to-excel">تحويل نص/جدول إلى إكسيل (.xlsx)</option>
-      <option value="excel-to-json">تحويل إكسيل (.xlsx) إلى JSON</option>
-      <option value="text-to-csv">تحويل نص/جدول إلى CSV</option>
-      <option value="csv-to-json">تحويل CSV إلى JSON</option>
-      <option value="json-to-excel">تحويل JSON إلى إكسيل</option>
-      <option value="word-to-csv">تحويل وورد إلى CSV</option>
-      <option value="csv-to-word">تحويل CSV إلى وورد</option>
-    </optgroup>
-    <optgroup label="🖼️ أدوات الصور والرسومات">
-      <option value="compress-image">ضغط حجم الصورة (KB)</option>
-      <option value="image-to-png">تحويل صورة إلى PNG</option>
-      <option value="image-to-jpg">تحويل صورة إلى JPG</option>
-      <option value="image-to-base64">تحويل صورة إلى Base64</option>
-      <option value="heic-to-jpg">تحويل HEIC (آيفون) إلى JPG</option>
-    </optgroup>
-    <optgroup label="💻 أدوات الويب والمطورين">
-      <option value="base64-tool">ترميز / فك ترميز Base64</option>
-      <option value="json-beautifier">تنسيق وترتيب JSON</option>
-      <option value="hash-generator">مولد التشفير (MD5 / SHA-256)</option>
-      <option value="url-encoder">تشفير الروابط (URL)</option>
-      <option value="css-js-minifier">تصغير حجم CSS/JS</option>
-      <option value="html-entity">تحويل نصوص HTML</option>
-      <option value="timestamp-converter">تحويل وقت Unix إلى تاريخ</option>
-    </optgroup>
-    <optgroup label="🔧 أدوات عامة ومفيدة">
-      <option value="text-to-qr">توليد باركود (QR Code)</option>
-      <option value="password-generator">مولد كلمات مرور قوية</option>
-      <option value="password-strength">فحص قوة كلمة المرور</option>
-      <option value="text-counter">عداد الحروف والكلمات المفصل</option>
-      <option value="text-to-speech">تحويل النص إلى صوت (نطق)</option>
-      <option value="percentage-calc">حاسبة النسب المئوية</option>
-      <option value="byte-converter">محول مساحات (Byte/KB/MB)</option>
-      <option value="unit-converter">محول الأطوال والوحدات</option>
-    </optgroup>
-  `;
-
-  document.getElementById('conversion-type').innerHTML = optionsEn;
-
-  function updateStats() {
-    const text = document.getElementById('input-data').value;
-    document.getElementById('char-count').innerText = text.length;
-    document.getElementById('word-count').innerText = text.trim() ? text.trim().split(/\s+/).length : 0;
-  }
-
-  function toggleTheme() {
-    document.body.classList.toggle('light-theme');
-    const btn = document.getElementById('theme-btn');
-    btn.innerText = document.body.classList.contains('light-theme') ? '🌙 Dark' : '☀️ Light';
-  }
-
-  let currentLang = 'en';
-  function toggleLanguage() {
-    currentLang = currentLang === 'en' ? 'ar' : 'en';
-    const langBtn = document.getElementById('lang-btn');
-    const selectElem = document.getElementById('conversion-type');
-    const selectedVal = selectElem.value;
-
-    if (currentLang === 'ar') {
-      document.dir = 'rtl';
-      langBtn.innerText = '🌐 English';
-      selectElem.innerHTML = optionsAr;
-      selectElem.setAttribute('dir', 'rtl');
-      document.getElementById('sub-title').innerText = 'الأداة الشاملة لكل ما تحتاجه، بسرعة فائقة.';
-      document.getElementById('lbl-tool').innerText = 'ماذا تريد أن تفعل اليوم؟';
-      document.getElementById('lbl-content').innerText = 'المحتوى';
-      document.getElementById('input-data').placeholder = 'الصق النص أو الجدول أو الأكواد هنا...';
-      document.getElementById('lbl-result').innerText = 'النتيجة:';
-      document.getElementById('label-chars').innerText = 'الحروف';
-      document.getElementById('label-words').innerText = 'الكلمات';
-      document.getElementById('lbl-upload-title').innerText = 'اسحب الملف أو اضغط لرفع صورة/ملف';
-      document.getElementById('lbl-upload-sub').innerText = '(يدعم الصور، PDF، CSV، JSON، وورد، TXT)';
-    } else {
-      document.dir = 'ltr';
-      langBtn.innerText = '🌐 العربية';
-      selectElem.innerHTML = optionsEn;
-      selectElem.setAttribute('dir', 'ltr');
-      document.getElementById('sub-title').innerText = 'The Infinite SaaS Conversion Suite';
-      document.getElementById('lbl-tool').innerText = 'What to do today?';
-      document.getElementById('lbl-content').innerText = 'Content';
-      document.getElementById('input-data').placeholder = 'Paste Text, Table, Links, or Code here...';
-      document.getElementById('lbl-result').innerText = 'Result:';
-      document.getElementById('label-chars').innerText = 'Chars';
-      document.getElementById('label-words').innerText = 'Words';
-      document.getElementById('lbl-upload-title').innerText = 'Drag & Drop file or click to upload';
-      document.getElementById('lbl-upload-sub').innerText = '(Supports Images, PDF, CSV, JSON, Word, TXT)';
-    }
-    if (selectedVal) selectElem.value = selectedVal;
-  }
-
-  const dropZone = document.getElementById('dropZone');
-  const fileInput = document.getElementById('fileInput');
-  const inputData = document.getElementById('input-data');
-
-  fileInput.addEventListener('change', (e) => {
-    if (e.target.files.length > 0) processFiles(Array.from(e.target.files));
+  document.getElementById('privacy-link').addEventListener('click', () => {
+    window.VInfinityToast.showToast(
+      window.currentLang === 'ar'
+        ? 'الخصوصية: نستخدم ملفات تعريف الارتباط ومزوّدي إعلانات مثل جوجل. تُعالج الملفات على سيرفراتنا لإتمام التحويل ولا يتم تخزينها بعد ذلك.'
+        : 'Privacy: We use cookies and ad providers like Google. Uploaded files are processed on our servers to perform the conversion and are not stored afterwards.',
+      { duration: 7000 }
+    );
   });
-
-  function pdfPageToOrderedText(items) {
-    if (!items || !items.length) return '';
-    let parts = items.map(it => ({ text: it.str, x: it.transform[4], y: it.transform[5], width: it.width || 0 })).filter(p => p.text.trim().length > 0);
-    if (!parts.length) return '';
-    parts.sort((a, b) => { if (Math.abs(a.y - b.y) > 7) { return b.y - a.y; } return a.x - b.x; });
-    let lines = []; let currentLine = []; let lastY = null;
-    parts.forEach(p => {
-      if (lastY === null) { currentLine.push(p); lastY = p.y; }
-      else { if (Math.abs(lastY - p.y) <= 7) { currentLine.push(p); } else { lines.push(currentLine); currentLine = [p]; lastY = p.y; } }
-    });
-    if (currentLine.length > 0) lines.push(currentLine);
-    return lines.map(line => {
-      line.sort((a, b) => a.x - b.x);
-      let lineText = ''; let prevEndX = null;
-      line.forEach(it => {
-        if (prevEndX !== null) { const gap = it.x - prevEndX; if (gap > 40) lineText += '   '; else if (gap > 2) lineText += ' '; }
-        lineText += it.text; prevEndX = it.x + it.width;
-      });
-      return lineText;
-    }).join('\n');
-  }
-
-  function processFiles(files) {
-    loadedFiles = files;
-    const first = files[0];
-    const reader = new FileReader();
-
-    const fileName = first.name.toLowerCase();
-    const isPDF = first.type.includes('pdf') || fileName.endsWith('.pdf');
-    const isWord = first.type.includes('word') || fileName.endsWith('.docx') || fileName.endsWith('.doc');
-    const isHeic = fileName.endsWith('.heic') || fileName.endsWith('.heif');
-
-    if (isHeic) {
-      inputData.value = (currentLang === 'ar') ? `[تم تحميل صورة HEIC: ${first.name} — جاهزة للتحويل]` : `[HEIC image loaded: ${first.name} — ready to convert]`;
-      updateStats();
-      return;
-    }
-
-    if (first.type.startsWith('image/')) {
-      reader.onload = (e) => {
-        first.dataUrl = e.target.result;
-        inputData.value = (currentLang === 'ar') ? `[تم تحميل الصورة: ${first.name}]` : `[Image Loaded: ${first.name}]`;
-        updateStats();
-      };
-      reader.readAsDataURL(first);
-    }
-    else if (isWord) {
-      const executeBtn = document.querySelector('.btn-execute');
-      isDocxProcessing = true;
-      if (executeBtn) { executeBtn.disabled = true; executeBtn.innerText = (currentLang === 'ar') ? '⏳ جاري القراءة...' : '⏳ Processing...'; }
-      inputData.value = (currentLang === 'ar') ? '⏳ جاري تجهيز الملف للمعاينة...' : '⏳ Reading Word file...';
-      updateStats();
-
-      reader.onload = function(e) {
-        mammoth.extractRawText({ arrayBuffer: e.target.result })
-          .then(function(resultText) {
-            inputData.value = resultText.value.trim() || `[Loaded Word: ${first.name}]`;
-            updateStats();
-          })
-          .catch(function(err) { console.error('Mammoth preview error:', err); })
-          .finally(() => {
-            isDocxProcessing = false;
-            if (executeBtn) { executeBtn.disabled = false; executeBtn.innerText = (currentLang === 'ar') ? 'تنفيذ العملية 🚀' : 'Execute 🚀'; }
-          });
-      };
-      reader.readAsArrayBuffer(first);
-    }
-    else if (isPDF) {
-      inputData.value = (currentLang === 'ar') ? '⏳ جاري استخراج معاينة النص...' : '⏳ Extracting text preview...';
-      updateStats();
-      reader.onload = async function() {
-        try {
-          const typedarray = new Uint8Array(this.result);
-          const pdf = await pdfjsLib.getDocument(typedarray).promise;
-          let fullText = '';
-          for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-            const textContent = await page.getTextContent();
-            fullText += pdfPageToOrderedText(textContent.items) + '\n\n';
-          }
-          inputData.value = fullText.trim() || `[Loaded PDF: ${first.name}]`;
-          updateStats();
-        } catch (err) {
-          console.error('PDF text extraction error:', err);
-          inputData.value = `[Loaded PDF: ${first.name}]`;
-          updateStats();
-        }
-      };
-      reader.readAsArrayBuffer(first);
-    }
-    else {
-      reader.onload = (e) => {
-        const text = e.target.result;
-        if (text.includes('%PDF-') || text.includes('PK\x03\x04')) {
-          inputData.value = (currentLang === 'ar') ? '⚠️ ملف ثنائي غير مدعوم للطباعة كنص.' : '⚠️ Binary file detected.';
-        } else {
-          inputData.value = text;
-        }
-        updateStats();
-      };
-      reader.readAsText(first, 'UTF-8');
-    }
-  }
-
-  const ALL_ACTIONS = ['word-to-pdf', 'csv-to-pdf', 'pdf-to-text', 'pdf-to-doc', 'pdf-to-docx', 'doc-to-docx', 'pdf-to-excel', 'pdf-to-ppt', 'merge-pdf', 'split-pdf', 'text-to-excel', 'json-to-excel', 'excel-to-json', 'csv-to-json', 'text-to-csv', 'word-to-csv', 'csv-to-word', 'compress-image', 'image-to-png', 'image-to-jpg', 'image-to-base64', 'image-to-pdf', 'heic-to-jpg', 'base64-tool', 'url-encoder', 'json-beautifier', 'css-js-minifier', 'html-entity', 'hash-generator', 'timestamp-converter', 'clean-text', 'text-to-qr', 'password-generator', 'password-strength', 'text-counter', 'percentage-calc', 'byte-converter', 'unit-converter', 'markdown-to-html', 'text-diff'];
-
-  function endpointFor(type) {
-    return ALL_ACTIONS.includes(type) ? '/api/convert' : null;
-  }
-
-  const BINARY_FILENAMES = {
-    'word-to-pdf': 'converted_document.pdf', 'csv-to-pdf': 'converted_table.pdf',
-    'pdf-to-doc': 'converted.doc', 'pdf-to-docx': 'converted.docx', 'doc-to-docx': 'converted.docx',
-    'pdf-to-excel': 'converted.xlsx', 'pdf-to-ppt': 'converted.pptx',
-    'merge-pdf': 'merged.pdf', 'split-pdf': 'split_pages.zip',
-    'text-to-excel': 'converted.xlsx', 'json-to-excel': 'converted.xlsx',
-    'text-to-csv': 'converted.csv', 'word-to-csv': 'converted.csv', 'csv-to-word': 'converted.docx',
-    'compress-image': 'compressed.jpg', 'image-to-png': 'converted.png', 'image-to-jpg': 'converted.jpg',
-    'image-to-pdf': 'converted.pdf', 'heic-to-jpg': 'converted.jpg',
-  };
-
-  const NEEDS_FILE = ['word-to-pdf', 'pdf-to-text', 'excel-to-json', 'compress-image', 'image-to-png', 'image-to-jpg', 'image-to-base64', 'image-to-pdf', 'heic-to-jpg', 'pdf-to-excel', 'pdf-to-ppt', 'split-pdf'];
-  const NEEDS_MULTIPLE_FILES = ['merge-pdf'];
-
-  const MAX_FILE_MB = 4;
-  function validateFileSize(file) {
-    const sizeMB = file.size / (1024 * 1024);
-    if (sizeMB > MAX_FILE_MB) {
-      return (currentLang === 'ar')
-        ? `⚠️ الملف "${file.name}" حجمه ${sizeMB.toFixed(1)}MB — يتجاوز الحد المسموح (${MAX_FILE_MB}MB).`
-        : `⚠️ File "${file.name}" is ${sizeMB.toFixed(1)}MB — exceeds the allowed limit (${MAX_FILE_MB}MB).`;
-    }
-    return null;
-  }
-
-  function fileToBase64(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result.split(',')[1]);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  }
-
-  let loadingInterval = null;
-  function startLoadingAnimation(executeBtn, baseText) {
-    let dots = 0;
-    loadingInterval = setInterval(() => {
-      dots = (dots + 1) % 4;
-      executeBtn.innerText = baseText + '.'.repeat(dots);
-    }, 400);
-  }
-  function stopLoadingAnimation() {
-    if (loadingInterval) { clearInterval(loadingInterval); loadingInterval = null; }
-  }
-
-  // تحويل الوورد محلياً بالمتصفح بشكل مضمون وبدون شاشات سوداء أو بيضاء
-  async function clientSideWordToPdf(file) {
-    const arrayBuffer = await file.arrayBuffer();
-    const result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
-    const textContent = result.value.trim() || "No text found in document.";
-
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(12);
-    
-    const splitText = doc.splitTextToSize(textContent, 180);
-    doc.text(splitText, 15, 20);
-    
-    doc.save('converted_document.pdf');
-  }
-
-  async function runConversion() {
-    const input = inputData.value;
-    const type = document.getElementById('conversion-type').value;
-    const output = document.getElementById('output-data');
-    const qrContainer = document.getElementById('qrcode-container');
-    const executeBtn = document.querySelector('.btn-execute');
-    qrContainer.innerHTML = '';
-
-    if (type === 'text-to-speech') {
-      if (!input.trim()) { output.value = (currentLang === 'ar') ? 'يرجى إدخال نص أولاً!' : 'Please enter input first!'; return; }
-      const msg = new SpeechSynthesisUtterance(input);
-      msg.lang = (/[\u0600-\u06FF]/.test(input) || currentLang === 'ar') ? 'ar-SA' : 'en-US';
-      window.speechSynthesis.speak(msg);
-      output.value = '🗣️ Speaking text...';
-      return;
-    }
-
-    if (isDocxProcessing) {
-      output.value = (currentLang === 'ar') ? '⏳ الملف قيد التجهيز...' : '⏳ Processing...';
-      return;
-    }
-
-    // تشغيل التحويل محلياً لـ Word to PDF لمنع مشاكل السيرفر نهائياً
-    if (type === 'word-to-pdf' && loadedFiles[0]) {
-      const origBtnText = executeBtn.innerText;
-      executeBtn.disabled = true;
-      startLoadingAnimation(executeBtn, '⏳ جاري المعالجة محلياً');
-      try {
-        await clientSideWordToPdf(loadedFiles[0]);
-        output.value = (currentLang === 'ar') ? '✅ تم التحويل والتنزيل بنجاح تام!' : '✅ Converted and downloaded successfully!';
-      } catch (err) {
-        output.value = '❌ خطأ في التحويل المحلي: ' + err.message;
-      } finally {
-        stopLoadingAnimation();
-        executeBtn.disabled = false;
-        executeBtn.innerText = origBtnText;
-      }
-      return;
-    }
-
-    if (NEEDS_MULTIPLE_FILES.includes(type)) {
-      if (!loadedFiles || loadedFiles.length < 2) {
-        output.value = (currentLang === 'ar') ? 'يرجى رفع ملفين PDF على الأقل.' : 'Please upload at least 2 PDF files.';
-        return;
-      }
-    } else if (NEEDS_FILE.includes(type) && !loadedFiles[0] && !input.trim()) {
-      output.value = (currentLang === 'ar') ? 'يرجى رفع ملف أو إدخال نص أولاً!' : 'Please upload a file or enter input first!';
-      return;
-    }
-
-    const filesToCheck = NEEDS_MULTIPLE_FILES.includes(type) ? loadedFiles : (loadedFiles[0] ? [loadedFiles[0]] : []);
-    for (const f of filesToCheck) {
-      const sizeError = validateFileSize(f);
-      if (sizeError) { output.value = sizeError; return; }
-    }
-
-    const origBtnText = executeBtn.innerText;
-    executeBtn.disabled = true;
-    const processingLabel = (currentLang === 'ar') ? '⏳ جاري المعالجة بالسيرفر' : '⏳ Processing on server';
-    startLoadingAnimation(executeBtn, processingLabel);
-
-    try {
-      const endpoint = endpointFor(type);
-      if (!endpoint) { output.value = input; return; }
-
-      const payload = { action: type, text: input, lang: currentLang };
-
-      if (NEEDS_MULTIPLE_FILES.includes(type)) {
-        payload.filesBase64 = await Promise.all(loadedFiles.map(f => fileToBase64(f)));
-      } else if (NEEDS_FILE.includes(type) && loadedFiles[0]) {
-        payload.fileBase64 = await fileToBase64(loadedFiles[0]);
-        payload.fileName = loadedFiles[0].name;
-        payload.mimeType = loadedFiles[0].type;
-      }
-      if (type === 'json-to-excel') { payload.json = input; }
-
-      const isBinary = !!BINARY_FILENAMES[type];
-
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        let msg = (currentLang === 'ar') ? 'خطأ من السيرفر' : 'Server error';
-        try { const j = await res.json(); if (j.error) msg = j.error; } catch (e) { /* ignore */ }
-        throw new Error(msg);
-      }
-
-      if (isBinary) {
-        const blob = await res.blob();
-        const reader = new FileReader();
-        reader.onloadend = function() {
-          const base64data = reader.result;
-          const a = document.createElement('a');
-          a.href = base64data;
-          a.download = BINARY_FILENAMES[type];
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-        };
-        reader.readAsDataURL(blob);
-
-        output.value = (currentLang === 'ar') ? '✅ تمت المعالجة وتم بدء التنزيل!' : '✅ Processed and download started!';
-      } else {
-        const data = await res.json();
-        if (data.resultImage) {
-          const img = document.createElement('img');
-          img.src = data.resultImage;
-          img.style.width = '140px'; img.style.height = '140px';
-          qrContainer.appendChild(img);
-          output.value = (currentLang === 'ar') ? '✅ تم توليد الباركود بالأسفل!' : '✅ QR Code Generated Below!';
-        } else {
-          output.value = (data.result !== undefined) ? data.result : JSON.stringify(data);
-        }
-      }
-    } catch (e) {
-      console.error('Conversion error:', e);
-      output.value = (currentLang === 'ar') ? ('❌ حدث خطأ: ' + e.message) : ('❌ Error: ' + e.message);
-    } finally {
-      stopLoadingAnimation();
-      executeBtn.disabled = false;
-      executeBtn.innerText = origBtnText;
-    }
-  }
+  document.getElementById('terms-link').addEventListener('click', () => {
+    window.VInfinityToast.showToast(
+      window.currentLang === 'ar'
+        ? 'الشروط: باستخدامك لهذه الأداة فأنت توافق على سياسات الاستخدام العادل.'
+        : 'Terms: By using this tool, you agree to fair use policies.',
+      { duration: 6000 }
+    );
+  });
 </script>
 
 </body>
