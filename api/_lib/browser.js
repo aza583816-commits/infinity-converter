@@ -1,12 +1,5 @@
 // =====================================================================================
 // browser.js — تشغيل Chromium بدون واجهة (Headless) لتحويل HTML إلى PDF
-//
-// 🔧 هذا الملف يحل مشكلة "الرموز المخربطة" عند تحويل الوورد العربي إلى PDF:
-// بيئات السيرفرات السحابية (Vercel / AWS Lambda) لا تأتي بخطوط عربية مثبّتة على
-// نظام التشغيل، فيرسم Chromium الحروف العربية كمربعات فارغة أو رموز مشوّهة (tofu).
-// الحل: نحمّل خط عربي حقيقي (Noto Naskh Arabic) من Google Fonts داخل صفحة الطباعة
-// نفسها، وننتظر تحميله فعلياً عبر document.fonts.ready قبل أخذ نسخة الـ PDF —
-// بدلاً من الاعتماد على setTimeout ثابت (500ms) كان غير كافٍ دائماً وغير موثوق.
 // =====================================================================================
 
 const path = require('path');
@@ -40,8 +33,7 @@ async function getBrowser() {
 }
 
 /**
- * ينتظر جاهزية كل الخطوط المطلوبة في الصفحة، مع سقف زمني أمان حتى لا تتجمد
- * الدالة إذا تعذّر الوصول لشبكة الإنترنت من داخل بيئة السيرفر لأي سبب.
+ * ينتظر جاهزية كل الخطوط المطلوبة في الصفحة، مع سقف زمني أمان.
  */
 async function waitForFonts(page, timeoutMs = 4000) {
   await Promise.race([
@@ -89,8 +81,10 @@ async function htmlToPdfBuffer(bodyHtml, isArabic) {
     const page = await browser.newPage();
     const fullHtml = buildFullHtml(bodyHtml, isArabic);
 
-    await page.setContent(fullHtml, { waitUntil: 'networkidle0' });
-    // الانتظار الفعلي لتحميل الخط العربي بدل setTimeout ثابت وغير موثوق
+    // تم التعديل هنا: استخدام domcontentloaded لضمان عدم التعليق في انتظار الشبكة
+    await page.setContent(fullHtml, { waitUntil: 'domcontentloaded', timeout: 15000 });
+    
+    // الانتظار الفعلي لتحميل الخط العربي
     await waitForFonts(page);
 
     return await page.pdf({
