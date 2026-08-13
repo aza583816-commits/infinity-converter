@@ -9,3 +9,4 @@ qrcode
 pandas
 gunicorn
 pypdf
+markdown
