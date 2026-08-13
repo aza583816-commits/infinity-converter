@@ -62,7 +62,6 @@ def ensure_arabic_font():
     if _arabic_font_registered:
         return ARABIC_FONT_NAME
     
-    # قائمة مسارات بحث ذكية وآمنة لتوافق السيرفر السحابي (Render)
     possible_paths = [
         "static/fonts/NotoNaskhArabic-Regular.ttf",
         "static/NotoNaskhArabic-Regular.ttf",
@@ -80,12 +79,12 @@ def ensure_arabic_font():
             except Exception:
                 continue
                 
-    # خط احتياطي آمن إذا لم يتم العثور على أي ملف خط
     return "Helvetica"
 
 def shape_arabic(text):
     if not text:
         return text
+    # معالجة صحيحة ومضبوطة للحروف العربية لتجنب التقطيع والعكس
     if arabic_reshaper and get_display:
         try:
             reshaped = arabic_reshaper.reshape(text)
@@ -145,7 +144,7 @@ def text_to_pdf_bytes(text, is_arabic, title=None):
     story = []
     for line in (text or "").split("\n"):
         content = shape_arabic(line) if is_arabic else line
-        story.append(RLParagraph(content.replace("\n", "<br/>") or "&nbsp;", style))
+        story.append(RLParagraph(escape_html(content).replace("\n", "<br/>") or "&nbsp;", style))
     doc.build(story)
     return buf.getvalue()
 
@@ -154,17 +153,33 @@ def csv_to_pdf_bytes(text, is_arabic):
     buf = io.BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=A4, topMargin=15 * mm, bottomMargin=15 * mm, leftMargin=15 * mm, rightMargin=15 * mm)
     font = pdf_font_name(is_arabic)
-    data = [[shape_arabic((c or "").strip()) if is_arabic else (c or "").strip() for c in row] for row in rows]
-    table = Table(data, hAlign="CENTER")
+    
+    # دعم الجداول والألوان وتنسيق الخلايا بشكل منظم
+    table_data = []
+    for row in rows:
+        formatted_row = []
+        for c in row:
+            cell_text = (c or "").strip()
+            processed_text = shape_arabic(cell_text) if is_arabic else cell_text
+            style_cell = ParagraphStyle('TableCell', fontName=font, fontSize=10, leading=14, alignment=2 if is_arabic else 0)
+            formatted_row.append(RLParagraph(escape_html(processed_text), style_cell))
+        table_data.append(formatted_row)
+        
+    if not table_data:
+        table_data = [[RLParagraph("", ParagraphStyle('Empty', fontName=font, fontSize=10))]]
+
+    table = Table(table_data, hAlign="CENTER")
     table.setStyle(TableStyle([
         ("FONTNAME", (0, 0), (-1, -1), font),
-        ("FONTSIZE", (0, 0), (-1, -1), 10),
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#e2e8f0")),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0ea5e9")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
         ("ALIGN", (0, 0), (-1, -1), "RIGHT" if is_arabic else "LEFT"),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("TOPPADDING", (0, 0), (-1, -1), 6),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+        ("TOPPADDING", (0, 0), (-1, -1), 8),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+        ("LEFTPADDING", (0, 0), (-1, -1), 8),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 8),
     ]))
     doc.build([table])
     return buf.getvalue()
@@ -176,10 +191,25 @@ def handle_word_to_pdf(p):
     if file_bytes:
         try:
             docx_doc = Document(io.BytesIO(file_bytes))
-            text = "\n".join(par.text for par in docx_doc.paragraphs)
+            # استخراج النصوص والجداول من ملف الوورد بدقة وتحويلها لجدول منظم
+            extracted_elements = []
+            for par in docx_doc.paragraphs:
+                if par.text.strip():
+                    extracted_elements.append(par.text)
+            for table in docx_doc.tables:
+                for row in table.rows:
+                    row_text = " | ".join(cell.text.strip() for cell in row.cells)
+                    if row_text.strip():
+                        extracted_elements.append(row_text)
+            text = "\n".join(extracted_elements) if extracted_elements else "\n".join(par.text for par in docx_doc.paragraphs)
         except Exception:
             return bad_request("تعذر قراءة ملف الوورد" if is_arabic else "Could not read the Word file")
-    pdf_bytes = text_to_pdf_bytes(text, is_arabic)
+            
+    # إذا كان الملف يحتوي على جداول أو خطوط مفصولة بـ (|)، نقوم بمعالجته كجدول ملون بـ PDF لضمان خروج الألوان والجداول
+    if "|" in text or file_bytes:
+        pdf_bytes = csv_to_pdf_bytes(text, is_arabic)
+    else:
+        pdf_bytes = text_to_pdf_bytes(text, is_arabic)
     return file_response(pdf_bytes, "application/pdf", "converted_document.pdf")
 
 def handle_csv_to_pdf(p):
