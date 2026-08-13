@@ -6,3 +6,4 @@ reportlab
 openpyxl
 pdf2docx
 qrcode
+gunicorn
