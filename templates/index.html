@@ -37,7 +37,7 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
-            font-family: 'Cairo', sans-serif;
+            font-family: 'Cairo', 'Poppins', sans-serif;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -58,29 +58,20 @@
 
         .logo { font-size: 24px; font-weight: 800; color: var(--primary); text-shadow: 0 0 10px rgba(139, 92, 246, 0.5); }
 
+        .controls { display: flex; gap: 10px; }
         .controls button {
-            background: var(--container-bg);
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            padding: 8px 16px;
-            border-radius: 20px;
-            cursor: pointer;
-            margin-left: 10px;
-            font-family: inherit;
-            transition: all 0.3s;
+            background: var(--container-bg); border: 1px solid var(--border-color);
+            color: var(--text-main); padding: 8px 16px; border-radius: 20px;
+            cursor: pointer; font-family: inherit; font-weight: 600; transition: all 0.3s;
+            display: flex; align-items: center; gap: 8px;
         }
 
         .controls button:hover { background: var(--primary); color: white; }
 
         .main-container {
-            width: 90%;
-            max-width: 800px;
-            margin: 40px auto;
-            background: var(--container-bg);
-            padding: 40px;
-            border-radius: 24px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(12px);
+            width: 90%; max-width: 800px; margin: 40px auto;
+            background: var(--container-bg); padding: 40px; border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2); backdrop-filter: blur(12px);
             border: 1px solid var(--border-color);
         }
 
@@ -90,20 +81,11 @@
 
         /* Tool Selector Button */
         .tool-selector-btn {
-            width: 100%;
-            padding: 15px;
-            background: rgba(139, 92, 246, 0.1);
-            border: 2px dashed var(--primary);
-            border-radius: 12px;
-            color: var(--text-main);
-            font-size: 18px;
-            font-family: inherit;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.3s;
-            margin-bottom: 25px;
+            width: 100%; padding: 15px; background: rgba(139, 92, 246, 0.1);
+            border: 2px dashed var(--primary); border-radius: 12px; color: var(--text-main);
+            font-size: 18px; font-family: inherit; font-weight: 600; cursor: pointer;
+            display: flex; justify-content: space-between; align-items: center;
+            transition: all 0.3s; margin-bottom: 25px;
         }
         .tool-selector-btn:hover { background: rgba(139, 92, 246, 0.2); box-shadow: 0 0 15px rgba(139, 92, 246, 0.3); }
 
@@ -125,11 +107,11 @@
         }
 
         /* Grid Categories */
-        .category-title { margin: 20px 0 10px; font-size: 20px; color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;}
+        .category-title { margin: 20px 0 10px; font-size: 20px; color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px; font-weight: bold;}
         .tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
         .tool-card {
             background: var(--container-bg); border: 1px solid var(--border-color); padding: 15px;
-            border-radius: 12px; cursor: pointer; text-align: center; transition: all 0.2s;
+            border-radius: 12px; cursor: pointer; text-align: center; transition: all 0.2s; font-weight: 600;
         }
         .tool-card:hover { transform: translateY(-5px); background: var(--primary); color: white; border-color: var(--primary); }
         .tool-card i { font-size: 24px; margin-bottom: 10px; display: block; }
@@ -170,7 +152,7 @@
         /* Result Area */
         .result-area {
             margin-top: 25px; padding: 20px; background: rgba(16, 185, 129, 0.1); border: 1px solid var(--success);
-            border-radius: 12px; display: none; word-wrap: break-word; text-align: right;
+            border-radius: 12px; display: none; word-wrap: break-word; text-align: start;
         }
         .result-area.error { background: rgba(239, 68, 68, 0.1); border-color: var(--danger); }
 
@@ -184,21 +166,47 @@
         .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
         .toast.error-toast { background: var(--danger); }
 
+        /* Footer Styles */
+        .footer-disclaimer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.6;
+            border-top: 1px solid var(--border-color);
+            padding-top: 20px;
+        }
+        .footer-links {
+            margin-top: 10px;
+        }
+        .footer-links a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: color 0.3s;
+            font-weight: 600;
+        }
+        .footer-links a:hover {
+            color: var(--primary-hover);
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="logo"><i class="fa-solid fa-infinity"></i> V-Infinity</div>
+        <div class="logo" style="display:flex; align-items:center; gap:8px;">
+            <i class="fa-solid fa-infinity"></i> <span data-ar="V-Infinity" data-en="V-Infinity">V-Infinity</span>
+        </div>
         <div class="controls">
+            <button onclick="toggleLanguage()" id="langBtn">🇺🇸 English</button>
             <button onclick="toggleTheme()" id="themeBtn"><i class="fa-solid fa-sun"></i></button>
         </div>
     </header>
 
     <div class="main-container">
         <div class="text-center">
-            <h1>المحول الشامل الذكي</h1>
-            <p>اختر الأداة، ارفع ملفك أو الصق النص، ودع السحر يبدأ!</p>
+            <h1 data-ar="المحول الشامل الذكي" data-en="Smart Infinity Converter">المحول الشامل الذكي</h1>
+            <p data-ar="اختر الأداة، ارفع ملفك أو الصق النص، ودع السحر يبدأ!" data-en="Select a tool, upload your file or paste text, and let the magic begin!">اختر الأداة، ارفع ملفك أو الصق النص، ودع السحر يبدأ!</p>
         </div>
 
         <!-- زر اختيار الأداة -->
@@ -210,81 +218,94 @@
         <!-- منطقة السحب والإفلات -->
         <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
             <i class="fa-solid fa-cloud-arrow-up"></i>
-            <h3 id="uploadText">اسحب وأفلت الملف هنا أو اضغط للاختيار</h3>
+            <h3 id="uploadText" data-ar="اسحب وأفلت الملف هنا أو اضغط للاختيار" data-en="Drag & Drop file here or click to select">اسحب وأفلت الملف هنا أو اضغط للاختيار</h3>
             <p id="fileName" style="margin-top: 10px; color: var(--primary); font-weight: bold;"></p>
             <input type="file" id="fileInput" onchange="handleFileSelect(event)">
         </div>
 
         <!-- مربع النص -->
-        <textarea id="textInput" placeholder="الصق النص أو المحتوى هنا (إذا كانت الأداة تتطلب نصاً)..."></textarea>
+        <textarea id="textInput" data-ar-ph="الصق النص أو المحتوى هنا (إذا كانت الأداة تتطلب نصاً)..." data-en-ph="Paste text or content here (if the tool requires text)..." placeholder="الصق النص أو المحتوى هنا (إذا كانت الأداة تتطلب نصاً)..."></textarea>
 
         <!-- زر التنفيذ -->
         <button class="execute-btn" id="executeBtn" onclick="processConversion()">
-            <span id="btnText">تنفيذ السحر <i class="fa-solid fa-rocket"></i></span>
+            <span id="btnText" data-ar="تنفيذ السحر <i class='fa-solid fa-rocket'></i>" data-en="Execute Magic <i class='fa-solid fa-rocket'></i>">تنفيذ السحر <i class="fa-solid fa-rocket"></i></span>
             <div class="spinner" id="spinner"></div>
         </button>
 
         <!-- منطقة عرض النتائج -->
         <div class="result-area" id="resultArea"></div>
+
+        <!-- الفوتر الخاص بسياسات الإعلانات والخصوصية -->
+        <div class="footer-disclaimer">
+            <p data-ar="V-Infinity Converter provides a comprehensive suite for data and file conversion. Files are processed securely on our servers and are never stored. We use cookies and Google AdSense according to policies." data-en="V-Infinity Converter provides a comprehensive suite for data and file conversion. Files are processed securely on our servers and are never stored. We use cookies and Google AdSense according to policies.">V-Infinity Converter provides a comprehensive suite for data and file conversion. Files are processed securely on our servers and are never stored. We use cookies and Google AdSense according to policies.</p>
+            <div class="footer-links">
+                <a href="#" data-ar="Privacy" data-en="Privacy">Privacy</a> | 
+                <a href="#" data-ar="Terms" data-en="Terms">Terms</a> | 
+                <a href="#" data-ar="Contact Us" data-en="Contact Us">Contact Us</a>
+            </div>
+        </div>
     </div>
 
     <!-- نافذة الأدوات (Modal) -->
     <div class="modal" id="toolsModal">
         <div class="modal-content">
             <button class="close-modal" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
-            <h2 style="text-align: center; margin-bottom: 20px; color: var(--primary);">مكتبة الأدوات</h2>
+            <h2 style="text-align: center; margin-bottom: 20px; color: var(--primary);" data-ar="مكتبة الأدوات" data-en="Tools Library">مكتبة الأدوات</h2>
             
             <!-- قسم المستندات -->
-            <div class="category-title"><i class="fa-regular fa-file-word"></i> أدوات المستندات والـ PDF</div>
+            <div class="category-title" data-ar="<i class='fa-regular fa-file-word'></i> أدوات المستندات والـ PDF" data-en="<i class='fa-regular fa-file-word'></i> Document & PDF Tools"><i class="fa-regular fa-file-word"></i> أدوات المستندات والـ PDF</div>
             <div class="tools-grid">
-                <div class="tool-card" onclick="selectTool('pdf-to-docx', 'PDF إلى Word (.docx)', 'file')">
-                    <i class="fa-solid fa-file-word"></i> PDF إلى Word
+                <div class="tool-card" onclick="selectTool('pdf-to-docx', 'PDF إلى Word', 'PDF to Word', 'file')">
+                    <i class="fa-solid fa-file-word"></i> <span data-ar="PDF إلى Word" data-en="PDF to Word">PDF إلى Word</span>
                 </div>
-                <div class="tool-card" onclick="selectTool('word-to-pdf', 'Word إلى PDF', 'file')">
-                    <i class="fa-solid fa-file-pdf"></i> Word إلى PDF
+                <div class="tool-card" onclick="selectTool('word-to-pdf', 'Word إلى PDF', 'Word to PDF', 'file')">
+                    <i class="fa-solid fa-file-pdf"></i> <span data-ar="Word إلى PDF" data-en="Word to PDF">Word إلى PDF</span>
                 </div>
-                <div class="tool-card" onclick="selectTool('text-to-pdf', 'نص إلى PDF', 'text')">
-                    <i class="fa-solid fa-file-lines"></i> نص إلى PDF
+                <div class="tool-card" onclick="selectTool('text-to-pdf', 'نص إلى PDF', 'Text to PDF', 'text')">
+                    <i class="fa-solid fa-file-lines"></i> <span data-ar="نص إلى PDF" data-en="Text to PDF">نص إلى PDF</span>
                 </div>
-                <div class="tool-card" onclick="selectTool('pdf-to-excel', 'PDF إلى Excel', 'file')">
-                    <i class="fa-solid fa-file-excel"></i> PDF إلى Excel
+                <div class="tool-card" onclick="selectTool('pdf-to-pdf', 'تنسيق PDF إلى PDF', 'Reformat PDF', 'file')">
+                    <i class="fa-solid fa-file-pdf"></i> <span data-ar="تنسيق PDF إلى PDF" data-en="Reformat PDF">تنسيق PDF إلى PDF</span>
                 </div>
-                <div class="tool-card" onclick="selectTool('csv-to-pdf', 'CSV إلى PDF', 'fileText')">
-                    <i class="fa-solid fa-table"></i> CSV إلى PDF
+                <div class="tool-card" onclick="selectTool('pdf-to-excel', 'PDF إلى Excel', 'PDF to Excel', 'file')">
+                    <i class="fa-solid fa-file-excel"></i> <span data-ar="PDF إلى Excel" data-en="PDF to Excel">PDF إلى Excel</span>
                 </div>
-                <div class="tool-card" onclick="selectTool('pdf-to-text', 'استخراج النص من PDF', 'file')">
-                    <i class="fa-solid fa-font"></i> استخراج نص PDF
+                <div class="tool-card" onclick="selectTool('csv-to-pdf', 'CSV إلى PDF', 'CSV to PDF', 'fileText')">
+                    <i class="fa-solid fa-table"></i> <span data-ar="CSV إلى PDF" data-en="CSV to PDF">CSV إلى PDF</span>
+                </div>
+                <div class="tool-card" onclick="selectTool('pdf-to-text', 'استخراج نص PDF', 'Extract PDF Text', 'file')">
+                    <i class="fa-solid fa-font"></i> <span data-ar="استخراج نص PDF" data-en="Extract PDF Text">استخراج نص PDF</span>
                 </div>
             </div>
 
             <!-- قسم الصور -->
-            <div class="category-title"><i class="fa-regular fa-image"></i> أدوات الصور</div>
+            <div class="category-title" data-ar="<i class='fa-regular fa-image'></i> أدوات الصور" data-en="<i class='fa-regular fa-image'></i> Image Tools"><i class="fa-regular fa-image"></i> أدوات الصور</div>
             <div class="tools-grid">
-                <div class="tool-card" onclick="selectTool('image-to-pdf', 'صورة إلى PDF', 'file')">
-                    <i class="fa-solid fa-images"></i> صورة إلى PDF
+                <div class="tool-card" onclick="selectTool('image-to-pdf', 'صورة إلى PDF', 'Image to PDF', 'file')">
+                    <i class="fa-solid fa-images"></i> <span data-ar="صورة إلى PDF" data-en="Image to PDF">صورة إلى PDF</span>
                 </div>
-                <div class="tool-card" onclick="selectTool('image-to-png', 'تحويل إلى PNG', 'file')">
-                    <i class="fa-regular fa-image"></i> تحويل لـ PNG
+                <div class="tool-card" onclick="selectTool('image-to-png', 'تحويل لـ PNG', 'Convert to PNG', 'file')">
+                    <i class="fa-regular fa-image"></i> <span data-ar="تحويل لـ PNG" data-en="Convert to PNG">تحويل لـ PNG</span>
                 </div>
-                <div class="tool-card" onclick="selectTool('compress-image', 'ضغط حجم الصورة', 'file')">
-                    <i class="fa-solid fa-compress"></i> ضغط الصورة
+                <div class="tool-card" onclick="selectTool('compress-image', 'ضغط الصورة', 'Compress Image', 'file')">
+                    <i class="fa-solid fa-compress"></i> <span data-ar="ضغط الصورة" data-en="Compress Image">ضغط الصورة</span>
                 </div>
             </div>
 
             <!-- قسم المطورين والنصوص -->
-            <div class="category-title"><i class="fa-solid fa-code"></i> أدوات النصوص والمطورين</div>
+            <div class="category-title" data-ar="<i class='fa-solid fa-code'></i> أدوات النصوص والمطورين" data-en="<i class='fa-solid fa-code'></i> Text & Developer Tools"><i class="fa-solid fa-code"></i> أدوات النصوص والمطورين</div>
             <div class="tools-grid">
-                <div class="tool-card" onclick="selectTool('password-generator', 'توليد كلمة مرور قوية', 'none')">
-                    <i class="fa-solid fa-key"></i> توليد كلمة سر
+                <div class="tool-card" onclick="selectTool('password-generator', 'توليد كلمة سر', 'Password Generator', 'none')">
+                    <i class="fa-solid fa-key"></i> <span data-ar="توليد كلمة سر" data-en="Password Generator">توليد كلمة سر</span>
                 </div>
-                <div class="tool-card" onclick="selectTool('text-to-qr', 'نص إلى ياركود QR', 'text')">
-                    <i class="fa-solid fa-qrcode"></i> توليد QR Code
+                <div class="tool-card" onclick="selectTool('text-to-qr', 'توليد QR Code', 'QR Code Generator', 'text')">
+                    <i class="fa-solid fa-qrcode"></i> <span data-ar="توليد QR Code" data-en="QR Code Generator">توليد QR Code</span>
                 </div>
-                <div class="tool-card" onclick="selectTool('text-counter', 'حساب الكلمات والحروف', 'text')">
-                    <i class="fa-solid fa-calculator"></i> عداد النصوص
+                <div class="tool-card" onclick="selectTool('text-counter', 'عداد النصوص', 'Text Counter', 'text')">
+                    <i class="fa-solid fa-calculator"></i> <span data-ar="عداد النصوص" data-en="Text Counter">عداد النصوص</span>
                 </div>
-                <div class="tool-card" onclick="selectTool('json-beautifier', 'ترتيب وتنسيق JSON', 'text')">
-                    <i class="fa-solid fa-brackets-curly"></i> تنسيق JSON
+                <div class="tool-card" onclick="selectTool('json-beautifier', 'تنسيق JSON', 'JSON Formatter', 'text')">
+                    <i class="fa-solid fa-brackets-curly"></i> <span data-ar="تنسيق JSON" data-en="JSON Formatter">تنسيق JSON</span>
                 </div>
             </div>
 
@@ -297,7 +318,7 @@
     <script>
         let currentAction = '';
         let fileBase64 = null;
-        let isArabic = true; // نفترض أن لغة الزائر الأساسية عربية
+        let isArabic = true; 
 
         // تبديل الثيم
         function toggleTheme() {
@@ -310,17 +331,52 @@
             }
         }
 
+        // تبديل اللغة مع الأعلام والترجمة
+        function toggleLanguage() {
+            isArabic = !isArabic;
+            const langBtn = document.getElementById('langBtn');
+            const html = document.documentElement;
+
+            if (isArabic) {
+                langBtn.innerHTML = '🇺🇸 English';
+                html.setAttribute('dir', 'rtl');
+                html.setAttribute('lang', 'ar');
+            } else {
+                langBtn.innerHTML = '🇸🇦 العربية';
+                html.setAttribute('dir', 'ltr');
+                html.setAttribute('lang', 'en');
+            }
+
+            // تحديث النصوص ذات السمة data-ar و data-en
+            document.querySelectorAll('[data-ar]').forEach(el => {
+                el.innerHTML = isArabic ? el.getAttribute('data-ar') : el.getAttribute('data-en');
+            });
+
+            // تحديث مربعات النصوص (Placeholders)
+            document.querySelectorAll('textarea[data-ar-ph]').forEach(el => {
+                el.placeholder = isArabic ? el.getAttribute('data-ar-ph') : el.getAttribute('data-en-ph');
+            });
+
+            // إعادة ضبط اختيار الأداة
+            currentAction = '';
+            document.getElementById('selectedToolText').innerHTML = isArabic 
+                ? '<i class="fa-solid fa-wand-magic-sparkles"></i> اختر أداة التحويل من هنا...' 
+                : '<i class="fa-solid fa-wand-magic-sparkles"></i> Select a conversion tool here...';
+            document.getElementById('uploadArea').style.display = 'block';
+            document.getElementById('textInput').style.display = 'block';
+        }
+
         // التعامل مع النافذة المنبثقة
         function openModal() { document.getElementById('toolsModal').classList.add('active'); }
         function closeModal() { document.getElementById('toolsModal').classList.remove('active'); }
 
         // اختيار الأداة
-        function selectTool(action, name, type) {
+        function selectTool(action, nameAr, nameEn, type) {
             currentAction = action;
-            document.getElementById('selectedToolText').innerHTML = `<i class="fa-solid fa-check text-success"></i> ${name}`;
+            const toolName = isArabic ? nameAr : nameEn;
+            document.getElementById('selectedToolText').innerHTML = `<i class="fa-solid fa-check" style="color:var(--success)"></i> ${toolName}`;
             closeModal();
             
-            // ترتيب الواجهة حسب الأداة
             const uploadArea = document.getElementById('uploadArea');
             const textArea = document.getElementById('textInput');
             
@@ -331,15 +387,16 @@
         }
 
         // إشعار التوست
-        function showToast(msg, isError = false) {
+        function showToast(msgAr, msgEn, isError = false) {
             const toast = document.getElementById('toast');
-            document.getElementById('toastMsg').innerText = msg;
+            const finalMsg = isArabic ? msgAr : msgEn;
+            document.getElementById('toastMsg').innerText = finalMsg;
             if(isError) {
                 toast.classList.add('error-toast');
-                toast.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> <span id="toastMsg">${msg}</span>`;
+                toast.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> <span id="toastMsg">${finalMsg}</span>`;
             } else {
                 toast.classList.remove('error-toast');
-                toast.innerHTML = `<i class="fa-solid fa-circle-check"></i> <span id="toastMsg">${msg}</span>`;
+                toast.innerHTML = `<i class="fa-solid fa-circle-check"></i> <span id="toastMsg">${finalMsg}</span>`;
             }
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 3500);
@@ -357,7 +414,10 @@
         function handleFileSelect(e) { if(e.target.files.length) processFile(e.target.files[0]); }
 
         function processFile(file) {
-            if (file.size > 4 * 1024 * 1024) { showToast('حجم الملف يتجاوز 4 ميجابايت!', true); return; }
+            if (file.size > 4 * 1024 * 1024) { 
+                showToast('حجم الملف يتجاوز 4 ميجابايت!', 'File size exceeds 4MB!', true); 
+                return; 
+            }
             document.getElementById('fileName').innerText = file.name;
             const reader = new FileReader();
             reader.onload = (e) => { fileBase64 = e.target.result.split(',')[1]; };
@@ -366,7 +426,10 @@
 
         // إرسال الطلب للسيرفر
         async function processConversion() {
-            if (!currentAction) { showToast('رجاءً اختر أداة أولاً!', true); return; }
+            if (!currentAction) { 
+                showToast('رجاءً اختر أداة أولاً!', 'Please select a tool first!', true); 
+                return; 
+            }
             
             const text = document.getElementById('textInput').value;
             const btn = document.getElementById('executeBtn');
@@ -374,10 +437,9 @@
             const btnText = document.getElementById('btnText');
             const resultArea = document.getElementById('resultArea');
 
-            // تشغيل مؤشر التحميل
             btn.disabled = true;
             spinner.style.display = 'block';
-            btnText.innerText = 'جاري التحويل...';
+            btnText.innerText = isArabic ? 'جاري التحويل...' : 'Converting...';
             resultArea.style.display = 'none';
             resultArea.classList.remove('error');
 
@@ -385,12 +447,12 @@
                 const response = await fetch('/convert', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: currentAction, text: text, fileBase64: fileBase64, lang: 'ar' })
+                    body: JSON.stringify({ action: currentAction, text: text, fileBase64: fileBase64, lang: isArabic ? 'ar' : 'en' })
                 });
 
                 if (!response.ok) {
                     const err = await response.json();
-                    throw new Error(err.error || 'حدث خطأ في السيرفر');
+                    throw new Error(err.error || (isArabic ? 'حدث خطأ في السيرفر' : 'Server error occurred'));
                 }
 
                 const contentType = response.headers.get("content-type");
@@ -399,10 +461,10 @@
                     if (data.resultImage) {
                         resultArea.innerHTML = `<img src="${data.resultImage}" style="max-width:100%; border-radius:10px;">`;
                     } else {
-                        resultArea.innerText = data.result || 'تم التنفيذ بنجاح!';
+                        resultArea.innerText = data.result || (isArabic ? 'تم التنفيذ بنجاح!' : 'Executed successfully!');
                     }
                     resultArea.style.display = 'block';
-                    showToast('تمت العملية بنجاح!');
+                    showToast('تمت العملية بنجاح!', 'Operation successful!');
                 } else {
                     const blob = await response.blob();
                     const url = window.URL.createObjectURL(blob);
@@ -418,18 +480,17 @@
                     document.body.appendChild(a);
                     a.click();
                     window.URL.revokeObjectURL(url);
-                    showToast('تم تحميل الملف بنجاح!');
+                    showToast('تم تحميل الملف بنجاح!', 'File downloaded successfully!');
                 }
             } catch (error) {
                 resultArea.innerText = error.message;
                 resultArea.classList.add('error');
                 resultArea.style.display = 'block';
-                showToast(error.message, true);
+                showToast(error.message, error.message, true);
             } finally {
-                // إيقاف مؤشر التحميل
                 btn.disabled = false;
                 spinner.style.display = 'none';
-                btnText.innerHTML = 'تنفيذ السحر <i class="fa-solid fa-rocket"></i>';
+                btnText.innerHTML = isArabic ? 'تنفيذ السحر <i class="fa-solid fa-rocket"></i>' : 'Execute Magic <i class="fa-solid fa-rocket"></i>';
             }
         }
     </script>
