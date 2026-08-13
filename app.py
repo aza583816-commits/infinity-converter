@@ -142,8 +142,8 @@ def text_to_pdf_bytes(text, is_arabic, title=None):
     style = ParagraphStyle("Body", fontName=font, fontSize=12, leading=18, alignment=2 if is_arabic else 0)
     story = []
     for line in (text or "").split("\n"):
-        # طباعة النص العادي مباشرة بدون تشكيل عكسي لضمان استقامته
-        story.append(RLParagraph(escape_html(line).replace("\n", "<br/>") or "&nbsp;", style))
+        content = shape_arabic(line) if is_arabic else line
+        story.append(RLParagraph(escape_html(content).replace("\n", "<br/>") or "&nbsp;", style))
         story.append(Spacer(1, 6))
     doc.build(story)
     return buf.getvalue()
@@ -155,14 +155,14 @@ def word_to_pdf_structured(docx_doc, is_arabic):
     style = ParagraphStyle("Body", fontName=font, fontSize=12, leading=18, alignment=2 if is_arabic else 0)
     story = []
 
-    # معالجة الفقرات العادية بدون عكس للحروف لضمان ظهورها بشكل سليم
+    # معالجة وعكس الفقرات العادية لتظهر بالترتيب الصحيح مثل الجدول تماماً
     for par in docx_doc.paragraphs:
         txt = par.text.strip()
         if txt:
-            story.append(RLParagraph(escape_html(txt), style))
+            content = shape_arabic(txt) if is_arabic else txt
+            story.append(RLParagraph(escape_html(content), style))
             story.append(Spacer(1, 6))
 
-    # معالجة الجداول بالتشكيل الصحيح لكي تظهر منسقة
     for table_elem in docx_doc.tables:
         table_data = []
         for row in table_elem.rows:
