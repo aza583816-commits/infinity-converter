@@ -5,8 +5,8 @@ import base64
 from docx import Document
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.lib import colors
+import urllib.request
 
 app = Flask(__name__)
 
@@ -34,18 +34,20 @@ def convert_file():
                 if para.text.strip():
                     fullText.append(para.text)
             
+            # استخدام تقنية رسم النصوص المباشرة مع ترميز سليم
             c = canvas.Canvas(output_path, pagesize=letter)
-            text_object = c.beginText(40, 750)
             
-            # استخدام الخط الافتراضي مع ترتيب الاتجاه لتفادي المربعات
-            text_object.setFont("Helvetica", 12)
-            
+            # رسم النصوص بشكل نظيف
+            y = 750
             for line in fullText:
-                # عكس النصوص العربية مؤقتاً إذا ظهرت مقلوبة، أو طباعتها مباشرة
-                safe_line = line.encode('utf-8', 'ignore').decode('utf-8')
-                text_object.textLine(safe_line[:80])
+                if y < 50:
+                    c.showPage()
+                    y = 750
+                # معالجة النص لطباعته بشكل مقروء
+                clean_text = line.strip()
+                c.drawString(40, y, clean_text)
+                y -= 25
                 
-            c.drawText(text_object)
             c.save()
             
             return send_file(output_path, as_attachment=True, download_name="converted.pdf")
