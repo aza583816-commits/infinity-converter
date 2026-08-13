@@ -155,12 +155,12 @@ def word_to_pdf_structured(docx_doc, is_arabic):
     style = ParagraphStyle("Body", fontName=font, fontSize=12, leading=18, alignment=2 if is_arabic else 0)
     story = []
 
-    # معالجة وعكس الفقرات العادية لتظهر بالترتيب الصحيح مثل الجدول تماماً
+    # استخدام دالة shape_arabic للفقرات العادية لتعديل اتجاه وحروف الكلمات العربية بدقة
     for par in docx_doc.paragraphs:
         txt = par.text.strip()
         if txt:
-            content = shape_arabic(txt) if is_arabic else txt
-            story.append(RLParagraph(escape_html(content), style))
+            processed_txt = shape_arabic(txt) if is_arabic else txt
+            story.append(RLParagraph(escape_html(processed_txt), style))
             story.append(Spacer(1, 6))
 
     for table_elem in docx_doc.tables:
