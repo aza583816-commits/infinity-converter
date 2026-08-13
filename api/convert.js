@@ -1,12 +1,7 @@
 // =====================================================================================
 // V-Infinity Converter — Backend موحّد (كل الأدوات بملف واحد)
-// كل الطلبات تدخل من هنا وتوجَّه حسب حقل "action" بالـ body
 // =====================================================================================
 
-// [حاسم] لازم يُضبط هذا المتغير قبل استدعاء require('@sparticuz/chromium') مباشرة.
-// بعكس ES import (اللي تُرفع/hoisted تلقائياً لأعلى الملف)، أوامر require بـ CommonJS
-// تُنفَّذ بترتيبها بالضبط — فوضعه هنا قبل السطر التالي يضمن قراءة المكتبة له صح
-// وقت التحميل، بدل ما يكون التعديل متأخر بعد ما تكون المكتبة خلصت فحصها.
 process.env.AWS_LAMBDA_JS_RUNTIME = process.env.AWS_LAMBDA_JS_RUNTIME || 'nodejs20.x';
 
 const path = require('path');
@@ -31,10 +26,6 @@ try { zxcvbn = require('zxcvbn'); } catch (e) { /* optional */ }
 try { terser = require('terser'); } catch (e) { /* optional */ }
 try { CleanCSS = require('clean-css'); } catch (e) { /* optional */ }
 
-// ---------------------------------------------------------------------------
-// [1] حماية CORS — يقبل الطلبات فقط من الدومين الرسمي (+ بيئات vercel.app للمعاينة)
-// عدّل هذي القائمة إذا أضفت نطاقات فرعية جديدة
-// ---------------------------------------------------------------------------
 const ALLOWED_ORIGINS = [
   'https://www.infinityconverter.com',
   'https://infinityconverter.com',
@@ -58,20 +49,12 @@ function applyCors(req, res) {
   return false;
 }
 
-// ---------------------------------------------------------------------------
-// [2] أدوات مساعدة عامة
-// ---------------------------------------------------------------------------
-const MAX_FILE_BYTES = 4 * 1024 * 1024; // 4MB — هامش أمان تحت حد الـ 4.5MB لخطة Vercel Hobby
+const MAX_FILE_BYTES = 4 * 1024 * 1024;
 
 function isArabicText(t) { return /[\u0600-\u06FF]/.test(t || ''); }
 function escapeHtml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 function parseCsv(csv) { return csv.trim().split('\n').map(r => r.split(',')); }
 
-// [إصلاح "Failed to launch the browser process"] ثلاث خطوات لازمة مع بعض:
-// 1) تعطيل وضع الرسوميات (GPU) — البيئة السيرفرية ما فيها GPU، وتفعيله يسبب تجميد/فشل الإطلاق.
-// 2) تحديد LD_LIBRARY_PATH صراحة لنفس مجلد ملف Chromium التنفيذي بعد فك ضغطه —
-//    بدون هذا السطر، النظام يفك المكتبات المشتركة (.so) لكن لا يعرف وين يدور عليها وقت التشغيل.
-// 3) قراءة executablePath (يفك الضغط فعلياً لأول مرة بكل Cold Start).
 async function getBrowser() {
   if (typeof chromium.setGraphicsMode === 'function') {
     chromium.setGraphicsMode(false);
@@ -91,10 +74,10 @@ async function getBrowser() {
   });
 }
 
-// طباعة HTML إلى PDF عبر Chromium حقيقي (بديل قوي وموثوق لـ html2canvas)
 async function htmlToPdfBuffer(bodyHtml, isArabic) {
-  const browser = await getBrowser();
+  let browser = null;
   try {
+    browser = await getBrowser();
     const page = await browser.newPage();
     const fullHtml = `<!DOCTYPE html><html dir="${isArabic ? 'rtl' : 'ltr'}"><head><meta charset="utf-8">
     <style>
@@ -105,10 +88,19 @@ async function htmlToPdfBuffer(bodyHtml, isArabic) {
       pre{white-space:pre-wrap;font-family:inherit;font-size:14px;}
       img{max-width:100%;}
     </style></head><body>${bodyHtml}</body></html>`;
-    await page.setContent(fullHtml, { waitUntil: 'networkidle0' });
-    return page.pdf({ format: 'A4', printBackground: true, margin: { top: '15mm', bottom: '15mm', left: '15mm', right: '15mm' } });
+    
+    await page.setContent(fullHtml, { waitUntil: 'domcontentloaded' });
+    await new Promise(r => setTimeout(r, 500));
+
+    return await page.pdf({ 
+      format: 'A4', 
+      printBackground: true, 
+      margin: { top: '15mm', bottom: '15mm', left: '15mm', right: '15mm' } 
+    });
   } finally {
-    await browser.close();
+    if (browser) {
+      await browser.close().catch(() => {});
+    }
   }
 }
 
@@ -174,9 +166,6 @@ function secureRandomString(length, chars) {
   return out;
 }
 
-// ---------------------------------------------------------------------------
-// [3] المعالج الرئيسي — نقطة الدخول الوحيدة لكل الأدوات
-// ---------------------------------------------------------------------------
 module.exports = async (req, res) => {
   if (applyCors(req, res)) return;
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -190,7 +179,6 @@ module.exports = async (req, res) => {
     }
 
     switch (action) {
-      // ============================= مستندات (Word/PDF/CSV) =============================
       case 'word-to-pdf': {
         let html;
         if (fileBase64) {
@@ -289,7 +277,6 @@ module.exports = async (req, res) => {
         return res.status(200).send(zipBuf);
       }
 
-      // ============================= بيانات وجداول =============================
       case 'text-to-excel':
       case 'json-to-excel': {
         const wb = XLSX.utils.book_new();
@@ -345,7 +332,6 @@ module.exports = async (req, res) => {
         return res.status(200).send(buf);
       }
 
-      // ============================= صور =============================
       case 'compress-image': {
         if (!fileBase64) return res.status(400).json({ error: 'No image provided' });
         const out = await sharp(Buffer.from(fileBase64, 'base64')).rotate().resize({ width: 1600, withoutEnlargement: true }).jpeg({ quality: 70, mozjpeg: true }).toBuffer();
@@ -397,7 +383,6 @@ module.exports = async (req, res) => {
         return res.status(200).send(Buffer.from(jpgBuffer));
       }
 
-      // ============================= أدوات مطورين =============================
       case 'base64-tool': {
         let result;
         try {
@@ -449,7 +434,6 @@ module.exports = async (req, res) => {
         return res.status(200).json({ result: text.replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, ' ').trim() });
       }
 
-      // ============================= أدوات عامة =============================
       case 'text-to-qr': {
         const dataUrl = await QRCode.toDataURL(text, { errorCorrectionLevel: 'H', width: 280, margin: 1 });
         return res.status(200).json({ resultImage: dataUrl });
@@ -490,7 +474,7 @@ module.exports = async (req, res) => {
 
       case 'unit-converter': {
         const val = parseFloat(text.replace(/[^0-9.]/g, ''));
-        return res.status(200).json({ result: `Meters: ${val} m\nFeet: ${(val * 3.28084).toFixed(2)} ft\nInches: ${(val * 39.3701).toFixed(2)} in\nMiles: ${(val / 1609.34).toFixed(4)} mi` });
+        return res.status(200).json({ result: `Meters: ${val} m\nFeet: ${(val * 3.28084).toFixed(2)} ft\nInches: ${(val * 39.3701).toFixed(2)} in\nij: ${(val / 1609.34).toFixed(4)} mi` });
       }
 
       case 'markdown-to-html': {
@@ -508,7 +492,7 @@ module.exports = async (req, res) => {
       default:
         return res.status(400).json({ error: 'Unknown action: ' + action });
     }
-  } catch (err) {
+  } catc (err) {
     console.error('convert.js error:', err);
     return res.status(500).json({ error: err.message });
   }
