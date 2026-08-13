@@ -22,7 +22,7 @@
             --text-main: #0f172a;
             --text-muted: #64748b;
             --border: #e2e8f0;
-            --primary: #4f46e5;      /* Indigo */
+            --primary: #4f46e5;      
             --primary-hover: #4338ca;
             --upload-bg: #eff6ff;
             --upload-border: #3b82f6;
@@ -206,12 +206,13 @@
 <body>
 
     <header>
-        <div class="logo">
+        <!-- الشعار ثابت الاتجاه -->
+        <div class="logo" style="display:flex; align-items:center; gap:8px; direction: ltr; white-space: nowrap;">
             <i class="fa-solid fa-infinity"></i> <span data-ar="V-Infinity" data-en="V-Infinity">V-Infinity</span>
         </div>
         <div class="controls">
             <button onclick="toggleLanguage()" id="langBtn">🇺🇸 English</button>
-            <button onclick="toggleTheme()" id="themeBtn"><i class="fa-solid fa-moon"></i></button>
+            <button onclick="toggleTheme()" id="themeBtn"><i class="fa-solid fa-sun"></i></button>
         </div>
     </header>
 
@@ -253,6 +254,7 @@
     <!-- مكتبة الأدوات (SaaS Grid Style) -->
     <div class="tools-section">
         
+        <!-- قسم المستندات -->
         <div class="section-title"><i class="fa-solid fa-file-pdf" style="color:var(--c-pdf)"></i> <span data-ar="أدوات PDF والمستندات" data-en="PDF & Document Tools">أدوات PDF والمستندات</span></div>
         <div class="tools-grid">
             <div class="tool-card" onclick="selectTool('pdf-to-docx', 'PDF إلى Word', 'PDF to Word', 'file', 'i-word', 'fa-file-word')">
@@ -297,22 +299,24 @@
                     <p data-ar="فصل صفحات الـ PDF إلى ملفات مستقلة." data-en="Separate PDF pages into individual files.">فصل صفحات الـ PDF إلى ملفات مستقلة.</p>
                 </div>
             </div>
-            <div class="tool-card" onclick="selectTool('pdf-to-pdf', 'تنسيق PDF', 'Reformat PDF', 'file', 'i-pdf', 'fa-file-pdf')">
-                <div class="tool-icon i-pdf"><i class="fa-solid fa-file-pdf"></i></div>
+            <!-- الأداة الجديدة -->
+            <div class="tool-card" onclick="selectTool('csv-to-word', 'CSV إلى Word', 'CSV to Word', 'fileText', 'i-word', 'fa-file-word')">
+                <div class="tool-icon i-word"><i class="fa-solid fa-file-word"></i></div>
                 <div class="tool-info">
-                    <h3 data-ar="تنسيق PDF إلى PDF" data-en="Reformat PDF">تنسيق PDF إلى PDF</h3>
-                    <p data-ar="إعادة بناء وتنسيق ملفات PDF النصية." data-en="Rebuild and format text-based PDFs.">إعادة بناء وتنسيق ملفات PDF النصية.</p>
+                    <h3 data-ar="CSV إلى Word" data-en="CSV to Word">CSV إلى Word</h3>
+                    <p data-ar="تحويل الجداول النصية إلى مستندات وورد." data-en="Convert CSV text to Word documents.">تحويل الجداول النصية إلى مستندات وورد.</p>
                 </div>
             </div>
-            <div class="tool-card" onclick="selectTool('pdf-to-text', 'استخراج نص PDF', 'Extract PDF Text', 'file', 'i-dev', 'fa-font')">
-                <div class="tool-icon i-dev"><i class="fa-solid fa-font"></i></div>
+            <div class="tool-card" onclick="selectTool('json-to-excel', 'JSON إلى Excel', 'JSON to Excel', 'fileText', 'i-excel', 'fa-file-excel')">
+                <div class="tool-icon i-excel"><i class="fa-solid fa-file-excel"></i></div>
                 <div class="tool-info">
-                    <h3 data-ar="استخراج نص PDF" data-en="Extract PDF Text">استخراج نص PDF</h3>
-                    <p data-ar="نسخ ولصق النصوص من داخل ملفات PDF." data-en="Copy and paste text directly from PDFs.">نسخ ولصق النصوص من داخل ملفات PDF.</p>
+                    <h3 data-ar="JSON إلى Excel" data-en="JSON to Excel">JSON إلى Excel</h3>
+                    <p data-ar="تحويل البيانات البرمجية إلى جداول إكسل." data-en="Convert JSON data into Excel sheets.">تحويل البيانات البرمجية إلى جداول إكسل.</p>
                 </div>
             </div>
         </div>
 
+        <!-- قسم الصور -->
         <div class="section-title"><i class="fa-solid fa-image" style="color:var(--c-img)"></i> <span data-ar="أدوات الصور" data-en="Image Tools">أدوات الصور</span></div>
         <div class="tools-grid">
             <div class="tool-card" onclick="selectTool('image-to-pdf', 'صورة إلى PDF', 'Image to PDF', 'file', 'i-img', 'fa-images')">
@@ -329,15 +333,24 @@
                     <p data-ar="تقليل حجم الصور مع الحفاظ على الجودة." data-en="Reduce image file size while maintaining quality.">تقليل حجم الصور مع الحفاظ على الجودة.</p>
                 </div>
             </div>
-            <div class="tool-card" onclick="selectTool('image-to-png', 'تحويل لـ PNG', 'Convert to PNG', 'file', 'i-img', 'fa-image')">
-                <div class="tool-icon i-img"><i class="fa-regular fa-image"></i></div>
+            <div class="tool-card" onclick="selectTool('image-to-jpg', 'تحويل لـ JPG', 'Convert to JPG', 'file', 'i-img', 'fa-image')">
+                <div class="tool-icon i-img"><i class="fa-solid fa-image"></i></div>
                 <div class="tool-info">
-                    <h3 data-ar="تحويل لـ PNG" data-en="Convert to PNG">تحويل لـ PNG</h3>
-                    <p data-ar="تحويل أي صورة إلى صيغة PNG شفافة." data-en="Convert any image to transparent PNG format.">تحويل أي صورة إلى صيغة PNG شفافة.</p>
+                    <h3 data-ar="تحويل لـ JPG" data-en="Convert to JPG">تحويل لـ JPG</h3>
+                    <p data-ar="تحويل وتوحيد الصور لصيغة JPG القياسية." data-en="Convert and standardize images to JPG format.">تحويل وتوحيد الصور لصيغة JPG القياسية.</p>
+                </div>
+            </div>
+            <!-- الأداة الجديدة -->
+            <div class="tool-card" onclick="selectTool('heic-to-jpg', 'HEIC إلى JPG (للايفون)', 'HEIC to JPG', 'file', 'i-img', 'fa-mobile-screen')">
+                <div class="tool-icon i-img"><i class="fa-solid fa-mobile-screen"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="HEIC إلى JPG" data-en="HEIC to JPG">HEIC إلى JPG</h3>
+                    <p data-ar="تحويل صور الايفون (HEIC) لتفتح في أي مكان." data-en="Convert iPhone photos (HEIC) to open anywhere.">تحويل صور الايفون (HEIC) لتفتح في أي مكان.</p>
                 </div>
             </div>
         </div>
 
+        <!-- قسم المطورين والنصوص -->
         <div class="section-title"><i class="fa-solid fa-code" style="color:var(--c-dev)"></i> <span data-ar="أدوات النصوص والمطورين" data-en="Text & Dev Tools">أدوات النصوص والمطورين</span></div>
         <div class="tools-grid">
             <div class="tool-card" onclick="selectTool('text-to-pdf', 'نص إلى PDF', 'Text to PDF', 'text', 'i-pdf', 'fa-file-lines')">
@@ -361,11 +374,26 @@
                     <p data-ar="إنشاء كلمات مرور عشوائية وآمنة جداً." data-en="Create highly secure, random passwords.">إنشاء كلمات مرور عشوائية وآمنة جداً.</p>
                 </div>
             </div>
-            <div class="tool-card" onclick="selectTool('json-beautifier', 'تنسيق JSON', 'JSON Formatter', 'text', 'i-word', 'fa-brackets-curly')">
-                <div class="tool-icon i-word"><i class="fa-solid fa-code"></i></div>
+            <!-- الأدوات الجديدة -->
+            <div class="tool-card" onclick="selectTool('markdown-to-html', 'Markdown إلى HTML', 'Markdown to HTML', 'text', 'i-dev', 'fa-code')">
+                <div class="tool-icon i-dev"><i class="fa-solid fa-code"></i></div>
                 <div class="tool-info">
-                    <h3 data-ar="تنسيق أكواد JSON" data-en="JSON Formatter">تنسيق أكواد JSON</h3>
-                    <p data-ar="ترتيب وتنظيف الأكواد البرمجية لسهولة القراءة." data-en="Format and prettify JSON code for readability.">ترتيب وتنظيف الأكواد البرمجية لسهولة القراءة.</p>
+                    <h3 data-ar="Markdown إلى HTML" data-en="Markdown to HTML">Markdown إلى HTML</h3>
+                    <p data-ar="تحويل نصوص ماركداون إلى كود HTML جاهز." data-en="Convert Markdown text to ready HTML code.">تحويل نصوص ماركداون إلى كود HTML جاهز.</p>
+                </div>
+            </div>
+            <div class="tool-card" onclick="selectTool('clean-text', 'تنظيف النص', 'Clean Text', 'text', 'i-word', 'fa-broom')">
+                <div class="tool-icon i-word"><i class="fa-solid fa-broom"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="تنظيف النص من HTML" data-en="Clean HTML Tags">تنظيف النص من HTML</h3>
+                    <p data-ar="إزالة جميع الأكواد واستخراج النص النظيف فقط." data-en="Remove all tags and extract clean text only.">إزالة جميع الأكواد واستخراج النص النظيف فقط.</p>
+                </div>
+            </div>
+            <div class="tool-card" onclick="selectTool('hash-generator', 'توليد التشفير', 'Hash Generator', 'text', 'i-dev', 'fa-hashtag')">
+                <div class="tool-icon i-dev"><i class="fa-solid fa-hashtag"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="توليد MD5 / SHA" data-en="Hash Generator">توليد MD5 / SHA</h3>
+                    <p data-ar="تشفير النصوص لحماية البيانات كـ Hash." data-en="Encrypt texts to protect data as Hashes.">تشفير النصوص لحماية البيانات كـ Hash.</p>
                 </div>
             </div>
         </div>
@@ -576,7 +604,7 @@
             }
         }
 
-        // تشغيل الوضع الداكن كافتراضي أول ما يفتح الموقع عشان الفخامة
+        // تشغيل الوضع الداكن كافتراضي أول ما يفتح الموقع
         document.body.classList.add('dark-mode');
         document.getElementById('themeBtn').innerHTML = '<i class="fa-solid fa-sun"></i>';
     </script>
