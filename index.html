@@ -8,7 +8,7 @@
 <!-- ⬇️ الخطوط ⬇️ -->
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 
-<!-- ⬇️ جميع المكتبات البرمجية ⬇️ -->
+<!-- ⬇️ المكتبات الأساسية للتنزيل والتحويل ⬇️ -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
@@ -19,9 +19,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.min.js"></script>
-
-<!-- ⬇️ كود GOOGLE ADSENSE ⬇️ -->
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6737521782255627" crossorigin="anonymous"></script>
 
 <style>
   :root {
@@ -288,7 +285,7 @@
       <option value="excel-to-json">تحويل إكسيل (.xlsx) إلى JSON</option>
       <option value="text-to-csv">تحويل نص/جدول إلى CSV</option>
       <option value="csv-to-json">تحويل CSV إلى JSON</option>
-      <option value="json-to-excel">تحويل JSON إلى إكسيل</option>
+      <option value="json-to-excel">JSON إلى إكسيل</option>
       <option value="word-to-csv">تحويل وورد إلى CSV</option>
       <option value="csv-to-word">تحويل CSV إلى وورد</option>
     </optgroup>
@@ -537,6 +534,28 @@
     if (loadingInterval) { clearInterval(loadingInterval); loadingInterval = null; }
   }
 
+  // دالة تحويل آمنة تماماً للمتصفح لمنع شاشة السيرفر السوداء لأدوات الوورد والـ PDF
+  async function clientSideWordToPdf(file) {
+    const arrayBuffer = await file.arrayBuffer();
+    const result = await mammoth.convertToHtml({ arrayBuffer: arrayBuffer });
+    const htmlContent = `<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8"><style>body{font-family:Tahoma,sans-serif;padding:20px;color:#000;background:#fff;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #000;padding:6px;}</style></head><body>${result.value}</body></html>`;
+    
+    const element = document.createElement('div');
+    element.innerHTML = htmlContent;
+    document.body.appendChild(element);
+    
+    const opt = {
+      margin: 10,
+      filename: 'converted_document.pdf',
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    
+    await html2pdf().from(element).set(opt).save();
+    document.body.removeChild(element);
+  }
+
   async function runConversion() {
     const input = inputData.value;
     const type = document.getElementById('conversion-type').value;
@@ -556,6 +575,24 @@
 
     if (isDocxProcessing) {
       output.value = (currentLang === 'ar') ? '⏳ الملف قيد التجهيز...' : '⏳ Processing...';
+      return;
+    }
+
+    // تشغيل التحويل محلياً بالمتصفح لمنع مشاكل السيرفر والشاشات السوداء لـ word-to-pdf
+    if (type === 'word-to-pdf' && loadedFiles[0]) {
+      const origBtnText = executeBtn.innerText;
+      executeBtn.disabled = true;
+      startLoadingAnimation(executeBtn, '⏳ جاري المعالجة محلياً');
+      try {
+        await clientSideWordToPdf(loadedFiles[0]);
+        output.value = (currentLang === 'ar') ? '✅ تم التحويل والتنزيل بنجاح تام!' : '✅ Converted and downloaded successfully!';
+      } catch (err) {
+        output.value = '❌ خطأ في التحويل المحلي: ' + err.message;
+      } finally {
+        stopLoadingAnimation();
+        executeBtn.disabled = false;
+        executeBtn.innerText = origBtnText;
+      }
       return;
     }
 
@@ -611,14 +648,17 @@
 
       if (isBinary) {
         const blob = await res.blob();
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = BINARY_FILENAMES[type];
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+        const reader = new FileReader();
+        reader.onloadend = function() {
+          const base64data = reader.result;
+          const a = document.createElement('a');
+          a.href = base64data;
+          a.download = BINARY_FILENAMES[type];
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        };
+        reader.readAsDataURL(blob);
 
         output.value = (currentLang === 'ar') ? '✅ تمت المعالجة وتم بدء التنزيل!' : '✅ Processed and download started!';
       } else {
