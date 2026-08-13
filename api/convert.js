@@ -3,6 +3,13 @@
 // كل الطلبات تدخل من هنا وتوجَّه حسب حقل "action" بالـ body
 // =====================================================================================
 
+// [حاسم] لازم يُضبط هذا المتغير قبل استدعاء require('@sparticuz/chromium') مباشرة.
+// بعكس ES import (اللي تُرفع/hoisted تلقائياً لأعلى الملف)، أوامر require بـ CommonJS
+// تُنفَّذ بترتيبها بالضبط — فوضعه هنا قبل السطر التالي يضمن قراءة المكتبة له صح
+// وقت التحميل، بدل ما يكون التعديل متأخر بعد ما تكون المكتبة خلصت فحصها.
+process.env.AWS_LAMBDA_JS_RUNTIME = process.env.AWS_LAMBDA_JS_RUNTIME || 'nodejs20.x';
+
+const path = require('path');
 const mammoth = require('mammoth');
 const pdfParse = require('pdf-parse');
 const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.js');
@@ -60,12 +67,27 @@ function isArabicText(t) { return /[\u0600-\u06FF]/.test(t || ''); }
 function escapeHtml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 function parseCsv(csv) { return csv.trim().split('\n').map(r => r.split(',')); }
 
+// [إصلاح "Failed to launch the browser process"] ثلاث خطوات لازمة مع بعض:
+// 1) تعطيل وضع الرسوميات (GPU) — البيئة السيرفرية ما فيها GPU، وتفعيله يسبب تجميد/فشل الإطلاق.
+// 2) تحديد LD_LIBRARY_PATH صراحة لنفس مجلد ملف Chromium التنفيذي بعد فك ضغطه —
+//    بدون هذا السطر، النظام يفك المكتبات المشتركة (.so) لكن لا يعرف وين يدور عليها وقت التشغيل.
+// 3) قراءة executablePath (يفك الضغط فعلياً لأول مرة بكل Cold Start).
 async function getBrowser() {
+  if (typeof chromium.setGraphicsMode === 'function') {
+    chromium.setGraphicsMode(false);
+  } else {
+    chromium.setGraphicsMode = false;
+  }
+
+  const executablePath = await chromium.executablePath();
+  process.env.LD_LIBRARY_PATH = [path.dirname(executablePath), process.env.LD_LIBRARY_PATH || ''].filter(Boolean).join(':');
+
   return puppeteer.launch({
     args: chromium.args,
     defaultViewport: chromium.defaultViewport,
-    executablePath: await chromium.executablePath(),
+    executablePath,
     headless: chromium.headless,
+    ignoreHTTPSErrors: true,
   });
 }
 
