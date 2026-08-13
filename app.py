@@ -143,7 +143,7 @@ def text_to_pdf_bytes(text, is_arabic, title=None):
     for line in (text or "").split("\n"):
         content = shape_arabic(line) if is_arabic else line
         p_style = ParagraphStyle('Body', fontName=font, fontSize=11, leading=16, alignment=2 if is_arabic else 0)
-        t_cell = Table([[RLParagraph(escape_html(content), p_style)]], colWidths=[480])
+        t_cell = Table([[RLParagraph(escape_html(content).replace("\n", "<br/>") or "&nbsp;", p_style)]], colWidths=[480])
         t_cell.setStyle(TableStyle([
             ("ALIGN", (0, 0), (-1, -1), "RIGHT" if is_arabic else "LEFT"),
             ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
@@ -237,6 +237,7 @@ def csv_to_pdf_bytes(text, is_arabic):
     doc.build([table])
     return buf.getvalue()
 
+# أداة الوورد الأصلية (مستقلة للوورد فقط)
 def handle_word_to_pdf(p):
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
@@ -252,18 +253,26 @@ def handle_word_to_pdf(p):
     pdf_bytes = text_to_pdf_bytes(text, is_arabic)
     return file_response(pdf_bytes, "application/pdf", "converted_document.pdf")
 
+# أداة جديدة: تحويل النص مباشرة إلى PDF
+def handle_text_to_pdf(p):
+    text = p.get("text", "")
+    is_arabic = p["is_arabic"]
+    if not text.strip():
+        return bad_request("يرجى إدخال نص للتحويل" if is_arabic else "Please enter text to convert")
+    pdf_bytes = text_to_pdf_bytes(text, is_arabic)
+    return file_response(pdf_bytes, "application/pdf", "converted_text.pdf")
+
+# أداة جديدة: قراءة PDF وإعادة تنسيقه كـ PDF جديد
 def handle_pdf_to_pdf_enhanced(p):
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
     if not file_bytes:
-        text = p.get("text", "")
-        pdf_bytes = text_to_pdf_bytes(text, is_arabic)
-        return file_response(pdf_bytes, "application/pdf", "converted_document.pdf")
+        return bad_request("يرجى رفع ملف PDF" if is_arabic else "Please upload a PDF file")
     try:
         reader = PdfReader(io.BytesIO(file_bytes))
         extracted_text = "\n".join((page.extract_text() or "") for page in reader.pages)
         pdf_bytes = text_to_pdf_bytes(extracted_text, is_arabic)
-        return file_response(pdf_bytes, "application/pdf", "converted_document.pdf")
+        return file_response(pdf_bytes, "application/pdf", "reformatted_document.pdf")
     except Exception:
         return bad_request("تعذر قراءة ملف الـ PDF" if is_arabic else "Could not read the PDF file")
 
@@ -587,7 +596,11 @@ def handle_text_diff(p):
     return jsonify({"result": "\n".join(out_lines)})
 
 REGISTRY = {
-    "word-to-pdf": handle_word_to_pdf, "pdf-to-pdf": handle_pdf_to_pdf_enhanced, "csv-to-pdf": handle_csv_to_pdf, "pdf-to-text": handle_pdf_to_text,
+    "word-to-pdf": handle_word_to_pdf, 
+    "text-to-pdf": handle_text_to_pdf, 
+    "pdf-to-pdf": handle_pdf_to_pdf_enhanced, 
+    "csv-to-pdf": handle_csv_to_pdf, 
+    "pdf-to-text": handle_pdf_to_text,
     "pdf-to-doc": handle_pdf_to_doc, "pdf-to-docx": handle_pdf_to_docx, "doc-to-docx": handle_doc_to_docx,
     "pdf-to-excel": handle_pdf_to_excel, "pdf-to-ppt": handle_pdf_to_ppt, "merge-pdf": handle_merge_pdf,
     "split-pdf": handle_split_pdf, "csv-to-word": handle_csv_to_word, "text-to-excel": handle_text_to_excel,
