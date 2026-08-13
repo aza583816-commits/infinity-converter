@@ -160,7 +160,6 @@ def word_to_pdf_structured(docx_doc, is_arabic):
     font = pdf_font_name(is_arabic)
     story = []
 
-    # معالجة الفقرات بوضعها داخل خلايا جدول خفية لضبط الحروف والاتجاه تماماً مثل الجدول
     for par in docx_doc.paragraphs:
         txt = par.text.strip()
         if txt:
@@ -252,6 +251,21 @@ def handle_word_to_pdf(p):
     text = p.get("text", "")
     pdf_bytes = text_to_pdf_bytes(text, is_arabic)
     return file_response(pdf_bytes, "application/pdf", "converted_document.pdf")
+
+def handle_pdf_to_pdf_enhanced(p):
+    file_bytes = get_file_bytes(p)
+    is_arabic = p["is_arabic"]
+    if not file_bytes:
+        text = p.get("text", "")
+        pdf_bytes = text_to_pdf_bytes(text, is_arabic)
+        return file_response(pdf_bytes, "application/pdf", "converted_document.pdf")
+    try:
+        reader = PdfReader(io.BytesIO(file_bytes))
+        extracted_text = "\n".join((page.extract_text() or "") for page in reader.pages)
+        pdf_bytes = text_to_pdf_bytes(extracted_text, is_arabic)
+        return file_response(pdf_bytes, "application/pdf", "converted_document.pdf")
+    except Exception:
+        return bad_request("تعذر قراءة ملف الـ PDF" if is_arabic else "Could not read the PDF file")
 
 def handle_csv_to_pdf(p):
     pdf_bytes = csv_to_pdf_bytes(p.get("text", ""), p["is_arabic"])
@@ -573,7 +587,7 @@ def handle_text_diff(p):
     return jsonify({"result": "\n".join(out_lines)})
 
 REGISTRY = {
-    "word-to-pdf": handle_word_to_pdf, "csv-to-pdf": handle_csv_to_pdf, "pdf-to-text": handle_pdf_to_text,
+    "word-to-pdf": handle_word_to_pdf, "pdf-to-pdf": handle_pdf_to_pdf_enhanced, "csv-to-pdf": handle_csv_to_pdf, "pdf-to-text": handle_pdf_to_text,
     "pdf-to-doc": handle_pdf_to_doc, "pdf-to-docx": handle_pdf_to_docx, "doc-to-docx": handle_doc_to_docx,
     "pdf-to-excel": handle_pdf_to_excel, "pdf-to-ppt": handle_pdf_to_ppt, "merge-pdf": handle_merge_pdf,
     "split-pdf": handle_split_pdf, "csv-to-word": handle_csv_to_word, "text-to-excel": handle_text_to_excel,
