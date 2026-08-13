@@ -3,6 +3,7 @@ import csv
 import hashlib
 import io
 import json
+import os
 import re
 import secrets
 import string
@@ -53,19 +54,34 @@ app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 12 * 1024 * 1024  # 12MB
 MAX_FILE_BYTES = 4 * 1024 * 1024  # 4MB
 
-ARABIC_FONT_PATH = "static/fonts/NotoNaskhArabic-Regular.ttf"
 ARABIC_FONT_NAME = "ArabicFont"
 _arabic_font_registered = False
 
 def ensure_arabic_font():
     global _arabic_font_registered
     if _arabic_font_registered:
-        return
-    try:
-        pdfmetrics.registerFont(TTFont(ARABIC_FONT_NAME, ARABIC_FONT_PATH))
-        _arabic_font_registered = True
-    except Exception:
-        _arabic_font_registered = False
+        return ARABIC_FONT_NAME
+    
+    # قائمة مسارات بحث ذكية وآمنة لتوافق السيرفر السحابي (Render)
+    possible_paths = [
+        "static/fonts/NotoNaskhArabic-Regular.ttf",
+        "static/NotoNaskhArabic-Regular.ttf",
+        "static/Cairo-Regular.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/truetype/freefont/FreeSans.ttf"
+    ]
+    
+    for path in possible_paths:
+        if os.path.exists(path):
+            try:
+                pdfmetrics.registerFont(TTFont(ARABIC_FONT_NAME, path))
+                _arabic_font_registered = True
+                return ARABIC_FONT_NAME
+            except Exception:
+                continue
+                
+    # خط احتياطي آمن إذا لم يتم العثور على أي ملف خط
+    return "Helvetica"
 
 def shape_arabic(text):
     if not text:
@@ -83,8 +99,7 @@ def is_arabic_text(t):
 
 def pdf_font_name(is_arabic):
     if is_arabic:
-        ensure_arabic_font()
-        return ARABIC_FONT_NAME if _arabic_font_registered else "Helvetica"
+        return ensure_arabic_font()
     return "Helvetica"
 
 def file_response(data_bytes, mimetype, filename):
@@ -470,7 +485,7 @@ def handle_byte_converter(p):
 def handle_unit_converter(p):
     cleaned = re.sub(r"[^0-9.]", "", p.get("text", ""))
     val = float(cleaned) if cleaned else 0.0
-    return jsonify({"result": f"Meters: {val} m\nFeet: {val * 3.28084:.2f} ft\nInches: {val * 39.3701:.2f} in\nMiles: {val / 1609.34:.4f} mi"})
+    return jsonify({"result": f"Meters: {val} m\nFeet: {val * 3.28084:.2f} ft\nInches: {val * 39.3701:.2f} in\Miles: {val / 1609.34:.4f} mi"})
 
 def handle_markdown_to_html(p):
     return jsonify({"result": md_lib.markdown(p.get("text", ""))})
@@ -540,4 +555,3 @@ def convert():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
-
