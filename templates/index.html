@@ -5,316 +5,381 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Infinity Converter | المحول الشامل</title>
     
-    <!-- كود جوجل أدسنس الخاص بك -->
+    <!-- كود جوجل أدسنس -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4343857922748618"
      crossorigin="anonymous"></script>
 
-    <!-- خطوط جوجل (Cairo للعربي و Poppins للإنجليزي) -->
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
-    <!-- أيقونات FontAwesome -->
+    <!-- الخطوط -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
+        /* الألوان الاحترافية (SaaS Colors) */
         :root {
-            --bg-color: #0f172a;
-            --container-bg: rgba(30, 41, 59, 0.7);
-            --primary: #8b5cf6;
-            --primary-hover: #7c3aed;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --border-color: rgba(139, 92, 246, 0.3);
-            --success: #10b981;
-            --danger: #ef4444;
-        }
-
-        .light-mode {
-            --bg-color: #f8fafc;
-            --container-bg: rgba(255, 255, 255, 0.9);
-            --primary: #6d28d9;
-            --primary-hover: #5b21b6;
+            /* الوضع الفاتح (الافتراضي - أنيق ومريح) */
+            --bg-body: #f8fafc;
+            --bg-surface: #ffffff;
             --text-main: #0f172a;
             --text-muted: #64748b;
-            --border-color: rgba(109, 40, 217, 0.2);
+            --border: #e2e8f0;
+            --primary: #4f46e5;      /* Indigo */
+            --primary-hover: #4338ca;
+            --upload-bg: #eff6ff;
+            --upload-border: #3b82f6;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+            --shadow-hover: 0 10px 25px -5px rgba(0,0,0,0.1);
+            
+            /* ألوان الأيقونات المتخصصة */
+            --c-word: #2563eb; --bg-word: #dbeafe;
+            --c-pdf: #ef4444;  --bg-pdf: #fee2e2;
+            --c-excel: #10b981; --bg-excel: #d1fae5;
+            --c-ppt: #f97316;  --bg-ppt: #ffedd5;
+            --c-img: #0ea5e9;  --bg-img: #e0f2fe;
+            --c-dev: #8b5cf6;  --bg-dev: #ede9fe;
+        }
+
+        .dark-mode {
+            /* الوضع الداكن (فخم وعميق) */
+            --bg-body: #0f172a;
+            --bg-surface: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --upload-bg: rgba(59, 130, 246, 0.1);
+            --upload-border: #60a5fa;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.5);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.4);
+            --shadow-hover: 0 10px 25px -5px rgba(0,0,0,0.5);
+
+            --bg-word: rgba(37, 99, 235, 0.2);
+            --bg-pdf: rgba(239, 68, 68, 0.2);
+            --bg-excel: rgba(16, 185, 129, 0.2);
+            --bg-ppt: rgba(249, 115, 22, 0.2);
+            --bg-img: rgba(14, 165, 233, 0.2);
+            --bg-dev: rgba(139, 92, 246, 0.2);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            background-color: var(--bg-color);
+            background-color: var(--bg-body);
             color: var(--text-main);
             font-family: 'Cairo', 'Poppins', sans-serif;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            transition: background-color 0.3s ease;
-            background-image: radial-gradient(circle at 50% 0%, rgba(139, 92, 246, 0.15), transparent 50%);
+            transition: all 0.3s ease;
+            overflow-x: hidden;
         }
 
+        /* الهيدر */
         header {
-            width: 100%;
-            padding: 20px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--border-color);
+            width: 100%; padding: 15px 5%;
+            background-color: var(--bg-surface);
+            border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 100;
+            box-shadow: var(--shadow-sm);
         }
 
-        .logo { font-size: 24px; font-weight: 800; color: var(--primary); text-shadow: 0 0 10px rgba(139, 92, 246, 0.5); }
+        .logo { font-size: 22px; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 8px; direction: ltr; white-space: nowrap; }
+        .logo i { color: var(--primary); font-size: 26px; }
 
-        .controls { display: flex; gap: 10px; }
+        .controls { display: flex; gap: 12px; }
         .controls button {
-            background: var(--container-bg); border: 1px solid var(--border-color);
-            color: var(--text-main); padding: 8px 16px; border-radius: 20px;
-            cursor: pointer; font-family: inherit; font-weight: 600; transition: all 0.3s;
+            background: var(--bg-body); border: 1px solid var(--border);
+            color: var(--text-main); padding: 8px 16px; border-radius: 8px;
+            cursor: pointer; font-family: inherit; font-weight: 600; transition: all 0.2s;
             display: flex; align-items: center; gap: 8px;
         }
+        .controls button:hover { background: var(--border); }
 
-        .controls button:hover { background: var(--primary); color: white; }
-
-        .main-container {
-            width: 90%; max-width: 800px; margin: 40px auto;
-            background: var(--container-bg); padding: 40px; border-radius: 24px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2); backdrop-filter: blur(12px);
-            border: 1px solid var(--border-color);
+        /* حاوية منطقة العمل (المربع الرئيسي) */
+        .workspace {
+            width: 100%; max-width: 900px; margin: 40px auto 20px;
+            padding: 0 20px;
         }
 
-        .text-center { text-align: center; margin-bottom: 30px; }
-        .text-center h1 { font-size: 32px; margin-bottom: 10px; }
-        .text-center p { color: var(--text-muted); }
-
-        /* Tool Selector Button */
-        .tool-selector-btn {
-            width: 100%; padding: 15px; background: rgba(139, 92, 246, 0.1);
-            border: 2px dashed var(--primary); border-radius: 12px; color: var(--text-main);
-            font-size: 18px; font-family: inherit; font-weight: 600; cursor: pointer;
-            display: flex; justify-content: space-between; align-items: center;
-            transition: all 0.3s; margin-bottom: 25px;
-        }
-        .tool-selector-btn:hover { background: rgba(139, 92, 246, 0.2); box-shadow: 0 0 15px rgba(139, 92, 246, 0.3); }
-
-        /* Modal for Tools */
-        .modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); z-index: 1000;
-            justify-content: center; align-items: center;
-        }
-        .modal.active { display: flex; animation: fadeIn 0.3s ease; }
-        .modal-content {
-            background: var(--bg-color); width: 90%; max-width: 900px; max-height: 85vh;
-            border-radius: 20px; border: 1px solid var(--border-color); padding: 30px;
-            overflow-y: auto; position: relative;
-        }
-        .close-modal {
-            position: absolute; top: 20px; right: 20px; background: none; border: none;
-            color: var(--text-main); font-size: 24px; cursor: pointer;
+        .workspace-card {
+            background: var(--bg-surface); border: 1px solid var(--border);
+            border-radius: 20px; padding: 40px; text-align: center;
+            box-shadow: var(--shadow-md); transition: all 0.3s;
         }
 
-        /* Grid Categories */
-        .category-title { margin: 20px 0 10px; font-size: 20px; color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px; font-weight: bold;}
-        .tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
-        .tool-card {
-            background: var(--container-bg); border: 1px solid var(--border-color); padding: 15px;
-            border-radius: 12px; cursor: pointer; text-align: center; transition: all 0.2s; font-weight: 600;
-        }
-        .tool-card:hover { transform: translateY(-5px); background: var(--primary); color: white; border-color: var(--primary); }
-        .tool-card i { font-size: 24px; margin-bottom: 10px; display: block; }
+        .workspace-header { margin-bottom: 30px; }
+        .workspace-header h1 { font-size: 32px; font-weight: 800; margin-bottom: 10px; color: var(--text-main); }
+        .workspace-header p { font-size: 16px; color: var(--text-muted); }
 
-        /* Upload Area */
+        .selected-tool-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: var(--bg-word); color: var(--c-word);
+            padding: 8px 16px; border-radius: 20px; font-weight: 700;
+            margin-bottom: 20px; font-size: 14px;
+        }
+
+        /* منطقة السحب والإفلات */
         .upload-area {
-            border: 2px dashed var(--text-muted); padding: 40px 20px; text-align: center;
-            border-radius: 16px; cursor: pointer; transition: all 0.3s; margin-bottom: 25px;
-            background: rgba(0,0,0,0.1);
+            border: 2px dashed var(--upload-border); background: var(--upload-bg);
+            padding: 50px 20px; border-radius: 16px; cursor: pointer;
+            transition: all 0.2s ease; margin-bottom: 20px;
         }
-        .upload-area.dragover { border-color: var(--primary); background: rgba(139, 92, 246, 0.1); transform: scale(1.02); }
-        .upload-area i { font-size: 40px; color: var(--primary); margin-bottom: 15px; }
-        #fileInput { display: none; }
+        .upload-area:hover, .upload-area.dragover { background: rgba(59, 130, 246, 0.15); border-color: var(--primary); transform: scale(1.01); }
+        .upload-area i { font-size: 48px; color: var(--primary); margin-bottom: 15px; }
+        .upload-area h3 { font-size: 20px; margin-bottom: 5px; color: var(--text-main); }
+        .upload-area p { color: var(--text-muted); font-size: 14px; }
+        #fileInput, #multiFileInput { display: none; }
 
-        /* Text Area */
+        /* منطقة النص */
         textarea {
-            width: 100%; height: 150px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color);
-            border-radius: 12px; padding: 15px; color: var(--text-main); font-family: inherit;
-            resize: vertical; margin-bottom: 25px; outline: none; transition: border-color 0.3s;
+            width: 100%; height: 180px; background: var(--bg-body); border: 1px solid var(--border);
+            border-radius: 12px; padding: 20px; color: var(--text-main); font-family: inherit; font-size: 15px;
+            resize: vertical; margin-bottom: 20px; outline: none; transition: all 0.3s;
         }
-        textarea:focus { border-color: var(--primary); box-shadow: 0 0 10px rgba(139, 92, 246, 0.2); }
+        textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2); }
 
-        /* Execute Button */
+        /* زر التنفيذ */
         .execute-btn {
-            width: 100%; padding: 16px; background: linear-gradient(135deg, var(--primary), var(--primary-hover));
-            color: white; border: none; border-radius: 12px; font-size: 18px; font-weight: bold;
+            width: 100%; padding: 18px; background: var(--primary); color: white;
+            border: none; border-radius: 12px; font-size: 18px; font-weight: 700;
             cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px;
-            transition: all 0.3s; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4); font-family: inherit;
+            transition: all 0.2s; font-family: inherit; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
         }
-        .execute-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(139, 92, 246, 0.6); }
+        .execute-btn:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 6px 15px rgba(79, 70, 229, 0.4); }
         .execute-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
 
-        /* Spinner */
-        .spinner { display: none; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 1s ease-in-out infinite; }
+        /* النتيجة والتحميل */
+        .spinner { display: none; width: 22px; height: 22px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 1s ease-in-out infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .result-area { margin-top: 20px; padding: 20px; background: #ecfdf5; border: 1px solid #10b981; color: #065f46; border-radius: 12px; display: none; word-wrap: break-word; text-align: start; font-weight: 600;}
+        .result-area.error { background: #fef2f2; border-color: #ef4444; color: #991b1b; }
 
-        /* Result Area */
-        .result-area {
-            margin-top: 25px; padding: 20px; background: rgba(16, 185, 129, 0.1); border: 1px solid var(--success);
-            border-radius: 12px; display: none; word-wrap: break-word; text-align: start;
+        /* مكتبة الأدوات (الجريد) */
+        .tools-section { width: 100%; max-width: 1200px; margin: 0 auto 60px; padding: 0 20px; }
+        .section-title { font-size: 24px; font-weight: 800; margin: 40px 0 20px; color: var(--text-main); display: flex; align-items: center; gap: 10px;}
+        
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
         }
-        .result-area.error { background: rgba(239, 68, 68, 0.1); border-color: var(--danger); }
 
-        /* Toast Notification */
-        .toast {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
-            background: var(--success); color: white; padding: 12px 24px; border-radius: 30px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2); font-weight: bold; transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            z-index: 2000; opacity: 0; display: flex; align-items: center; gap: 10px;
+        .tool-card {
+            background: var(--bg-surface); border: 1px solid var(--border);
+            padding: 20px; border-radius: 16px; cursor: pointer; transition: all 0.2s ease;
+            display: flex; align-items: flex-start; gap: 16px;
         }
+        .tool-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); border-color: var(--primary); }
+        
+        .tool-icon {
+            width: 50px; height: 50px; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 24px; flex-shrink: 0;
+        }
+        .tool-info h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; color: var(--text-main); }
+        .tool-info p { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
+
+        /* ألوان الأيقونات الخاصة بالكروت */
+        .i-word { background: var(--bg-word); color: var(--c-word); }
+        .i-pdf { background: var(--bg-pdf); color: var(--c-pdf); }
+        .i-excel { background: var(--bg-excel); color: var(--c-excel); }
+        .i-ppt { background: var(--bg-ppt); color: var(--c-ppt); }
+        .i-img { background: var(--bg-img); color: var(--c-img); }
+        .i-dev { background: var(--bg-dev); color: var(--c-dev); }
+
+        /* إشعار التوست والفوتر */
+        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: #10b981; color: white; padding: 12px 24px; border-radius: 30px; box-shadow: var(--shadow-md); font-weight: bold; transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); z-index: 2000; opacity: 0; display: flex; align-items: center; gap: 10px; }
         .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-        .toast.error-toast { background: var(--danger); }
+        .toast.error-toast { background: #ef4444; }
 
-        /* Footer Styles */
-        .footer-disclaimer {
-            margin-top: 40px;
-            text-align: center;
-            font-size: 13px;
-            color: var(--text-muted);
-            line-height: 1.6;
-            border-top: 1px solid var(--border-color);
-            padding-top: 20px;
-        }
-        .footer-links {
-            margin-top: 10px;
-        }
-        .footer-links a {
-            color: var(--primary);
-            text-decoration: none;
-            transition: color 0.3s;
-            font-weight: 600;
-            margin: 0 5px;
-        }
-        .footer-links a:hover {
-            color: var(--primary-hover);
-            text-decoration: underline;
-        }
+        .footer-disclaimer { margin-top: 40px; text-align: center; font-size: 13px; color: var(--text-muted); line-height: 1.6; border-top: 1px solid var(--border); padding-top: 20px; padding-bottom: 30px;}
+        .footer-links { margin-top: 10px; }
+        .footer-links a { color: var(--primary); text-decoration: none; font-weight: 600; margin: 0 8px; }
+        .footer-links a:hover { text-decoration: underline; }
+
+        /* RTL/LTR fixes */
+        html[dir="ltr"] .tool-card { text-align: left; }
+        html[dir="rtl"] .tool-card { text-align: right; }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="logo" style="display:flex; align-items:center; gap:8px;">
+        <div class="logo">
             <i class="fa-solid fa-infinity"></i> <span data-ar="V-Infinity" data-en="V-Infinity">V-Infinity</span>
         </div>
         <div class="controls">
             <button onclick="toggleLanguage()" id="langBtn">🇺🇸 English</button>
-            <button onclick="toggleTheme()" id="themeBtn"><i class="fa-solid fa-sun"></i></button>
+            <button onclick="toggleTheme()" id="themeBtn"><i class="fa-solid fa-moon"></i></button>
         </div>
     </header>
 
-    <div class="main-container">
-        <div class="text-center">
-            <h1 data-ar="المحول الشامل الذكي" data-en="Smart Infinity Converter">المحول الشامل الذكي</h1>
-            <p data-ar="اختر الأداة، ارفع ملفك أو الصق النص، ودع السحر يبدأ!" data-en="Select a tool, upload your file or paste text, and let the magic begin!">اختر الأداة، ارفع ملفك أو الصق النص، ودع السحر يبدأ!</p>
-        </div>
+    <!-- منطقة العمل الرئيسية -->
+    <div class="workspace" id="workspace">
+        <div class="workspace-card">
+            <div class="workspace-header">
+                <h1 data-ar="مرحباً بك في المحول الشامل" data-en="Welcome to Infinity Converter">مرحباً بك في المحول الشامل</h1>
+                <p data-ar="اختر إحدى الأدوات من الأسفل للبدء في المعالجة." data-en="Select a tool from below to start processing.">اختر إحدى الأدوات من الأسفل للبدء في المعالجة.</p>
+            </div>
 
-        <!-- زر اختيار الأداة -->
-        <button class="tool-selector-btn" onclick="openModal()">
-            <span id="selectedToolText"><i class="fa-solid fa-wand-magic-sparkles"></i> اختر أداة التحويل من هنا...</span>
-            <i class="fa-solid fa-chevron-down"></i>
-        </button>
+            <!-- هذا الجزء يظهر فقط عند اختيار أداة -->
+            <div id="activeToolArea" style="display: none;">
+                <div class="selected-tool-badge" id="selectedToolBadge">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> <span id="selectedToolText">الأداة المحددة</span>
+                </div>
 
-        <!-- منطقة السحب والإفلات -->
-        <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
-            <i class="fa-solid fa-cloud-arrow-up"></i>
-            <h3 id="uploadText" data-ar="اسحب وأفلت الملف هنا أو اضغط للاختيار" data-en="Drag & Drop file here or click to select">اسحب وأفلت الملف هنا أو اضغط للاختيار</h3>
-            <p id="fileName" style="margin-top: 10px; color: var(--primary); font-weight: bold;"></p>
-            <input type="file" id="fileInput" onchange="handleFileSelect(event)">
-        </div>
+                <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <h3 id="uploadText" data-ar="اختر ملفاً أو اسحبه هنا" data-en="Choose a file or drag it here">اختر ملفاً أو اسحبه هنا</h3>
+                    <p data-ar="الحد الأقصى للملف: 4MB" data-en="Max file size: 4MB">الحد الأقصى للملف: 4MB</p>
+                    <p id="fileName" style="margin-top: 10px; color: var(--primary); font-weight: bold;"></p>
+                    <input type="file" id="fileInput" onchange="handleFileSelect(event)">
+                    <input type="file" id="multiFileInput" multiple style="display:none;" onchange="handleMultiFileSelect(event)">
+                </div>
 
-        <!-- مربع النص -->
-        <textarea id="textInput" data-ar-ph="الصق النص أو المحتوى هنا (إذا كانت الأداة تتطلب نصاً)..." data-en-ph="Paste text or content here (if the tool requires text)..." placeholder="الصق النص أو المحتوى هنا (إذا كانت الأداة تتطلب نصاً)..."></textarea>
+                <textarea id="textInput" data-ar-ph="الصق النص أو المحتوى هنا..." data-en-ph="Paste text or content here..." placeholder="الصق النص أو المحتوى هنا..."></textarea>
 
-        <!-- زر التنفيذ -->
-        <button class="execute-btn" id="executeBtn" onclick="processConversion()">
-            <span id="btnText" data-ar="تنفيذ السحر <i class='fa-solid fa-rocket'></i>" data-en="Execute Magic <i class='fa-solid fa-rocket'></i>">تنفيذ السحر <i class="fa-solid fa-rocket"></i></span>
-            <div class="spinner" id="spinner"></div>
-        </button>
+                <button class="execute-btn" id="executeBtn" onclick="processConversion()">
+                    <span id="btnText" data-ar="تحويل الآن" data-en="Convert Now">تحويل الآن</span>
+                    <div class="spinner" id="spinner"></div>
+                </button>
 
-        <!-- منطقة عرض النتائج -->
-        <div class="result-area" id="resultArea"></div>
-
-        <!-- الفوتر الخاص بسياسات الإعلانات والخصوصية -->
-        <div class="footer-disclaimer">
-            <p data-ar="V-Infinity Converter provides a comprehensive suite for data and file conversion. Files are processed securely on our servers and are never stored. We use cookies and Google AdSense according to policies." data-en="V-Infinity Converter provides a comprehensive suite for data and file conversion. Files are processed securely on our servers and are never stored. We use cookies and Google AdSense according to policies.">V-Infinity Converter provides a comprehensive suite for data and file conversion. Files are processed securely on our servers and are never stored. We use cookies and Google AdSense according to policies.</p>
-            <div class="footer-links">
-                <a href="#" data-ar="Privacy" data-en="Privacy">Privacy</a> | 
-                <a href="#" data-ar="Terms" data-en="Terms">Terms</a> | 
-                <a href="#" data-ar="Contact Us" data-en="Contact Us">Contact Us</a>
+                <div class="result-area" id="resultArea"></div>
             </div>
         </div>
     </div>
 
-    <!-- نافذة الأدوات (Modal) -->
-    <div class="modal" id="toolsModal">
-        <div class="modal-content">
-            <button class="close-modal" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
-            <h2 style="text-align: center; margin-bottom: 20px; color: var(--primary);" data-ar="مكتبة الأدوات" data-en="Tools Library">مكتبة الأدوات</h2>
-            
-            <!-- قسم المستندات -->
-            <div class="category-title" data-ar="<i class='fa-regular fa-file-word'></i> أدوات المستندات والـ PDF" data-en="<i class='fa-regular fa-file-word'></i> Document & PDF Tools"><i class="fa-regular fa-file-word"></i> أدوات المستندات والـ PDF</div>
-            <div class="tools-grid">
-                <div class="tool-card" onclick="selectTool('pdf-to-docx', 'PDF إلى Word', 'PDF to Word', 'file')">
-                    <i class="fa-solid fa-file-word"></i> <span data-ar="PDF إلى Word" data-en="PDF to Word">PDF إلى Word</span>
-                </div>
-                <div class="tool-card" onclick="selectTool('word-to-pdf', 'Word إلى PDF', 'Word to PDF', 'file')">
-                    <i class="fa-solid fa-file-pdf"></i> <span data-ar="Word إلى PDF" data-en="Word to PDF">Word إلى PDF</span>
-                </div>
-                <div class="tool-card" onclick="selectTool('text-to-pdf', 'نص إلى PDF', 'Text to PDF', 'text')">
-                    <i class="fa-solid fa-file-lines"></i> <span data-ar="نص إلى PDF" data-en="Text to PDF">نص إلى PDF</span>
-                </div>
-                <div class="tool-card" onclick="selectTool('pdf-to-pdf', 'تنسيق PDF إلى PDF', 'Reformat PDF', 'file')">
-                    <i class="fa-solid fa-file-pdf"></i> <span data-ar="تنسيق PDF إلى PDF" data-en="Reformat PDF">تنسيق PDF إلى PDF</span>
-                </div>
-                <div class="tool-card" onclick="selectTool('pdf-to-excel', 'PDF إلى Excel', 'PDF to Excel', 'file')">
-                    <i class="fa-solid fa-file-excel"></i> <span data-ar="PDF إلى Excel" data-en="PDF to Excel">PDF إلى Excel</span>
-                </div>
-                <div class="tool-card" onclick="selectTool('csv-to-pdf', 'CSV إلى PDF', 'CSV to PDF', 'fileText')">
-                    <i class="fa-solid fa-table"></i> <span data-ar="CSV إلى PDF" data-en="CSV to PDF">CSV إلى PDF</span>
-                </div>
-                <div class="tool-card" onclick="selectTool('pdf-to-text', 'استخراج نص PDF', 'Extract PDF Text', 'file')">
-                    <i class="fa-solid fa-font"></i> <span data-ar="استخراج نص PDF" data-en="Extract PDF Text">استخراج نص PDF</span>
+    <!-- مكتبة الأدوات (SaaS Grid Style) -->
+    <div class="tools-section">
+        
+        <div class="section-title"><i class="fa-solid fa-file-pdf" style="color:var(--c-pdf)"></i> <span data-ar="أدوات PDF والمستندات" data-en="PDF & Document Tools">أدوات PDF والمستندات</span></div>
+        <div class="tools-grid">
+            <div class="tool-card" onclick="selectTool('pdf-to-docx', 'PDF إلى Word', 'PDF to Word', 'file', 'i-word', 'fa-file-word')">
+                <div class="tool-icon i-word"><i class="fa-solid fa-file-word"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="PDF إلى Word" data-en="PDF to Word">PDF إلى Word</h3>
+                    <p data-ar="تحويل ملفات PDF إلى مستندات وورد قابلة للتعديل." data-en="Convert PDF files to editable Word documents.">تحويل ملفات PDF إلى مستندات وورد قابلة للتعديل.</p>
                 </div>
             </div>
-
-            <!-- قسم الصور -->
-            <div class="category-title" data-ar="<i class='fa-regular fa-image'></i> أدوات الصور" data-en="<i class='fa-regular fa-image'></i> Image Tools"><i class="fa-regular fa-image"></i> أدوات الصور</div>
-            <div class="tools-grid">
-                <div class="tool-card" onclick="selectTool('image-to-pdf', 'صورة إلى PDF', 'Image to PDF', 'file')">
-                    <i class="fa-solid fa-images"></i> <span data-ar="صورة إلى PDF" data-en="Image to PDF">صورة إلى PDF</span>
-                </div>
-                <div class="tool-card" onclick="selectTool('image-to-png', 'تحويل لـ PNG', 'Convert to PNG', 'file')">
-                    <i class="fa-regular fa-image"></i> <span data-ar="تحويل لـ PNG" data-en="Convert to PNG">تحويل لـ PNG</span>
-                </div>
-                <div class="tool-card" onclick="selectTool('compress-image', 'ضغط الصورة', 'Compress Image', 'file')">
-                    <i class="fa-solid fa-compress"></i> <span data-ar="ضغط الصورة" data-en="Compress Image">ضغط الصورة</span>
+            <div class="tool-card" onclick="selectTool('word-to-pdf', 'Word إلى PDF', 'Word to PDF', 'file', 'i-pdf', 'fa-file-pdf')">
+                <div class="tool-icon i-pdf"><i class="fa-solid fa-file-pdf"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="Word إلى PDF" data-en="Word to PDF">Word إلى PDF</h3>
+                    <p data-ar="تحويل مستندات وورد إلى PDF بكل سهولة." data-en="Convert Word documents to PDF easily.">تحويل مستندات وورد إلى PDF بكل سهولة.</p>
                 </div>
             </div>
-
-            <!-- قسم المطورين والنصوص -->
-            <div class="category-title" data-ar="<i class='fa-solid fa-code'></i> أدوات النصوص والمطورين" data-en="<i class='fa-solid fa-code'></i> Text & Developer Tools"><i class="fa-solid fa-code"></i> أدوات النصوص والمطورين</div>
-            <div class="tools-grid">
-                <div class="tool-card" onclick="selectTool('password-generator', 'توليد كلمة سر', 'Password Generator', 'none')">
-                    <i class="fa-solid fa-key"></i> <span data-ar="توليد كلمة سر" data-en="Password Generator">توليد كلمة سر</span>
-                </div>
-                <div class="tool-card" onclick="selectTool('text-to-qr', 'توليد QR Code', 'QR Code Generator', 'text')">
-                    <i class="fa-solid fa-qrcode"></i> <span data-ar="توليد QR Code" data-en="QR Code Generator">توليد QR Code</span>
-                </div>
-                <div class="tool-card" onclick="selectTool('text-counter', 'عداد النصوص', 'Text Counter', 'text')">
-                    <i class="fa-solid fa-calculator"></i> <span data-ar="عداد النصوص" data-en="Text Counter">عداد النصوص</span>
-                </div>
-                <div class="tool-card" onclick="selectTool('json-beautifier', 'تنسيق JSON', 'JSON Formatter', 'text')">
-                    <i class="fa-solid fa-brackets-curly"></i> <span data-ar="تنسيق JSON" data-en="JSON Formatter">تنسيق JSON</span>
+            <div class="tool-card" onclick="selectTool('pdf-to-ppt', 'PDF إلى PowerPoint', 'PDF to PPT', 'file', 'i-ppt', 'fa-file-powerpoint')">
+                <div class="tool-icon i-ppt"><i class="fa-solid fa-file-powerpoint"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="PDF إلى PowerPoint" data-en="PDF to PPT">PDF إلى PowerPoint</h3>
+                    <p data-ar="تحويل ملفات PDF إلى شرائح عرض باوربوينت." data-en="Convert PDF files to PowerPoint slides.">تحويل ملفات PDF إلى شرائح عرض باوربوينت.</p>
                 </div>
             </div>
+            <div class="tool-card" onclick="selectTool('pdf-to-excel', 'PDF إلى Excel', 'PDF to Excel', 'file', 'i-excel', 'fa-file-excel')">
+                <div class="tool-icon i-excel"><i class="fa-solid fa-file-excel"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="PDF إلى Excel" data-en="PDF to Excel">PDF إلى Excel</h3>
+                    <p data-ar="استخراج الجداول من PDF إلى إكسل." data-en="Extract tables from PDF to Excel.">استخراج الجداول من PDF إلى إكسل.</p>
+                </div>
+            </div>
+            <div class="tool-card" onclick="selectTool('merge-pdf', 'دمج ملفات PDF', 'Merge PDF Files', 'multiFile', 'i-dev', 'fa-object-group')">
+                <div class="tool-icon i-dev"><i class="fa-solid fa-object-group"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="دمج ملفات PDF" data-en="Merge PDF Files">دمج ملفات PDF</h3>
+                    <p data-ar="جمع عدة ملفات PDF في ملف واحد منظم." data-en="Combine multiple PDFs into one organized file.">جمع عدة ملفات PDF في ملف واحد منظم.</p>
+                </div>
+            </div>
+            <div class="tool-card" onclick="selectTool('split-pdf', 'تقسيم PDF', 'Split PDF', 'file', 'i-pdf', 'fa-file-dashed-line')">
+                <div class="tool-icon i-pdf"><i class="fa-solid fa-file-dashed-line"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="تقسيم PDF" data-en="Split PDF">تقسيم PDF</h3>
+                    <p data-ar="فصل صفحات الـ PDF إلى ملفات مستقلة." data-en="Separate PDF pages into individual files.">فصل صفحات الـ PDF إلى ملفات مستقلة.</p>
+                </div>
+            </div>
+            <div class="tool-card" onclick="selectTool('pdf-to-pdf', 'تنسيق PDF', 'Reformat PDF', 'file', 'i-pdf', 'fa-file-pdf')">
+                <div class="tool-icon i-pdf"><i class="fa-solid fa-file-pdf"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="تنسيق PDF إلى PDF" data-en="Reformat PDF">تنسيق PDF إلى PDF</h3>
+                    <p data-ar="إعادة بناء وتنسيق ملفات PDF النصية." data-en="Rebuild and format text-based PDFs.">إعادة بناء وتنسيق ملفات PDF النصية.</p>
+                </div>
+            </div>
+            <div class="tool-card" onclick="selectTool('pdf-to-text', 'استخراج نص PDF', 'Extract PDF Text', 'file', 'i-dev', 'fa-font')">
+                <div class="tool-icon i-dev"><i class="fa-solid fa-font"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="استخراج نص PDF" data-en="Extract PDF Text">استخراج نص PDF</h3>
+                    <p data-ar="نسخ ولصق النصوص من داخل ملفات PDF." data-en="Copy and paste text directly from PDFs.">نسخ ولصق النصوص من داخل ملفات PDF.</p>
+                </div>
+            </div>
+        </div>
 
+        <div class="section-title"><i class="fa-solid fa-image" style="color:var(--c-img)"></i> <span data-ar="أدوات الصور" data-en="Image Tools">أدوات الصور</span></div>
+        <div class="tools-grid">
+            <div class="tool-card" onclick="selectTool('image-to-pdf', 'صورة إلى PDF', 'Image to PDF', 'file', 'i-img', 'fa-images')">
+                <div class="tool-icon i-img"><i class="fa-solid fa-images"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="صورة إلى PDF" data-en="Image to PDF">صورة إلى PDF</h3>
+                    <p data-ar="تحويل الصور (JPG, PNG) إلى مستند PDF." data-en="Convert images (JPG, PNG) into a PDF document.">تحويل الصور (JPG, PNG) إلى مستند PDF.</p>
+                </div>
+            </div>
+            <div class="tool-card" onclick="selectTool('compress-image', 'ضغط الصور', 'Compress Image', 'file', 'i-excel', 'fa-compress')">
+                <div class="tool-icon i-excel"><i class="fa-solid fa-compress"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="ضغط حجم الصورة" data-en="Compress Image">ضغط حجم الصورة</h3>
+                    <p data-ar="تقليل حجم الصور مع الحفاظ على الجودة." data-en="Reduce image file size while maintaining quality.">تقليل حجم الصور مع الحفاظ على الجودة.</p>
+                </div>
+            </div>
+            <div class="tool-card" onclick="selectTool('image-to-png', 'تحويل لـ PNG', 'Convert to PNG', 'file', 'i-img', 'fa-image')">
+                <div class="tool-icon i-img"><i class="fa-regular fa-image"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="تحويل لـ PNG" data-en="Convert to PNG">تحويل لـ PNG</h3>
+                    <p data-ar="تحويل أي صورة إلى صيغة PNG شفافة." data-en="Convert any image to transparent PNG format.">تحويل أي صورة إلى صيغة PNG شفافة.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title"><i class="fa-solid fa-code" style="color:var(--c-dev)"></i> <span data-ar="أدوات النصوص والمطورين" data-en="Text & Dev Tools">أدوات النصوص والمطورين</span></div>
+        <div class="tools-grid">
+            <div class="tool-card" onclick="selectTool('text-to-pdf', 'نص إلى PDF', 'Text to PDF', 'text', 'i-pdf', 'fa-file-lines')">
+                <div class="tool-icon i-pdf"><i class="fa-solid fa-file-lines"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="نص إلى PDF" data-en="Text to PDF">نص إلى PDF</h3>
+                    <p data-ar="لصق نص وتحويله مباشرة إلى مستند PDF." data-en="Paste text and instantly turn it into a PDF.">لصق نص وتحويله مباشرة إلى مستند PDF.</p>
+                </div>
+            </div>
+            <div class="tool-card" onclick="selectTool('text-to-qr', 'توليد QR Code', 'QR Code Generator', 'text', 'i-excel', 'fa-qrcode')">
+                <div class="tool-icon i-excel"><i class="fa-solid fa-qrcode"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="توليد باركود QR" data-en="QR Code Generator">توليد باركود QR</h3>
+                    <p data-ar="تحويل الروابط والنصوص إلى رمز استجابة سريعة." data-en="Turn links and text into a Quick Response code.">تحويل الروابط والنصوص إلى رمز استجابة سريعة.</p>
+                </div>
+            </div>
+            <div class="tool-card" onclick="selectTool('password-generator', 'توليد كلمة سر', 'Password Generator', 'none', 'i-dev', 'fa-key')">
+                <div class="tool-icon i-dev"><i class="fa-solid fa-key"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="كلمة سر قوية" data-en="Password Generator">كلمة سر قوية</h3>
+                    <p data-ar="إنشاء كلمات مرور عشوائية وآمنة جداً." data-en="Create highly secure, random passwords.">إنشاء كلمات مرور عشوائية وآمنة جداً.</p>
+                </div>
+            </div>
+            <div class="tool-card" onclick="selectTool('json-beautifier', 'تنسيق JSON', 'JSON Formatter', 'text', 'i-word', 'fa-brackets-curly')">
+                <div class="tool-icon i-word"><i class="fa-solid fa-code"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="تنسيق أكواد JSON" data-en="JSON Formatter">تنسيق أكواد JSON</h3>
+                    <p data-ar="ترتيب وتنظيف الأكواد البرمجية لسهولة القراءة." data-en="Format and prettify JSON code for readability.">ترتيب وتنظيف الأكواد البرمجية لسهولة القراءة.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- الفوتر -->
+    <div class="workspace">
+        <div class="footer-disclaimer">
+            <p data-ar="V-Infinity Converter يوفر مجموعة شاملة من الأدوات الآمنة. تتم معالجة الملفات سحابياً ولا يتم تخزينها أبداً. نحن نستخدم ملفات تعريف الارتباط وخدمات إعلانات جوجل وفقاً للسياسات." data-en="V-Infinity Converter provides a comprehensive suite for secure file conversion. Files are processed on our servers and are never stored. We use cookies and Google AdSense according to policies.">V-Infinity Converter يوفر مجموعة شاملة من الأدوات الآمنة. تتم معالجة الملفات سحابياً ولا يتم تخزينها أبداً. نحن نستخدم ملفات تعريف الارتباط وخدمات إعلانات جوجل وفقاً للسياسات.</p>
+            <div class="footer-links">
+                <a href="#" data-ar="سياسة الخصوصية" data-en="Privacy Policy">سياسة الخصوصية</a> | 
+                <a href="#" data-ar="الشروط والأحكام" data-en="Terms of Service">الشروط والأحكام</a> | 
+                <a href="#" data-ar="اتصل بنا" data-en="Contact Us">اتصل بنا</a>
+            </div>
         </div>
     </div>
 
@@ -324,20 +389,21 @@
     <script>
         let currentAction = '';
         let fileBase64 = null;
+        let filesBase64Array = []; 
         let isArabic = true; 
 
-        // تبديل الثيم
+        // الوضع الليلي
         function toggleTheme() {
-            document.body.classList.toggle('light-mode');
+            document.body.classList.toggle('dark-mode');
             const btn = document.getElementById('themeBtn');
-            if(document.body.classList.contains('light-mode')) {
-                btn.innerHTML = '<i class="fa-solid fa-moon"></i>';
-            } else {
+            if(document.body.classList.contains('dark-mode')) {
                 btn.innerHTML = '<i class="fa-solid fa-sun"></i>';
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-moon"></i>';
             }
         }
 
-        // تبديل اللغة مع الأعلام والترجمة
+        // تبديل اللغة
         function toggleLanguage() {
             isArabic = !isArabic;
             const langBtn = document.getElementById('langBtn');
@@ -353,46 +419,61 @@
                 html.setAttribute('lang', 'en');
             }
 
-            // تحديث النصوص ذات السمة data-ar و data-en
             document.querySelectorAll('[data-ar]').forEach(el => {
                 el.innerHTML = isArabic ? el.getAttribute('data-ar') : el.getAttribute('data-en');
             });
-
-            // تحديث مربعات النصوص (Placeholders)
             document.querySelectorAll('textarea[data-ar-ph]').forEach(el => {
                 el.placeholder = isArabic ? el.getAttribute('data-ar-ph') : el.getAttribute('data-en-ph');
             });
-
-            // إعادة ضبط اختيار الأداة
-            currentAction = '';
-            document.getElementById('selectedToolText').innerHTML = isArabic 
-                ? '<i class="fa-solid fa-wand-magic-sparkles"></i> اختر أداة التحويل من هنا...' 
-                : '<i class="fa-solid fa-wand-magic-sparkles"></i> Select a conversion tool here...';
-            document.getElementById('uploadArea').style.display = 'block';
-            document.getElementById('textInput').style.display = 'block';
         }
 
-        // التعامل مع النافذة المنبثقة
-        function openModal() { document.getElementById('toolsModal').classList.add('active'); }
-        function closeModal() { document.getElementById('toolsModal').classList.remove('active'); }
-
-        // اختيار الأداة
-        function selectTool(action, nameAr, nameEn, type) {
+        // اختيار الأداة من القائمة (SaaS Style)
+        function selectTool(action, nameAr, nameEn, type, iconClass, iconName) {
             currentAction = action;
             const toolName = isArabic ? nameAr : nameEn;
-            document.getElementById('selectedToolText').innerHTML = `<i class="fa-solid fa-check" style="color:var(--success)"></i> ${toolName}`;
-            closeModal();
+            
+            // إظهار منطقة العمل
+            document.getElementById('activeToolArea').style.display = 'block';
+            
+            // تحديث الشارة
+            const badge = document.getElementById('selectedToolBadge');
+            badge.className = `selected-tool-badge ${iconClass}`;
+            badge.innerHTML = `<i class="fa-solid ${iconName}"></i> <span>${toolName}</span>`;
             
             const uploadArea = document.getElementById('uploadArea');
             const textArea = document.getElementById('textInput');
+            const fileInput = document.getElementById('fileInput');
+            const multiFileInput = document.getElementById('multiFileInput');
             
-            if(type === 'file') { uploadArea.style.display = 'block'; textArea.style.display = 'none'; }
-            else if(type === 'text') { uploadArea.style.display = 'none'; textArea.style.display = 'block'; }
-            else if(type === 'fileText') { uploadArea.style.display = 'block'; textArea.style.display = 'block'; }
-            else { uploadArea.style.display = 'none'; textArea.style.display = 'none'; }
+            // إعادة الضبط
+            fileBase64 = null;
+            filesBase64Array = [];
+            document.getElementById('fileName').innerText = '';
+            document.getElementById('resultArea').style.display = 'none';
+            
+            // ترتيب الواجهة
+            if(type === 'multiFile') {
+                uploadArea.style.display = 'block'; textArea.style.display = 'none';
+                uploadArea.onclick = () => multiFileInput.click();
+                document.getElementById('uploadText').innerText = isArabic ? "حدد عدة ملفات PDF للدمج" : "Select multiple PDFs to merge";
+            } else if(type === 'file') { 
+                uploadArea.style.display = 'block'; textArea.style.display = 'none'; 
+                uploadArea.onclick = () => fileInput.click();
+                document.getElementById('uploadText').innerText = isArabic ? "اسحب وأفلت الملف هنا أو اضغط للاختيار" : "Drag & Drop file here or click to select";
+            } else if(type === 'text') { 
+                uploadArea.style.display = 'none'; textArea.style.display = 'block'; 
+            } else if(type === 'fileText') { 
+                uploadArea.style.display = 'block'; textArea.style.display = 'block'; 
+                uploadArea.onclick = () => fileInput.click();
+                document.getElementById('uploadText').innerText = isArabic ? "اسحب وأفلت الملف هنا أو اضغط للاختيار" : "Drag & Drop file here or click to select";
+            } else { 
+                uploadArea.style.display = 'none'; textArea.style.display = 'none'; 
+            }
+
+            // التمرير السلس للأعلى
+            document.getElementById('workspace').scrollIntoView({ behavior: 'smooth' });
         }
 
-        // إشعار التوست
         function showToast(msgAr, msgEn, isError = false) {
             const toast = document.getElementById('toast');
             const finalMsg = isArabic ? msgAr : msgEn;
@@ -408,34 +489,42 @@
             setTimeout(() => toast.classList.remove('show'), 3500);
         }
 
-        // السحب والإفلات
         const dropZone = document.getElementById('uploadArea');
         dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
         dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
         dropZone.addEventListener('drop', (e) => {
             e.preventDefault(); dropZone.classList.remove('dragover');
-            if(e.dataTransfer.files.length) processFile(e.dataTransfer.files[0]);
+            if(currentAction === 'merge-pdf' && e.dataTransfer.files.length > 1) {
+                handleMultiFiles(e.dataTransfer.files);
+            } else if(e.dataTransfer.files.length) {
+                processFile(e.dataTransfer.files[0]);
+            }
         });
 
         function handleFileSelect(e) { if(e.target.files.length) processFile(e.target.files[0]); }
+        function handleMultiFileSelect(e) { if(e.target.files.length > 1) handleMultiFiles(e.target.files); else if (e.target.files.length === 1) processFile(e.target.files[0]); }
 
         function processFile(file) {
-            if (file.size > 4 * 1024 * 1024) { 
-                showToast('حجم الملف يتجاوز 4 ميجابايت!', 'File size exceeds 4MB!', true); 
-                return; 
-            }
+            if (file.size > 4 * 1024 * 1024) { showToast('حجم الملف يتجاوز 4 ميجابايت!', 'File size exceeds 4MB!', true); return; }
             document.getElementById('fileName').innerText = file.name;
             const reader = new FileReader();
             reader.onload = (e) => { fileBase64 = e.target.result.split(',')[1]; };
             reader.readAsDataURL(file);
         }
 
-        // إرسال الطلب للسيرفر
+        function handleMultiFiles(files) {
+            document.getElementById('fileName').innerText = isArabic ? `تم تحديد ${files.length} ملفات` : `${files.length} files selected`;
+            filesBase64Array = [];
+            Array.from(files).forEach(file => {
+                if (file.size > 4 * 1024 * 1024) return;
+                const reader = new FileReader();
+                reader.onload = (e) => { filesBase64Array.push(e.target.result.split(',')[1]); };
+                reader.readAsDataURL(file);
+            });
+        }
+
         async function processConversion() {
-            if (!currentAction) { 
-                showToast('رجاءً اختر أداة أولاً!', 'Please select a tool first!', true); 
-                return; 
-            }
+            if (!currentAction) { showToast('رجاءً اختر أداة أولاً!', 'Please select a tool first!', true); return; }
             
             const text = document.getElementById('textInput').value;
             const btn = document.getElementById('executeBtn');
@@ -443,17 +532,17 @@
             const btnText = document.getElementById('btnText');
             const resultArea = document.getElementById('resultArea');
 
-            btn.disabled = true;
-            spinner.style.display = 'block';
-            btnText.innerText = isArabic ? 'جاري التحويل...' : 'Converting...';
-            resultArea.style.display = 'none';
-            resultArea.classList.remove('error');
+            btn.disabled = true; spinner.style.display = 'block';
+            btnText.innerText = isArabic ? 'جاري المعالجة...' : 'Processing...';
+            resultArea.style.display = 'none'; resultArea.classList.remove('error');
 
             try {
+                const payload = { action: currentAction, text: text, lang: isArabic ? 'ar' : 'en' };
+                if (currentAction === 'merge-pdf' && filesBase64Array.length > 0) payload.filesBase64 = filesBase64Array;
+                else payload.fileBase64 = fileBase64;
+
                 const response = await fetch('/convert', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: currentAction, text: text, fileBase64: fileBase64, lang: isArabic ? 'ar' : 'en' })
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
                 });
 
                 if (!response.ok) {
@@ -464,41 +553,32 @@
                 const contentType = response.headers.get("content-type");
                 if (contentType && contentType.includes("application/json")) {
                     const data = await response.json();
-                    if (data.resultImage) {
-                        resultArea.innerHTML = `<img src="${data.resultImage}" style="max-width:100%; border-radius:10px;">`;
-                    } else {
-                        resultArea.innerText = data.result || (isArabic ? 'تم التنفيذ بنجاح!' : 'Executed successfully!');
-                    }
+                    if (data.resultImage) resultArea.innerHTML = `<img src="${data.resultImage}" style="max-width:100%; border-radius:10px;">`;
+                    else resultArea.innerText = data.result || (isArabic ? 'تم التنفيذ بنجاح!' : 'Executed successfully!');
                     resultArea.style.display = 'block';
                     showToast('تمت العملية بنجاح!', 'Operation successful!');
                 } else {
                     const blob = await response.blob();
                     const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    const contentDisposition = response.headers.get('Content-Disposition');
+                    const a = document.createElement('a'); a.href = url;
+                    const cd = response.headers.get('Content-Disposition');
                     let filename = 'downloaded_file';
-                    if (contentDisposition) {
-                        const match = contentDisposition.match(/filename="?([^"]+)"?/);
-                        if (match) filename = match[1];
-                    }
-                    a.download = filename;
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
+                    if (cd) { const match = cd.match(/filename="?([^"]+)"?/); if (match) filename = match[1]; }
+                    a.download = filename; document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url);
                     showToast('تم تحميل الملف بنجاح!', 'File downloaded successfully!');
                 }
             } catch (error) {
-                resultArea.innerText = error.message;
-                resultArea.classList.add('error');
-                resultArea.style.display = 'block';
+                resultArea.innerText = error.message; resultArea.classList.add('error'); resultArea.style.display = 'block';
                 showToast(error.message, error.message, true);
             } finally {
-                btn.disabled = false;
-                spinner.style.display = 'none';
-                btnText.innerHTML = isArabic ? 'تنفيذ السحر <i class="fa-solid fa-rocket"></i>' : 'Execute Magic <i class="fa-solid fa-rocket"></i>';
+                btn.disabled = false; spinner.style.display = 'none';
+                btnText.innerHTML = isArabic ? 'تحويل الآن' : 'Convert Now';
             }
         }
+
+        // تشغيل الوضع الداكن كافتراضي أول ما يفتح الموقع عشان الفخامة
+        document.body.classList.add('dark-mode');
+        document.getElementById('themeBtn').innerHTML = '<i class="fa-solid fa-sun"></i>';
     </script>
 </body>
 </html>
