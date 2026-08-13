@@ -611,19 +611,16 @@
 
       if (isBinary) {
         const blob = await res.blob();
-        const reader = new FileReader();
-        reader.onloadend = function() {
-          const base64data = reader.result;
-          const link = document.createElement('a');
-          link.href = base64data;
-          link.download = BINARY_FILENAMES[type];
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        };
-        reader.readAsDataURL(blob);
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = BINARY_FILENAMES[type];
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => window.URL.revokeObjectURL(url), 1000);
 
-        output.value = (currentLang === 'ar') ? '✅ تمت المعالجة وتحميل الملف بنجاح!' : '✅ Processed and downloaded successfully!';
+        output.value = (currentLang === 'ar') ? '✅ تمت المعالجة وتم بدء التنزيل!' : '✅ Processed and download started!';
       } else {
         const data = await res.json();
         if (data.resultImage) {
