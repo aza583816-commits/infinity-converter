@@ -84,7 +84,6 @@ def ensure_arabic_font():
 def shape_arabic(text):
     if not text:
         return text
-    # تعديل طريقة عرض النص العربي ليتوافق مع محاذاة وقراءة ReportLab بدقة
     if arabic_reshaper and get_display:
         try:
             reshaped = arabic_reshaper.reshape(text)
@@ -140,6 +139,7 @@ def text_to_pdf_bytes(text, is_arabic, title=None):
     buf = io.BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=A4, topMargin=15 * mm, bottomMargin=15 * mm, leftMargin=15 * mm, rightMargin=15 * mm)
     font = pdf_font_name(is_arabic)
+    # ضبط المحاذاة لليمين واتجاه النص العربي للفقرات العادية
     style = ParagraphStyle("Body", fontName=font, fontSize=12, leading=18, alignment=2 if is_arabic else 0)
     story = []
     for line in (text or "").split("\n"):
@@ -156,15 +156,14 @@ def word_to_pdf_structured(docx_doc, is_arabic):
     style = ParagraphStyle("Body", fontName=font, fontSize=12, leading=18, alignment=2 if is_arabic else 0)
     story = []
 
-    # معالجة الفقرات العادية أولاً
     for par in docx_doc.paragraphs:
         txt = par.text.strip()
         if txt:
+            # معالجة وعكس الحروف للفقرات العادية لتظهر بشكل صحيح وسليم
             content = shape_arabic(txt) if is_arabic else txt
             story.append(RLParagraph(escape_html(content), style))
             story.append(Spacer(1, 6))
 
-    # معالجة الجداول الموجودة في الوورد بشكل منفصل ونظيف
     for table_elem in docx_doc.tables:
         table_data = []
         for row in table_elem.rows:
