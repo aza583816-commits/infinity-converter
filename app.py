@@ -8,6 +8,7 @@ import re
 import secrets
 import string
 import zipfile
+import tempfile
 from datetime import datetime, timezone
 from difflib import unified_diff
 
@@ -43,6 +44,11 @@ except Exception:
 from pypdf import PdfReader, PdfWriter
 import qrcode
 import markdown as md_lib
+
+try:
+    from pdf2docx import Converter
+except Exception:
+    Converter = None
 
 try:
     from pptx import Presentation
@@ -237,7 +243,6 @@ def csv_to_pdf_bytes(text, is_arabic):
     doc.build([table])
     return buf.getvalue()
 
-# أداة الوورد الأصلية (مستقلة للوورد فقط)
 def handle_word_to_pdf(p):
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
@@ -253,7 +258,6 @@ def handle_word_to_pdf(p):
     pdf_bytes = text_to_pdf_bytes(text, is_arabic)
     return file_response(pdf_bytes, "application/pdf", "converted_document.pdf")
 
-# أداة جديدة: تحويل النص مباشرة إلى PDF
 def handle_text_to_pdf(p):
     text = p.get("text", "")
     is_arabic = p["is_arabic"]
@@ -262,7 +266,6 @@ def handle_text_to_pdf(p):
     pdf_bytes = text_to_pdf_bytes(text, is_arabic)
     return file_response(pdf_bytes, "application/pdf", "converted_text.pdf")
 
-# أداة جديدة: قراءة PDF وإعادة تنسيقه كـ PDF جديد
 def handle_pdf_to_pdf_enhanced(p):
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
@@ -288,13 +291,55 @@ def handle_pdf_to_text(p):
     text = "\n".join((page.extract_text() or "") for page in reader.pages)
     return jsonify({"result": text.strip()})
 
-def handle_pdf_to_doc(p):
-    buf = build_docx_from_text(p.get("text", ""), p["is_arabic"])
-    return file_response(buf, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "converted.doc")
-
+# الدالة الجديدة والمتطورة لتحويل PDF إلى Word بالاحتفاظ بالشكل والرسومات
 def handle_pdf_to_docx(p):
-    buf = build_docx_from_text(p.get("text", ""), p["is_arabic"])
-    return file_response(buf, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "converted.docx")
+    file_bytes = get_file_bytes(p)
+    is_arabic = p["is_arabic"]
+    
+    if not file_bytes:
+        buf = build_docx_from_text(p.get("text", ""), is_arabic)
+        return file_response(buf, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "converted.docx")
+        
+    if Converter is not None:
+        try:
+            # استخدام ملفات مؤقتة آمنة لمعالجة الصور والتنسيقات في الـ PDF
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_pdf:
+                tmp_pdf.write(file_bytes)
+                tmp_pdf_path = tmp_pdf.name
+                
+            tmp_docx_path = tmp_pdf_path + ".docx"
+            
+            # تحويل ذكي يحافظ على المسافات، المعادلات والرسومات
+            cv = Converter(tmp_pdf_path)
+            cv.convert(tmp_docx_path, start=0, end=None)
+            cv.close()
+            
+            with open(tmp_docx_path, "rb") as f:
+                docx_bytes = f.read()
+                
+            os.remove(tmp_pdf_path)
+            os.remove(tmp_docx_path)
+            
+            return file_response(docx_bytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "converted.docx")
+        except Exception as e:
+            if 'tmp_pdf_path' in locals() and os.path.exists(tmp_pdf_path):
+                os.remove(tmp_pdf_path)
+            if 'tmp_docx_path' in locals() and os.path.exists(tmp_docx_path):
+                os.remove(tmp_docx_path)
+            pass
+
+    # في حال فشل التحويل الذكي لأي سبب، يتم الرجوع للتحويل البسيط الاحتياطي
+    try:
+        reader = PdfReader(io.BytesIO(file_bytes))
+        text = "\n".join((page.extract_text() or "") for page in reader.pages)
+        buf = build_docx_from_text(text, is_arabic)
+        return file_response(buf, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "converted.docx")
+    except Exception:
+        return bad_request("تعذر قراءة أو تحويل ملف الـ PDF" if is_arabic else "Could not read or convert the PDF file")
+
+def handle_pdf_to_doc(p):
+    # نستخدم نفس تقنية الـ docx العالية لملفات الـ doc
+    return handle_pdf_to_docx(p)
 
 def handle_doc_to_docx(p):
     buf = build_docx_from_text(p.get("text", ""), p["is_arabic"])
@@ -601,7 +646,9 @@ REGISTRY = {
     "pdf-to-pdf": handle_pdf_to_pdf_enhanced, 
     "csv-to-pdf": handle_csv_to_pdf, 
     "pdf-to-text": handle_pdf_to_text,
-    "pdf-to-doc": handle_pdf_to_doc, "pdf-to-docx": handle_pdf_to_docx, "doc-to-docx": handle_doc_to_docx,
+    "pdf-to-doc": handle_pdf_to_doc, 
+    "pdf-to-docx": handle_pdf_to_docx, 
+    "doc-to-docx": handle_doc_to_docx,
     "pdf-to-excel": handle_pdf_to_excel, "pdf-to-ppt": handle_pdf_to_ppt, "merge-pdf": handle_merge_pdf,
     "split-pdf": handle_split_pdf, "csv-to-word": handle_csv_to_word, "text-to-excel": handle_text_to_excel,
     "json-to-excel": handle_json_to_excel, "excel-to-json": handle_excel_to_json, "csv-to-json": handle_csv_to_json,
