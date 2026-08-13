@@ -2,13 +2,11 @@ from flask import Flask, request, send_file
 import os
 import tempfile
 import base64
-from docx2pdf import convert
+from docx import Document
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
 
 app = Flask(__name__)
-
-@app.route('/', methods=['GET'])
-def home():
-    return "Python Conversion Server is Running!", 200
 
 @app.route('/convert', methods=['POST'])
 def convert_file():
@@ -28,12 +26,29 @@ def convert_file():
             with open(input_path, "wb") as f:
                 f.write(file_bytes)
                 
-            convert(input_path, output_path)
+            # قراءة ملف الـ Word واستخراج النصوص
+            doc = Document(input_path)
+            fullText = []
+            for para in doc.paragraphs:
+                if para.text.strip():
+                    fullText.append(para.text)
+            
+            # إنشاء ملف PDF نظيف من النصوص المستخرجة
+            c = canvas.Canvas(output_path, pagesize=letter)
+            text_object = c.beginText(40, 750)
+            text_object.setFont("Helvetica", 12)
+            
+            for line in fullText:
+                # تقسيم الأسطر الطويلة لتتطابق مع صفحة الـ PDF
+                text_object.textLine(line[:90])
+                
+            c.drawText(text_object)
+            c.save()
             
             if os.path.exists(output_path):
                 return send_file(output_path, as_attachment=True, download_name="converted.pdf")
             else:
-                return "Conversion failed to generate PDF", 500
+                return "PDF generation failed", 500
                 
     except Exception as e:
         return str(e), 500
