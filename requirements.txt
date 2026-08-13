@@ -6,4 +6,5 @@ reportlab
 openpyxl
 pdf2docx
 qrcode
+pandas
 gunicorn
