@@ -1,11 +1,14 @@
 {
   "name": "v-infinity-converter",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "private": true,
   "description": "V-Infinity Converter - server-powered conversion suite",
+  "engines": {
+    "node": "20.x"
+  },
   "dependencies": {
     "puppeteer-core": "^23.9.0",
-    "@sparticuz/chromium": "^123.0.1",
+    "@sparticuz/chromium": "^131.0.1",
     "mammoth": "^1.7.2",
     "xlsx": "^0.18.5",
     "docx": "^9.0.2",
