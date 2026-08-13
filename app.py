@@ -28,7 +28,7 @@ from docx.oxml.ns import qn
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.lib import colors
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph as RLParagraph
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph as RLParagraph, Spacer
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
@@ -84,7 +84,7 @@ def ensure_arabic_font():
 def shape_arabic(text):
     if not text:
         return text
-    # معالجة صحيحة ومضبوطة للحروف العربية لتجنب التقطيع والعكس
+    # تعديل طريقة عرض النص العربي ليتوافق مع محاذاة وقراءة ReportLab بدقة
     if arabic_reshaper and get_display:
         try:
             reshaped = arabic_reshaper.reshape(text)
@@ -145,6 +145,53 @@ def text_to_pdf_bytes(text, is_arabic, title=None):
     for line in (text or "").split("\n"):
         content = shape_arabic(line) if is_arabic else line
         story.append(RLParagraph(escape_html(content).replace("\n", "<br/>") or "&nbsp;", style))
+        story.append(Spacer(1, 6))
+    doc.build(story)
+    return buf.getvalue()
+
+def word_to_pdf_structured(docx_doc, is_arabic):
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4, topMargin=15 * mm, bottomMargin=15 * mm, leftMargin=15 * mm, rightMargin=15 * mm)
+    font = pdf_font_name(is_arabic)
+    style = ParagraphStyle("Body", fontName=font, fontSize=12, leading=18, alignment=2 if is_arabic else 0)
+    story = []
+
+    # معالجة الفقرات العادية أولاً
+    for par in docx_doc.paragraphs:
+        txt = par.text.strip()
+        if txt:
+            content = shape_arabic(txt) if is_arabic else txt
+            story.append(RLParagraph(escape_html(content), style))
+            story.append(Spacer(1, 6))
+
+    # معالجة الجداول الموجودة في الوورد بشكل منفصل ونظيف
+    for table_elem in docx_doc.tables:
+        table_data = []
+        for row in table_elem.rows:
+            formatted_row = []
+            for cell in row.cells:
+                cell_text = cell.text.strip()
+                processed = shape_arabic(cell_text) if is_arabic else cell_text
+                cell_style = ParagraphStyle('TableCell', fontName=font, fontSize=10, leading=14, alignment=2 if is_arabic else 0)
+                formatted_row.append(RLParagraph(escape_html(processed), cell_style))
+            table_data.append(formatted_row)
+            
+        if table_data:
+            t = Table(table_data, hAlign="CENTER")
+            t.setStyle(TableStyle([
+                ("FONTNAME", (0, 0), (-1, -1), font),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0ea5e9")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("ALIGN", (0, 0), (-1, -1), "RIGHT" if is_arabic else "LEFT"),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("TOPPADDING", (0, 0), (-1, -1), 6),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+            ]))
+            story.append(Spacer(1, 10))
+            story.append(t)
+            story.append(Spacer(1, 10))
+
     doc.build(story)
     return buf.getvalue()
 
@@ -154,7 +201,6 @@ def csv_to_pdf_bytes(text, is_arabic):
     doc = SimpleDocTemplate(buf, pagesize=A4, topMargin=15 * mm, bottomMargin=15 * mm, leftMargin=15 * mm, rightMargin=15 * mm)
     font = pdf_font_name(is_arabic)
     
-    # دعم الجداول والألوان وتنسيق الخلايا بشكل منظم
     table_data = []
     for row in rows:
         formatted_row = []
@@ -178,38 +224,23 @@ def csv_to_pdf_bytes(text, is_arabic):
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
         ("TOPPADDING", (0, 0), (-1, -1), 8),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
-        ("LEFTPADDING", (0, 0), (-1, -1), 8),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 8),
     ]))
     doc.build([table])
     return buf.getvalue()
 
 def handle_word_to_pdf(p):
-    text = p.get("text", "")
-    is_arabic = p["is_arabic"]
     file_bytes = get_file_bytes(p)
+    is_arabic = p["is_arabic"]
     if file_bytes:
         try:
             docx_doc = Document(io.BytesIO(file_bytes))
-            # استخراج النصوص والجداول من ملف الوورد بدقة وتحويلها لجدول منظم
-            extracted_elements = []
-            for par in docx_doc.paragraphs:
-                if par.text.strip():
-                    extracted_elements.append(par.text)
-            for table in docx_doc.tables:
-                for row in table.rows:
-                    row_text = " | ".join(cell.text.strip() for cell in row.cells)
-                    if row_text.strip():
-                        extracted_elements.append(row_text)
-            text = "\n".join(extracted_elements) if extracted_elements else "\n".join(par.text for par in docx_doc.paragraphs)
+            pdf_bytes = word_to_pdf_structured(docx_doc, is_arabic)
+            return file_response(pdf_bytes, "application/pdf", "converted_document.pdf")
         except Exception:
             return bad_request("تعذر قراءة ملف الوورد" if is_arabic else "Could not read the Word file")
             
-    # إذا كان الملف يحتوي على جداول أو خطوط مفصولة بـ (|)، نقوم بمعالجته كجدول ملون بـ PDF لضمان خروج الألوان والجداول
-    if "|" in text or file_bytes:
-        pdf_bytes = csv_to_pdf_bytes(text, is_arabic)
-    else:
-        pdf_bytes = text_to_pdf_bytes(text, is_arabic)
+    text = p.get("text", "")
+    pdf_bytes = text_to_pdf_bytes(text, is_arabic)
     return file_response(pdf_bytes, "application/pdf", "converted_document.pdf")
 
 def handle_csv_to_pdf(p):
