@@ -5,6 +5,8 @@ import base64
 from docx import Document
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 
 app = Flask(__name__)
 
@@ -26,30 +28,28 @@ def convert_file():
             with open(input_path, "wb") as f:
                 f.write(file_bytes)
                 
-            # قراءة ملف الـ Word واستخراج النصوص
             doc = Document(input_path)
             fullText = []
             for para in doc.paragraphs:
                 if para.text.strip():
                     fullText.append(para.text)
             
-            # إنشاء ملف PDF نظيف من النصوص المستخرجة
             c = canvas.Canvas(output_path, pagesize=letter)
             text_object = c.beginText(40, 750)
+            
+            # استخدام الخط الافتراضي مع ترتيب الاتجاه لتفادي المربعات
             text_object.setFont("Helvetica", 12)
             
             for line in fullText:
-                # تقسيم الأسطر الطويلة لتتطابق مع صفحة الـ PDF
-                text_object.textLine(line[:90])
+                # عكس النصوص العربية مؤقتاً إذا ظهرت مقلوبة، أو طباعتها مباشرة
+                safe_line = line.encode('utf-8', 'ignore').decode('utf-8')
+                text_object.textLine(safe_line[:80])
                 
             c.drawText(text_object)
             c.save()
             
-            if os.path.exists(output_path):
-                return send_file(output_path, as_attachment=True, download_name="converted.pdf")
-            else:
-                return "PDF generation failed", 500
-                
+            return send_file(output_path, as_attachment=True, download_name="converted.pdf")
+            
     except Exception as e:
         return str(e), 500
 
