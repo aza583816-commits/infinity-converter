@@ -139,12 +139,18 @@ def text_to_pdf_bytes(text, is_arabic, title=None):
     buf = io.BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=A4, topMargin=15 * mm, bottomMargin=15 * mm, leftMargin=15 * mm, rightMargin=15 * mm)
     font = pdf_font_name(is_arabic)
-    style = ParagraphStyle("Body", fontName=font, fontSize=12, leading=18, alignment=2 if is_arabic else 0)
     story = []
     for line in (text or "").split("\n"):
         content = shape_arabic(line) if is_arabic else line
-        story.append(RLParagraph(escape_html(content).replace("\n", "<br/>") or "&nbsp;", style))
-        story.append(Spacer(1, 6))
+        p_style = ParagraphStyle('Body', fontName=font, fontSize=11, leading=16, alignment=2 if is_arabic else 0)
+        t_cell = Table([[RLParagraph(escape_html(content), p_style)]], colWidths=[480])
+        t_cell.setStyle(TableStyle([
+            ("ALIGN", (0, 0), (-1, -1), "RIGHT" if is_arabic else "LEFT"),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+        ]))
+        story.append(t_cell)
+        story.append(Spacer(1, 4))
     doc.build(story)
     return buf.getvalue()
 
@@ -154,6 +160,7 @@ def word_to_pdf_structured(docx_doc, is_arabic):
     font = pdf_font_name(is_arabic)
     story = []
 
+    # معالجة الفقرات بوضعها داخل خلايا جدول خفية لضبط الحروف والاتجاه تماماً مثل الجدول
     for par in docx_doc.paragraphs:
         txt = par.text.strip()
         if txt:
