@@ -8,7 +8,7 @@
 <!-- ⬇️ الخطوط ⬇️ -->
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 
-<!-- ⬇️ جميع المكتبات البرمجية (بدون حذف) ⬇️ -->
+<!-- ⬇️ جميع المكتبات البرمجية ⬇️ -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
@@ -98,9 +98,6 @@
   select:focus, textarea:focus { border-color: #6366f1; box-shadow: 0 0 15px rgba(99, 102, 241, 0.3); }
   option { background: #0f172a; color: #fff; }
   optgroup { background: #090d16; color: #a855f7; font-weight: bold; }
-
-  /* [إضافة مخصصة لحل مشكلة اتجاه القائمة بالعربي] يفرض RTL صريح على القائمة
-     وعناصرها عند تفعيل الوضع العربي، بدل الاعتماد فقط على خاصية dir بالـJS */
   select[dir="rtl"] { direction: rtl; text-align: right; }
   select[dir="rtl"] option, select[dir="rtl"] optgroup { direction: rtl; text-align: right; unicode-bidi: plaintext; }
 
@@ -325,20 +322,6 @@
 
   document.getElementById('conversion-type').innerHTML = optionsEn;
 
-  // === [الحل الجذري لمشكلة الأسهم المقلوبة] ===
-  // السهم الرمزي "➔" حرف "محايد الاتجاه" بيونيكود، وبعض القوائم المنسدلة
-  // (خصوصاً الواجهة الأصلية Native Picker بالجوال) تتعامل معه بشكل غير ثابت
-  // حتى مع محارف عزل الاتجاه. الحل الجذري: استبدال السهم بكلمة عربية طبيعية
-  // "إلى" بين المصطلحين — كلمة عربية بين مصطلحين إنجليزيين هي الحالة الأبسط
-  // والأكثر دعماً باتجاه النص على كل المنصات بدون استثناء، فحلت المشكلة نهائياً
-  // بدل الاعتماد على حيل محارف Unicode غير المضمونة 100%.
-  // نُبقي هذي الدالة كخط دفاع إضافي (تضمن اتجاه العنصر صراحة، غير ضارة إطلاقاً).
-  function applyBidiFix(selectElem) {
-    Array.from(selectElem.querySelectorAll('option')).forEach(opt => {
-      opt.setAttribute('dir', 'rtl');
-    });
-  }
-
   function updateStats() {
     const text = document.getElementById('input-data').value;
     document.getElementById('char-count').innerText = text.length;
@@ -363,7 +346,6 @@
       langBtn.innerText = '🌐 English';
       selectElem.innerHTML = optionsAr;
       selectElem.setAttribute('dir', 'rtl');
-      applyBidiFix(selectElem);
       document.getElementById('sub-title').innerText = 'الأداة الشاملة لكل ما تحتاجه، بسرعة فائقة.';
       document.getElementById('lbl-tool').innerText = 'ماذا تريد أن تفعل اليوم؟';
       document.getElementById('lbl-content').innerText = 'المحتوى';
@@ -421,8 +403,6 @@
     }).join('\n');
   }
 
-  // === [تحسين] الآن نحتفظ بالملف الأصلي (File Object) لإرساله كاملاً للسيرفر
-  // عند التحويلات المعقدة، والـ Textarea تُستخدم فقط كمعاينة للتحويلات النصية البسيطة ===
   function processFiles(files) {
     loadedFiles = files;
     const first = files[0];
@@ -505,11 +485,6 @@
     }
   }
 
-  // === [ترقية للسيرفر] كل الأدوات معالَجة الآن على سيرفر Vercel (Node.js Serverless) ===
-  // الاستثناء الوحيد: "تحويل النص إلى صوت" يبقى بالمتصفح لأنه يعتمد تقنياً على
-  // مكبر صوت جهاز المستخدم مباشرة (Web Speech API) ولا يمكن تشغيله من السيرفر.
-
-  // كل الأدوات الآن تمر عبر نقطة دخول واحدة موحّدة: /api/convert
   const ALL_ACTIONS = ['word-to-pdf', 'csv-to-pdf', 'pdf-to-text', 'pdf-to-doc', 'pdf-to-docx', 'doc-to-docx', 'pdf-to-excel', 'pdf-to-ppt', 'merge-pdf', 'split-pdf', 'text-to-excel', 'json-to-excel', 'excel-to-json', 'csv-to-json', 'text-to-csv', 'word-to-csv', 'csv-to-word', 'compress-image', 'image-to-png', 'image-to-jpg', 'image-to-base64', 'image-to-pdf', 'heic-to-jpg', 'base64-tool', 'url-encoder', 'json-beautifier', 'css-js-minifier', 'html-entity', 'hash-generator', 'timestamp-converter', 'clean-text', 'text-to-qr', 'password-generator', 'password-strength', 'text-counter', 'percentage-calc', 'byte-converter', 'unit-converter', 'markdown-to-html', 'text-diff'];
 
   function endpointFor(type) {
@@ -527,20 +502,16 @@
     'image-to-pdf': 'converted.pdf', 'heic-to-jpg': 'converted.jpg',
   };
 
-  // أدوات تحتاج ملف واحد على الأقل مرفوع
   const NEEDS_FILE = ['word-to-pdf', 'pdf-to-text', 'excel-to-json', 'compress-image', 'image-to-png', 'image-to-jpg', 'image-to-base64', 'image-to-pdf', 'heic-to-jpg', 'pdf-to-excel', 'pdf-to-ppt', 'split-pdf'];
-  // أدوات تحتاج أكثر من ملف (ملفات متعددة)
   const NEEDS_MULTIPLE_FILES = ['merge-pdf'];
 
-  // [تحقق من حجم الملف] حد أقصى 4 ميجابايت متوافق مع حدود خطة Vercel Hobby
   const MAX_FILE_MB = 4;
   function validateFileSize(file) {
     const sizeMB = file.size / (1024 * 1024);
     if (sizeMB > MAX_FILE_MB) {
-      const msg = (currentLang === 'ar')
-        ? `⚠️ الملف "${file.name}" حجمه ${sizeMB.toFixed(1)}MB — يتجاوز الحد المسموح (${MAX_FILE_MB}MB). يرجى استخدام ملف أصغر.`
-        : `⚠️ File "${file.name}" is ${sizeMB.toFixed(1)}MB — exceeds the allowed limit (${MAX_FILE_MB}MB). Please use a smaller file.`;
-      return msg;
+      return (currentLang === 'ar')
+        ? `⚠️ الملف "${file.name}" حجمه ${sizeMB.toFixed(1)}MB — يتجاوز الحد المسموح (${MAX_FILE_MB}MB).`
+        : `⚠️ File "${file.name}" is ${sizeMB.toFixed(1)}MB — exceeds the allowed limit (${MAX_FILE_MB}MB).`;
     }
     return null;
   }
@@ -554,7 +525,6 @@
     });
   }
 
-  // [تأثير تحميل بصري بدون أي CSS إضافي] نقطتان متحركتان بالنص داخل الزر نفسه
   let loadingInterval = null;
   function startLoadingAnimation(executeBtn, baseText) {
     let dots = 0;
@@ -575,7 +545,6 @@
     const executeBtn = document.querySelector('.btn-execute');
     qrContainer.innerHTML = '';
 
-    // [استثناء وحيد] تحويل النص لصوت يبقى محلياً بالمتصفح
     if (type === 'text-to-speech') {
       if (!input.trim()) { output.value = (currentLang === 'ar') ? 'يرجى إدخال نص أولاً!' : 'Please enter input first!'; return; }
       const msg = new SpeechSynthesisUtterance(input);
@@ -592,18 +561,14 @@
 
     if (NEEDS_MULTIPLE_FILES.includes(type)) {
       if (!loadedFiles || loadedFiles.length < 2) {
-        output.value = (currentLang === 'ar') ? 'يرجى رفع ملفين PDF على الأقل (اضغط مع الاستمرار لاختيار أكثر من ملف).' : 'Please upload at least 2 PDF files (use multi-select).';
+        output.value = (currentLang === 'ar') ? 'يرجى رفع ملفين PDF على الأقل.' : 'Please upload at least 2 PDF files.';
         return;
       }
     } else if (NEEDS_FILE.includes(type) && !loadedFiles[0] && !input.trim()) {
       output.value = (currentLang === 'ar') ? 'يرجى رفع ملف أو إدخال نص أولاً!' : 'Please upload a file or enter input first!';
       return;
-    } else if (!NEEDS_FILE.includes(type) && !NEEDS_MULTIPLE_FILES.includes(type) && !input.trim()) {
-      output.value = (currentLang === 'ar') ? 'يرجى إدخال نص أولاً!' : 'Please enter input first!';
-      return;
     }
 
-    // [تحقق من الحجم] قبل الإرسال بأي شكل
     const filesToCheck = NEEDS_MULTIPLE_FILES.includes(type) ? loadedFiles : (loadedFiles[0] ? [loadedFiles[0]] : []);
     for (const f of filesToCheck) {
       const sizeError = validateFileSize(f);
@@ -645,11 +610,17 @@
       }
 
       if (isBinary) {
+        // [تعديل منع الشاشة السوداء]: استقبال الملف كـ Blob وإجباره على التحميل الفوري
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
-        link.href = url; link.download = BINARY_FILENAMES[type]; link.click();
+        link.href = url;
+        link.download = BINARY_FILENAMES[type];
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
         setTimeout(() => URL.revokeObjectURL(url), 5000);
+        
         output.value = (currentLang === 'ar') ? '✅ تمت المعالجة وتحميل الملف بنجاح!' : '✅ Processed and downloaded successfully!';
       } else {
         const data = await res.json();
@@ -668,6 +639,7 @@
       output.value = (currentLang === 'ar') ? ('❌ حدث خطأ: ' + e.message) : ('❌ Error: ' + e.message);
     } finally {
       stopLoadingAnimation();
+      executeBtn.disabled.disabled = false;
       executeBtn.disabled = false;
       executeBtn.innerText = origBtnText;
     }
