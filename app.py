@@ -1,10 +1,14 @@
 from flask import Flask, request, send_file
 import os
-from docx2pdf import convert
 import tempfile
 import base64
+from docx2pdf import convert
 
 app = Flask(__name__)
+
+@app.route('/', methods=['GET'])
+def home():
+    return "Python Conversion Server is Running!", 200
 
 @app.route('/convert', methods=['POST'])
 def convert_file():
@@ -13,7 +17,7 @@ def convert_file():
         file_base64 = data.get('fileBase64')
         
         if not file_base64:
-            return "No file provided", 400
+            return "No fileBase64 provided", 400
         
         file_bytes = base64.b64decode(file_base64)
         
@@ -26,7 +30,11 @@ def convert_file():
                 
             convert(input_path, output_path)
             
-            return send_file(output_path, as_attachment=True, download_name="converted.pdf")
+            if os.path.exists(output_path):
+                return send_file(output_path, as_attachment=True, download_name="converted.pdf")
+            else:
+                return "Conversion failed to generate PDF", 500
+                
     except Exception as e:
         return str(e), 500
 
