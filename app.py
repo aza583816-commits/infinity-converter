@@ -6,9 +6,12 @@ from docx import Document
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from reportlab.lib import colors
-import urllib.request
 
 app = Flask(__name__)
+
+@app.route('/', methods=['GET'])
+def home():
+    return "Python Conversion Server is Live!", 200
 
 @app.route('/convert', methods=['POST'])
 def convert_file():
@@ -34,24 +37,25 @@ def convert_file():
                 if para.text.strip():
                     fullText.append(para.text)
             
-            # استخدام تقنية رسم النصوص المباشرة مع ترميز سليم
             c = canvas.Canvas(output_path, pagesize=letter)
+            text_object = c.beginText(50, 730)
+            text_object.setFont("Helvetica", 11)
             
-            # رسم النصوص بشكل نظيف
-            y = 750
             for line in fullText:
-                if y < 50:
-                    c.showPage()
-                    y = 750
-                # معالجة النص لطباعته بشكل مقروء
-                clean_text = line.strip()
-                c.drawString(40, y, clean_text)
-                y -= 25
+                # تنظيم وتنسيق السطر لضمان خروجه بشكل نظيف
+                clean_line = line.strip()
+                if len(clean_line) > 85:
+                    clean_line = clean_line[:85]
+                text_object.textLine(clean_line)
                 
+            c.drawText(text_object)
             c.save()
             
-            return send_file(output_path, as_attachment=True, download_name="converted.pdf")
-            
+            if os.path.exists(output_path):
+                return send_file(output_path, as_attachment=True, download_name="converted.pdf")
+            else:
+                return "PDF generation failed", 500
+                
     except Exception as e:
         return str(e), 500
 
