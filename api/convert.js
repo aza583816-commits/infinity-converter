@@ -474,7 +474,7 @@ module.exports = async (req, res) => {
 
       case 'unit-converter': {
         const val = parseFloat(text.replace(/[^0-9.]/g, ''));
-        return res.status(200).json({ result: `Meters: ${val} m\nFeet: ${(val * 3.28084).toFixed(2)} ft\nInches: ${(val * 39.3701).toFixed(2)} in\nij: ${(val / 1609.34).toFixed(4)} mi` });
+        return res.status(200).json({ result: `Meters: ${val} m\nFeet: ${(val * 3.28084).toFixed(2)} ft\nInches: ${(val * 39.3701).toFixed(2)} in\nMiles: ${(val / 1609.34).toFixed(4)} mi` });
       }
 
       case 'markdown-to-html': {
@@ -492,7 +492,7 @@ module.exports = async (req, res) => {
       default:
         return res.status(400).json({ error: 'Unknown action: ' + action });
     }
-  } catc (err) {
+  } catch (err) {
     console.error('convert.js error:', err);
     return res.status(500).json({ error: err.message });
   }
