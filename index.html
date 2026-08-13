@@ -99,6 +99,11 @@
   option { background: #0f172a; color: #fff; }
   optgroup { background: #090d16; color: #a855f7; font-weight: bold; }
 
+  /* [إضافة مخصصة لحل مشكلة اتجاه القائمة بالعربي] يفرض RTL صريح على القائمة
+     وعناصرها عند تفعيل الوضع العربي، بدل الاعتماد فقط على خاصية dir بالـJS */
+  select[dir="rtl"] { direction: rtl; text-align: right; }
+  select[dir="rtl"] option, select[dir="rtl"] optgroup { direction: rtl; text-align: right; unicode-bidi: plaintext; }
+
   textarea { resize: vertical; min-height: 120px; }
 
   .upload-box {
@@ -264,38 +269,38 @@
 
   const optionsAr = `
     <optgroup label="👩‍🏫 أدوات المعلمين والطلاب">
-      <option value="word-to-pdf" selected>وورد (.docx/.doc) ➔ PDF</option>
-      <option value="pdf-to-doc">PDF ➔ وورد (.doc)</option>
-      <option value="pdf-to-docx">PDF ➔ وورد (.docx)</option>
-      <option value="doc-to-docx">وورد قديم (.doc) ➔ حديث (.docx)</option>
-      <option value="csv-to-pdf">CSV ➔ PDF</option>
-      <option value="pdf-to-excel">PDF ➔ إكسيل (.xlsx)</option>
-      <option value="pdf-to-ppt">PDF ➔ بوربوينت (.pptx)</option>
+      <option value="word-to-pdf" selected>تحويل وورد (.docx/.doc) إلى PDF</option>
+      <option value="pdf-to-doc">تحويل PDF إلى وورد (.doc)</option>
+      <option value="pdf-to-docx">تحويل PDF إلى وورد (.docx)</option>
+      <option value="doc-to-docx">تحويل وورد قديم (.doc) إلى حديث (.docx)</option>
+      <option value="csv-to-pdf">تحويل CSV إلى PDF</option>
+      <option value="pdf-to-excel">تحويل PDF إلى إكسيل (.xlsx)</option>
+      <option value="pdf-to-ppt">تحويل PDF إلى بوربوينت (.pptx)</option>
       <option value="merge-pdf">دمج عدة ملفات PDF</option>
       <option value="split-pdf">تقسيم PDF لصفحات (ZIP)</option>
     </optgroup>
     <optgroup label="📄 المستندات العامة والـ PDF">
-      <option value="pdf-to-text">PDF ➔ استخراج النصوص</option>
-      <option value="image-to-pdf">صورة ➔ PDF</option>
+      <option value="pdf-to-text">استخراج النصوص من PDF</option>
+      <option value="image-to-pdf">تحويل صورة إلى PDF</option>
       <option value="clean-text">إزالة التنسيقات / HTML</option>
       <option value="text-diff">مقارنة النصوص (Diff)</option>
-      <option value="markdown-to-html">Markdown ➔ HTML</option>
+      <option value="markdown-to-html">تحويل Markdown إلى HTML</option>
     </optgroup>
     <optgroup label="📊 البيانات والجداول الإلكترونية">
-      <option value="text-to-excel">نص/جدول ➔ إكسيل (.xlsx)</option>
-      <option value="excel-to-json">إكسيل (.xlsx) ➔ JSON</option>
-      <option value="text-to-csv">نص/جدول ➔ CSV</option>
-      <option value="csv-to-json">CSV ➔ JSON</option>
-      <option value="json-to-excel">JSON ➔ إكسيل</option>
-      <option value="word-to-csv">وورد ➔ CSV</option>
-      <option value="csv-to-word">CSV ➔ وورد</option>
+      <option value="text-to-excel">تحويل نص/جدول إلى إكسيل (.xlsx)</option>
+      <option value="excel-to-json">تحويل إكسيل (.xlsx) إلى JSON</option>
+      <option value="text-to-csv">تحويل نص/جدول إلى CSV</option>
+      <option value="csv-to-json">تحويل CSV إلى JSON</option>
+      <option value="json-to-excel">تحويل JSON إلى إكسيل</option>
+      <option value="word-to-csv">تحويل وورد إلى CSV</option>
+      <option value="csv-to-word">تحويل CSV إلى وورد</option>
     </optgroup>
     <optgroup label="🖼️ أدوات الصور والرسومات">
       <option value="compress-image">ضغط حجم الصورة (KB)</option>
-      <option value="image-to-png">صورة ➔ PNG</option>
-      <option value="image-to-jpg">صورة ➔ JPG</option>
-      <option value="image-to-base64">صورة ➔ Base64</option>
-      <option value="heic-to-jpg">HEIC (آيفون) ➔ JPG</option>
+      <option value="image-to-png">تحويل صورة إلى PNG</option>
+      <option value="image-to-jpg">تحويل صورة إلى JPG</option>
+      <option value="image-to-base64">تحويل صورة إلى Base64</option>
+      <option value="heic-to-jpg">تحويل HEIC (آيفون) إلى JPG</option>
     </optgroup>
     <optgroup label="💻 أدوات الويب والمطورين">
       <option value="base64-tool">ترميز / فك ترميز Base64</option>
@@ -304,7 +309,7 @@
       <option value="url-encoder">تشفير الروابط (URL)</option>
       <option value="css-js-minifier">تصغير حجم CSS/JS</option>
       <option value="html-entity">تحويل نصوص HTML</option>
-      <option value="timestamp-converter">محول وقت Unix</option>
+      <option value="timestamp-converter">تحويل وقت Unix إلى تاريخ</option>
     </optgroup>
     <optgroup label="🔧 أدوات عامة ومفيدة">
       <option value="text-to-qr">توليد باركود (QR Code)</option>
@@ -320,16 +325,17 @@
 
   document.getElementById('conversion-type').innerHTML = optionsEn;
 
-  // === معالجة اتجاه النصوص المختلطة (Bidi Fix) بمحارف Unicode Isolates ===
-  // يعزل كل مقطع لاتيني (PDF, Word, .docx...) داخل تسمية عربية بدل ترك المتصفح
-  // يعيد ترتيب المقاطع تلقائياً بشكل خاطئ. لا يغيّر أي تصميم مرئي.
+  // === [الحل الجذري لمشكلة الأسهم المقلوبة] ===
+  // السهم الرمزي "➔" حرف "محايد الاتجاه" بيونيكود، وبعض القوائم المنسدلة
+  // (خصوصاً الواجهة الأصلية Native Picker بالجوال) تتعامل معه بشكل غير ثابت
+  // حتى مع محارف عزل الاتجاه. الحل الجذري: استبدال السهم بكلمة عربية طبيعية
+  // "إلى" بين المصطلحين — كلمة عربية بين مصطلحين إنجليزيين هي الحالة الأبسط
+  // والأكثر دعماً باتجاه النص على كل المنصات بدون استثناء، فحلت المشكلة نهائياً
+  // بدل الاعتماد على حيل محارف Unicode غير المضمونة 100%.
+  // نُبقي هذي الدالة كخط دفاع إضافي (تضمن اتجاه العنصر صراحة، غير ضارة إطلاقاً).
   function applyBidiFix(selectElem) {
-    const LRI = '\u2066', RLI = '\u2067', PDI = '\u2069';
-    const latinRun = /[A-Za-z0-9._\/()%\-]+/g;
     Array.from(selectElem.querySelectorAll('option')).forEach(opt => {
-      const original = opt.getAttribute('data-original') || opt.textContent;
-      opt.setAttribute('data-original', original);
-      opt.textContent = RLI + original.replace(latinRun, m => LRI + m + PDI) + PDI;
+      opt.setAttribute('dir', 'rtl');
     });
   }
 
