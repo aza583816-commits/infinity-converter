@@ -1,1 +1,100 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V-Infinity Converter</title>
+<link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+<meta name="theme-color" content="#6366f1">
 
+<!-- الخطوط -->
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+
+<!-- المكتبات الأساسية للمعaينة -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+
+<div class="top-bar">
+  <button class="top-btn pwa-banner" id="pwa-btn">📱 Add to Home Screen</button>
+  <button class="top-btn" id="theme-btn">☀️ Light</button>
+  <button class="top-btn" id="lang-btn">🌐 العربية</button>
+</div>
+
+<div class="container" id="main-container">
+  <div class="header">
+    <div class="logo">V-Infinity Converter</div>
+    <div class="subtitle" id="sub-title">The Infinite SaaS Conversion Suite</div>
+  </div>
+
+  <div class="form-group">
+    <label id="lbl-tool">What to do today?</label>
+    <select id="conversion-type"></select>
+  </div>
+
+  <div class="upload-box" id="dropZone">
+    <input type="file" id="fileInput" hidden multiple accept="image/*,.heic,.heif,.json,.csv,.txt,.pdf,.xlsx,.docx,.doc,.xml,.yaml" />
+    <div class="upload-icon">📂</div>
+    <div class="upload-title" id="lbl-upload-title">Drag & Drop file or click to upload</div>
+    <div class="upload-sub" id="lbl-upload-sub">(Supports Images, PDF, CSV, JSON, Word, TXT)</div>
+  </div>
+
+  <div class="form-group">
+    <label id="lbl-content">Content</label>
+    <textarea id="input-data" rows="5" dir="auto" placeholder="Paste Text, Table, Links, or Code here..."></textarea>
+    <div class="stats-bar">
+      <span><span id="label-chars">Chars</span>: <strong id="char-count">0</strong></span>
+      <span><span id="label-words">Words</span>: <strong id="word-count">0</strong></span>
+    </div>
+  </div>
+
+  <button type="button" class="btn-execute">Execute 🚀</button>
+
+  <div class="form-group" style="margin-top: 20px;">
+    <label id="lbl-result">Result:</label>
+    <textarea id="output-data" rows="4" dir="auto" readonly placeholder="Result will appear here..."></textarea>
+    <div class="result-actions">
+      <button type="button" class="btn-secondary" id="copy-btn">Copy</button>
+      <button type="button" class="btn-secondary" id="clear-btn">Clear</button>
+    </div>
+    <div id="qrcode-container"></div>
+  </div>
+
+  <footer>
+    <p id="ft-text">V-Infinity Converter provides a comprehensive suite for data and file conversion. Files are processed securely on our servers and are never stored. We use cookies and Google AdSense according to policies.</p>
+    <div class="footer-links">
+      <a id="privacy-link">Privacy</a> |
+      <a id="terms-link">Terms</a> |
+      <a href="mailto:2saree3.tech@gmail.com">Contact Us</a>
+    </div>
+    <div class="copyright">Conversions are processed securely through our servers for the best possible quality. No file or text is stored after processing completes.</div>
+  </footer>
+</div>
+
+<!-- ملفات الجافاسكريبت -->
+<script src="{{ url_for('static', filename='js/toast.js') }}"></script>
+<script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
+<script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+<script src="{{ url_for('static', filename='js/download.js') }}"></script>
+<script src="{{ url_for('static', filename='js/api.js') }}"></script>
+<script src="{{ url_for('static', filename='js/file-handling.js') }}"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+<script>
+  document.getElementById('privacy-link').addEventListener('click', () => {
+    window.VInfinityToast.showToast(
+      window.currentLang === 'ar' ? 'الخصوصية: نستخدم ملفات تعريف الارتباط ومزوّدي إعلانات مثل جوجل.' : 'Privacy: We use cookies and ad providers.',
+      { duration: 7000 }
+    );
+  });
+  document.getElementById('terms-link').addEventListener('click', () => {
+    window.VInfinityToast.showToast(
+      window.currentLang === 'ar' ? 'الشروط: باستخدامك لهذه الأداة فأنت توافق على سياسات الاستخدام العادل.' : 'Terms: By using this tool, you agree to fair use.',
+      { duration: 6000 }
+    );
+  });
+</script>
+</body>
+</html>
