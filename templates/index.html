@@ -236,6 +236,7 @@
 
     <div class="tools-section">
         
+        <!-- قسم المستندات -->
         <div class="section-title"><i class="fa-solid fa-file-pdf" style="color:var(--c-pdf)"></i> <span data-ar="أدوات PDF والمستندات" data-en="PDF & Document Tools">أدوات PDF والمستندات</span></div>
         <div class="tools-grid">
             <div class="tool-card" onclick="selectTool('pdf-to-docx', 'PDF إلى Word', 'PDF to Word', 'file', 'i-word', 'fa-file-word')">
@@ -266,6 +267,35 @@
                     <p data-ar="استخراج الجداول من PDF إلى إكسل." data-en="Extract tables from PDF to Excel.">استخراج الجداول من PDF إلى إكسل.</p>
                 </div>
             </div>
+            <!-- تم إضافة أدوات الـ CSV العكسية هنا بشكل بارز -->
+            <div class="tool-card" onclick="selectTool('pdf-to-csv', 'PDF إلى CSV', 'PDF to CSV', 'file', 'i-excel', 'fa-file-csv')">
+                <div class="tool-icon i-excel"><i class="fa-solid fa-file-csv"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="PDF إلى CSV" data-en="PDF to CSV">PDF إلى CSV</h3>
+                    <p data-ar="استخراج الجداول والبيانات من PDF إلى CSV." data-en="Extract tables and data from PDF to CSV.">استخراج الجداول والبيانات من PDF إلى CSV.</p>
+                </div>
+            </div>
+            <div class="tool-card" onclick="selectTool('csv-to-pdf', 'CSV إلى PDF', 'CSV to PDF', 'fileText', 'i-pdf', 'fa-file-pdf')">
+                <div class="tool-icon i-pdf"><i class="fa-solid fa-file-pdf"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="CSV إلى PDF" data-en="CSV to PDF">CSV إلى PDF</h3>
+                    <p data-ar="تحويل بيانات وجداول CSV إلى مستند PDF." data-en="Convert CSV data and tables into a PDF.">تحويل بيانات وجداول CSV إلى مستند PDF.</p>
+                </div>
+            </div>
+            <div class="tool-card" onclick="selectTool('word-to-csv', 'Word إلى CSV', 'Word to CSV', 'file', 'i-excel', 'fa-file-csv')">
+                <div class="tool-icon i-excel"><i class="fa-solid fa-file-csv"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="Word إلى CSV" data-en="Word to CSV">Word إلى CSV</h3>
+                    <p data-ar="استخراج الجداول من ملفات Word إلى CSV." data-en="Extract tables from Word documents to CSV.">استخراج الجداول من ملفات Word إلى CSV.</p>
+                </div>
+            </div>
+            <div class="tool-card" onclick="selectTool('csv-to-word', 'CSV إلى Word', 'CSV to Word', 'fileText', 'i-word', 'fa-file-word')">
+                <div class="tool-icon i-word"><i class="fa-solid fa-file-word"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="CSV إلى Word" data-en="CSV to Word">CSV إلى Word</h3>
+                    <p data-ar="تحويل الجداول النصية إلى مستندات Word." data-en="Convert CSV text into Word documents.">تحويل الجداول النصية إلى مستندات Word.</p>
+                </div>
+            </div>
             <div class="tool-card" onclick="selectTool('merge-pdf', 'دمج ملفات PDF', 'Merge PDF Files', 'multiFile', 'i-dev', 'fa-object-group')">
                 <div class="tool-icon i-dev"><i class="fa-solid fa-object-group"></i></div>
                 <div class="tool-info">
@@ -280,29 +310,69 @@
                     <p data-ar="فصل صفحات الـ PDF إلى ملفات مستقلة." data-en="Separate PDF pages into individual files.">فصل صفحات الـ PDF إلى ملفات مستقلة.</p>
                 </div>
             </div>
-            <div class="tool-card" onclick="selectTool('pdf-to-csv', 'PDF إلى CSV', 'PDF to CSV', 'file', 'i-excel', 'fa-file-csv')">
-                <div class="tool-icon i-excel"><i class="fa-solid fa-file-csv"></i></div>
+            <div class="tool-card" onclick="selectTool('text-to-pdf', 'نص إلى PDF', 'Text to PDF', 'text', 'i-pdf', 'fa-file-lines')">
+                <div class="tool-icon i-pdf"><i class="fa-solid fa-file-lines"></i></div>
                 <div class="tool-info">
-                    <h3 data-ar="PDF إلى CSV" data-en="PDF to CSV">PDF إلى CSV</h3>
-                    <p data-ar="استخراج الجداول والبيانات من PDF إلى CSV." data-en="Extract tables and data from PDF to CSV.">استخراج الجداول والبيانات من PDF إلى CSV.</p>
+                    <h3 data-ar="نص إلى PDF" data-en="Text to PDF">نص إلى PDF</h3>
+                    <p data-ar="لصق نص وتحويله مباشرة إلى مستند PDF." data-en="Paste text and instantly turn it into a PDF.">لصق نص وتحويله مباشرة إلى مستند PDF.</p>
                 </div>
             </div>
-            <div class="tool-card" onclick="selectTool('csv-to-word', 'CSV إلى Word', 'CSV to Word', 'fileText', 'i-word', 'fa-file-word')">
-                <div class="tool-icon i-word"><i class="fa-solid fa-file-word"></i></div>
+            <div class="tool-card" onclick="selectTool('pdf-to-pdf', 'تنسيق PDF', 'Reformat PDF', 'file', 'i-pdf', 'fa-file-pdf')">
+                <div class="tool-icon i-pdf"><i class="fa-solid fa-file-pdf"></i></div>
                 <div class="tool-info">
-                    <h3 data-ar="CSV إلى Word" data-en="CSV to Word">CSV إلى Word</h3>
-                    <p data-ar="تحويل الجداول النصية إلى مستندات وورد." data-en="Convert CSV text to Word documents.">تحويل الجداول النصية إلى مستندات وورد.</p>
+                    <h3 data-ar="تنسيق PDF" data-en="Reformat PDF">تنسيق PDF</h3>
+                    <p data-ar="إعادة بناء وتنسيق ملفات PDF النصية." data-en="Rebuild and format text-based PDFs.">إعادة بناء وتنسيق ملفات PDF النصية.</p>
+                </div>
+            </div>
+            <div class="tool-card" onclick="selectTool('pdf-to-text', 'استخراج نص PDF', 'Extract PDF Text', 'file', 'i-dev', 'fa-font')">
+                <div class="tool-icon i-dev"><i class="fa-solid fa-font"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="استخراج نص PDF" data-en="Extract PDF Text">استخراج نص PDF</h3>
+                    <p data-ar="نسخ ولصق النصوص من داخل ملفات PDF." data-en="Copy and paste text directly from PDFs.">نسخ ولصق النصوص من داخل ملفات PDF.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title"><i class="fa-solid fa-table" style="color:var(--c-excel)"></i> <span data-ar="أدوات البيانات والجداول" data-en="Data & Spreadsheets">أدوات البيانات والجداول</span></div>
+        <div class="tools-grid">
+            <div class="tool-card" onclick="selectTool('text-to-excel', 'نص إلى Excel', 'Text to Excel', 'text', 'i-excel', 'fa-file-excel')">
+                <div class="tool-icon i-excel"><i class="fa-solid fa-file-excel"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="نص إلى Excel" data-en="Text to Excel">نص إلى Excel</h3>
+                    <p data-ar="تحويل النصوص المنسقة إلى جداول إكسل." data-en="Convert formatted text into Excel tables.">تحويل النصوص المنسقة إلى جداول إكسل.</p>
                 </div>
             </div>
             <div class="tool-card" onclick="selectTool('json-to-excel', 'JSON إلى Excel', 'JSON to Excel', 'fileText', 'i-excel', 'fa-file-excel')">
                 <div class="tool-icon i-excel"><i class="fa-solid fa-file-excel"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="JSON إلى Excel" data-en="JSON to Excel">JSON إلى Excel</h3>
-                    <p data-ar="تحويل البيانات البرمجية إلى جداول إكسل." data-en="Convert JSON data into Excel sheets.">تحويل البيانات البرمجية إلى جداول إكسل.</p>
+                    <p data-ar="تحويل البيانات البرمجية (JSON) إلى إكسل." data-en="Convert JSON data into Excel sheets.">تحويل البيانات البرمجية (JSON) إلى إكسل.</p>
+                </div>
+            </div>
+            <div class="tool-card" onclick="selectTool('excel-to-json', 'Excel إلى JSON', 'Excel to JSON', 'file', 'i-dev', 'fa-code')">
+                <div class="tool-icon i-dev"><i class="fa-solid fa-code"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="Excel إلى JSON" data-en="Excel to JSON">Excel إلى JSON</h3>
+                    <p data-ar="تحويل جداول إكسل إلى أكواد JSON." data-en="Convert Excel tables into JSON format.">تحويل جداول إكسل إلى أكواد JSON.</p>
+                </div>
+            </div>
+            <div class="tool-card" onclick="selectTool('csv-to-json', 'CSV إلى JSON', 'CSV to JSON', 'fileText', 'i-dev', 'fa-code')">
+                <div class="tool-icon i-dev"><i class="fa-solid fa-code"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="CSV إلى JSON" data-en="CSV to JSON">CSV إلى JSON</h3>
+                    <p data-ar="تحويل بيانات CSV إلى أكواد JSON." data-en="Convert CSV data into JSON format.">تحويل بيانات CSV إلى أكواد JSON.</p>
+                </div>
+            </div>
+            <div class="tool-card" onclick="selectTool('text-to-csv', 'نص إلى CSV', 'Text to CSV', 'text', 'i-excel', 'fa-file-csv')">
+                <div class="tool-icon i-excel"><i class="fa-solid fa-file-csv"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="نص إلى CSV" data-en="Text to CSV">نص إلى CSV</h3>
+                    <p data-ar="تحويل النصوص المجدولة إلى ملف CSV." data-en="Convert tabulated text to a CSV file.">تحويل النصوص المجدولة إلى ملف CSV.</p>
                 </div>
             </div>
         </div>
 
+        <!-- قسم الصور -->
         <div class="section-title"><i class="fa-solid fa-image" style="color:var(--c-img)"></i> <span data-ar="أدوات الصور" data-en="Image Tools">أدوات الصور</span></div>
         <div class="tools-grid">
             <div class="tool-card" onclick="selectTool('image-to-pdf', 'صورة إلى PDF', 'Image to PDF', 'file', 'i-img', 'fa-images')">
@@ -315,7 +385,7 @@
             <div class="tool-card" onclick="selectTool('compress-image', 'ضغط الصور', 'Compress Image', 'file', 'i-excel', 'fa-compress')">
                 <div class="tool-icon i-excel"><i class="fa-solid fa-compress"></i></div>
                 <div class="tool-info">
-                    <h3 data-ar="ضغط حجم الصورة" data-en="Compress Image">ضغط حجم الصورة</h3>
+                    <h3 data-ar="ضغط الصور" data-en="Compress Image">ضغط الصور</h3>
                     <p data-ar="تقليل حجم الصور مع الحفاظ على الجودة." data-en="Reduce image file size while maintaining quality.">تقليل حجم الصور مع الحفاظ على الجودة.</p>
                 </div>
             </div>
@@ -326,6 +396,13 @@
                     <p data-ar="تحويل وتوحيد الصور لصيغة JPG القياسية." data-en="Convert and standardize images to JPG format.">تحويل وتوحيد الصور لصيغة JPG القياسية.</p>
                 </div>
             </div>
+            <div class="tool-card" onclick="selectTool('image-to-png', 'تحويل لـ PNG', 'Convert to PNG', 'file', 'i-img', 'fa-image')">
+                <div class="tool-icon i-img"><i class="fa-regular fa-image"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="تحويل لـ PNG" data-en="Convert to PNG">تحويل لـ PNG</h3>
+                    <p data-ar="تحويل أي صورة إلى صيغة PNG شفافة." data-en="Convert any image to transparent PNG format.">تحويل أي صورة إلى صيغة PNG شفافة.</p>
+                </div>
+            </div>
             <div class="tool-card" onclick="selectTool('heic-to-jpg', 'HEIC إلى JPG (للايفون)', 'HEIC to JPG', 'file', 'i-img', 'fa-mobile-screen')">
                 <div class="tool-icon i-img"><i class="fa-solid fa-mobile-screen"></i></div>
                 <div class="tool-info">
@@ -333,17 +410,93 @@
                     <p data-ar="تحويل صور الايفون (HEIC) لتفتح في أي مكان." data-en="Convert iPhone photos (HEIC) to open anywhere.">تحويل صور الايفون (HEIC) لتفتح في أي مكان.</p>
                 </div>
             </div>
-        </div>
-
-        <div class="section-title"><i class="fa-solid fa-code" style="color:var(--c-dev)"></i> <span data-ar="أدوات النصوص والمطورين" data-en="Text & Dev Tools">أدوات النصوص والمطورين</span></div>
-        <div class="tools-grid">
-            <div class="tool-card" onclick="selectTool('text-to-pdf', 'نص إلى PDF', 'Text to PDF', 'text', 'i-pdf', 'fa-file-lines')">
-                <div class="tool-icon i-pdf"><i class="fa-solid fa-file-lines"></i></div>
+            <div class="tool-card" onclick="selectTool('image-to-base64', 'صورة إلى Base64', 'Image to Base64', 'file', 'i-dev', 'fa-code')">
+                <div class="tool-icon i-dev"><i class="fa-solid fa-code"></i></div>
                 <div class="tool-info">
-                    <h3 data-ar="نص إلى PDF" data-en="Text to PDF">نص إلى PDF</h3>
-                    <p data-ar="لصق نص وتحويله مباشرة إلى مستند PDF." data-en="Paste text and instantly turn it into a PDF.">لصق نص وتحويله مباشرة إلى مستند PDF.</p>
+                    <h3 data-ar="صورة إلى Base64" data-en="Image to Base64">صورة إلى Base64</h3>
+                    <p data-ar="تحويل الصور إلى نصوص Base64 للمطورين." data-en="Convert images to Base64 strings for developers.">تحويل الصور إلى نصوص Base64 للمطورين.</p>
                 </div>
             </div>
+        </div>
+
+        <!-- قسم المطورين والنصوص -->
+        <div class="section-title"><i class="fa-solid fa-code" style="color:var(--c-dev)"></i> <span data-ar="أدوات النصوص والمطورين" data-en="Text & Dev Tools">أدوات النصوص والمطورين</span></div>
+        <div class="tools-grid">
+            <div class="tool-card" onclick="selectTool('markdown-to-html', 'Markdown إلى HTML', 'Markdown to HTML', 'text', 'i-dev', 'fa-file-code')">
+                <div class="tool-icon i-dev"><i class="fa-solid fa-file-code"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="Markdown إلى HTML" data-en="Markdown to HTML">Markdown إلى HTML</h3>
+                    <p data-ar="تحويل نصوص ماركداون إلى كود HTML جاهز." data-en="Convert Markdown text to ready HTML code.">تحويل نصوص ماركداون إلى كود HTML جاهز.</p>
+                </div>
+            </div>
+            <div class="tool-card" onclick="selectTool('clean-text', 'تنظيف النص', 'Clean Text', 'text', 'i-word', 'fa-broom')">
+                <div class="tool-icon i-word"><i class="fa-solid fa-broom"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="تنظيف النص من HTML" data-en="Clean HTML Tags">تنظيف النص من HTML</h3>
+                    <p data-ar="إزالة الأكواد واستخراج النص النظيف فقط." data-en="Remove all tags and extract clean text only.">إزالة الأكواد واستخراج النص النظيف فقط.</p>
+                </div>
+            </div>
+            <div class="tool-card" onclick="selectTool('base64-tool', 'تشفير Base64', 'Base64 Encode', 'text', 'i-dev', 'fa-shield-halved')">
+                <div class="tool-icon i-dev"><i class="fa-solid fa-shield-halved"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="تشفير Base64" data-en="Base64 Encode">تشفير Base64</h3>
+                    <p data-ar="تشفير وفك تشفير النصوص بصيغة Base64." data-en="Encode and decode text in Base64 format.">تشفير وفك تشفير النصوص بصيغة Base64.</p>
+                </div>
+            </div>
+            <div class="tool-card" onclick="selectTool('url-encoder', 'تشفير الروابط URL', 'URL Encode', 'text', 'i-dev', 'fa-link')">
+                <div class="tool-icon i-dev"><i class="fa-solid fa-link"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="تشفير الروابط URL" data-en="URL Encode">تشفير الروابط URL</h3>
+                    <p data-ar="تشفير وفك تشفير الروابط لتعمل في المتصفح." data-en="Encode and decode URLs for browser safety.">تشفير وفك تشفير الروابط لتعمل في المتصفح.</p>
+                </div>
+            </div>
+            <div class="tool-card" onclick="selectTool('json-beautifier', 'تنسيق JSON', 'JSON Formatter', 'text', 'i-word', 'fa-brackets-curly')">
+                <div class="tool-icon i-word"><i class="fa-solid fa-brackets-curly"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="تنسيق JSON" data-en="JSON Formatter">تنسيق JSON</h3>
+                    <p data-ar="ترتيب وتنظيف الأكواد البرمجية لسهولة القراءة." data-en="Format and prettify JSON code for readability.">ترتيب وتنظيف الأكواد البرمجية لسهولة القراءة.</p>
+                </div>
+            </div>
+            <div class="tool-card" onclick="selectTool('css-js-minifier', 'ضغط CSS/JS', 'Minify CSS/JS', 'text', 'i-excel', 'fa-minimize')">
+                <div class="tool-icon i-excel"><i class="fa-solid fa-minimize"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="ضغط أكواد CSS/JS" data-en="Minify CSS/JS">ضغط أكواد CSS/JS</h3>
+                    <p data-ar="إزالة المسافات لتقليل حجم ملفات البرمجة." data-en="Remove whitespace to reduce code file size.">إزالة المسافات لتقليل حجم ملفات البرمجة.</p>
+                </div>
+            </div>
+            <div class="tool-card" onclick="selectTool('html-entity', 'تشفير HTML', 'HTML Entity Encode', 'text', 'i-dev', 'fa-code')">
+                <div class="tool-icon i-dev"><i class="fa-solid fa-code"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="تشفير HTML Entities" data-en="HTML Entity Encode">تشفير HTML Entities</h3>
+                    <p data-ar="تحويل الرموز الخاصة إلى كيانات HTML." data-en="Convert special characters to HTML entities.">تحويل الرموز الخاصة إلى كيانات HTML.</p>
+                </div>
+            </div>
+            <div class="tool-card" onclick="selectTool('hash-generator', 'توليد التشفير Hash', 'Hash Generator', 'text', 'i-dev', 'fa-hashtag')">
+                <div class="tool-icon i-dev"><i class="fa-solid fa-hashtag"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="توليد MD5 / SHA" data-en="Hash Generator">توليد MD5 / SHA</h3>
+                    <p data-ar="تشفير النصوص لحماية البيانات كـ Hash." data-en="Encrypt texts to protect data as Hashes.">تشفير النصوص لحماية البيانات كـ Hash.</p>
+                </div>
+            </div>
+            <div class="tool-card" onclick="selectTool('text-diff', 'مقارنة النصوص', 'Text Compare', 'text', 'i-word', 'fa-not-equal')">
+                <div class="tool-icon i-word"><i class="fa-solid fa-not-equal"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="مقارنة النصوص (Diff)" data-en="Text Compare">مقارنة النصوص (Diff)</h3>
+                    <p data-ar="إيجاد الفروقات والاختلافات بين نصين." data-en="Find differences and changes between two texts.">إيجاد الفروقات والاختلافات بين نصين.</p>
+                </div>
+            </div>
+            <div class="tool-card" onclick="selectTool('text-counter', 'عداد النصوص', 'Text Counter', 'text', 'i-word', 'fa-calculator')">
+                <div class="tool-icon i-word"><i class="fa-solid fa-calculator"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="عداد النصوص" data-en="Text Counter">عداد النصوص</h3>
+                    <p data-ar="حساب عدد الأحرف، الكلمات، والأسطر." data-en="Count characters, words, and lines.">حساب عدد الأحرف، الكلمات، والأسطر.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- قسم الأدوات المتنوعة -->
+        <div class="section-title"><i class="fa-solid fa-toolbox" style="color:var(--c-dev)"></i> <span data-ar="أدوات متنوعة" data-en="Utilities">أدوات متنوعة</span></div>
+        <div class="tools-grid">
             <div class="tool-card" onclick="selectTool('text-to-qr', 'توليد QR Code', 'QR Code Generator', 'text', 'i-excel', 'fa-qrcode')">
                 <div class="tool-icon i-excel"><i class="fa-solid fa-qrcode"></i></div>
                 <div class="tool-info">
@@ -358,30 +511,46 @@
                     <p data-ar="إنشاء كلمات مرور عشوائية وآمنة جداً." data-en="Create highly secure, random passwords.">إنشاء كلمات مرور عشوائية وآمنة جداً.</p>
                 </div>
             </div>
-            <div class="tool-card" onclick="selectTool('markdown-to-html', 'Markdown إلى HTML', 'Markdown to HTML', 'text', 'i-dev', 'fa-code')">
-                <div class="tool-icon i-dev"><i class="fa-solid fa-code"></i></div>
+            <div class="tool-card" onclick="selectTool('password-strength', 'فحص كلمة السر', 'Password Strength', 'text', 'i-dev', 'fa-shield')">
+                <div class="tool-icon i-dev"><i class="fa-solid fa-shield"></i></div>
                 <div class="tool-info">
-                    <h3 data-ar="Markdown إلى HTML" data-en="Markdown to HTML">Markdown إلى HTML</h3>
-                    <p data-ar="تحويل نصوص ماركداون إلى كود HTML جاهز." data-en="Convert Markdown text to ready HTML code.">تحويل نصوص ماركداون إلى كود HTML جاهز.</p>
+                    <h3 data-ar="فحص قوة كلمة السر" data-en="Check Password Strength">فحص قوة كلمة السر</h3>
+                    <p data-ar="التحقق من مدى أمان وصعوبة كلمة مرورك." data-en="Verify the security and strength of your password.">التحقق من مدى أمان وصعوبة كلمة مرورك.</p>
                 </div>
             </div>
-            <div class="tool-card" onclick="selectTool('clean-text', 'تنظيف النص', 'Clean Text', 'text', 'i-word', 'fa-broom')">
-                <div class="tool-icon i-word"><i class="fa-solid fa-broom"></i></div>
+            <div class="tool-card" onclick="selectTool('percentage-calc', 'حاسبة النسب', 'Percentage Calculator', 'text', 'i-word', 'fa-percent')">
+                <div class="tool-icon i-word"><i class="fa-solid fa-percent"></i></div>
                 <div class="tool-info">
-                    <h3 data-ar="تنظيف النص من HTML" data-en="Clean HTML Tags">تنظيف النص من HTML</h3>
-                    <p data-ar="إزالة جميع الأكواد واستخراج النص النظيف فقط." data-en="Remove all tags and extract clean text only.">إزالة جميع الأكواد واستخراج النص النظيف فقط.</p>
+                    <h3 data-ar="حاسبة النسب المئوية" data-en="Percentage Calculator">حاسبة النسب المئوية</h3>
+                    <p data-ar="حساب النسب المئوية للأرقام بسهولة." data-en="Calculate percentages of numbers easily.">حساب النسب المئوية للأرقام بسهولة.</p>
                 </div>
             </div>
-            <div class="tool-card" onclick="selectTool('hash-generator', 'توليد التشفير', 'Hash Generator', 'text', 'i-dev', 'fa-hashtag')">
-                <div class="tool-icon i-dev"><i class="fa-solid fa-hashtag"></i></div>
+            <div class="tool-card" onclick="selectTool('timestamp-converter', 'محول التاريخ Unix', 'Timestamp Converter', 'text', 'i-word', 'fa-clock')">
+                <div class="tool-icon i-word"><i class="fa-solid fa-clock"></i></div>
                 <div class="tool-info">
-                    <h3 data-ar="توليد MD5 / SHA" data-en="Hash Generator">توليد MD5 / SHA</h3>
-                    <p data-ar="تشفير النصوص لحماية البيانات كـ Hash." data-en="Encrypt texts to protect data as Hashes.">تشفير النصوص لحماية البيانات كـ Hash.</p>
+                    <h3 data-ar="محول التاريخ Unix" data-en="Timestamp Converter">محول التاريخ Unix</h3>
+                    <p data-ar="تحويل أرقام Timestamp إلى تاريخ مقروء." data-en="Convert Unix Timestamp to readable date.">تحويل أرقام Timestamp إلى تاريخ مقروء.</p>
+                </div>
+            </div>
+            <div class="tool-card" onclick="selectTool('byte-converter', 'محول الأحجام Bytes', 'Byte Converter', 'text', 'i-excel', 'fa-hard-drive')">
+                <div class="tool-icon i-excel"><i class="fa-solid fa-hard-drive"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="محول الأحجام (KB/MB)" data-en="Byte Converter">محول الأحجام (KB/MB)</h3>
+                    <p data-ar="تحويل البايت إلى كيلوبايت وميجابايت." data-en="Convert Bytes to KB, MB, and GB.">تحويل البايت إلى كيلوبايت وميجابايت.</p>
+                </div>
+            </div>
+            <div class="tool-card" onclick="selectTool('unit-converter', 'محول الوحدات', 'Unit Converter', 'text', 'i-ppt', 'fa-ruler')">
+                <div class="tool-icon i-ppt"><i class="fa-solid fa-ruler"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="محول الوحدات" data-en="Unit Converter">محول الوحدات</h3>
+                    <p data-ar="تحويل وحدات القياس (متر، قدم، بوصة)." data-en="Convert measurement units (meters, feet, inches).">تحويل وحدات القياس (متر، قدم، بوصة).</p>
                 </div>
             </div>
         </div>
+
     </div>
 
+    <!-- الفوتر -->
     <div class="workspace">
         <div class="footer-disclaimer">
             <p data-ar="V-Infinity Converter يوفر مجموعة شاملة من الأدوات الآمنة. تتم معالجة الملفات سحابياً ولا يتم تخزينها أبداً. نحن نستخدم ملفات تعريف الارتباط وخدمات إعلانات جوجل وفقاً للسياسات." data-en="V-Infinity Converter provides a comprehensive suite for secure file conversion. Files are processed on our servers and are never stored. We use cookies and Google AdSense according to policies.">V-Infinity Converter يوفر مجموعة شاملة من الأدوات الآمنة. تتم معالجة الملفات سحابياً ولا يتم تخزينها أبداً. نحن نستخدم ملفات تعريف الارتباط وخدمات إعلانات جوجل وفقاً للسياسات.</p>
