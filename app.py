@@ -9,7 +9,6 @@ import secrets
 import string
 import zipfile
 import tempfile
-import subprocess
 from datetime import datetime, timezone
 from difflib import unified_diff
 
@@ -84,7 +83,7 @@ def set_secure_headers(response):
 
 @app.errorhandler(429)
 def ratelimit_handler(e):
-    return jsonify(error="تم تجاوز الحد المسموح (15 تحويل بالدقيقة). يرجى الانتظار قليلاً لحماية السيرفر."), 429
+    return jsonify(error="تم تجاوز الحد المسموح. يرجى الانتظار قليلاً لحماية السيرفر."), 429
 # ====================================================================
 
 ARABIC_FONT_NAME = "ArabicFont"
@@ -186,6 +185,57 @@ def text_to_pdf_bytes(text, is_arabic, title=None):
     doc.build(story)
     return buf.getvalue()
 
+def word_to_pdf_structured(docx_doc, is_arabic):
+    # محرك تحويل الوورد إلى PDF الصافي (بدون LibreOffice)
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4, topMargin=15 * mm, bottomMargin=15 * mm, leftMargin=15 * mm, rightMargin=15 * mm)
+    font = pdf_font_name(is_arabic)
+    story = []
+
+    for par in docx_doc.paragraphs:
+        txt = par.text.strip()
+        if txt:
+            processed_txt = shape_arabic(txt) if is_arabic else txt
+            p_style = ParagraphStyle('PStyle', fontName=font, fontSize=11, leading=16, alignment=2 if is_arabic else 0)
+            t_cell = Table([[RLParagraph(escape_html(processed_txt), p_style)]], colWidths=[480])
+            t_cell.setStyle(TableStyle([
+                ("ALIGN", (0, 0), (-1, -1), "RIGHT" if is_arabic else "LEFT"),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+            ]))
+            story.append(t_cell)
+            story.append(Spacer(1, 4))
+
+    for table_elem in docx_doc.tables:
+        table_data = []
+        for row in table_elem.rows:
+            formatted_row = []
+            for cell in row.cells:
+                cell_text = cell.text.strip()
+                processed = shape_arabic(cell_text) if is_arabic else cell_text
+                cell_style = ParagraphStyle('TableCell', fontName=font, fontSize=10, leading=14, alignment=2 if is_arabic else 0)
+                formatted_row.append(RLParagraph(escape_html(processed), cell_style))
+            table_data.append(formatted_row)
+            
+        if table_data:
+            t = Table(table_data, hAlign="CENTER")
+            t.setStyle(TableStyle([
+                ("FONTNAME", (0, 0), (-1, -1), font),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0ea5e9")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("ALIGN", (0, 0), (-1, -1), "RIGHT" if is_arabic else "LEFT"),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("TOPPADDING", (0, 0), (-1, -1), 6),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+            ]))
+            story.append(Spacer(1, 10))
+            story.append(t)
+            story.append(Spacer(1, 10))
+
+    doc.build(story)
+    return buf.getvalue()
+
 def csv_to_pdf_bytes(text, is_arabic):
     rows = parse_csv_text(text)
     buf = io.BytesIO()
@@ -219,47 +269,22 @@ def csv_to_pdf_bytes(text, is_arabic):
     doc.build([table])
     return buf.getvalue()
 
-# ================= التعديل الأساسي لتحويل الوورد إلى PDF (LibreOffice) =================
+# ================= الأدوات =================
+
 def handle_word_to_pdf(p):
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
-    
     if file_bytes:
         try:
-            with tempfile.TemporaryDirectory() as temp_dir:
-                input_docx_path = os.path.join(temp_dir, "input.docx")
-                with open(input_docx_path, "wb") as f:
-                    f.write(file_bytes)
-                
-                command = [
-                    "libreoffice", 
-                    "--headless",
-                    "--convert-to", "pdf",
-                    "--outdir", temp_dir,
-                    input_docx_path
-                ]
-                
-                subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                
-                output_pdf_path = os.path.join(temp_dir, "input.pdf")
-                if not os.path.exists(output_pdf_path):
-                    raise Exception("لم يتم العثور على ملف PDF الناتج.")
-                    
-                with open(output_pdf_path, "rb") as f:
-                    pdf_bytes_out = f.read()
-            
-            return file_response(pdf_bytes_out, "application/pdf", "converted_document.pdf")
-            
-        except Exception as str_error:
-            app.logger.error(f"Error during LibreOffice conversion: {str_error}")
-            return bad_request(
-                "تعذر تحويل الملف. تأكد من تثبيت حزمة LibreOffice على السيرفر." if is_arabic else "Could not convert file. Ensure LibreOffice is installed on the server."
-            )
+            docx_doc = Document(io.BytesIO(file_bytes))
+            pdf_bytes = word_to_pdf_structured(docx_doc, is_arabic)
+            return file_response(pdf_bytes, "application/pdf", "converted_document.pdf")
+        except Exception:
+            return bad_request("حدث خطأ أثناء قراءة ملف الوورد. تأكد أن الملف غير تالف." if is_arabic else "Error reading Word file.")
             
     text = p.get("text", "")
     pdf_bytes = text_to_pdf_bytes(text, is_arabic)
     return file_response(pdf_bytes, "application/pdf", "converted_document.pdf")
-# ========================================================================================
 
 def handle_text_to_pdf(p):
     text = p.get("text", "")
@@ -822,13 +847,13 @@ def convert():
         return handler(ctx)
     except Exception as exc:
         app.logger.exception("convert() error")
-    return jsonify({"error": str(exc)}), 500
-    
+        return jsonify({"error": str(exc)}), 500
+
 @app.route('/ads.txt')
 def ads_txt():
-    # ملف ads.txt الخاص بحسابك في أدسنس
+    # استبدل pub-4343857922748618 برقم الناشر الخاص بك إذا كان مختلفاً
     return "google.com, pub-4343857922748618, DIRECT, f08c47fec0942fa0", 200, {'Content-Type': 'text/plain'}
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port) 
+    app.run(host='0.0.0.0', port=port)
