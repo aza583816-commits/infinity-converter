@@ -848,7 +848,12 @@ def convert():
         return handler(ctx)
     except Exception as exc:
         app.logger.exception("convert() error")
-        return jsonify({"error": str(exc)}), 500
+    return jsonify({"error": str(exc)}), 500
+    
+@app.route('/ads.txt')
+def ads_txt():
+    # ملف ads.txt الخاص بحسابك في أدسنس
+    return "google.com, pub-4343857922748618, DIRECT, f08c47fec0942fa0", 200, {'Content-Type': 'text/plain'}
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
