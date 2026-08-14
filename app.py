@@ -242,6 +242,8 @@ def csv_to_pdf_bytes(text, is_arabic):
     doc.build([table])
     return buf.getvalue()
 
+# ================= الأدوات =================
+
 def handle_word_to_pdf(p):
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
@@ -288,6 +290,20 @@ def handle_csv_to_pdf(p):
             text = file_bytes.decode("windows-1256", errors="ignore")
     pdf_bytes = csv_to_pdf_bytes(text, p["is_arabic"])
     return file_response(pdf_bytes, "application/pdf", "converted_table.pdf")
+
+# ---- أداة جديدة: Excel إلى PDF ----
+def handle_excel_to_pdf(p):
+    file_bytes = get_file_bytes(p)
+    is_arabic = p["is_arabic"]
+    if not file_bytes:
+        return bad_request("يرجى رفع ملف Excel" if is_arabic else "Please upload an Excel file")
+    try:
+        df = pd.read_excel(io.BytesIO(file_bytes))
+        csv_text = df.to_csv(index=False)
+        pdf_bytes = csv_to_pdf_bytes(csv_text, is_arabic)
+        return file_response(pdf_bytes, "application/pdf", "converted_excel.pdf")
+    except Exception:
+        return bad_request("تعذر قراءة أو تحويل ملف الـ Excel" if is_arabic else "Could not read the Excel file")
 
 def handle_pdf_to_text(p):
     file_bytes = get_file_bytes(p)
@@ -491,7 +507,14 @@ def handle_excel_to_json(p):
     return jsonify({"result": df.to_json(orient="records", force_ascii=False, indent=2)})
 
 def handle_csv_to_json(p):
-    rows = parse_csv_text(p.get("text", ""))
+    text = p.get("text", "")
+    file_bytes = get_file_bytes(p)
+    if file_bytes:
+        try:
+            text = file_bytes.decode("utf-8")
+        except Exception:
+            text = file_bytes.decode("windows-1256", errors="ignore")
+    rows = parse_csv_text(text)
     if not rows:
         return jsonify({"result": "[]"})
     headers = [h.strip() for h in rows[0]]
@@ -500,6 +523,28 @@ def handle_csv_to_json(p):
         item = {headers[i]: (r[i].strip() if i < len(r) else "") for i in range(len(headers))}
         data.append(item)
     return jsonify({"result": json.dumps(data, ensure_ascii=False, indent=2)})
+
+# ---- أداة جديدة: JSON إلى CSV ----
+def handle_json_to_csv(p):
+    text = p.get("text", "")
+    file_bytes = get_file_bytes(p)
+    if file_bytes:
+        try:
+            text = file_bytes.decode("utf-8", errors="ignore")
+        except Exception:
+            text = ""
+    try:
+        data = json.loads(text)
+        if isinstance(data, dict): data = [data]
+        if not data: return bad_request("Empty JSON")
+        buf = io.StringIO()
+        writer = csv.DictWriter(buf, fieldnames=data[0].keys())
+        writer.writeheader()
+        writer.writerows(data)
+        output_bytes = ("\ufeff" + buf.getvalue()).encode("utf-8")
+        return file_response(output_bytes, "text/csv", "converted.csv")
+    except Exception:
+        return bad_request("تنسيق JSON غير صحيح" if p["is_arabic"] else "Invalid JSON format")
 
 def handle_text_to_csv(p):
     text = p.get("text", "")
@@ -654,10 +699,26 @@ def handle_byte_converter(p):
 def handle_unit_converter(p):
     cleaned = re.sub(r"[^0-9.]", "", p.get("text", ""))
     val = float(cleaned) if cleaned else 0.0
-    return jsonify({"result": f"Meters: {val} m\nFeet: {val * 3.28084:.2f} ft\nInches: {val * 39.3701:.2f} in\Miles: {val / 1609.34:.4f} mi"})
+    return jsonify({"result": f"Meters: {val} m\nFeet: {val * 3.28084:.2f} ft\nInches: {val * 39.3701:.2f} in\nMiles: {val / 1609.34:.4f} mi"})
 
+# ---- دمجنا الأداة لتتعرف على HTML وتحوله Markdown أو العكس بذكاء ----
 def handle_markdown_to_html(p):
-    return jsonify({"result": md_lib.markdown(p.get("text", ""))})
+    text = p.get("text", "")
+    if "<" in text and ">" in text and ("<h" in text or "<b" in text or "<p" in text):
+        # المستخدم رفع HTML يبيها Markdown
+        text = re.sub(r'<h1>(.*?)</h1>', r'# \1\n', text, flags=re.IGNORECASE)
+        text = re.sub(r'<h2>(.*?)</h2>', r'## \1\n', text, flags=re.IGNORECASE)
+        text = re.sub(r'<h3>(.*?)</h3>', r'### \1\n', text, flags=re.IGNORECASE)
+        text = re.sub(r'<strong>(.*?)</strong>|<b>(.*?)</b>', r'**\1\2**', text, flags=re.IGNORECASE)
+        text = re.sub(r'<em>(.*?)</em>|<i>(.*?)</i>', r'*\1\2*', text, flags=re.IGNORECASE)
+        text = re.sub(r'<a href="(.*?)">(.*?)</a>', r'[\2](\1)', text, flags=re.IGNORECASE)
+        text = re.sub(r'<br\s*/?>', r'\n', text, flags=re.IGNORECASE)
+        text = re.sub(r'<p>(.*?)</p>', r'\1\n\n', text, flags=re.IGNORECASE|re.DOTALL)
+        text = re.sub(r'<[^>]+>', '', text) 
+        return jsonify({"result": text.strip()})
+    else:
+        # المستخدم رفع Markdown يبيها HTML
+        return jsonify({"result": md_lib.markdown(text)})
 
 def handle_text_diff(p):
     lines = p.get("text", "").split("\n")
@@ -675,6 +736,7 @@ REGISTRY = {
     "text-to-pdf": handle_text_to_pdf, 
     "pdf-to-pdf": handle_pdf_to_pdf_enhanced, 
     "csv-to-pdf": handle_csv_to_pdf, 
+    "excel-to-pdf": handle_excel_to_pdf,
     "pdf-to-text": handle_pdf_to_text,
     "pdf-to-csv": handle_pdf_to_csv,
     "pdf-to-doc": handle_pdf_to_doc, 
@@ -685,12 +747,13 @@ REGISTRY = {
     "merge-pdf": handle_merge_pdf,
     "split-pdf": handle_split_pdf, 
     "csv-to-word": handle_csv_to_word, 
+    "word-to-csv": handle_word_to_csv,
     "text-to-excel": handle_text_to_excel,
     "json-to-excel": handle_json_to_excel, 
     "excel-to-json": handle_excel_to_json, 
     "csv-to-json": handle_csv_to_json,
+    "json-to-csv": handle_json_to_csv,
     "text-to-csv": handle_text_to_csv, 
-    "word-to-csv": handle_word_to_csv, 
     "compress-image": handle_compress_image,
     "image-to-png": handle_image_to_png, 
     "image-to-jpg": handle_image_to_jpg, 
@@ -713,6 +776,7 @@ REGISTRY = {
     "byte-converter": handle_byte_converter, 
     "unit-converter": handle_unit_converter, 
     "markdown-to-html": handle_markdown_to_html,
+    "html-to-markdown": handle_markdown_to_html, # توجيه عشان يشتغل في الحالتين
     "text-diff": handle_text_diff,
 }
 
