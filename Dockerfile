@@ -1,9 +1,9 @@
 FROM python:3.10-slim
 
-# تحديث النظام وتثبيت LibreOffice مع الخطوط العربية الأساسية فقط لتجنب الأخطاء
+# تحديث النظام وتثبيت LibreOffice وحزمة الخطوط الأساسية فقط
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libreoffice \
-    fonts-noto-arabic \
+    fontconfig \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
