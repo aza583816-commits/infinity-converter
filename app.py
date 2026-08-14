@@ -9,6 +9,7 @@ import secrets
 import string
 import zipfile
 import tempfile
+import subprocess
 from datetime import datetime, timezone
 from difflib import unified_diff
 
@@ -37,9 +38,6 @@ from reportlab.lib.styles import ParagraphStyle
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
-# إضافة مكتبة aspose.words للتحويل الدقيق للوورد
-import aspose.words as aw
-
 try:
     import arabic_reshaper
     from bidi.algorithm import get_display
@@ -67,10 +65,8 @@ app.config["MAX_CONTENT_LENGTH"] = 12 * 1024 * 1024  # 12MB
 MAX_FILE_BYTES = 4 * 1024 * 1024  # 4MB
 
 # ==================== إعدادات الحماية (Security) ====================
-# 1. منع سرقة السيرفر (السماح فقط لموقعك بالاتصال)
 CORS(app)
 
-# 2. منع السبام وهجمات DDoS (الحد من عدد الطلبات)
 limiter = Limiter(
     get_remote_address,
     app=app,
@@ -78,7 +74,6 @@ limiter = Limiter(
     storage_uri="memory://"
 )
 
-# 3. إعدادات Headers لصد ثغرات المتصفح
 @app.after_request
 def set_secure_headers(response):
     response.headers['X-Content-Type-Options'] = 'nosniff'
@@ -87,7 +82,6 @@ def set_secure_headers(response):
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
     return response
 
-# 4. رسالة الخطأ عند تجاوز الحد المسموح (Rate Limit Exceeded)
 @app.errorhandler(429)
 def ratelimit_handler(e):
     return jsonify(error="تم تجاوز الحد المسموح (15 تحويل بالدقيقة). يرجى الانتظار قليلاً لحماية السيرفر."), 429
@@ -225,33 +219,47 @@ def csv_to_pdf_bytes(text, is_arabic):
     doc.build([table])
     return buf.getvalue()
 
-# ================= التعديل الأساسي لتحويل الوورد إلى PDF =================
+# ================= التعديل الأساسي لتحويل الوورد إلى PDF (LibreOffice) =================
 def handle_word_to_pdf(p):
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
     
     if file_bytes:
         try:
-            # 1. قراءة الملف من الـ Bytes باستخدام Aspose
-            in_stream = io.BytesIO(file_bytes)
-            doc = aw.Document(in_stream)
+            with tempfile.TemporaryDirectory() as temp_dir:
+                input_docx_path = os.path.join(temp_dir, "input.docx")
+                with open(input_docx_path, "wb") as f:
+                    f.write(file_bytes)
+                
+                command = [
+                    "libreoffice", 
+                    "--headless",
+                    "--convert-to", "pdf",
+                    "--outdir", temp_dir,
+                    input_docx_path
+                ]
+                
+                subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                
+                output_pdf_path = os.path.join(temp_dir, "input.pdf")
+                if not os.path.exists(output_pdf_path):
+                    raise Exception("لم يتم العثور على ملف PDF الناتج.")
+                    
+                with open(output_pdf_path, "rb") as f:
+                    pdf_bytes_out = f.read()
             
-            # 2. حفظ الملف كـ PDF في الذاكرة (Memory)
-            out_stream = io.BytesIO()
-            doc.save(out_stream, aw.SaveFormat.PDF)
-            
-            # 3. إرجاع النتيجة
-            pdf_bytes = out_stream.getvalue()
-            return file_response(pdf_bytes, "application/pdf", "converted_document.pdf")
+            return file_response(pdf_bytes_out, "application/pdf", "converted_document.pdf")
             
         except Exception as str_error:
-            return bad_request("تعذر قراءة أو تحويل ملف الوورد" if is_arabic else f"Could not convert Word file: {str_error}")
+            app.logger.error(f"Error during LibreOffice conversion: {str_error}")
+            return bad_request(
+                "تعذر تحويل الملف. تأكد من تثبيت حزمة LibreOffice على السيرفر." if is_arabic else "Could not convert file. Ensure LibreOffice is installed on the server."
+            )
             
-    # في حال لم يتم رفع ملف وكان هناك نص فقط
     text = p.get("text", "")
     pdf_bytes = text_to_pdf_bytes(text, is_arabic)
     return file_response(pdf_bytes, "application/pdf", "converted_document.pdf")
-# =========================================================================
+# ========================================================================================
 
 def handle_text_to_pdf(p):
     text = p.get("text", "")
