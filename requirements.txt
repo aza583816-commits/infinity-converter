@@ -13,3 +13,5 @@ qrcode
 Markdown
 python-pptx
 pdf2docx
+Flask-Limiter
+Flask-Cors
