@@ -13,6 +13,9 @@ from datetime import datetime, timezone
 from difflib import unified_diff
 
 from flask import Flask, request, jsonify, render_template, send_file
+from flask_cors import CORS
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 import pandas as pd
 from PIL import Image
@@ -59,6 +62,33 @@ except Exception:
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 12 * 1024 * 1024  # 12MB
 MAX_FILE_BYTES = 4 * 1024 * 1024  # 4MB
+
+# ==================== إعدادات الحماية (Security) ====================
+# 1. منع سرقة السيرفر (السماح فقط لموقعك بالاتصال)
+CORS(app)
+
+# 2. منع السبام وهجمات DDoS (الحد من عدد الطلبات)
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["500 per day", "100 per hour"],
+    storage_uri="memory://"
+)
+
+# 3. إعدادات Headers لصد ثغرات المتصفح
+@app.after_request
+def set_secure_headers(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    return response
+
+# 4. رسالة الخطأ عند تجاوز الحد المسموح (Rate Limit Exceeded)
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    return jsonify(error="تم تجاوز الحد المسموح (15 تحويل بالدقيقة). يرجى الانتظار قليلاً لحماية السيرفر."), 429
+# ====================================================================
 
 ARABIC_FONT_NAME = "ArabicFont"
 _arabic_font_registered = False
@@ -241,8 +271,6 @@ def csv_to_pdf_bytes(text, is_arabic):
     ]))
     doc.build([table])
     return buf.getvalue()
-
-# ================= الأدوات =================
 
 def handle_word_to_pdf(p):
     file_bytes = get_file_bytes(p)
@@ -781,7 +809,6 @@ NEEDS_MULTIPLE_FILES = {"merge-pdf"}
 def index():
     return render_template("index.html")
 
-# =========== الروابط الجديدة لصفحات أدسنس ===========
 @app.route("/privacy")
 def privacy():
     return render_template("privacy.html")
@@ -793,9 +820,9 @@ def terms():
 @app.route("/contact")
 def contact():
     return render_template("contact.html")
-# ===================================================
 
 @app.route("/convert", methods=["POST"])
+@limiter.limit("15 per minute")
 def convert():
     payload = request.get_json(silent=True) or {}
     action = payload.get("action")
