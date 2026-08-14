@@ -14,9 +14,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        /* الألوان الاحترافية (SaaS Colors) */
         :root {
-            /* الوضع الفاتح (الافتراضي - أنيق ومريح) */
             --bg-body: #f8fafc;
             --bg-surface: #ffffff;
             --text-main: #0f172a;
@@ -30,7 +28,6 @@
             --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
             --shadow-hover: 0 10px 25px -5px rgba(0,0,0,0.1);
             
-            /* ألوان الأيقونات المتخصصة */
             --c-word: #2563eb; --bg-word: #dbeafe;
             --c-pdf: #ef4444;  --bg-pdf: #fee2e2;
             --c-excel: #10b981; --bg-excel: #d1fae5;
@@ -40,7 +37,6 @@
         }
 
         .dark-mode {
-            /* الوضع الداكن (فخم وعميق) */
             --bg-body: #0f172a;
             --bg-surface: #1e293b;
             --text-main: #f8fafc;
@@ -75,7 +71,6 @@
             overflow-x: hidden;
         }
 
-        /* الهيدر */
         header {
             width: 100%; padding: 15px 5%;
             background-color: var(--bg-surface);
@@ -97,7 +92,6 @@
         }
         .controls button:hover { background: var(--border); }
 
-        /* حاوية منطقة العمل (المربع الرئيسي) */
         .workspace {
             width: 100%; max-width: 900px; margin: 40px auto 20px;
             padding: 0 20px;
@@ -120,7 +114,6 @@
             margin-bottom: 20px; font-size: 14px;
         }
 
-        /* منطقة السحب والإفلات */
         .upload-area {
             border: 2px dashed var(--upload-border); background: var(--upload-bg);
             padding: 50px 20px; border-radius: 16px; cursor: pointer;
@@ -132,7 +125,6 @@
         .upload-area p { color: var(--text-muted); font-size: 14px; }
         #fileInput, #multiFileInput { display: none; }
 
-        /* منطقة النص */
         textarea {
             width: 100%; height: 180px; background: var(--bg-body); border: 1px solid var(--border);
             border-radius: 12px; padding: 20px; color: var(--text-main); font-family: inherit; font-size: 15px;
@@ -140,7 +132,6 @@
         }
         textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2); }
 
-        /* زر التنفيذ */
         .execute-btn {
             width: 100%; padding: 18px; background: var(--primary); color: white;
             border: none; border-radius: 12px; font-size: 18px; font-weight: 700;
@@ -150,14 +141,12 @@
         .execute-btn:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 6px 15px rgba(79, 70, 229, 0.4); }
         .execute-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
 
-        /* النتيجة والتحميل */
         .spinner { display: none; width: 22px; height: 22px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 1s ease-in-out infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         
         .result-area { margin-top: 20px; padding: 20px; background: #ecfdf5; border: 1px solid #10b981; color: #065f46; border-radius: 12px; display: none; word-wrap: break-word; text-align: start; font-weight: 600;}
         .result-area.error { background: #fef2f2; border-color: #ef4444; color: #991b1b; }
 
-        /* مكتبة الأدوات (الجريد) */
         .tools-section { width: 100%; max-width: 1200px; margin: 0 auto 60px; padding: 0 20px; }
         .section-title { font-size: 24px; font-weight: 800; margin: 40px 0 20px; color: var(--text-main); display: flex; align-items: center; gap: 10px;}
         
@@ -180,7 +169,6 @@
         .tool-info h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; color: var(--text-main); }
         .tool-info p { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
 
-        /* ألوان الأيقونات الخاصة بالكروت */
         .i-word { background: var(--bg-word); color: var(--c-word); }
         .i-pdf { background: var(--bg-pdf); color: var(--c-pdf); }
         .i-excel { background: var(--bg-excel); color: var(--c-excel); }
@@ -188,7 +176,6 @@
         .i-img { background: var(--bg-img); color: var(--c-img); }
         .i-dev { background: var(--bg-dev); color: var(--c-dev); }
 
-        /* إشعار التوست والفوتر */
         .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: #10b981; color: white; padding: 12px 24px; border-radius: 30px; box-shadow: var(--shadow-md); font-weight: bold; transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); z-index: 2000; opacity: 0; display: flex; align-items: center; gap: 10px; }
         .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
         .toast.error-toast { background: #ef4444; }
@@ -198,7 +185,6 @@
         .footer-links a { color: var(--primary); text-decoration: none; font-weight: 600; margin: 0 8px; }
         .footer-links a:hover { text-decoration: underline; }
 
-        /* RTL/LTR fixes */
         html[dir="ltr"] .tool-card { text-align: left; }
         html[dir="rtl"] .tool-card { text-align: right; }
     </style>
@@ -206,7 +192,6 @@
 <body>
 
     <header>
-        <!-- الشعار ثابت الاتجاه -->
         <div class="logo" style="display:flex; align-items:center; gap:8px; direction: ltr; white-space: nowrap;">
             <i class="fa-solid fa-infinity"></i> <span data-ar="V-Infinity" data-en="V-Infinity">V-Infinity</span>
         </div>
@@ -216,7 +201,6 @@
         </div>
     </header>
 
-    <!-- منطقة العمل الرئيسية -->
     <div class="workspace" id="workspace">
         <div class="workspace-card">
             <div class="workspace-header">
@@ -224,7 +208,6 @@
                 <p data-ar="اختر إحدى الأدوات من الأسفل للبدء في المعالجة." data-en="Select a tool from below to start processing.">اختر إحدى الأدوات من الأسفل للبدء في المعالجة.</p>
             </div>
 
-            <!-- هذا الجزء يظهر فقط عند اختيار أداة -->
             <div id="activeToolArea" style="display: none;">
                 <div class="selected-tool-badge" id="selectedToolBadge">
                     <i class="fa-solid fa-wand-magic-sparkles"></i> <span id="selectedToolText">الأداة المحددة</span>
@@ -251,10 +234,8 @@
         </div>
     </div>
 
-    <!-- مكتبة الأدوات (SaaS Grid Style) -->
     <div class="tools-section">
         
-        <!-- قسم المستندات -->
         <div class="section-title"><i class="fa-solid fa-file-pdf" style="color:var(--c-pdf)"></i> <span data-ar="أدوات PDF والمستندات" data-en="PDF & Document Tools">أدوات PDF والمستندات</span></div>
         <div class="tools-grid">
             <div class="tool-card" onclick="selectTool('pdf-to-docx', 'PDF إلى Word', 'PDF to Word', 'file', 'i-word', 'fa-file-word')">
@@ -299,7 +280,13 @@
                     <p data-ar="فصل صفحات الـ PDF إلى ملفات مستقلة." data-en="Separate PDF pages into individual files.">فصل صفحات الـ PDF إلى ملفات مستقلة.</p>
                 </div>
             </div>
-            <!-- الأداة الجديدة -->
+            <div class="tool-card" onclick="selectTool('pdf-to-csv', 'PDF إلى CSV', 'PDF to CSV', 'file', 'i-excel', 'fa-file-csv')">
+                <div class="tool-icon i-excel"><i class="fa-solid fa-file-csv"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="PDF إلى CSV" data-en="PDF to CSV">PDF إلى CSV</h3>
+                    <p data-ar="استخراج الجداول والبيانات من PDF إلى CSV." data-en="Extract tables and data from PDF to CSV.">استخراج الجداول والبيانات من PDF إلى CSV.</p>
+                </div>
+            </div>
             <div class="tool-card" onclick="selectTool('csv-to-word', 'CSV إلى Word', 'CSV to Word', 'fileText', 'i-word', 'fa-file-word')">
                 <div class="tool-icon i-word"><i class="fa-solid fa-file-word"></i></div>
                 <div class="tool-info">
@@ -316,7 +303,6 @@
             </div>
         </div>
 
-        <!-- قسم الصور -->
         <div class="section-title"><i class="fa-solid fa-image" style="color:var(--c-img)"></i> <span data-ar="أدوات الصور" data-en="Image Tools">أدوات الصور</span></div>
         <div class="tools-grid">
             <div class="tool-card" onclick="selectTool('image-to-pdf', 'صورة إلى PDF', 'Image to PDF', 'file', 'i-img', 'fa-images')">
@@ -340,7 +326,6 @@
                     <p data-ar="تحويل وتوحيد الصور لصيغة JPG القياسية." data-en="Convert and standardize images to JPG format.">تحويل وتوحيد الصور لصيغة JPG القياسية.</p>
                 </div>
             </div>
-            <!-- الأداة الجديدة -->
             <div class="tool-card" onclick="selectTool('heic-to-jpg', 'HEIC إلى JPG (للايفون)', 'HEIC to JPG', 'file', 'i-img', 'fa-mobile-screen')">
                 <div class="tool-icon i-img"><i class="fa-solid fa-mobile-screen"></i></div>
                 <div class="tool-info">
@@ -350,7 +335,6 @@
             </div>
         </div>
 
-        <!-- قسم المطورين والنصوص -->
         <div class="section-title"><i class="fa-solid fa-code" style="color:var(--c-dev)"></i> <span data-ar="أدوات النصوص والمطورين" data-en="Text & Dev Tools">أدوات النصوص والمطورين</span></div>
         <div class="tools-grid">
             <div class="tool-card" onclick="selectTool('text-to-pdf', 'نص إلى PDF', 'Text to PDF', 'text', 'i-pdf', 'fa-file-lines')">
@@ -374,7 +358,6 @@
                     <p data-ar="إنشاء كلمات مرور عشوائية وآمنة جداً." data-en="Create highly secure, random passwords.">إنشاء كلمات مرور عشوائية وآمنة جداً.</p>
                 </div>
             </div>
-            <!-- الأدوات الجديدة -->
             <div class="tool-card" onclick="selectTool('markdown-to-html', 'Markdown إلى HTML', 'Markdown to HTML', 'text', 'i-dev', 'fa-code')">
                 <div class="tool-icon i-dev"><i class="fa-solid fa-code"></i></div>
                 <div class="tool-info">
@@ -399,7 +382,6 @@
         </div>
     </div>
 
-    <!-- الفوتر -->
     <div class="workspace">
         <div class="footer-disclaimer">
             <p data-ar="V-Infinity Converter يوفر مجموعة شاملة من الأدوات الآمنة. تتم معالجة الملفات سحابياً ولا يتم تخزينها أبداً. نحن نستخدم ملفات تعريف الارتباط وخدمات إعلانات جوجل وفقاً للسياسات." data-en="V-Infinity Converter provides a comprehensive suite for secure file conversion. Files are processed on our servers and are never stored. We use cookies and Google AdSense according to policies.">V-Infinity Converter يوفر مجموعة شاملة من الأدوات الآمنة. تتم معالجة الملفات سحابياً ولا يتم تخزينها أبداً. نحن نستخدم ملفات تعريف الارتباط وخدمات إعلانات جوجل وفقاً للسياسات.</p>
@@ -411,7 +393,6 @@
         </div>
     </div>
 
-    <!-- إشعار التوست -->
     <div class="toast" id="toast"><i class="fa-solid fa-circle-check"></i> <span id="toastMsg"></span></div>
 
     <script>
@@ -420,7 +401,6 @@
         let filesBase64Array = []; 
         let isArabic = true; 
 
-        // الوضع الليلي
         function toggleTheme() {
             document.body.classList.toggle('dark-mode');
             const btn = document.getElementById('themeBtn');
@@ -431,7 +411,6 @@
             }
         }
 
-        // تبديل اللغة
         function toggleLanguage() {
             isArabic = !isArabic;
             const langBtn = document.getElementById('langBtn');
@@ -455,15 +434,12 @@
             });
         }
 
-        // اختيار الأداة من القائمة (SaaS Style)
         function selectTool(action, nameAr, nameEn, type, iconClass, iconName) {
             currentAction = action;
             const toolName = isArabic ? nameAr : nameEn;
             
-            // إظهار منطقة العمل
             document.getElementById('activeToolArea').style.display = 'block';
             
-            // تحديث الشارة
             const badge = document.getElementById('selectedToolBadge');
             badge.className = `selected-tool-badge ${iconClass}`;
             badge.innerHTML = `<i class="fa-solid ${iconName}"></i> <span>${toolName}</span>`;
@@ -473,13 +449,11 @@
             const fileInput = document.getElementById('fileInput');
             const multiFileInput = document.getElementById('multiFileInput');
             
-            // إعادة الضبط
             fileBase64 = null;
             filesBase64Array = [];
             document.getElementById('fileName').innerText = '';
             document.getElementById('resultArea').style.display = 'none';
             
-            // ترتيب الواجهة
             if(type === 'multiFile') {
                 uploadArea.style.display = 'block'; textArea.style.display = 'none';
                 uploadArea.onclick = () => multiFileInput.click();
@@ -498,7 +472,6 @@
                 uploadArea.style.display = 'none'; textArea.style.display = 'none'; 
             }
 
-            // التمرير السلس للأعلى
             document.getElementById('workspace').scrollIntoView({ behavior: 'smooth' });
         }
 
@@ -604,7 +577,6 @@
             }
         }
 
-        // تشغيل الوضع الداكن كافتراضي أول ما يفتح الموقع
         document.body.classList.add('dark-mode');
         document.getElementById('themeBtn').innerHTML = '<i class="fa-solid fa-sun"></i>';
     </script>
