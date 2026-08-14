@@ -9,6 +9,7 @@ import secrets
 import string
 import zipfile
 import tempfile
+import subprocess
 from datetime import datetime, timezone
 from difflib import unified_diff
 
@@ -60,10 +61,10 @@ except Exception:
     Presentation = None
 
 app = Flask(__name__)
-app.config["MAX_CONTENT_LENGTH"] = 12 * 1024 * 1024  # 12MB
-MAX_FILE_BYTES = 4 * 1024 * 1024  # 4MB
+app.config["MAX_CONTENT_LENGTH"] = 12 * 1024 * 1024  
+MAX_FILE_BYTES = 4 * 1024 * 1024  
 
-# ==================== إعدادات الحماية (Security) ====================
+# ==================== إعدادات الحماية ====================
 CORS(app)
 
 limiter = Limiter(
@@ -84,7 +85,7 @@ def set_secure_headers(response):
 @app.errorhandler(429)
 def ratelimit_handler(e):
     return jsonify(error="تم تجاوز الحد المسموح. يرجى الانتظار قليلاً لحماية السيرفر."), 429
-# ====================================================================
+# ==========================================================
 
 ARABIC_FONT_NAME = "ArabicFont"
 _arabic_font_registered = False
@@ -185,83 +186,6 @@ def text_to_pdf_bytes(text, is_arabic, title=None):
     doc.build(story)
     return buf.getvalue()
 
-def word_to_pdf_structured(docx_doc, is_arabic):
-    buf = io.BytesIO()
-    doc = SimpleDocTemplate(buf, pagesize=A4, rightMargin=15*mm, leftMargin=15*mm, topMargin=15*mm, bottomMargin=15*mm)
-    font = pdf_font_name(is_arabic)
-    story = []
-
-    def process_paragraph(par):
-        html_text = ""
-        for run in par.runs:
-            txt = escape_html(run.text)
-            if not txt: continue
-            if is_arabic: txt = shape_arabic(txt)
-
-            if run.bold: txt = f"<b>{txt}</b>"
-            if run.italic: txt = f"<i>{txt}</i>"
-            if run.underline: txt = f"<u>{txt}</u>"
-            if run.font.color and run.font.color.rgb:
-                color = f"#{run.font.color.rgb}"
-                txt = f'<font color="{color}">{txt}</font>'
-            html_text += txt
-        return html_text
-
-    for element in docx_doc.element.body:
-        if element.tag.endswith('p'):
-            for p in docx_doc.paragraphs:
-                if p._element == element:
-                    html = process_paragraph(p)
-                    if html.strip():
-                        style = ParagraphStyle('PStyle', fontName=font, fontSize=12, leading=22, alignment=2 if is_arabic else 0)
-                        story.append(RLParagraph(html, style))
-                    break
-            story.append(Spacer(1, 8))
-            
-        elif element.tag.endswith('tbl'):
-            for tbl in docx_doc.tables:
-                if tbl._element == element:
-                    table_data = []
-                    for row in tbl.rows:
-                        row_data = []
-                        for cell in row.cells:
-                            cell_html = ""
-                            for p in cell.paragraphs:
-                                cell_html += process_paragraph(p) + "<br/>"
-                            if cell_html.endswith("<br/>"): cell_html = cell_html[:-5]
-                            if not cell_html.strip(): cell_html = "&nbsp;"
-                            
-                            style = ParagraphStyle('CStyle', fontName=font, fontSize=11, leading=18, alignment=2 if is_arabic else 0)
-                            row_data.append(RLParagraph(cell_html, style))
-                        
-                        if is_arabic:
-                            row_data.reverse() 
-                        table_data.append(row_data)
-                    
-                    if table_data:
-                        usable_width = 480
-                        col_widths = [usable_width / len(table_data[0])] * len(table_data[0])
-                        t = Table(table_data, colWidths=col_widths, hAlign="CENTER")
-                        t.setStyle(TableStyle([
-                            ("FONTNAME", (0, 0), (-1, -1), font),
-                            ("GRID", (0, 0), (-1, -1), 1, colors.HexColor("#cbd5e1")),
-                            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#f1f5f9")), 
-                            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                            ("ALIGN", (0, 0), (-1, -1), "RIGHT" if is_arabic else "LEFT"),
-                            ("PADDING", (0, 0), (-1, -1), 8),
-                        ]))
-                        story.append(Spacer(1, 10))
-                        story.append(t)
-                        story.append(Spacer(1, 10))
-                    break
-
-    if not story:
-        style = ParagraphStyle('PStyle', fontName=font, fontSize=12, leading=18, alignment=2 if is_arabic else 0)
-        story.append(RLParagraph(shape_arabic("لم يتم العثور على نص.") if is_arabic else "No text found.", style))
-
-    doc.build(story)
-    return buf.getvalue()
-
 def csv_to_pdf_bytes(text, is_arabic):
     rows = parse_csv_text(text)
     buf = io.BytesIO()
@@ -297,16 +221,36 @@ def csv_to_pdf_bytes(text, is_arabic):
 
 # ================= الأدوات =================
 
+# محرك LibreOffice الجديد لمعالجة الوورد
 def handle_word_to_pdf(p):
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
     if file_bytes:
         try:
-            docx_doc = Document(io.BytesIO(file_bytes))
-            pdf_bytes = word_to_pdf_structured(docx_doc, is_arabic)
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".docx") as tmp_docx:
+                tmp_docx.write(file_bytes)
+                tmp_docx_path = tmp_docx.name
+            
+            out_dir = tempfile.gettempdir()
+            cmd = ["libreoffice", "--headless", "--convert-to", "pdf", tmp_docx_path, "--outdir", out_dir]
+            subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            
+            base_name = os.path.splitext(os.path.basename(tmp_docx_path))[0]
+            pdf_path = os.path.join(out_dir, f"{base_name}.pdf")
+            
+            with open(pdf_path, "rb") as f:
+                pdf_bytes = f.read()
+            
+            os.remove(tmp_docx_path)
+            if os.path.exists(pdf_path):
+                os.remove(pdf_path)
+                
             return file_response(pdf_bytes, "application/pdf", "converted_document.pdf")
-        except Exception:
-            return bad_request("تعذر قراءة ملف الوورد" if is_arabic else "Could not read the Word file")
+        except Exception as e:
+            app.logger.error(f"LibreOffice Error: {e}")
+            if 'tmp_docx_path' in locals() and os.path.exists(tmp_docx_path):
+                os.remove(tmp_docx_path)
+            return bad_request("فشل التحويل. قد يكون السيرفر تحت ضغط، يرجى المحاولة لاحقاً." if is_arabic else "Conversion failed due to server load.")
             
     text = p.get("text", "")
     pdf_bytes = text_to_pdf_bytes(text, is_arabic)
