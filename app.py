@@ -242,8 +242,6 @@ def csv_to_pdf_bytes(text, is_arabic):
     doc.build([table])
     return buf.getvalue()
 
-# ================= الأدوات =================
-
 def handle_word_to_pdf(p):
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
@@ -291,7 +289,6 @@ def handle_csv_to_pdf(p):
     pdf_bytes = csv_to_pdf_bytes(text, p["is_arabic"])
     return file_response(pdf_bytes, "application/pdf", "converted_table.pdf")
 
-# ---- أداة جديدة: Excel إلى PDF ----
 def handle_excel_to_pdf(p):
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
@@ -524,7 +521,6 @@ def handle_csv_to_json(p):
         data.append(item)
     return jsonify({"result": json.dumps(data, ensure_ascii=False, indent=2)})
 
-# ---- أداة جديدة: JSON إلى CSV ----
 def handle_json_to_csv(p):
     text = p.get("text", "")
     file_bytes = get_file_bytes(p)
@@ -701,11 +697,9 @@ def handle_unit_converter(p):
     val = float(cleaned) if cleaned else 0.0
     return jsonify({"result": f"Meters: {val} m\nFeet: {val * 3.28084:.2f} ft\nInches: {val * 39.3701:.2f} in\nMiles: {val / 1609.34:.4f} mi"})
 
-# ---- دمجنا الأداة لتتعرف على HTML وتحوله Markdown أو العكس بذكاء ----
 def handle_markdown_to_html(p):
     text = p.get("text", "")
     if "<" in text and ">" in text and ("<h" in text or "<b" in text or "<p" in text):
-        # المستخدم رفع HTML يبيها Markdown
         text = re.sub(r'<h1>(.*?)</h1>', r'# \1\n', text, flags=re.IGNORECASE)
         text = re.sub(r'<h2>(.*?)</h2>', r'## \1\n', text, flags=re.IGNORECASE)
         text = re.sub(r'<h3>(.*?)</h3>', r'### \1\n', text, flags=re.IGNORECASE)
@@ -717,7 +711,6 @@ def handle_markdown_to_html(p):
         text = re.sub(r'<[^>]+>', '', text) 
         return jsonify({"result": text.strip()})
     else:
-        # المستخدم رفع Markdown يبيها HTML
         return jsonify({"result": md_lib.markdown(text)})
 
 def handle_text_diff(p):
@@ -776,7 +769,7 @@ REGISTRY = {
     "byte-converter": handle_byte_converter, 
     "unit-converter": handle_unit_converter, 
     "markdown-to-html": handle_markdown_to_html,
-    "html-to-markdown": handle_markdown_to_html, # توجيه عشان يشتغل في الحالتين
+    "html-to-markdown": handle_markdown_to_html,
     "text-diff": handle_text_diff,
 }
 
@@ -785,6 +778,20 @@ NEEDS_MULTIPLE_FILES = {"merge-pdf"}
 @app.route("/")
 def index():
     return render_template("index.html")
+
+# --- الروابط الجديدة المطلوبة لجوجل أدسنس ---
+@app.route("/privacy")
+def privacy():
+    return render_template("privacy.html")
+
+@app.route("/terms")
+def terms():
+    return render_template("terms.html")
+
+@app.route("/contact")
+def contact():
+    return render_template("contact.html")
+# ---------------------------------------------
 
 @app.route("/convert", methods=["POST"])
 def convert():
