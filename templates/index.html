@@ -236,7 +236,6 @@
 
     <div class="tools-section">
         
-        <!-- قسم المستندات -->
         <div class="section-title"><i class="fa-solid fa-file-pdf" style="color:var(--c-pdf)"></i> <span data-ar="أدوات PDF والمستندات" data-en="PDF & Document Tools">أدوات PDF والمستندات</span></div>
         <div class="tools-grid">
             <div class="tool-card" onclick="selectTool('pdf-to-docx', 'PDF إلى Word', 'PDF to Word', 'file', 'i-word', 'fa-file-word')">
@@ -267,7 +266,20 @@
                     <p data-ar="استخراج الجداول من PDF إلى إكسل." data-en="Extract tables from PDF to Excel.">استخراج الجداول من PDF إلى إكسل.</p>
                 </div>
             </div>
-            <!-- تم إضافة أدوات الـ CSV العكسية هنا بشكل بارز -->
+            <div class="tool-card" onclick="selectTool('merge-pdf', 'دمج ملفات PDF', 'Merge PDF Files', 'multiFile', 'i-dev', 'fa-object-group')">
+                <div class="tool-icon i-dev"><i class="fa-solid fa-object-group"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="دمج ملفات PDF" data-en="Merge PDF Files">دمج ملفات PDF</h3>
+                    <p data-ar="جمع عدة ملفات PDF في ملف واحد منظم." data-en="Combine multiple PDFs into one organized file.">جمع عدة ملفات PDF في ملف واحد منظم.</p>
+                </div>
+            </div>
+            <div class="tool-card" onclick="selectTool('split-pdf', 'تقسيم PDF', 'Split PDF', 'file', 'i-pdf', 'fa-file-dashed-line')">
+                <div class="tool-icon i-pdf"><i class="fa-solid fa-file-dashed-line"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="تقسيم PDF" data-en="Split PDF">تقسيم PDF</h3>
+                    <p data-ar="فصل صفحات الـ PDF إلى ملفات مستقلة." data-en="Separate PDF pages into individual files.">فصل صفحات الـ PDF إلى ملفات مستقلة.</p>
+                </div>
+            </div>
             <div class="tool-card" onclick="selectTool('pdf-to-csv', 'PDF إلى CSV', 'PDF to CSV', 'file', 'i-excel', 'fa-file-csv')">
                 <div class="tool-icon i-excel"><i class="fa-solid fa-file-csv"></i></div>
                 <div class="tool-info">
@@ -294,20 +306,6 @@
                 <div class="tool-info">
                     <h3 data-ar="CSV إلى Word" data-en="CSV to Word">CSV إلى Word</h3>
                     <p data-ar="تحويل الجداول النصية إلى مستندات Word." data-en="Convert CSV text into Word documents.">تحويل الجداول النصية إلى مستندات Word.</p>
-                </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('merge-pdf', 'دمج ملفات PDF', 'Merge PDF Files', 'multiFile', 'i-dev', 'fa-object-group')">
-                <div class="tool-icon i-dev"><i class="fa-solid fa-object-group"></i></div>
-                <div class="tool-info">
-                    <h3 data-ar="دمج ملفات PDF" data-en="Merge PDF Files">دمج ملفات PDF</h3>
-                    <p data-ar="جمع عدة ملفات PDF في ملف واحد منظم." data-en="Combine multiple PDFs into one organized file.">جمع عدة ملفات PDF في ملف واحد منظم.</p>
-                </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('split-pdf', 'تقسيم PDF', 'Split PDF', 'file', 'i-pdf', 'fa-file-dashed-line')">
-                <div class="tool-icon i-pdf"><i class="fa-solid fa-file-dashed-line"></i></div>
-                <div class="tool-info">
-                    <h3 data-ar="تقسيم PDF" data-en="Split PDF">تقسيم PDF</h3>
-                    <p data-ar="فصل صفحات الـ PDF إلى ملفات مستقلة." data-en="Separate PDF pages into individual files.">فصل صفحات الـ PDF إلى ملفات مستقلة.</p>
                 </div>
             </div>
             <div class="tool-card" onclick="selectTool('text-to-pdf', 'نص إلى PDF', 'Text to PDF', 'text', 'i-pdf', 'fa-file-lines')">
@@ -372,7 +370,6 @@
             </div>
         </div>
 
-        <!-- قسم الصور -->
         <div class="section-title"><i class="fa-solid fa-image" style="color:var(--c-img)"></i> <span data-ar="أدوات الصور" data-en="Image Tools">أدوات الصور</span></div>
         <div class="tools-grid">
             <div class="tool-card" onclick="selectTool('image-to-pdf', 'صورة إلى PDF', 'Image to PDF', 'file', 'i-img', 'fa-images')">
@@ -419,7 +416,6 @@
             </div>
         </div>
 
-        <!-- قسم المطورين والنصوص -->
         <div class="section-title"><i class="fa-solid fa-code" style="color:var(--c-dev)"></i> <span data-ar="أدوات النصوص والمطورين" data-en="Text & Dev Tools">أدوات النصوص والمطورين</span></div>
         <div class="tools-grid">
             <div class="tool-card" onclick="selectTool('markdown-to-html', 'Markdown إلى HTML', 'Markdown to HTML', 'text', 'i-dev', 'fa-file-code')">
@@ -494,7 +490,6 @@
             </div>
         </div>
 
-        <!-- قسم الأدوات المتنوعة -->
         <div class="section-title"><i class="fa-solid fa-toolbox" style="color:var(--c-dev)"></i> <span data-ar="أدوات متنوعة" data-en="Utilities">أدوات متنوعة</span></div>
         <div class="tools-grid">
             <div class="tool-card" onclick="selectTool('text-to-qr', 'توليد QR Code', 'QR Code Generator', 'text', 'i-excel', 'fa-qrcode')">
@@ -550,14 +545,14 @@
 
     </div>
 
-    <!-- الفوتر -->
+    <!-- الفوتر (مع الروابط الشغالة 100%) -->
     <div class="workspace">
         <div class="footer-disclaimer">
             <p data-ar="V-Infinity Converter يوفر مجموعة شاملة من الأدوات الآمنة. تتم معالجة الملفات سحابياً ولا يتم تخزينها أبداً. نحن نستخدم ملفات تعريف الارتباط وخدمات إعلانات جوجل وفقاً للسياسات." data-en="V-Infinity Converter provides a comprehensive suite for secure file conversion. Files are processed on our servers and are never stored. We use cookies and Google AdSense according to policies.">V-Infinity Converter يوفر مجموعة شاملة من الأدوات الآمنة. تتم معالجة الملفات سحابياً ولا يتم تخزينها أبداً. نحن نستخدم ملفات تعريف الارتباط وخدمات إعلانات جوجل وفقاً للسياسات.</p>
             <div class="footer-links">
-                <a href="#" data-ar="سياسة الخصوصية" data-en="Privacy Policy">سياسة الخصوصية</a> | 
-                <a href="#" data-ar="الشروط والأحكام" data-en="Terms of Service">الشروط والأحكام</a> | 
-                <a href="#" data-ar="اتصل بنا" data-en="Contact Us">اتصل بنا</a>
+                <a href="/privacy" data-ar="سياسة الخصوصية" data-en="Privacy Policy">سياسة الخصوصية</a> | 
+                <a href="/terms" data-ar="الشروط والأحكام" data-en="Terms of Service">الشروط والأحكام</a> | 
+                <a href="/contact" data-ar="اتصل بنا" data-en="Contact Us">اتصل بنا</a>
             </div>
         </div>
     </div>
