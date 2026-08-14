@@ -677,7 +677,10 @@ def handle_password_strength(p):
 
 def handle_text_counter(p):
     text = p.get("text", "")
-    return jsonify({"result": f"Chars: {len(text)}\nWords: {len(text.strip().split()) if text.strip() else 0}\nLines: {len(text.split('\n'))}"})
+    chars = len(text)
+    words = len(text.strip().split()) if text.strip() else 0
+    lines = len(text.splitlines())
+    return jsonify({"result": f"Chars: {chars}\nWords: {words}\nLines: {lines}"})
 
 def handle_percentage_calc(p):
     nums = re.findall(r"\d+(?:\.\d+)?", p.get("text", ""))
