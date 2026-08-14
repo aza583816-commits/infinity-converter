@@ -84,7 +84,6 @@ def ensure_arabic_font():
                 return ARABIC_FONT_NAME
             except Exception:
                 continue
-                
     return "Helvetica"
 
 def shape_arabic(text):
@@ -280,7 +279,14 @@ def handle_pdf_to_pdf_enhanced(p):
         return bad_request("تعذر قراءة ملف الـ PDF" if is_arabic else "Could not read the PDF file")
 
 def handle_csv_to_pdf(p):
-    pdf_bytes = csv_to_pdf_bytes(p.get("text", ""), p["is_arabic"])
+    text = p.get("text", "")
+    file_bytes = get_file_bytes(p)
+    if file_bytes:
+        try:
+            text = file_bytes.decode("utf-8")
+        except Exception:
+            text = file_bytes.decode("windows-1256", errors="ignore")
+    pdf_bytes = csv_to_pdf_bytes(text, p["is_arabic"])
     return file_response(pdf_bytes, "application/pdf", "converted_table.pdf")
 
 def handle_pdf_to_text(p):
@@ -295,16 +301,19 @@ def handle_pdf_to_csv(p):
     file_bytes = get_file_bytes(p)
     if not file_bytes:
         return bad_request("No file provided")
-    reader = PdfReader(io.BytesIO(file_bytes))
-    buf = io.StringIO()
-    writer = csv.writer(buf)
-    for page in reader.pages:
-        text = page.extract_text() or ""
-        for line in text.split("\n"):
-            if line.strip():
-                writer.writerow(line.split())
-    output_bytes = ("\ufeff" + buf.getvalue()).encode("utf-8")
-    return file_response(output_bytes, "text/csv", "converted.csv")
+    try:
+        reader = PdfReader(io.BytesIO(file_bytes))
+        buf = io.StringIO()
+        writer = csv.writer(buf)
+        for page in reader.pages:
+            text = page.extract_text() or ""
+            for line in text.split("\n"):
+                if line.strip():
+                    writer.writerow(line.split())
+        output_bytes = ("\ufeff" + buf.getvalue()).encode("utf-8")
+        return file_response(output_bytes, "text/csv", "converted.csv")
+    except Exception:
+         return bad_request("تعذر استخراج الجداول من ملف الـ PDF" if p["is_arabic"] else "Could not extract tables from PDF")
 
 def handle_pdf_to_docx(p):
     file_bytes = get_file_bytes(p)
@@ -417,7 +426,14 @@ def handle_split_pdf(p):
     return file_response(zip_buf.getvalue(), "application/zip", "split_pages.zip")
 
 def handle_csv_to_word(p):
-    rows = parse_csv_text(p.get("text", ""))
+    text = p.get("text", "")
+    file_bytes = get_file_bytes(p)
+    if file_bytes:
+        try:
+            text = file_bytes.decode("utf-8")
+        except Exception:
+            text = file_bytes.decode("windows-1256", errors="ignore")
+    rows = parse_csv_text(text)
     is_arabic = p["is_arabic"]
     doc = Document()
     if rows:
@@ -433,6 +449,22 @@ def handle_csv_to_word(p):
     buf = io.BytesIO()
     doc.save(buf)
     return file_response(buf.getvalue(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "converted.docx")
+
+def handle_word_to_csv(p):
+    file_bytes = get_file_bytes(p)
+    if not file_bytes:
+        return handle_text_to_csv(p)
+    try:
+        docx_doc = Document(io.BytesIO(file_bytes))
+        buf = io.StringIO()
+        writer = csv.writer(buf)
+        for table in docx_doc.tables:
+            for row in table.rows:
+                writer.writerow([cell.text.strip() for cell in row.cells])
+        output_bytes = ("\ufeff" + buf.getvalue()).encode("utf-8")
+        return file_response(output_bytes, "text/csv", "converted.csv")
+    except Exception:
+        return bad_request("تعذر استخراج الجداول من ملف الوورد" if p["is_arabic"] else "Could not extract tables from Word")
 
 def handle_text_to_excel(p):
     rows = [line.split("\t") if "\t" in line else line.split(",") for line in (p.get("text", "")).split("\n")]
@@ -473,9 +505,6 @@ def handle_text_to_csv(p):
     text = p.get("text", "")
     buf = ("\ufeff" + text).encode("utf-8")
     return file_response(buf, "text/csv", "converted.csv")
-
-def handle_word_to_csv(p):
-    return handle_text_to_csv(p)
 
 def handle_compress_image(p):
     file_bytes = get_file_bytes(p)
