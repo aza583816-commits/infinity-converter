@@ -242,6 +242,8 @@ def csv_to_pdf_bytes(text, is_arabic):
     doc.build([table])
     return buf.getvalue()
 
+# ================= الأدوات =================
+
 def handle_word_to_pdf(p):
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
@@ -779,7 +781,7 @@ NEEDS_MULTIPLE_FILES = {"merge-pdf"}
 def index():
     return render_template("index.html")
 
-# --- الروابط الجديدة المطلوبة لجوجل أدسنس ---
+# =========== الروابط الجديدة لصفحات أدسنس ===========
 @app.route("/privacy")
 def privacy():
     return render_template("privacy.html")
@@ -791,7 +793,7 @@ def terms():
 @app.route("/contact")
 def contact():
     return render_template("contact.html")
-# ---------------------------------------------
+# ===================================================
 
 @app.route("/convert", methods=["POST"])
 def convert():
