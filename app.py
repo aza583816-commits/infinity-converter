@@ -228,11 +228,20 @@ def csv_to_pdf_bytes(text, is_arabic):
     if not table_data:
         table_data = [[RLParagraph("", ParagraphStyle('Empty', fontName=font, fontSize=10))]]
 
+    # ================= مكتبة الألوان =================
+    # اختيار لون عشوائي لترويسة الجدول في كل عملية تحويل
+    color_palette = [
+        "#0ea5e9", "#10b981", "#f59e0b", "#6366f1", 
+        "#334155", "#ec4899", "#14b8a6", "#ef4444"
+    ]
+    chosen_bg_color = secrets.choice(color_palette)
+    # =================================================
+
     table = Table(table_data, hAlign="CENTER")
     table.setStyle(TableStyle([
         ("FONTNAME", (0, 0), (-1, -1), font),
         ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0ea5e9")),
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor(chosen_bg_color)),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
         ("ALIGN", (0, 0), (-1, -1), "RIGHT" if is_arabic else "LEFT"),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
@@ -316,12 +325,31 @@ def handle_excel_to_pdf(p):
     if not file_bytes:
         return bad_request("يرجى رفع ملف Excel" if is_arabic else "Please upload an Excel file")
     try:
-        df = pd.read_excel(io.BytesIO(file_bytes))
-        csv_text = df.to_csv(index=False)
-        pdf_bytes = csv_to_pdf_bytes(csv_text, is_arabic)
+        # استخدام LibreOffice للحفاظ على الألوان والتنسيقات الأصلية للإكسل
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp_xlsx:
+            tmp_xlsx.write(file_bytes)
+            tmp_xlsx_path = tmp_xlsx.name
+        
+        out_dir = tempfile.gettempdir()
+        cmd = ["libreoffice", "--headless", "--convert-to", "pdf", tmp_xlsx_path, "--outdir", out_dir]
+        subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        
+        base_name = os.path.splitext(os.path.basename(tmp_xlsx_path))[0]
+        pdf_path = os.path.join(out_dir, f"{base_name}.pdf")
+        
+        with open(pdf_path, "rb") as f:
+            pdf_bytes = f.read()
+        
+        os.remove(tmp_xlsx_path)
+        if os.path.exists(pdf_path):
+            os.remove(pdf_path)
+            
         return file_response(pdf_bytes, "application/pdf", "converted_excel.pdf")
-    except Exception:
-        return bad_request("تعذر قراءة أو تحويل ملف الـ Excel" if is_arabic else "Could not read the Excel file")
+    except Exception as e:
+        app.logger.error(f"LibreOffice Excel Error: {e}")
+        if 'tmp_xlsx_path' in locals() and os.path.exists(tmp_xlsx_path):
+            os.remove(tmp_xlsx_path)
+        return bad_request("تعذر تحويل ملف الـ Excel. قد يكون الملف تالفاً أو السيرفر تحت ضغط." if is_arabic else "Could not convert the Excel file")
 
 def handle_pdf_to_text(p):
     file_bytes = get_file_bytes(p)
