@@ -10,6 +10,8 @@ import string
 import zipfile
 import tempfile
 import subprocess
+import textwrap
+import urllib.request
 from datetime import datetime, timezone
 from difflib import unified_diff
 
@@ -29,6 +31,7 @@ except Exception:
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml.ns import qn
+from docx.oxml import OxmlElement
 
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
@@ -95,9 +98,18 @@ def ensure_arabic_font():
     if _arabic_font_registered:
         return ARABIC_FONT_NAME
     
+    # تحميل خط Cairo الأصلي برمجياً إذا لم يكن موجوداً لضمان عدم ظهور مربعات
+    font_path = "/tmp/Cairo-Regular.ttf"
+    if not os.path.exists(font_path):
+        try:
+            url = "https://github.com/googlefonts/cairo/raw/main/fonts/ttf/Cairo-Regular.ttf"
+            urllib.request.urlretrieve(url, font_path)
+        except Exception as e:
+            app.logger.error(f"Failed to download font: {e}")
+            
     possible_paths = [
+        font_path,
         "static/fonts/NotoNaskhArabic-Regular.ttf",
-        "static/NotoNaskhArabic-Regular.ttf",
         "static/Cairo-Regular.ttf",
         "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
         "/usr/share/fonts/truetype/freefont/FreeSans.ttf"
@@ -113,13 +125,18 @@ def ensure_arabic_font():
                 continue
     return "Helvetica"
 
-def shape_arabic(text):
+def shape_arabic(text, wrap_width=None):
     if not text:
         return text
     if arabic_reshaper and get_display:
         try:
             reshaped = arabic_reshaper.reshape(text)
-            return get_display(reshaped)
+            if wrap_width:
+                # قص النص إلى أسطر قصيرة قبل عكسه للحفاظ على سياق الجمل العربية الطويلة
+                lines = textwrap.wrap(reshaped, wrap_width)
+                return "<br/>".join(get_display(line) for line in lines)
+            else:
+                return get_display(reshaped)
         except Exception:
             return text
     return text
@@ -173,9 +190,10 @@ def text_to_pdf_bytes(text, is_arabic, title=None):
     font = pdf_font_name(is_arabic)
     story = []
     for line in (text or "").split("\n"):
-        content = shape_arabic(line) if is_arabic else line
+        # عرض الأسطر لـ 85 حرف للحفاظ على النص المنسق
+        content = shape_arabic(line, wrap_width=85) if is_arabic else line
         p_style = ParagraphStyle('Body', fontName=font, fontSize=11, leading=16, alignment=2 if is_arabic else 0)
-        t_cell = Table([[RLParagraph(escape_html(content).replace("\n", "<br/>") or "&nbsp;", p_style)]], colWidths=[480])
+        t_cell = Table([[RLParagraph(escape_html(content).replace("&lt;br/&gt;", "<br/>") or "&nbsp;", p_style)]], colWidths=[480])
         t_cell.setStyle(TableStyle([
             ("ALIGN", (0, 0), (-1, -1), "RIGHT" if is_arabic else "LEFT"),
             ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
@@ -197,9 +215,14 @@ def csv_to_pdf_bytes(text, is_arabic):
         formatted_row = []
         for c in row:
             cell_text = (c or "").strip()
-            processed_text = shape_arabic(cell_text) if is_arabic else cell_text
+            # التفاف النصوص الطويلة داخل الخلايا
+            processed_text = shape_arabic(cell_text, wrap_width=30) if is_arabic else cell_text
             style_cell = ParagraphStyle('TableCell', fontName=font, fontSize=10, leading=14, alignment=2 if is_arabic else 0)
-            formatted_row.append(RLParagraph(escape_html(processed_text), style_cell))
+            formatted_row.append(RLParagraph(escape_html(processed_text).replace("&lt;br/&gt;", "<br/>"), style_cell))
+        
+        # لعكس أعمدة الجدول إذا كانت اللغة عربية
+        if is_arabic:
+            formatted_row.reverse()
         table_data.append(formatted_row)
         
     if not table_data:
@@ -221,7 +244,6 @@ def csv_to_pdf_bytes(text, is_arabic):
 
 # ================= الأدوات =================
 
-# محرك LibreOffice الجديد لمعالجة الوورد
 def handle_word_to_pdf(p):
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
@@ -448,9 +470,18 @@ def handle_csv_to_word(p):
     rows = parse_csv_text(text)
     is_arabic = p["is_arabic"]
     doc = Document()
+    
     if rows:
         table = doc.add_table(rows=len(rows), cols=len(rows[0]))
         table.style = "Table Grid"
+        
+        # تفعيل خاصية RTL للجدول بالكامل داخل الوورد
+        if is_arabic:
+            tblPr = table._element.xpath('w:tblPr')
+            if tblPr:
+                bidiVisual = OxmlElement('w:bidiVisual')
+                tblPr[0].append(bidiVisual)
+                
         for r, row in enumerate(rows):
             for c, val in enumerate(row):
                 cell = table.cell(r, c)
@@ -458,6 +489,9 @@ def handle_csv_to_word(p):
                 if is_arabic:
                     for par in cell.paragraphs:
                         par.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+                        pPr = par._p.get_or_add_pPr()
+                        pPr.append(pPr.makeelement(qn("w:bidi"), {}))
+                        
     buf = io.BytesIO()
     doc.save(buf)
     return file_response(buf.getvalue(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "converted.docx")
