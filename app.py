@@ -33,7 +33,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
-from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph as RLParagraph, Spacer
@@ -187,27 +187,24 @@ def text_to_pdf_bytes(text, is_arabic, title=None):
     doc = SimpleDocTemplate(buf, pagesize=A4, topMargin=15 * mm, bottomMargin=15 * mm, leftMargin=15 * mm, rightMargin=15 * mm)
     font = pdf_font_name(is_arabic)
     story = []
-    
-    align = 2 if is_arabic else 0
-    p_style = ParagraphStyle('BodyText', fontName=font, fontSize=12, leading=18, alignment=align)
-
-    paragraphs = (text or "").split("\n")
-    for para in paragraphs:
-        if not para.strip():
-             story.append(Spacer(1, 12))
-             continue
-        shaped_text = shape_arabic(para) if is_arabic else para
-        story.append(RLParagraph(escape_html(shaped_text), p_style))
-        story.append(Spacer(1, 8))
-
+    for line in (text or "").split("\n"):
+        content = shape_arabic(line, wrap_width=85) if is_arabic else line
+        p_style = ParagraphStyle('Body', fontName=font, fontSize=11, leading=16, alignment=2 if is_arabic else 0)
+        t_cell = Table([[RLParagraph(escape_html(content).replace("&lt;br/&gt;", "<br/>") or "&nbsp;", p_style)]], colWidths=[480])
+        t_cell.setStyle(TableStyle([
+            ("ALIGN", (0, 0), (-1, -1), "RIGHT" if is_arabic else "LEFT"),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+        ]))
+        story.append(t_cell)
+        story.append(Spacer(1, 4))
     doc.build(story)
     return buf.getvalue()
 
 def csv_to_pdf_bytes(text, is_arabic):
     rows = parse_csv_text(text)
     buf = io.BytesIO()
-    
-    doc = SimpleDocTemplate(buf, pagesize=landscape(A4), topMargin=15 * mm, bottomMargin=15 * mm, leftMargin=15 * mm, rightMargin=15 * mm)
+    doc = SimpleDocTemplate(buf, pagesize=A4, topMargin=15 * mm, bottomMargin=15 * mm, leftMargin=15 * mm, rightMargin=15 * mm)
     font = pdf_font_name(is_arabic)
     
     table_data = []
@@ -215,49 +212,28 @@ def csv_to_pdf_bytes(text, is_arabic):
         formatted_row = []
         for c in row:
             cell_text = (c or "").strip()
-            processed_text = shape_arabic(cell_text, wrap_width=40) if is_arabic else cell_text
-            style_cell = ParagraphStyle('TableCell', fontName=font, fontSize=11, leading=16, alignment=1)
-            formatted_row.append(RLParagraph(escape_html(processed_text).replace("&lt;br/&gt;", "<br/>"), style_cell))
-        
-        if is_arabic:
-            formatted_row.reverse()
+            processed_text = shape_arabic(cell_text) if is_arabic else cell_text
+            style_cell = ParagraphStyle('TableCell', fontName=font, fontSize=10, leading=14, alignment=2 if is_arabic else 0)
+            formatted_row.append(RLParagraph(escape_html(processed_text), style_cell))
         table_data.append(formatted_row)
         
     if not table_data:
-        table_data = [[RLParagraph("", ParagraphStyle('Empty', fontName=font, fontSize=11))]]
+        table_data = [[RLParagraph("", ParagraphStyle('Empty', fontName=font, fontSize=10))]]
 
-    page_width, _ = landscape(A4)
-    available_width = page_width - (30 * mm)
-    num_cols = len(table_data[0]) if table_data else 1
-    col_widths = [available_width / num_cols] * num_cols
-
-    color_palette = [
-        "#0ea5e9", "#10b981", "#f59e0b", "#6366f1", 
-        "#334155", "#ec4899", "#14b8a6", "#ef4444"
-    ]
-    chosen_bg_color = secrets.choice(color_palette)
-
-    table = Table(table_data, colWidths=col_widths, hAlign="CENTER", repeatRows=1)
-    
-    style_commands = [
+    # ضبط الجدول ليكون بالحجم والتنسيق الكلاسيكي السابق بالكامل
+    table = Table(table_data, hAlign="CENTER")
+    table.setStyle(TableStyle([
         ("FONTNAME", (0, 0), (-1, -1), font),
         ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor(chosen_bg_color)),
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0ea5e9")),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("ALIGN", (0, 0), (-1, -1), "RIGHT" if is_arabic else "LEFT"),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("TOPPADDING", (0, 0), (-1, -1), 10),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
-    ]
-    
-    for i in range(1, len(table_data)):
-        bg_color = colors.HexColor("#f8fafc") if i % 2 == 0 else colors.white
-        style_commands.append(("BACKGROUND", (0, i), (-1, i), bg_color))
-
-    table.setStyle(TableStyle(style_commands))
+        ("TOPPADDING", (0, 0), (-1, -1), 8),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+    ]))
     doc.build([table])
     return buf.getvalue()
-
 
 # ================= الأدوات =================
 
