@@ -132,6 +132,7 @@
             width: 100%; height: 180px; background: var(--bg-body); border: 1px solid var(--border);
             border-radius: 12px; padding: 20px; color: var(--text-main); font-family: inherit; font-size: 15px;
             resize: vertical; margin-bottom: 20px; outline: none; transition: all 0.3s;
+            text-align: start; /* يعتمد على لغة النص المدخل تلقائياً */
         }
         textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2); }
 
@@ -147,8 +148,12 @@
         .spinner { display: none; width: 22px; height: 22px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 1s ease-in-out infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         
-        .result-area { margin-top: 20px; padding: 20px; background: #ecfdf5; border: 1px solid #10b981; color: #065f46; border-radius: 12px; display: none; word-wrap: break-word; text-align: start; font-weight: 600;}
-        .result-area.error { background: #fef2f2; border-color: #ef4444; color: #991b1b; }
+        .result-area { 
+            margin-top: 20px; padding: 20px; background: #ecfdf5; border: 1px solid #10b981; color: #065f46; border-radius: 12px; display: none; word-wrap: break-word; font-weight: 600;
+            text-align: start; /* يعتمد على لغة النص المخرج تلقائياً */
+        }
+        .dark-mode .result-area { background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: #059669; }
+        .result-area.error { background: #fef2f2; border-color: #ef4444; color: #991b1b; direction: rtl; text-align: right; }
 
         .tools-section { width: 100%; max-width: 1200px; margin: 0 auto 60px; padding: 0 20px; }
         .section-title { font-size: 24px; font-weight: 800; margin: 40px 0 20px; color: var(--text-main); display: flex; align-items: center; gap: 10px;}
@@ -225,14 +230,16 @@
                     <input type="file" id="multiFileInput" multiple style="display:none;" onchange="handleMultiFileSelect(event)">
                 </div>
 
-                <textarea id="textInput" data-ar-ph="الصق النص أو المحتوى هنا..." data-en-ph="Paste text or content here..." placeholder="الصق النص أو المحتوى هنا..."></textarea>
+                <!-- إضافة dir="auto" هنا ليتعرف على لغة النص تلقائياً -->
+                <textarea id="textInput" dir="auto" data-ar-ph="الصق النص أو المحتوى هنا..." data-en-ph="Paste text or content here..." placeholder="الصق النص أو المحتوى هنا..."></textarea>
 
                 <button class="execute-btn" id="executeBtn" onclick="processConversion()">
                     <span id="btnText" data-ar="تحويل الآن" data-en="Convert Now">تحويل الآن</span>
                     <div class="spinner" id="spinner"></div>
                 </button>
 
-                <div class="result-area" id="resultArea"></div>
+                <!-- إضافة dir="auto" هنا أيضاً لنتائج التحويل -->
+                <div class="result-area" id="resultArea" dir="auto"></div>
             </div>
         </div>
     </div>
