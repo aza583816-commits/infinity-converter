@@ -587,8 +587,20 @@ def handle_json_to_csv(p):
 
 def handle_text_to_csv(p):
     text = p.get("text", "")
-    buf = ("\ufeff" + text).encode("utf-8")
-    return file_response(buf, "text/csv", "converted.csv")
+    rows = parse_csv_text(text)
+    
+    # تحويل البيانات إلى جدول HTML احترافي ليظهر منسقاً في الموقع
+    html_table = '<table style="width:100%; border-collapse:collapse; text-align:center;">'
+    for i, row in enumerate(rows):
+        style = 'background-color:#0ea5e9; color:white; font-weight:bold;' if i == 0 else ('background-color:#f8fafc;' if i % 2 == 0 else 'background-color:white;')
+        html_table += f'<tr style="{style}">'
+        for cell in row:
+            html_table += f'<td style="padding:10px; border:1px solid #cbd5e1;">{escape_html(cell)}</td>'
+        html_table += '</tr>'
+    html_table += '</table>'
+    
+    # نرجع النتيجة كـ JSON يحتوي على تنسيق الجدول
+    return jsonify({"result": html_table})
 
 def handle_compress_image(p):
     file_bytes = get_file_bytes(p)
