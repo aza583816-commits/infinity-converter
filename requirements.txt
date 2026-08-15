@@ -16,4 +16,4 @@ pdf2docx
 Flask-Limiter
 Flask-Cors
 arabic-reshaper
-python-bidi⁠
+python-bidi
