@@ -728,8 +728,13 @@
                 const contentType = response.headers.get("content-type");
                 if (contentType && contentType.includes("application/json")) {
                     const data = await response.json();
-                    if (data.resultImage) resultArea.innerHTML = `<img src="${data.resultImage}" style="max-width:100%; border-radius:10px;">`;
-                    else resultArea.innerText = data.result || (isArabic ? 'تم التنفيذ بنجاح!' : 'Executed successfully!');
+                    if (data.resultImage) {
+                        resultArea.innerHTML = `<img src="${data.resultImage}" style="max-width:100%; border-radius:10px;">`;
+                    } else if (data.result && (data.result.includes('<table') || data.result.includes('<div style="overflow'))) {
+                        resultArea.innerHTML = data.result; // يعرض الكود كجدول حقيقي
+                    } else {
+                        resultArea.innerText = data.result || (isArabic ? 'تم التنفيذ بنجاح!' : 'Executed successfully!');
+                    }
                     resultArea.style.display = 'block';
                     showToast('تمت العملية بنجاح!', 'Operation successful!');
                 } else {
