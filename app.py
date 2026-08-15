@@ -213,10 +213,9 @@ def csv_to_pdf_bytes(text, is_arabic):
         for c in row:
             cell_text = (c or "").strip()
             processed_text = shape_arabic(cell_text) if is_arabic else cell_text
-            style_cell = ParagraphStyle('TableCell', fontName=font, fontSize=11, leading=16, alignment=1) # توسيط النص
+            style_cell = ParagraphStyle('TableCell', fontName=font, fontSize=11, leading=16, alignment=1)
             formatted_row.append(RLParagraph(escape_html(processed_text), style_cell))
         
-        # لعكس الأعمدة إذا كانت اللغة عربية
         if is_arabic:
             formatted_row.reverse()
         table_data.append(formatted_row)
@@ -224,9 +223,10 @@ def csv_to_pdf_bytes(text, is_arabic):
     if not table_data:
         table_data = [[RLParagraph("", ParagraphStyle('Empty', fontName=font, fontSize=11))]]
 
-    # حساب وتحديد عرض الأعمدة ليمتلئ الجدول في عرض الصفحة (العرض الإجمالي 480 نقطة)
+    # تمديد الجدول وتوسيطه ليكون عريضاً وجميلاً في مستند الـ PDF
+    page_width = A4[0] - (30 * mm)
     num_cols = len(table_data[0]) if table_data else 1
-    col_width = 480 / num_cols
+    col_width = page_width / num_cols
     col_widths = [col_width] * num_cols
 
     table = Table(table_data, colWidths=col_widths, hAlign="CENTER", repeatRows=1)
@@ -234,15 +234,14 @@ def csv_to_pdf_bytes(text, is_arabic):
     style_commands = [
         ("FONTNAME", (0, 0), (-1, -1), font),
         ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0ea5e9")), # اللون الأزرق الأساسي للترويسة
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0ea5e9")),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("ALIGN", (0, 0), (-1, -1), "CENTER"), # توسيط محتوى الخلايا
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
         ("TOPPADDING", (0, 0), (-1, -1), 12),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
     ]
     
-    # صفوف بخلفية بيضاء للحفاظ على الشكل الكلاسيكي
     for i in range(1, len(table_data)):
         style_commands.append(("BACKGROUND", (0, i), (-1, i), colors.white))
 
@@ -604,17 +603,18 @@ def handle_text_to_csv(p):
     text = p.get("text", "")
     rows = parse_csv_text(text)
     
-    # تحويل النص لجدول منسق بمسافات يظهر بشكل نظيف داخل الصندوق (بدون أكواد HTML)
-    formatted_text = ""
-    if rows:
-        col_widths = [max(len(str(item)) for item in col) for col in zip(*rows)]
-        for row in rows:
-            formatted_text += " | ".join(str(val).center(width) for val, width in zip(row, col_widths)) + "\n"
-            formatted_text += "-" * (sum(col_widths) + 3 * (len(row) - 1)) + "\n"
-    else:
-        formatted_text = text
-
-    return jsonify({"result": formatted_text.strip()})
+    # بناء جدول HTML مرتب واحترافي ليعرض في صندوق النتائج في الموقع
+    html = '<div style="overflow-x:auto;"><table style="width:100%; border-collapse:collapse; color:white; font-family:Cairo; font-size:15px; margin-top:10px;">'
+    for i, row in enumerate(rows):
+        # لون الترويسة أزرق، وبقية الصفوف بلون خلفية متناسق ومريح
+        bg = "#0ea5e9" if i == 0 else ("#334155" if i % 2 == 0 else "#1e293b")
+        html += f'<tr style="background-color:{bg};">'
+        for cell in row:
+            html += f'<td style="padding:12px; border:1px solid #475569; text-align:center;">{escape_html(cell)}</td>'
+        html += '</tr>'
+    html += '</table></div>'
+    
+    return jsonify({"result": html})
 
 def handle_compress_image(p):
     file_bytes = get_file_bytes(p)
