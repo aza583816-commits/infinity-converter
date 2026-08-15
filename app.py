@@ -601,20 +601,9 @@ def handle_json_to_csv(p):
 
 def handle_text_to_csv(p):
     text = p.get("text", "")
-    rows = parse_csv_text(text)
-    
-    # بناء جدول HTML مرتب واحترافي ليعرض في صندوق النتائج في الموقع
-    html = '<div style="overflow-x:auto;"><table style="width:100%; border-collapse:collapse; color:white; font-family:Cairo; font-size:15px; margin-top:10px;">'
-    for i, row in enumerate(rows):
-        # لون الترويسة أزرق، وبقية الصفوف بلون خلفية متناسق ومريح
-        bg = "#0ea5e9" if i == 0 else ("#334155" if i % 2 == 0 else "#1e293b")
-        html += f'<tr style="background-color:{bg};">'
-        for cell in row:
-            html += f'<td style="padding:12px; border:1px solid #475569; text-align:center;">{escape_html(cell)}</td>'
-        html += '</tr>'
-    html += '</table></div>'
-    
-    return jsonify({"result": html})
+    buf = ("\ufeff" + text).encode("utf-8")
+    return file_response(buf, "text/csv", "converted.csv")
+
 
 def handle_compress_image(p):
     file_bytes = get_file_bytes(p)
