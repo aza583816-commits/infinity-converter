@@ -213,7 +213,7 @@ def csv_to_pdf_bytes(text, is_arabic):
         for c in row:
             cell_text = (c or "").strip()
             processed_text = shape_arabic(cell_text) if is_arabic else cell_text
-            style_cell = ParagraphStyle('TableCell', fontName=font, fontSize=10, leading=14, alignment=2 if is_arabic else 0)
+            style_cell = ParagraphStyle('TableCell', fontName=font, fontSize=11, leading=16, alignment=1) # توسيط النص
             formatted_row.append(RLParagraph(escape_html(processed_text), style_cell))
         
         # لعكس الأعمدة إذا كانت اللغة عربية
@@ -222,25 +222,31 @@ def csv_to_pdf_bytes(text, is_arabic):
         table_data.append(formatted_row)
         
     if not table_data:
-        table_data = [[RLParagraph("", ParagraphStyle('Empty', fontName=font, fontSize=10))]]
+        table_data = [[RLParagraph("", ParagraphStyle('Empty', fontName=font, fontSize=11))]]
 
-    # حساب العرض الكلي للصفحة (A4) ناقص الهوامش
-    page_width = A4[0] - (30 * mm) 
+    # حساب وتحديد عرض الأعمدة ليمتلئ الجدول في عرض الصفحة (العرض الإجمالي 480 نقطة)
     num_cols = len(table_data[0]) if table_data else 1
-    # تقسيم العرض بالتساوي على عدد الأعمدة
-    col_widths = [page_width / num_cols] * num_cols
+    col_width = 480 / num_cols
+    col_widths = [col_width] * num_cols
 
-    table = Table(table_data, colWidths=col_widths, hAlign="CENTER")
-    table.setStyle(TableStyle([
+    table = Table(table_data, colWidths=col_widths, hAlign="CENTER", repeatRows=1)
+    
+    style_commands = [
         ("FONTNAME", (0, 0), (-1, -1), font),
         ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0ea5e9")),
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0ea5e9")), # اللون الأزرق الأساسي للترويسة
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
         ("ALIGN", (0, 0), (-1, -1), "CENTER"), # توسيط محتوى الخلايا
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("TOPPADDING", (0, 0), (-1, -1), 8),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
-    ]))
+        ("TOPPADDING", (0, 0), (-1, -1), 12),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
+    ]
+    
+    # صفوف بخلفية بيضاء للحفاظ على الشكل الكلاسيكي
+    for i in range(1, len(table_data)):
+        style_commands.append(("BACKGROUND", (0, i), (-1, i), colors.white))
+
+    table.setStyle(TableStyle(style_commands))
     doc.build([table])
     return buf.getvalue()
 
@@ -596,8 +602,19 @@ def handle_json_to_csv(p):
 
 def handle_text_to_csv(p):
     text = p.get("text", "")
-    buf = ("\ufeff" + text).encode("utf-8")
-    return file_response(buf, "text/csv", "converted.csv")
+    rows = parse_csv_text(text)
+    
+    # تحويل النص لجدول منسق بمسافات يظهر بشكل نظيف داخل الصندوق (بدون أكواد HTML)
+    formatted_text = ""
+    if rows:
+        col_widths = [max(len(str(item)) for item in col) for col in zip(*rows)]
+        for row in rows:
+            formatted_text += " | ".join(str(val).center(width) for val, width in zip(row, col_widths)) + "\n"
+            formatted_text += "-" * (sum(col_widths) + 3 * (len(row) - 1)) + "\n"
+    else:
+        formatted_text = text
+
+    return jsonify({"result": formatted_text.strip()})
 
 def handle_compress_image(p):
     file_bytes = get_file_bytes(p)
