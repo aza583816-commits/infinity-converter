@@ -207,6 +207,7 @@ def csv_to_pdf_bytes(text, is_arabic):
     rows = parse_csv_text(text)
     buf = io.BytesIO()
     
+    # استخدام العرض الأفقي (Landscape) عشان الجدول ياخذ راحته ويمتلئ بالعرض
     doc = SimpleDocTemplate(buf, pagesize=landscape(A4), topMargin=15 * mm, bottomMargin=15 * mm, leftMargin=15 * mm, rightMargin=15 * mm)
     font = pdf_font_name(is_arabic)
     
@@ -226,11 +227,13 @@ def csv_to_pdf_bytes(text, is_arabic):
     if not table_data:
         table_data = [[RLParagraph("", ParagraphStyle('Empty', fontName=font, fontSize=11))]]
 
+    # حساب عرض الأعمدة تلقائياً لتملأ الصفحة بالعرض الكامل
     page_width, _ = landscape(A4)
     available_width = page_width - (30 * mm)
     num_cols = len(table_data[0]) if table_data else 1
     col_widths = [available_width / num_cols] * num_cols
 
+    # مكتبة الألوان الذكية لترويسة الجدول
     color_palette = [
         "#0ea5e9", "#10b981", "#f59e0b", "#6366f1", 
         "#334155", "#ec4899", "#14b8a6", "#ef4444"
@@ -246,8 +249,8 @@ def csv_to_pdf_bytes(text, is_arabic):
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("TOPPADDING", (0, 0), (-1, -1), 8),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+        ("TOPPADDING", (0, 0), (-1, -1), 10),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
     ]
     
     for i in range(1, len(table_data)):
