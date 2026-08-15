@@ -215,19 +215,28 @@ def csv_to_pdf_bytes(text, is_arabic):
             processed_text = shape_arabic(cell_text) if is_arabic else cell_text
             style_cell = ParagraphStyle('TableCell', fontName=font, fontSize=10, leading=14, alignment=2 if is_arabic else 0)
             formatted_row.append(RLParagraph(escape_html(processed_text), style_cell))
+        
+        # لعكس الأعمدة إذا كانت اللغة عربية
+        if is_arabic:
+            formatted_row.reverse()
         table_data.append(formatted_row)
         
     if not table_data:
         table_data = [[RLParagraph("", ParagraphStyle('Empty', fontName=font, fontSize=10))]]
 
-    # ضبط الجدول ليكون بالحجم والتنسيق الكلاسيكي السابق بالكامل
-    table = Table(table_data, hAlign="CENTER")
+    # حساب العرض الكلي للصفحة (A4) ناقص الهوامش
+    page_width = A4[0] - (30 * mm) 
+    num_cols = len(table_data[0]) if table_data else 1
+    # تقسيم العرض بالتساوي على عدد الأعمدة
+    col_widths = [page_width / num_cols] * num_cols
+
+    table = Table(table_data, colWidths=col_widths, hAlign="CENTER")
     table.setStyle(TableStyle([
         ("FONTNAME", (0, 0), (-1, -1), font),
         ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
         ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0ea5e9")),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("ALIGN", (0, 0), (-1, -1), "RIGHT" if is_arabic else "LEFT"),
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"), # توسيط محتوى الخلايا
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
         ("TOPPADDING", (0, 0), (-1, -1), 8),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
@@ -587,20 +596,8 @@ def handle_json_to_csv(p):
 
 def handle_text_to_csv(p):
     text = p.get("text", "")
-    rows = parse_csv_text(text)
-    
-    # تحويل البيانات إلى جدول HTML احترافي ليظهر منسقاً في الموقع
-    html_table = '<table style="width:100%; border-collapse:collapse; text-align:center;">'
-    for i, row in enumerate(rows):
-        style = 'background-color:#0ea5e9; color:white; font-weight:bold;' if i == 0 else ('background-color:#f8fafc;' if i % 2 == 0 else 'background-color:white;')
-        html_table += f'<tr style="{style}">'
-        for cell in row:
-            html_table += f'<td style="padding:10px; border:1px solid #cbd5e1;">{escape_html(cell)}</td>'
-        html_table += '</tr>'
-    html_table += '</table>'
-    
-    # نرجع النتيجة كـ JSON يحتوي على تنسيق الجدول
-    return jsonify({"result": html_table})
+    buf = ("\ufeff" + text).encode("utf-8")
+    return file_response(buf, "text/csv", "converted.csv")
 
 def handle_compress_image(p):
     file_bytes = get_file_bytes(p)
