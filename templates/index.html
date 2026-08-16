@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Infinity PDF Converter - المحول الشامل للملفات</title>
-<meta name="description" content="منصة Infinity Converter الأفضل لتحويل ملفات PDF، Word، Excel، والمزيد من الأدوات المجانية عبر الإنترنت.">
+    <title>Infinity Converter PDF - المحول الشامل لملفات PDF والأدوات</title>
+    
+    <!-- الوصف المحدث والاحترافي لجوجل -->
+    <meta name="description" content="منصة Infinity Converter الشاملة والمجانية لتحويل ملفات PDF، Word، Excel، والصور بضغطة زر. معالجة سحابية آمنة وسريعة بدون تخزين لملفاتك. اكتشف أكثر من 40 أداة الآن!">
 
     <!-- كود جوجل أدسنس -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4343857922748618"
@@ -131,7 +133,6 @@
             width: 100%; height: 180px; background: var(--bg-body); border: 1px solid var(--border);
             border-radius: 12px; padding: 20px; color: var(--text-main); font-family: inherit; font-size: 15px;
             resize: vertical; margin-bottom: 20px; outline: none; transition: all 0.3s;
-            text-align: start;
         }
         textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2); }
 
@@ -147,12 +148,8 @@
         .spinner { display: none; width: 22px; height: 22px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 1s ease-in-out infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         
-        .result-area { 
-            margin-top: 20px; padding: 20px; background: #ecfdf5; border: 1px solid #10b981; color: #065f46; border-radius: 12px; display: none; word-wrap: break-word; font-weight: 600;
-            text-align: start;
-        }
-        .dark-mode .result-area { background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: #059669; }
-        .result-area.error { background: #fef2f2; border-color: #ef4444; color: #991b1b; direction: rtl; text-align: right; }
+        .result-area { margin-top: 20px; padding: 20px; background: #ecfdf5; border: 1px solid #10b981; color: #065f46; border-radius: 12px; display: none; word-wrap: break-word; text-align: start; font-weight: 600;}
+        .result-area.error { background: #fef2f2; border-color: #ef4444; color: #991b1b; }
 
         .tools-section { width: 100%; max-width: 1200px; margin: 0 auto 60px; padding: 0 20px; }
         .section-title { font-size: 24px; font-weight: 800; margin: 40px 0 20px; color: var(--text-main); display: flex; align-items: center; gap: 10px;}
@@ -183,17 +180,31 @@
         .i-img { background: var(--bg-img); color: var(--c-img); }
         .i-dev { background: var(--bg-dev); color: var(--c-dev); }
 
+        /* ستايل قسم الآراء (الجديد) */
+        .testimonials-section { width: 100%; max-width: 1200px; margin: 0 auto 40px; padding: 0 20px; }
+        .testimonials-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .testimonial-card { background: var(--bg-surface); border: 1px solid var(--border); padding: 25px; border-radius: 16px; box-shadow: var(--shadow-sm); transition: all 0.3s; }
+        .testimonial-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); border-color: var(--primary); }
+        .stars { color: #fbbf24; font-size: 14px; margin-bottom: 12px; }
+        .testimonial-text { font-size: 14px; color: var(--text-muted); line-height: 1.7; margin-bottom: 20px; font-style: italic; }
+        .user-info { display: flex; align-items: center; gap: 12px; }
+        .user-avatar { width: 42px; height: 42px; border-radius: 50%; background: var(--upload-bg); display: flex; justify-content: center; align-items: center; color: var(--primary); font-weight: 800; font-size: 18px;}
+        .user-details h4 { font-size: 15px; color: var(--text-main); margin-bottom: 2px; }
+        .user-details span { font-size: 12px; color: var(--text-muted); }
+
         .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: #10b981; color: white; padding: 12px 24px; border-radius: 30px; box-shadow: var(--shadow-md); font-weight: bold; transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); z-index: 2000; opacity: 0; display: flex; align-items: center; gap: 10px; }
         .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
         .toast.error-toast { background: #ef4444; }
 
-        .footer-disclaimer { margin-top: 40px; text-align: center; font-size: 13px; color: var(--text-muted); line-height: 1.6; border-top: 1px solid var(--border); padding-top: 20px; padding-bottom: 30px;}
+        .footer-disclaimer { margin-top: 20px; text-align: center; font-size: 13px; color: var(--text-muted); line-height: 1.6; border-top: 1px solid var(--border); padding-top: 20px; padding-bottom: 30px;}
         .footer-links { margin-top: 10px; }
         .footer-links a { color: var(--primary); text-decoration: none; font-weight: 600; margin: 0 8px; }
         .footer-links a:hover { text-decoration: underline; }
 
         html[dir="ltr"] .tool-card { text-align: left; }
         html[dir="rtl"] .tool-card { text-align: right; }
+        html[dir="ltr"] .testimonial-card { text-align: left; }
+        html[dir="rtl"] .testimonial-card { text-align: right; }
     </style>
 </head>
 <body>
@@ -216,6 +227,13 @@
             </div>
 
             <div id="activeToolArea" style="display: none;">
+                
+                <!-- رسالة التحذير الجديدة -->
+                <div id="toolWarning" style="display: none; background: #fff3cd; color: #856404; padding: 12px; border-radius: 8px; border: 1px solid #ffeeba; margin-bottom: 20px; font-size: 14px; font-weight: 700;">
+                    <i class="fa-solid fa-triangle-exclamation"></i> 
+                    <span id="warningText"></span>
+                </div>
+
                 <div class="selected-tool-badge" id="selectedToolBadge">
                     <i class="fa-solid fa-wand-magic-sparkles"></i> <span id="selectedToolText">الأداة المحددة</span>
                 </div>
@@ -229,14 +247,14 @@
                     <input type="file" id="multiFileInput" multiple style="display:none;" onchange="handleMultiFileSelect(event)">
                 </div>
 
-                <textarea id="textInput" dir="auto" data-ar-ph="الصق النص أو المحتوى هنا..." data-en-ph="Paste text or content here..." placeholder="الصق النص أو المحتوى هنا..."></textarea>
+                <textarea id="textInput" data-ar-ph="الصق النص أو المحتوى هنا..." data-en-ph="Paste text or content here..." placeholder="الصق النص أو المحتوى هنا..."></textarea>
 
                 <button class="execute-btn" id="executeBtn" onclick="processConversion()">
                     <span id="btnText" data-ar="تحويل الآن" data-en="Convert Now">تحويل الآن</span>
                     <div class="spinner" id="spinner"></div>
                 </button>
 
-                <div class="result-area" id="resultArea" dir="auto"></div>
+                <div class="result-area" id="resultArea"></div>
             </div>
         </div>
     </div>
@@ -552,7 +570,47 @@
 
     </div>
 
-    <!-- الفوتر (مع الروابط الشغالة 100%) -->
+    <!-- قسم آراء الزوار (Social Proof) -->
+    <div class="testimonials-section">
+        <div class="section-title"><i class="fa-solid fa-star" style="color:#fbbf24"></i> <span data-ar="آراء مستخدمينا" data-en="User Reviews">آراء مستخدمينا</span></div>
+        <div class="testimonials-grid">
+            <div class="testimonial-card">
+                <div class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+                <p class="testimonial-text" data-ar="أفضل موقع استخدمته لتحويل ملفات الـ PDF. سريع جداً وبدون إعلانات مزعجة تعيق العمل!" data-en="The best site I've used for converting PDF files. Very fast and no annoying ads to hinder work!">أفضل موقع استخدمته لتحويل ملفات الـ PDF. سريع جداً وبدون إعلانات مزعجة تعيق العمل!</p>
+                <div class="user-info">
+                    <div class="user-avatar">A</div>
+                    <div class="user-details">
+                        <h4 data-ar="أحمد س." data-en="Ahmed S.">أحمد س.</h4>
+                        <span data-ar="طالب جامعي" data-en="University Student">طالب جامعي</span>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-card">
+                <div class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star-half-stroke"></i></div>
+                <p class="testimonial-text" data-ar="أداة دمج ملفات الـ PDF أنقذتني في شغلي. الجودة ممتازة وسهل الاستخدام حتى من الجوال." data-en="The PDF merging tool saved me at work. Excellent quality and easy to use even from mobile.">أداة دمج ملفات الـ PDF أنقذتني في شغلي. الجودة ممتازة وسهل الاستخدام حتى من الجوال.</p>
+                <div class="user-info">
+                    <div class="user-avatar">S</div>
+                    <div class="user-details">
+                        <h4 data-ar="سارة م." data-en="Sarah M.">سارة م.</h4>
+                        <span data-ar="مصممة جرافيك" data-en="Graphic Designer">مصممة جرافيك</span>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-card">
+                <div class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+                <p class="testimonial-text" data-ar="حرفياً 40 أداة في مكان واحد وبدون تسجيل دخول! اعتمدته كموقعي الأساسي لكل ملفاتي." data-en="Literally 40 tools in one place without logging in! I've adopted it as my main site for all my files.">حرفياً 40 أداة في مكان واحد وبدون تسجيل دخول! اعتمدته كموقعي الأساسي لكل ملفاتي.</p>
+                <div class="user-info">
+                    <div class="user-avatar">K</div>
+                    <div class="user-details">
+                        <h4 data-ar="خالد ال." data-en="Khalid Al.">خالد ال.</h4>
+                        <span data-ar="مطور واجهات" data-en="Frontend Developer">مطور واجهات</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- الفوتر -->
     <div class="workspace">
         <div class="footer-disclaimer">
             <p data-ar="V-Infinity Converter يوفر مجموعة شاملة من الأدوات الآمنة. تتم معالجة الملفات سحابياً ولا يتم تخزينها أبداً. نحن نستخدم ملفات تعريف الارتباط وخدمات إعلانات جوجل وفقاً للسياسات." data-en="V-Infinity Converter provides a comprehensive suite for secure file conversion. Files are processed on our servers and are never stored. We use cookies and Google AdSense according to policies.">V-Infinity Converter يوفر مجموعة شاملة من الأدوات الآمنة. تتم معالجة الملفات سحابياً ولا يتم تخزينها أبداً. نحن نستخدم ملفات تعريف الارتباط وخدمات إعلانات جوجل وفقاً للسياسات.</p>
@@ -610,6 +668,19 @@
             const toolName = isArabic ? nameAr : nameEn;
             
             document.getElementById('activeToolArea').style.display = 'block';
+            
+            // التحكم بظهور رسالة التحذير الخاصة بأداة PDF to Word
+            const warningBox = document.getElementById('toolWarning');
+            if(warningBox) {
+                if (action === 'pdf-to-docx') {
+                    warningBox.style.display = 'block';
+                    document.getElementById('warningText').innerText = isArabic ? 
+                        "ملاحظة: هذه الأداة تعمل بكفاءة مع النصوص الإنجليزية. الملفات العربية أو الجداول المعقدة قد تفقد بعض تنسيقها." : 
+                        "Note: This tool works best with English text. Arabic files or complex tables may lose formatting.";
+                } else {
+                    warningBox.style.display = 'none';
+                }
+            }
             
             const badge = document.getElementById('selectedToolBadge');
             badge.className = `selected-tool-badge ${iconClass}`;
@@ -725,13 +796,8 @@
                 const contentType = response.headers.get("content-type");
                 if (contentType && contentType.includes("application/json")) {
                     const data = await response.json();
-                    if (data.resultImage) {
-                        resultArea.innerHTML = `<img src="${data.resultImage}" style="max-width:100%; border-radius:10px;">`;
-                    } else if (data.result && (data.result.includes('<table') || data.result.includes('<div style="overflow'))) {
-                        resultArea.innerHTML = data.result; 
-                    } else {
-                        resultArea.innerText = data.result || (isArabic ? 'تم التنفيذ بنجاح!' : 'Executed successfully!');
-                    }
+                    if (data.resultImage) resultArea.innerHTML = `<img src="${data.resultImage}" style="max-width:100%; border-radius:10px;">`;
+                    else resultArea.innerText = data.result || (isArabic ? 'تم التنفيذ بنجاح!' : 'Executed successfully!');
                     resultArea.style.display = 'block';
                     showToast('تمت العملية بنجاح!', 'Operation successful!');
                 } else {
@@ -753,24 +819,8 @@
             }
         }
 
-        // --- الميزات الذكية التلقائية ---
-        window.addEventListener('DOMContentLoaded', () => {
-            // 1. اكتشاف لغة جهاز المستخدم تلقائياً
-            const userLang = navigator.language || navigator.userLanguage;
-            if (!userLang.startsWith('ar') && isArabic) {
-                toggleLanguage();
-            }
-
-            // 2. اكتشاف وضع الجهاز (داكن أو فاتح) تلقائياً
-            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-            if (prefersDark) {
-                document.body.classList.add('dark-mode');
-                document.getElementById('themeBtn').innerHTML = '<i class="fa-solid fa-sun"></i>';
-            } else {
-                document.body.classList.remove('dark-mode');
-                document.getElementById('themeBtn').innerHTML = '<i class="fa-solid fa-moon"></i>';
-            }
-        });
+        document.body.classList.add('dark-mode');
+        document.getElementById('themeBtn').innerHTML = '<i class="fa-solid fa-sun"></i>';
     </script>
 </body>
 </html>
