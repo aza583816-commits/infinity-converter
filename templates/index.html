@@ -759,6 +759,14 @@
 
         document.body.classList.add('dark-mode');
         document.getElementById('themeBtn').innerHTML = '<i class="fa-solid fa-sun"></i>';
+                // كود اكتشاف لغة جهاز المستخدم تلقائياً
+        window.addEventListener('DOMContentLoaded', () => {
+            const userLang = navigator.language || navigator.userLanguage;
+            // إذا كانت لغة جهاز المستخدم ليست عربية، حول الموقع للإنجليزي تلقائياً
+            if (!userLang.startsWith('ar') && isArabic) {
+                toggleLanguage();
+            }
+        });
     </script>
 </body>
 </html>
