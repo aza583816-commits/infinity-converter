@@ -21,12 +21,15 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
 import pandas as pd
-from PIL import Image, ImageOps  # تمت إضافة ImageOps لضبط دوران الصور
+from PIL import Image, ImageOps, ImageFilter
 try:
     import pillow_heif
     pillow_heif.register_heif_opener()
 except Exception:
     pillow_heif = None
+
+# استيراد مكتبات التنسيق الفاخر للإكسل
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -93,11 +96,62 @@ def ratelimit_handler(e):
 ARABIC_FONT_NAME = "ArabicFont"
 _arabic_font_registered = False
 
+# ==================== دوال (الرادار) والمساعدات السحرية القصوى ====================
+
+def smart_decode(file_bytes):
+    """رادار النصوص: يفك تشفير الملفات العربية والإنجليزية بدون أي طلاسم"""
+    encodings_to_try = ['utf-8-sig', 'utf-8', 'windows-1256', 'cp1256', 'iso-8859-6']
+    for enc in encodings_to_try:
+        try:
+            return file_bytes.decode(enc)
+        except UnicodeDecodeError:
+            continue
+    return file_bytes.decode('utf-8', errors='ignore')
+
+def auto_fit_excel_columns(writer, sheet_name="Sheet1"):
+    """تنسيق إكسل الماسي: تلوين، توسيط، تجميد، وحدود احترافية"""
+    worksheet = writer.sheets[sheet_name]
+    
+    # تعريف الستايلات
+    header_fill = PatternFill(start_color="1E293B", end_color="1E293B", fill_type="solid") # أزرق ليلي فخم
+    header_font = Font(bold=True, color="FFFFFF")
+    alt_fill = PatternFill(start_color="F8FAFC", end_color="F8FAFC", fill_type="solid") # رمادي فاتح
+    thin_border = Border(left=Side(style='thin', color="CBD5E1"),
+                         right=Side(style='thin', color="CBD5E1"),
+                         top=Side(style='thin', color="CBD5E1"),
+                         bottom=Side(style='thin', color="CBD5E1"))
+    center_align = Alignment(horizontal="center", vertical="center", wrap_text=True)
+
+    # تطبيق الستايلات على الخلايا
+    for row_idx, row in enumerate(worksheet.iter_rows(), start=1):
+        for cell in row:
+            cell.border = thin_border
+            cell.alignment = center_align
+            if row_idx == 1:
+                cell.fill = header_fill
+                cell.font = header_font
+            elif row_idx % 2 == 0:
+                cell.fill = alt_fill
+
+    # توسيع الأعمدة
+    for col in worksheet.columns:
+        max_length = 0
+        column = col[0].column_letter
+        for cell in col:
+            try:
+                if cell.value and len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        adjusted_width = min(max_length + 3, 40) # أقصى عرض 40 عشان ما يخرب الشكل
+        worksheet.column_dimensions[column].width = adjusted_width
+        
+    worksheet.freeze_panes = "A2"  
+
 def ensure_arabic_font():
     global _arabic_font_registered
     if _arabic_font_registered:
         return ARABIC_FONT_NAME
-    
     font_path = "/tmp/Cairo-Regular.ttf"
     if not os.path.exists(font_path):
         try:
@@ -105,15 +159,10 @@ def ensure_arabic_font():
             urllib.request.urlretrieve(url, font_path)
         except Exception as e:
             app.logger.error(f"Failed to download font: {e}")
-            
     possible_paths = [
-        font_path,
-        "static/fonts/NotoNaskhArabic-Regular.ttf",
-        "static/Cairo-Regular.ttf",
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-        "/usr/share/fonts/truetype/freefont/FreeSans.ttf"
+        font_path, "static/fonts/NotoNaskhArabic-Regular.ttf", "static/Cairo-Regular.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", "/usr/share/fonts/truetype/freefont/FreeSans.ttf"
     ]
-    
     for path in possible_paths:
         if os.path.exists(path):
             try:
@@ -155,8 +204,7 @@ def bad_request(message):
 
 def get_file_bytes(payload, key="fileBase64"):
     b64 = payload.get(key)
-    if not b64:
-        return None
+    if not b64: return None
     return base64.b64decode(b64)
 
 def parse_csv_text(text):
@@ -199,7 +247,17 @@ def text_to_pdf_bytes(text, is_arabic, title=None):
         story.append(t_cell)
         story.append(Spacer(1, 4))
     doc.build(story)
-    return buf.getvalue()
+    
+    # ضغط الملف النهائي
+    reader = PdfReader(io.BytesIO(buf.getvalue()))
+    writer = PdfWriter()
+    for page in reader.pages:
+        page.compress_content_streams()
+        writer.add_page(page)
+    
+    final_buf = io.BytesIO()
+    writer.write(final_buf)
+    return final_buf.getvalue()
 
 def csv_to_pdf_bytes(text, is_arabic):
     rows = parse_csv_text(text)
@@ -215,9 +273,7 @@ def csv_to_pdf_bytes(text, is_arabic):
             processed_text = shape_arabic(cell_text) if is_arabic else cell_text
             style_cell = ParagraphStyle('TableCell', fontName=font, fontSize=11, leading=16, alignment=1)
             formatted_row.append(RLParagraph(escape_html(processed_text), style_cell))
-        
-        if is_arabic:
-            formatted_row.reverse()
+        if is_arabic: formatted_row.reverse()
         table_data.append(formatted_row)
         
     if not table_data:
@@ -233,7 +289,7 @@ def csv_to_pdf_bytes(text, is_arabic):
     style_commands = [
         ("FONTNAME", (0, 0), (-1, -1), font),
         ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0ea5e9")),
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e293b")), # لون أزرق ليلي للعنوان
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
@@ -241,16 +297,24 @@ def csv_to_pdf_bytes(text, is_arabic):
         ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
     ]
     
-    # منشطات: تلوين الأسطر بشكل احترافي (سطر أبيض وسطر رمادي فاتح)
     for i in range(1, len(table_data)):
         bg_color = colors.HexColor("#f8fafc") if i % 2 == 0 else colors.white
         style_commands.append(("BACKGROUND", (0, i), (-1, i), bg_color))
 
     table.setStyle(TableStyle(style_commands))
     doc.build([table])
-    return buf.getvalue()
+    
+    reader = PdfReader(io.BytesIO(buf.getvalue()))
+    writer = PdfWriter()
+    for page in reader.pages:
+        page.compress_content_streams()
+        writer.add_page(page)
+    
+    final_buf = io.BytesIO()
+    writer.write(final_buf)
+    return final_buf.getvalue()
 
-# ================= الأدوات المدعومة بالخصائص القصوى =================
+# ================= الأدوات القصوى (Maximum Features) =================
 
 def handle_word_to_pdf(p):
     file_bytes = get_file_bytes(p)
@@ -262,113 +326,105 @@ def handle_word_to_pdf(p):
                 tmp_docx_path = tmp_docx.name
             
             out_dir = tempfile.gettempdir()
-            # منشطات: تسريع LibreOffice ومنعه من التعليق
-            cmd = [
-                "libreoffice", "--headless", "--nologo", "--nofirststartwizard", "--norestore", 
-                "--convert-to", "pdf", tmp_docx_path, "--outdir", out_dir
-            ]
+            cmd = ["libreoffice", "--headless", "--nologo", "--nofirststartwizard", "--norestore", 
+                   "--convert-to", "pdf", tmp_docx_path, "--outdir", out_dir]
             subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             
             base_name = os.path.splitext(os.path.basename(tmp_docx_path))[0]
             pdf_path = os.path.join(out_dir, f"{base_name}.pdf")
             
-            with open(pdf_path, "rb") as f:
-                pdf_bytes = f.read()
+            reader = PdfReader(pdf_path)
+            writer = PdfWriter()
+            for page in reader.pages:
+                page.compress_content_streams()
+                writer.add_page(page)
+            
+            final_buf = io.BytesIO()
+            writer.write(final_buf)
             
             os.remove(tmp_docx_path)
-            if os.path.exists(pdf_path):
-                os.remove(pdf_path)
+            if os.path.exists(pdf_path): os.remove(pdf_path)
                 
-            return file_response(pdf_bytes, "application/pdf", "converted_document.pdf")
+            return file_response(final_buf.getvalue(), "application/pdf", "Converted_Document.pdf")
         except Exception as e:
             app.logger.error(f"LibreOffice Error: {e}")
-            if 'tmp_docx_path' in locals() and os.path.exists(tmp_docx_path):
-                os.remove(tmp_docx_path)
+            if 'tmp_docx_path' in locals() and os.path.exists(tmp_docx_path): os.remove(tmp_docx_path)
             return bad_request("فشل التحويل. قد يكون السيرفر تحت ضغط، يرجى المحاولة لاحقاً." if is_arabic else "Conversion failed due to server load.")
             
     text = p.get("text", "")
     pdf_bytes = text_to_pdf_bytes(text, is_arabic)
-    return file_response(pdf_bytes, "application/pdf", "converted_document.pdf")
+    return file_response(pdf_bytes, "application/pdf", "Converted_Document.pdf")
 
 def handle_text_to_pdf(p):
     text = p.get("text", "")
     is_arabic = p["is_arabic"]
-    if not text.strip():
-        return bad_request("يرجى إدخال نص للتحويل" if is_arabic else "Please enter text to convert")
+    if not text.strip(): return bad_request("يرجى إدخال نص" if is_arabic else "Please enter text")
     pdf_bytes = text_to_pdf_bytes(text, is_arabic)
-    return file_response(pdf_bytes, "application/pdf", "converted_text.pdf")
+    return file_response(pdf_bytes, "application/pdf", "Converted_Text.pdf")
 
 def handle_pdf_to_pdf_enhanced(p):
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
-    if not file_bytes:
-        return bad_request("يرجى رفع ملف PDF" if is_arabic else "Please upload a PDF file")
+    if not file_bytes: return bad_request("يرجى رفع ملف PDF" if is_arabic else "Please upload a PDF")
     try:
         reader = PdfReader(io.BytesIO(file_bytes))
         extracted_text = "\n".join((page.extract_text() or "") for page in reader.pages)
         pdf_bytes = text_to_pdf_bytes(extracted_text, is_arabic)
-        return file_response(pdf_bytes, "application/pdf", "reformatted_document.pdf")
+        return file_response(pdf_bytes, "application/pdf", "Reformatted_Document.pdf")
     except Exception:
-        return bad_request("تعذر قراءة ملف الـ PDF" if is_arabic else "Could not read the PDF file")
+        return bad_request("تعذر قراءة الملف" if is_arabic else "Could not read PDF")
 
 def handle_csv_to_pdf(p):
-    text = p.get("text", "")
     file_bytes = get_file_bytes(p)
-    if file_bytes:
-        try:
-            text = file_bytes.decode("utf-8")
-        except Exception:
-            text = file_bytes.decode("windows-1256", errors="ignore")
+    text = smart_decode(file_bytes) if file_bytes else p.get("text", "")
     pdf_bytes = csv_to_pdf_bytes(text, p["is_arabic"])
-    return file_response(pdf_bytes, "application/pdf", "converted_table.pdf")
+    return file_response(pdf_bytes, "application/pdf", "Converted_Table.pdf")
 
 def handle_excel_to_pdf(p):
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
-    if not file_bytes:
-        return bad_request("يرجى رفع ملف Excel" if is_arabic else "Please upload an Excel file")
+    if not file_bytes: return bad_request("يرجى رفع ملف Excel" if is_arabic else "Please upload an Excel file")
     try:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp_xlsx:
             tmp_xlsx.write(file_bytes)
             tmp_xlsx_path = tmp_xlsx.name
         
         out_dir = tempfile.gettempdir()
-        # منشطات: تسريع LibreOffice
-        cmd = [
-            "libreoffice", "--headless", "--nologo", "--nofirststartwizard", "--norestore",
-            "--convert-to", "pdf", tmp_xlsx_path, "--outdir", out_dir
-        ]
+        cmd = ["libreoffice", "--headless", "--nologo", "--nofirststartwizard", "--norestore",
+               "--convert-to", "pdf", tmp_xlsx_path, "--outdir", out_dir]
         subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         
         base_name = os.path.splitext(os.path.basename(tmp_xlsx_path))[0]
         pdf_path = os.path.join(out_dir, f"{base_name}.pdf")
         
-        with open(pdf_path, "rb") as f:
-            pdf_bytes = f.read()
+        reader = PdfReader(pdf_path)
+        writer = PdfWriter()
+        for page in reader.pages:
+            page.compress_content_streams()
+            writer.add_page(page)
+        
+        final_buf = io.BytesIO()
+        writer.write(final_buf)
         
         os.remove(tmp_xlsx_path)
-        if os.path.exists(pdf_path):
-            os.remove(pdf_path)
+        if os.path.exists(pdf_path): os.remove(pdf_path)
             
-        return file_response(pdf_bytes, "application/pdf", "converted_excel.pdf")
+        return file_response(final_buf.getvalue(), "application/pdf", "Converted_Excel.pdf")
     except Exception as e:
         app.logger.error(f"LibreOffice Excel Error: {e}")
-        if 'tmp_xlsx_path' in locals() and os.path.exists(tmp_xlsx_path):
-            os.remove(tmp_xlsx_path)
-        return bad_request("تعذر تحويل ملف الـ Excel. قد يكون الملف تالفاً أو السيرفر تحت ضغط." if is_arabic else "Could not convert the Excel file")
+        if 'tmp_xlsx_path' in locals() and os.path.exists(tmp_xlsx_path): os.remove(tmp_xlsx_path)
+        return bad_request("تعذر التحويل" if is_arabic else "Could not convert")
 
 def handle_pdf_to_text(p):
     file_bytes = get_file_bytes(p)
-    if not file_bytes:
-        return bad_request("No file provided")
+    if not file_bytes: return bad_request("No file provided")
     reader = PdfReader(io.BytesIO(file_bytes))
     text = "\n".join((page.extract_text() or "") for page in reader.pages)
     return jsonify({"result": text.strip()})
 
 def handle_pdf_to_csv(p):
     file_bytes = get_file_bytes(p)
-    if not file_bytes:
-        return bad_request("No file provided")
+    if not file_bytes: return bad_request("No file provided")
     try:
         reader = PdfReader(io.BytesIO(file_bytes))
         buf = io.StringIO()
@@ -376,22 +432,17 @@ def handle_pdf_to_csv(p):
         for page in reader.pages:
             text = page.extract_text() or ""
             for line in text.split("\n"):
-                if line.strip():
-                    writer.writerow(line.split())
+                if line.strip(): writer.writerow(line.split())
         output_bytes = ("\ufeff" + buf.getvalue()).encode("utf-8")
-        return file_response(output_bytes, "text/csv", "converted.csv")
+        return file_response(output_bytes, "text/csv", "Converted_Data.csv")
     except Exception:
-         return bad_request("تعذر استخراج الجداول من ملف الـ PDF" if p["is_arabic"] else "Could not extract tables from PDF")
+         return bad_request("تعذر استخراج الجداول" if p["is_arabic"] else "Could not extract tables")
 
-# أداة PDF to Word بالمنشطات الشاملة اللي طلبناها
 def handle_pdf_to_docx(p):
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
-    if not file_bytes:
-        return bad_request("يرجى رفع ملف PDF" if is_arabic else "Please upload a PDF file")
-    
-    if Converter is None:
-        return bad_request("مكتبة pdf2docx غير مثبتة" if is_arabic else "pdf2docx is not installed")
+    if not file_bytes: return bad_request("يرجى رفع ملف PDF" if is_arabic else "Please upload a PDF file")
+    if Converter is None: return bad_request("مكتبة pdf2docx غير مثبتة" if is_arabic else "pdf2docx is not installed")
         
     try:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_pdf:
@@ -404,11 +455,8 @@ def handle_pdf_to_docx(p):
         
         cv = Converter(tmp_pdf_path)
         cv.convert(docx_path, start=0, end=None, kwargs={
-            "connected_border_tolerance": 2.5,  
-            "line_overlap_threshold": 0.8,      
-            "line_margin": 0.1,                 
-            "word_margin": 0.1,                 
-            "maintain_layout": True             
+            "connected_border_tolerance": 2.5, "line_overlap_threshold": 0.8,      
+            "line_margin": 0.1, "word_margin": 0.1, "maintain_layout": True             
         })
         cv.close()
         
@@ -432,20 +480,18 @@ def handle_pdf_to_docx(p):
                                 pPr.insert(0, OxmlElement('w:bidi'))
                 doc.save(docx_path)
             except Exception as e:
-                app.logger.warning(f"Post-processing Arabic DOCX failed: {e}")
+                app.logger.warning(f"Post-processing DOCX failed: {e}")
 
         with open(docx_path, "rb") as f:
             docx_bytes = f.read()
         
         os.remove(tmp_pdf_path)
-        if os.path.exists(docx_path):
-            os.remove(docx_path)
+        if os.path.exists(docx_path): os.remove(docx_path)
             
-        return file_response(docx_bytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "V-Infinity_Converted.docx")
+        return file_response(docx_bytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "Converted_Document.docx")
     except Exception as e:
         app.logger.error(f"PDF to DOCX Error: {e}")
-        if 'tmp_pdf_path' in locals() and os.path.exists(tmp_pdf_path):
-            os.remove(tmp_pdf_path)
+        if 'tmp_pdf_path' in locals() and os.path.exists(tmp_pdf_path): os.remove(tmp_pdf_path)
         return bad_request("فشل التحويل. قد يكون الملف معقداً جداً." if is_arabic else "Conversion failed.")
 
 def handle_pdf_to_doc(p):
@@ -453,32 +499,30 @@ def handle_pdf_to_doc(p):
 
 def handle_doc_to_docx(p):
     buf = build_docx_from_text(p.get("text", ""), p["is_arabic"])
-    return file_response(buf, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "converted.docx")
+    return file_response(buf, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "Converted_Document.docx")
 
 def handle_pdf_to_excel(p):
     file_bytes = get_file_bytes(p)
-    if not file_bytes:
-        return bad_request("No file provided")
+    if not file_bytes: return bad_request("No file provided")
     reader = PdfReader(io.BytesIO(file_bytes))
     buf = io.BytesIO()
     with pd.ExcelWriter(buf, engine="openpyxl") as writer:
         for idx, page in enumerate(reader.pages):
             text = page.extract_text() or ""
             rows = [line.split() for line in text.split("\n") if line.strip()]
-            if not rows:
-                rows = [[""]]
+            if not rows: rows = [[""]]
             max_len = max(len(r) for r in rows)
             rows = [r + [""] * (max_len - len(r)) for r in rows]
             df = pd.DataFrame(rows)
-            df.to_excel(writer, sheet_name=f"Page {idx + 1}"[:31], index=False, header=False)
-    return file_response(buf.getvalue(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "converted.xlsx")
+            sheet_name = f"Page {idx + 1}"[:31]
+            df.to_excel(writer, sheet_name=sheet_name, index=False, header=False)
+            auto_fit_excel_columns(writer, sheet_name) 
+    return file_response(buf.getvalue(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Converted_Excel.xlsx")
 
 def handle_pdf_to_ppt(p):
-    if Presentation is None:
-        return bad_request("python-pptx غير مثبّت على السيرفر")
+    if Presentation is None: return bad_request("python-pptx غير مثبّت على السيرفر")
     file_bytes = get_file_bytes(p)
-    if not file_bytes:
-        return bad_request("No file provided")
+    if not file_bytes: return bad_request("No file provided")
     reader = PdfReader(io.BytesIO(file_bytes))
     prs = Presentation()
     blank_layout = prs.slide_layouts[6]
@@ -494,45 +538,43 @@ def handle_pdf_to_ppt(p):
         body_box.text_frame.word_wrap = True
     buf = io.BytesIO()
     prs.save(buf)
-    return file_response(buf.getvalue(), "application/vnd.openxmlformats-officedocument.presentationml.presentation", "converted.pptx")
+    return file_response(buf.getvalue(), "application/vnd.openxmlformats-officedocument.presentationml.presentation", "Converted_Presentation.pptx")
 
 def handle_merge_pdf(p):
     files = p.get("filesBase64") or ([p.get("fileBase64")] if p.get("fileBase64") else [])
-    if len(files) < 2:
-        msg = "يرجى رفع ملفين PDF على الأقل للدمج" if p["is_arabic"] else "Please upload at least 2 PDF files to merge"
-        return bad_request(msg)
+    if len(files) < 2: return bad_request("يرجى رفع ملفين PDF على الأقل للدمج" if p["is_arabic"] else "Please upload at least 2 PDFs")
     writer = PdfWriter()
-    for b64 in files:
+    page_count = 0
+    # إضافة الفهرس الذكي (TOC Bookmarks) للملفات المدموجة
+    for i, b64 in enumerate(files):
         reader = PdfReader(io.BytesIO(base64.b64decode(b64)))
+        writer.add_outline_item(f"ملف {i+1}" if p["is_arabic"] else f"Document {i+1}", page_count)
         for page in reader.pages:
+            page.compress_content_streams() 
             writer.add_page(page)
+            page_count += 1
     buf = io.BytesIO()
     writer.write(buf)
-    return file_response(buf.getvalue(), "application/pdf", "merged.pdf")
+    return file_response(buf.getvalue(), "application/pdf", "Merged_Document.pdf")
 
 def handle_split_pdf(p):
     file_bytes = get_file_bytes(p)
-    if not file_bytes:
-        return bad_request("No file provided")
+    if not file_bytes: return bad_request("No file provided")
     reader = PdfReader(io.BytesIO(file_bytes))
     zip_buf = io.BytesIO()
     with zipfile.ZipFile(zip_buf, "w") as zf:
         for i, page in enumerate(reader.pages):
             writer = PdfWriter()
+            page.compress_content_streams()
             writer.add_page(page)
             page_buf = io.BytesIO()
             writer.write(page_buf)
-            zf.writestr(f"page_{i + 1}.pdf", page_buf.getvalue())
-    return file_response(zip_buf.getvalue(), "application/zip", "split_pages.zip")
+            zf.writestr(f"Page_{i + 1}.pdf", page_buf.getvalue())
+    return file_response(zip_buf.getvalue(), "application/zip", "Split_Pages.zip")
 
 def handle_csv_to_word(p):
-    text = p.get("text", "")
     file_bytes = get_file_bytes(p)
-    if file_bytes:
-        try:
-            text = file_bytes.decode("utf-8")
-        except Exception:
-            text = file_bytes.decode("windows-1256", errors="ignore")
+    text = smart_decode(file_bytes) if file_bytes else p.get("text", "")
     rows = parse_csv_text(text)
     is_arabic = p["is_arabic"]
     doc = Document()
@@ -540,7 +582,6 @@ def handle_csv_to_word(p):
     if rows:
         table = doc.add_table(rows=len(rows), cols=len(rows[0]))
         table.style = "Table Grid"
-        
         if is_arabic:
             tblPr = table._element.xpath('w:tblPr')
             if tblPr:
@@ -559,12 +600,11 @@ def handle_csv_to_word(p):
                         
     buf = io.BytesIO()
     doc.save(buf)
-    return file_response(buf.getvalue(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "converted.docx")
+    return file_response(buf.getvalue(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "Converted_Document.docx")
 
 def handle_word_to_csv(p):
     file_bytes = get_file_bytes(p)
-    if not file_bytes:
-        return handle_text_to_csv(p)
+    if not file_bytes: return handle_text_to_csv(p)
     try:
         docx_doc = Document(io.BytesIO(file_bytes))
         buf = io.StringIO()
@@ -573,45 +613,45 @@ def handle_word_to_csv(p):
             for row in table.rows:
                 writer.writerow([cell.text.strip() for cell in row.cells])
         output_bytes = ("\ufeff" + buf.getvalue()).encode("utf-8")
-        return file_response(output_bytes, "text/csv", "converted.csv")
+        return file_response(output_bytes, "text/csv", "Converted_Data.csv")
     except Exception:
         return bad_request("تعذر استخراج الجداول من ملف الوورد" if p["is_arabic"] else "Could not extract tables from Word")
 
 def handle_text_to_excel(p):
-    rows = [line.split("\t") if "\t" in line else line.split(",") for line in (p.get("text", "")).split("\n")]
+    file_bytes = get_file_bytes(p)
+    text = smart_decode(file_bytes) if file_bytes else p.get("text", "")
+    rows = [line.split("\t") if "\t" in line else line.split(",") for line in text.split("\n")]
     df = pd.DataFrame(rows)
     buf = io.BytesIO()
     with pd.ExcelWriter(buf, engine="openpyxl") as writer:
-        df.to_excel(writer, sheet_name="Sheet1", index=False, header=False)
-    return file_response(buf.getvalue(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "converted.xlsx")
+        df.to_excel(writer, sheet_name="Data", index=False, header=False)
+        auto_fit_excel_columns(writer, "Data")
+    return file_response(buf.getvalue(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Converted_Excel.xlsx")
 
 def handle_json_to_excel(p):
-    raw = p.get("json") or p.get("text", "")
+    file_bytes = get_file_bytes(p)
+    raw = smart_decode(file_bytes) if file_bytes else (p.get("json") or p.get("text", ""))
     data = json.loads(raw)
     df = pd.DataFrame(data if isinstance(data, list) else [data])
     buf = io.BytesIO()
     with pd.ExcelWriter(buf, engine="openpyxl") as writer:
-        df.to_excel(writer, sheet_name="Sheet1", index=False)
-    return file_response(buf.getvalue(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "converted.xlsx")
+        df.to_excel(writer, sheet_name="Data", index=False)
+        auto_fit_excel_columns(writer, "Data")
+    return file_response(buf.getvalue(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Converted_Excel.xlsx")
 
 def handle_excel_to_json(p):
     file_bytes = get_file_bytes(p)
-    if not file_bytes:
-        return bad_request("No file provided")
+    if not file_bytes: return bad_request("No file provided")
     df = pd.read_excel(io.BytesIO(file_bytes))
+    # تنظيف ذكي للبيانات: مسح الفراغات المخفية حول النصوص
+    df = df.map(lambda x: x.strip() if isinstance(x, str) else x).fillna("")
     return jsonify({"result": df.to_json(orient="records", force_ascii=False, indent=2)})
 
 def handle_csv_to_json(p):
-    text = p.get("text", "")
     file_bytes = get_file_bytes(p)
-    if file_bytes:
-        try:
-            text = file_bytes.decode("utf-8")
-        except Exception:
-            text = file_bytes.decode("windows-1256", errors="ignore")
+    text = smart_decode(file_bytes) if file_bytes else p.get("text", "")
     rows = parse_csv_text(text)
-    if not rows:
-        return jsonify({"result": "[]"})
+    if not rows: return jsonify({"result": "[]"})
     headers = [h.strip() for h in rows[0]]
     data = []
     for r in rows[1:]:
@@ -620,13 +660,8 @@ def handle_csv_to_json(p):
     return jsonify({"result": json.dumps(data, ensure_ascii=False, indent=2)})
 
 def handle_json_to_csv(p):
-    text = p.get("text", "")
     file_bytes = get_file_bytes(p)
-    if file_bytes:
-        try:
-            text = file_bytes.decode("utf-8", errors="ignore")
-        except Exception:
-            text = ""
+    text = smart_decode(file_bytes) if file_bytes else p.get("text", "")
     try:
         data = json.loads(text)
         if isinstance(data, dict): data = [data]
@@ -636,81 +671,81 @@ def handle_json_to_csv(p):
         writer.writeheader()
         writer.writerows(data)
         output_bytes = ("\ufeff" + buf.getvalue()).encode("utf-8")
-        return file_response(output_bytes, "text/csv", "converted.csv")
+        return file_response(output_bytes, "text/csv", "Converted_Data.csv")
     except Exception:
         return bad_request("تنسيق JSON غير صحيح" if p["is_arabic"] else "Invalid JSON format")
 
 def handle_text_to_csv(p):
-    text = p.get("text", "")
+    file_bytes = get_file_bytes(p)
+    text = smart_decode(file_bytes) if file_bytes else p.get("text", "")
     buf = ("\ufeff" + text).encode("utf-8")
-    return file_response(buf, "text/csv", "converted.csv")
+    return file_response(buf, "text/csv", "Converted_Data.csv")
 
-
+# ================= أدوات الصور والتعديلات الخارقة =================
 def handle_compress_image(p):
     file_bytes = get_file_bytes(p)
-    if not file_bytes:
-        return bad_request("No image provided")
+    if not file_bytes: return bad_request("No image provided")
     img = Image.open(io.BytesIO(file_bytes)).convert("RGB")
-    img = ImageOps.exif_transpose(img) # منشطات: تعديل دوران الصورة التلقائي
+    img = ImageOps.exif_transpose(img) 
+    
+    # الفلتر السينمائي لزيادة الحدة قبل الضغط (عشان ما تصير الصورة مغبشة)
+    img = img.filter(ImageFilter.UnsharpMask(radius=1.5, percent=100, threshold=3))
     img.thumbnail((1600, 1600))
+    
     buf = io.BytesIO()
-    # منشطات: التحميل التدريجي للملف لسرعة الاستجابة
     img.save(buf, format="JPEG", quality=70, optimize=True, progressive=True) 
-    return file_response(buf.getvalue(), "image/jpeg", "compressed.jpg")
+    return file_response(buf.getvalue(), "image/jpeg", "Compressed_Image.jpg")
 
 def handle_image_to_png(p):
     file_bytes = get_file_bytes(p)
-    if not file_bytes:
-        return bad_request("No image provided")
+    if not file_bytes: return bad_request("No image provided")
     img = Image.open(io.BytesIO(file_bytes))
-    img = ImageOps.exif_transpose(img) # تعديل الدوران
+    img = ImageOps.exif_transpose(img)
     buf = io.BytesIO()
     img.save(buf, format="PNG", optimize=True)
-    return file_response(buf.getvalue(), "image/png", "converted.png")
+    return file_response(buf.getvalue(), "image/png", "Converted_Image.png")
 
 def handle_image_to_jpg(p):
     file_bytes = get_file_bytes(p)
-    if not file_bytes:
-        return bad_request("No image provided")
+    if not file_bytes: return bad_request("No image provided")
     img = Image.open(io.BytesIO(file_bytes))
-    img = ImageOps.exif_transpose(img) # تعديل الدوران
+    img = ImageOps.exif_transpose(img)
     background = Image.new("RGB", img.size, (255, 255, 255))
-    if img.mode in ("RGBA", "LA"):
-        background.paste(img, mask=img.split()[-1])
-    else:
-        background.paste(img.convert("RGB"))
+    if img.mode in ("RGBA", "LA"): background.paste(img, mask=img.split()[-1])
+    else: background.paste(img.convert("RGB"))
     buf = io.BytesIO()
     background.save(buf, format="JPEG", quality=92, optimize=True, progressive=True)
-    return file_response(buf.getvalue(), "image/jpeg", "converted.jpg")
+    return file_response(buf.getvalue(), "image/jpeg", "Converted_Image.jpg")
 
 def handle_image_to_base64(p):
     file_bytes = get_file_bytes(p)
-    if not file_bytes:
-        return bad_request("No image provided")
-    b64 = base64.b64encode(file_bytes).decode("ascii")
+    if not file_bytes: return bad_request("No image provided")
+    img = Image.open(io.BytesIO(file_bytes))
+    img = ImageOps.exif_transpose(img) 
+    buf = io.BytesIO()
+    img.save(buf, format=img.format or "PNG")
+    b64 = base64.b64encode(buf.getvalue()).decode("ascii")
     mime = p.get("mimeType") or "image/png"
     return jsonify({"result": f"data:{mime};base64,{b64}"})
 
 def handle_image_to_pdf(p):
     file_bytes = get_file_bytes(p)
-    if not file_bytes:
-        return bad_request("No image provided")
+    if not file_bytes: return bad_request("No image provided")
     img = Image.open(io.BytesIO(file_bytes)).convert("RGB")
-    img = ImageOps.exif_transpose(img) # تعديل الدوران عشان ما يطلع المقلوب في الـ PDF
+    img = ImageOps.exif_transpose(img) 
     buf = io.BytesIO()
-    img.save(buf, format="PDF")
-    return file_response(buf.getvalue(), "application/pdf", "converted.pdf")
+    # حفظ بجودة وضوح عالية (100 DPI)
+    img.save(buf, format="PDF", resolution=100)
+    return file_response(buf.getvalue(), "application/pdf", "Converted_Image.pdf")
 
 def handle_heic_to_jpg(p):
     file_bytes = get_file_bytes(p)
-    if not file_bytes:
-        return bad_request("No image provided")
-    if pillow_heif is None:
-        return bad_request("pillow-heif غير مثبّت على السيرفر")
+    if not file_bytes: return bad_request("No image provided")
+    if pillow_heif is None: return bad_request("pillow-heif غير مثبّت على السيرفر")
     img = Image.open(io.BytesIO(file_bytes)).convert("RGB")
     buf = io.BytesIO()
     img.save(buf, format="JPEG", quality=92, optimize=True, progressive=True)
-    return file_response(buf.getvalue(), "image/jpeg", "converted.jpg")
+    return file_response(buf.getvalue(), "image/jpeg", "Converted_Image.jpg")
 
 def handle_base64_tool(p):
     text = p.get("text", "")
@@ -733,8 +768,11 @@ def handle_url_encoder(p):
     return jsonify({"result": result})
 
 def handle_json_beautifier(p):
-    data = json.loads(p.get("text", ""))
-    return jsonify({"result": json.dumps(data, ensure_ascii=False, indent=4)})
+    try:
+        data = json.loads(p.get("text", ""))
+        return jsonify({"result": json.dumps(data, ensure_ascii=False, indent=4, sort_keys=True)})
+    except Exception:
+         return bad_request("تنسيق JSON غير صحيح" if p["is_arabic"] else "Invalid JSON")
 
 def handle_css_js_minifier(p):
     text = p.get("text", "")
@@ -749,12 +787,16 @@ def handle_html_entity(p):
 
 def handle_hash_generator(p):
     text = p.get("text", "").encode("utf-8")
-    result = f"MD5: {hashlib.md5(text).hexdigest()}\nSHA-1: {hashlib.sha1(text).hexdigest()}\nSHA-256: {hashlib.sha256(text).hexdigest()}\nSHA-512: {hashlib.sha512(text).hexdigest()}"
+    # إضافة خوارزمية BLAKE2b العسكرية الفائقة الحماية
+    result = f"MD5: {hashlib.md5(text).hexdigest()}\nSHA-1: {hashlib.sha1(text).hexdigest()}\nSHA-256: {hashlib.sha256(text).hexdigest()}\nSHA-512: {hashlib.sha512(text).hexdigest()}\nBLAKE2b: {hashlib.blake2b(text).hexdigest()}"
     return jsonify({"result": result})
 
 def handle_timestamp_converter(p):
-    dt = datetime.fromtimestamp(int(p.get("text", "").strip()), tz=timezone.utc)
-    return jsonify({"result": dt.strftime("%a, %d %b %Y %H:%M:%S GMT")})
+    try:
+        dt = datetime.fromtimestamp(int(p.get("text", "").strip()), tz=timezone.utc)
+        return jsonify({"result": dt.strftime("%a, %d %b %Y %H:%M:%S GMT")})
+    except:
+        return bad_request("رقم Timestamp غير صحيح" if p["is_arabic"] else "Invalid Timestamp")
 
 def handle_clean_text(p):
     result = re.sub(r"<[^>]*>?", "", p.get("text", "")).replace("&nbsp;", " ").strip()
@@ -771,13 +813,14 @@ def handle_text_to_qr(p):
     return jsonify({"resultImage": f"data:image/png;base64,{b64}"})
 
 def handle_password_generator(p):
-    chars = string.ascii_letters + string.digits + "!@#$%^&*()_+-="
+    # مولد كلمات السر الصافي (إزالة الحروف المتشابهة لمنع الخطأ في القراءة)
+    chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%^&*_+="
     return jsonify({"result": "".join(secrets.choice(chars) for _ in range(20))})
 
 def handle_password_strength(p):
     text = p.get("text", "")
     strong = len(text) >= 8 and re.search(r"[A-Z]", text) and re.search(r"[0-9]", text) and re.search(r"[^A-Za-z0-9]", text)
-    result = ("🔒 قوية" if p["is_arabic"] else "🔒 STRONG") if strong else ("⚠️ ضعيفة" if p["is_arabic"] else "⚠️ WEAK")
+    result = ("🔒 قوية جداً" if p["is_arabic"] else "🔒 VERY STRONG") if strong else ("⚠️ ضعيفة" if p["is_arabic"] else "⚠️ WEAK")
     return jsonify({"result": result})
 
 def handle_text_counter(p):
@@ -789,8 +832,7 @@ def handle_text_counter(p):
 
 def handle_percentage_calc(p):
     nums = re.findall(r"\d+(?:\.\d+)?", p.get("text", ""))
-    if len(nums) < 2:
-        return jsonify({"result": "يرجى إدخال رقمين" if p["is_arabic"] else "Please enter two numbers"})
+    if len(nums) < 2: return jsonify({"result": "يرجى إدخال رقمين" if p["is_arabic"] else "Please enter two numbers"})
     a, b = float(nums[0]), float(nums[1])
     return jsonify({"result": f"{nums[0]}% of {nums[1]} = {(a / 100) * b}"})
 
@@ -806,12 +848,12 @@ def handle_unit_converter(p):
 
 def handle_markdown_to_html(p):
     text = p.get("text", "")
-    # منشطات: دعم الأكواد البرمجية والجداول وقوائم HTML بكل احترافية
     try:
-        html_result = md_lib.markdown(text, extensions=['extra', 'tables', 'fenced_code', 'nl2br'])
+        html_result = md_lib.markdown(text, extensions=[
+            'extra', 'tables', 'fenced_code', 'nl2br', 'toc', 'def_list', 'abbr', 'attr_list', 'admonition', 'sane_lists'
+        ])
         return jsonify({"result": html_result.strip()})
     except Exception:
-        # نظام طوارئ لو فشل التحويل الاحترافي
         return jsonify({"result": md_lib.markdown(text)})
 
 def handle_text_diff(p):
@@ -820,8 +862,7 @@ def handle_text_diff(p):
     diff = unified_diff(lines[:mid], lines[mid:], lineterm="")
     out_lines = []
     for line in diff:
-        if line.startswith(("+++", "---", "@@")):
-            continue
+        if line.startswith(("+++", "---", "@@")): continue
         out_lines.append(("+ " if line.startswith("+") else ("- " if line.startswith("-") else "  ")) + line[1:])
     return jsonify({"result": "\n".join(out_lines)})
 
