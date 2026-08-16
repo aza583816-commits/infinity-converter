@@ -21,7 +21,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
 import pandas as pd
-from PIL import Image
+from PIL import Image, ImageOps  # تمت إضافة ImageOps لضبط دوران الصور
 try:
     import pillow_heif
     pillow_heif.register_heif_opener()
@@ -241,14 +241,16 @@ def csv_to_pdf_bytes(text, is_arabic):
         ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
     ]
     
+    # منشطات: تلوين الأسطر بشكل احترافي (سطر أبيض وسطر رمادي فاتح)
     for i in range(1, len(table_data)):
-        style_commands.append(("BACKGROUND", (0, i), (-1, i), colors.white))
+        bg_color = colors.HexColor("#f8fafc") if i % 2 == 0 else colors.white
+        style_commands.append(("BACKGROUND", (0, i), (-1, i), bg_color))
 
     table.setStyle(TableStyle(style_commands))
     doc.build([table])
     return buf.getvalue()
 
-# ================= الأدوات =================
+# ================= الأدوات المدعومة بالخصائص القصوى =================
 
 def handle_word_to_pdf(p):
     file_bytes = get_file_bytes(p)
@@ -260,7 +262,11 @@ def handle_word_to_pdf(p):
                 tmp_docx_path = tmp_docx.name
             
             out_dir = tempfile.gettempdir()
-            cmd = ["libreoffice", "--headless", "--convert-to", "pdf", tmp_docx_path, "--outdir", out_dir]
+            # منشطات: تسريع LibreOffice ومنعه من التعليق
+            cmd = [
+                "libreoffice", "--headless", "--nologo", "--nofirststartwizard", "--norestore", 
+                "--convert-to", "pdf", tmp_docx_path, "--outdir", out_dir
+            ]
             subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             
             base_name = os.path.splitext(os.path.basename(tmp_docx_path))[0]
@@ -327,7 +333,11 @@ def handle_excel_to_pdf(p):
             tmp_xlsx_path = tmp_xlsx.name
         
         out_dir = tempfile.gettempdir()
-        cmd = ["libreoffice", "--headless", "--convert-to", "pdf", tmp_xlsx_path, "--outdir", out_dir]
+        # منشطات: تسريع LibreOffice
+        cmd = [
+            "libreoffice", "--headless", "--nologo", "--nofirststartwizard", "--norestore",
+            "--convert-to", "pdf", tmp_xlsx_path, "--outdir", out_dir
+        ]
         subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         
         base_name = os.path.splitext(os.path.basename(tmp_xlsx_path))[0]
@@ -373,7 +383,7 @@ def handle_pdf_to_csv(p):
     except Exception:
          return bad_request("تعذر استخراج الجداول من ملف الـ PDF" if p["is_arabic"] else "Could not extract tables from PDF")
 
-# كود تحويل PDF إلى Word القديم (اللي يستخدم مكتبة pdf2docx)
+# أداة PDF to Word بالمنشطات الشاملة اللي طلبناها
 def handle_pdf_to_docx(p):
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
@@ -393,9 +403,37 @@ def handle_pdf_to_docx(p):
         docx_path = os.path.join(out_dir, f"{base_name}.docx")
         
         cv = Converter(tmp_pdf_path)
-        cv.convert(docx_path, start=0, end=None)
+        cv.convert(docx_path, start=0, end=None, kwargs={
+            "connected_border_tolerance": 2.5,  
+            "line_overlap_threshold": 0.8,      
+            "line_margin": 0.1,                 
+            "word_margin": 0.1,                 
+            "maintain_layout": True             
+        })
         cv.close()
         
+        if is_arabic:
+            try:
+                doc = Document(docx_path)
+                for paragraph in doc.paragraphs:
+                    paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+                    pPr = paragraph._element.get_or_add_pPr()
+                    pPr.insert(0, OxmlElement('w:bidi'))
+                for table in doc.tables:
+                    tblPr = table._element.xpath('w:tblPr')
+                    if tblPr:
+                        bidiVisual = OxmlElement('w:bidiVisual')
+                        tblPr[0].append(bidiVisual)
+                    for row in table.rows:
+                        for cell in row.cells:
+                            for par in cell.paragraphs:
+                                par.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+                                pPr = par._p.get_or_add_pPr()
+                                pPr.insert(0, OxmlElement('w:bidi'))
+                doc.save(docx_path)
+            except Exception as e:
+                app.logger.warning(f"Post-processing Arabic DOCX failed: {e}")
+
         with open(docx_path, "rb") as f:
             docx_bytes = f.read()
         
@@ -613,9 +651,11 @@ def handle_compress_image(p):
     if not file_bytes:
         return bad_request("No image provided")
     img = Image.open(io.BytesIO(file_bytes)).convert("RGB")
+    img = ImageOps.exif_transpose(img) # منشطات: تعديل دوران الصورة التلقائي
     img.thumbnail((1600, 1600))
     buf = io.BytesIO()
-    img.save(buf, format="JPEG", quality=70, optimize=True)
+    # منشطات: التحميل التدريجي للملف لسرعة الاستجابة
+    img.save(buf, format="JPEG", quality=70, optimize=True, progressive=True) 
     return file_response(buf.getvalue(), "image/jpeg", "compressed.jpg")
 
 def handle_image_to_png(p):
@@ -623,6 +663,7 @@ def handle_image_to_png(p):
     if not file_bytes:
         return bad_request("No image provided")
     img = Image.open(io.BytesIO(file_bytes))
+    img = ImageOps.exif_transpose(img) # تعديل الدوران
     buf = io.BytesIO()
     img.save(buf, format="PNG", optimize=True)
     return file_response(buf.getvalue(), "image/png", "converted.png")
@@ -632,13 +673,14 @@ def handle_image_to_jpg(p):
     if not file_bytes:
         return bad_request("No image provided")
     img = Image.open(io.BytesIO(file_bytes))
+    img = ImageOps.exif_transpose(img) # تعديل الدوران
     background = Image.new("RGB", img.size, (255, 255, 255))
     if img.mode in ("RGBA", "LA"):
         background.paste(img, mask=img.split()[-1])
     else:
         background.paste(img.convert("RGB"))
     buf = io.BytesIO()
-    background.save(buf, format="JPEG", quality=92)
+    background.save(buf, format="JPEG", quality=92, optimize=True, progressive=True)
     return file_response(buf.getvalue(), "image/jpeg", "converted.jpg")
 
 def handle_image_to_base64(p):
@@ -654,6 +696,7 @@ def handle_image_to_pdf(p):
     if not file_bytes:
         return bad_request("No image provided")
     img = Image.open(io.BytesIO(file_bytes)).convert("RGB")
+    img = ImageOps.exif_transpose(img) # تعديل الدوران عشان ما يطلع المقلوب في الـ PDF
     buf = io.BytesIO()
     img.save(buf, format="PDF")
     return file_response(buf.getvalue(), "application/pdf", "converted.pdf")
@@ -666,7 +709,7 @@ def handle_heic_to_jpg(p):
         return bad_request("pillow-heif غير مثبّت على السيرفر")
     img = Image.open(io.BytesIO(file_bytes)).convert("RGB")
     buf = io.BytesIO()
-    img.save(buf, format="JPEG", quality=92)
+    img.save(buf, format="JPEG", quality=92, optimize=True, progressive=True)
     return file_response(buf.getvalue(), "image/jpeg", "converted.jpg")
 
 def handle_base64_tool(p):
@@ -763,18 +806,12 @@ def handle_unit_converter(p):
 
 def handle_markdown_to_html(p):
     text = p.get("text", "")
-    if "<" in text and ">" in text and ("<h" in text or "<b" in text or "<p" in text):
-        text = re.sub(r'<h1>(.*?)</h1>', r'# \1\n', text, flags=re.IGNORECASE)
-        text = re.sub(r'<h2>(.*?)</h2>', r'## \1\n', text, flags=re.IGNORECASE)
-        text = re.sub(r'<h3>(.*?)</h3>', r'### \1\n', text, flags=re.IGNORECASE)
-        text = re.sub(r'<strong>(.*?)</strong>|<b>(.*?)</b>', r'**\1\2**', text, flags=re.IGNORECASE)
-        text = re.sub(r'<em>(.*?)</em>|<i>(.*?)</i>', r'*\1\2*', text, flags=re.IGNORECASE)
-        text = re.sub(r'<a href="(.*?)">(.*?)</a>', r'[\2](\1)', text, flags=re.IGNORECASE)
-        text = re.sub(r'<br\s*/?>', r'\n', text, flags=re.IGNORECASE)
-        text = re.sub(r'<p>(.*?)</p>', r'\1\n\n', text, flags=re.IGNORECASE|re.DOTALL)
-        text = re.sub(r'<[^>]+>', '', text) 
-        return jsonify({"result": text.strip()})
-    else:
+    # منشطات: دعم الأكواد البرمجية والجداول وقوائم HTML بكل احترافية
+    try:
+        html_result = md_lib.markdown(text, extensions=['extra', 'tables', 'fenced_code', 'nl2br'])
+        return jsonify({"result": html_result.strip()})
+    except Exception:
+        # نظام طوارئ لو فشل التحويل الاحترافي
         return jsonify({"result": md_lib.markdown(text)})
 
 def handle_text_diff(p):
