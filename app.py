@@ -223,7 +223,6 @@ def csv_to_pdf_bytes(text, is_arabic):
     if not table_data:
         table_data = [[RLParagraph("", ParagraphStyle('Empty', fontName=font, fontSize=11))]]
 
-    # تمديد الجدول وتوسيطه ليكون عريضاً وجميلاً في مستند الـ PDF
     page_width = A4[0] - (30 * mm)
     num_cols = len(table_data[0]) if table_data else 1
     col_width = page_width / num_cols
@@ -374,24 +373,42 @@ def handle_pdf_to_csv(p):
     except Exception:
          return bad_request("تعذر استخراج الجداول من ملف الـ PDF" if p["is_arabic"] else "Could not extract tables from PDF")
 
-        elif action == 'pdf-to-docx':
-            # الطريقة الجديدة والاحترافية باستخدام LibreOffice المدمج في الدوكر
-            out_filename = f"converted_{uuid.uuid4().hex}.docx"
+def handle_pdf_to_docx(p):
+    file_bytes = get_file_bytes(p)
+    is_arabic = p["is_arabic"]
+    if not file_bytes:
+        return bad_request("يرجى رفع ملف PDF" if is_arabic else "Please upload a PDF file")
+    
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_pdf:
+            tmp_pdf.write(file_bytes)
+            tmp_pdf_path = tmp_pdf.name
+        
+        out_dir = tempfile.gettempdir()
+        
+        cmd = [
+            "libreoffice", "--headless", "--infilter=writer_pdf_import",
+            "--convert-to", "docx",
+            tmp_pdf_path, "--outdir", out_dir
+        ]
+        subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        
+        base_name = os.path.splitext(os.path.basename(tmp_pdf_path))[0]
+        docx_path = os.path.join(out_dir, f"{base_name}.docx")
+        
+        with open(docx_path, "rb") as f:
+            docx_bytes = f.read()
+        
+        os.remove(tmp_pdf_path)
+        if os.path.exists(docx_path):
+            os.remove(docx_path)
             
-            # أمر تشغيل ليبر أوفيس للتحويل مع الحفاظ على التنسيق
-            subprocess.run([
-                'libreoffice', '--headless', '--infilter=writer_pdf_import',
-                '--convert-to', 'docx',
-                '--outdir', app.config['UPLOAD_FOLDER'],
-                temp_filepath
-            ], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-            # تحديد مسار الملف الجديد اللي تم إنشاؤه
-            base_name = os.path.splitext(os.path.basename(temp_filepath))[0]
-            libre_out_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{base_name}.docx")
-
-            return send_file(libre_out_path, as_attachment=True, download_name="V-Infinity_Converted.docx")
-
+        return file_response(docx_bytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "V-Infinity_Converted.docx")
+    except Exception as e:
+        app.logger.error(f"LibreOffice PDF-to-DOCX Error: {e}")
+        if 'tmp_pdf_path' in locals() and os.path.exists(tmp_pdf_path):
+            os.remove(tmp_pdf_path)
+        return bad_request("فشل التحويل. قد يكون الملف معقداً جداً أو السيرفر تحت ضغط." if is_arabic else "Conversion failed.")
 
 def handle_pdf_to_doc(p):
     return handle_pdf_to_docx(p)
