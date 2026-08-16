@@ -127,18 +127,24 @@ def dynamic_convert_limit():
 
 @app.after_request
 def set_secure_headers(response):
+    # رؤوس أساسية آمنة على كل الصفحات، لا تؤثر على تحميل CSS/خطوط/سكربتات خارجية
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     response.headers['X-XSS-Protection'] = '1; mode=block'
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     response.headers['X-Permitted-Cross-Domain-Policies'] = 'none'
-    response.headers['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()'
-    response.headers['Content-Security-Policy'] = (
-        "default-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'"
-    )
+
     if request.path == "/convert":
+        # سياسة صارمة (CSP) على مسار الـ API فقط، لأنه لا يعرض أي صفحة HTML
+        # ولا يحتاج تحميل خطوط/CSS/سكربتات خارجية أصلاً
+        response.headers['Content-Security-Policy'] = (
+            "default-src 'none'; frame-ancestors 'self'"
+        )
         response.headers['Cache-Control'] = 'no-store'
+    # الصفحات الأخرى (الرئيسية، الخصوصية، إلخ) لا تُقيَّد بـ CSP هنا حتى لا تنكسر
+    # التنسيقات/الخطوط/إعلانات جوجل الخارجية. إن رغبت بإضافة CSP للصفحات العامة
+    # لاحقاً، حدد نطاقات الموارد الخارجية المستخدمة فعلياً (CDN، Google Fonts، Ads) أولاً.
     return response
 
 
