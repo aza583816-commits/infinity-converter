@@ -4,11 +4,9 @@
 <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- تم تعديل اسم الموقع هنا بناءً على طلبك -->
     <title>Infinity PDF Converter - المحول الشامل للملفات</title>
 <meta name="description" content="منصة Infinity Converter الأفضل لتحويل ملفات PDF، Word، Excel، والمزيد من الأدوات المجانية عبر الإنترنت.">
 
-    
     <!-- كود جوجل أدسنس -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4343857922748618"
      crossorigin="anonymous"></script>
@@ -133,7 +131,7 @@
             width: 100%; height: 180px; background: var(--bg-body); border: 1px solid var(--border);
             border-radius: 12px; padding: 20px; color: var(--text-main); font-family: inherit; font-size: 15px;
             resize: vertical; margin-bottom: 20px; outline: none; transition: all 0.3s;
-            text-align: start; /* يعتمد على لغة النص المدخل تلقائياً */
+            text-align: start;
         }
         textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2); }
 
@@ -151,7 +149,7 @@
         
         .result-area { 
             margin-top: 20px; padding: 20px; background: #ecfdf5; border: 1px solid #10b981; color: #065f46; border-radius: 12px; display: none; word-wrap: break-word; font-weight: 600;
-            text-align: start; /* يعتمد على لغة النص المخرج تلقائياً */
+            text-align: start;
         }
         .dark-mode .result-area { background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: #059669; }
         .result-area.error { background: #fef2f2; border-color: #ef4444; color: #991b1b; direction: rtl; text-align: right; }
@@ -231,7 +229,6 @@
                     <input type="file" id="multiFileInput" multiple style="display:none;" onchange="handleMultiFileSelect(event)">
                 </div>
 
-                <!-- إضافة dir="auto" هنا ليتعرف على لغة النص تلقائياً -->
                 <textarea id="textInput" dir="auto" data-ar-ph="الصق النص أو المحتوى هنا..." data-en-ph="Paste text or content here..." placeholder="الصق النص أو المحتوى هنا..."></textarea>
 
                 <button class="execute-btn" id="executeBtn" onclick="processConversion()">
@@ -239,7 +236,6 @@
                     <div class="spinner" id="spinner"></div>
                 </button>
 
-                <!-- إضافة dir="auto" هنا أيضاً لنتائج التحويل -->
                 <div class="result-area" id="resultArea" dir="auto"></div>
             </div>
         </div>
@@ -732,7 +728,7 @@
                     if (data.resultImage) {
                         resultArea.innerHTML = `<img src="${data.resultImage}" style="max-width:100%; border-radius:10px;">`;
                     } else if (data.result && (data.result.includes('<table') || data.result.includes('<div style="overflow'))) {
-                        resultArea.innerHTML = data.result; // يعرض الكود كجدول حقيقي
+                        resultArea.innerHTML = data.result; 
                     } else {
                         resultArea.innerText = data.result || (isArabic ? 'تم التنفيذ بنجاح!' : 'Executed successfully!');
                     }
@@ -757,14 +753,22 @@
             }
         }
 
-        document.body.classList.add('dark-mode');
-        document.getElementById('themeBtn').innerHTML = '<i class="fa-solid fa-sun"></i>';
-                // كود اكتشاف لغة جهاز المستخدم تلقائياً
+        // --- الميزات الذكية التلقائية ---
         window.addEventListener('DOMContentLoaded', () => {
+            // 1. اكتشاف لغة جهاز المستخدم تلقائياً
             const userLang = navigator.language || navigator.userLanguage;
-            // إذا كانت لغة جهاز المستخدم ليست عربية، حول الموقع للإنجليزي تلقائياً
             if (!userLang.startsWith('ar') && isArabic) {
                 toggleLanguage();
+            }
+
+            // 2. اكتشاف وضع الجهاز (داكن أو فاتح) تلقائياً
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (prefersDark) {
+                document.body.classList.add('dark-mode');
+                document.getElementById('themeBtn').innerHTML = '<i class="fa-solid fa-sun"></i>';
+            } else {
+                document.body.classList.remove('dark-mode');
+                document.getElementById('themeBtn').innerHTML = '<i class="fa-solid fa-moon"></i>';
             }
         });
     </script>
