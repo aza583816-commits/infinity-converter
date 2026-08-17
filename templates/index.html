@@ -795,8 +795,23 @@
             }
         }
 
-        document.body.classList.add('dark-mode');
-        document.getElementById('themeBtn').innerHTML = '<i class="fa-solid fa-sun"></i>';
+        // --- 🚀 ميزة الاستشعار التلقائي لجهاز الزائر (اللغة والمظهر) ---
+        
+        // 1. التعرف التلقائي على مظهر الجهاز (داكن / فاتح)
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+            document.body.classList.remove('dark-mode');
+            document.getElementById('themeBtn').innerHTML = '<i class="fa-solid fa-moon"></i>';
+        } else {
+            document.body.classList.add('dark-mode');
+            document.getElementById('themeBtn').innerHTML = '<i class="fa-solid fa-sun"></i>';
+        }
+
+        // 2. التعرف التلقائي على لغة المتصفح/الجهاز
+        const userLang = navigator.language || navigator.userLanguage;
+        // إذا كانت لغة جهازه ليست عربية، حوّل الموقع للإنجليزي فوراً
+        if (!userLang.startsWith('ar')) {
+            toggleLanguage();
+        }
     </script>
 </body>
 </html>
