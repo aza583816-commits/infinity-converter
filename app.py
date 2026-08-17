@@ -197,8 +197,18 @@ for action, nameAr, nameEn, type_, iconClass, iconName in TOOLS_DEF:
         "seo_title": f"أداة {nameAr} مجاناً أونلاين | V-Infinity",
         "seo_desc": f"أفضل أداة سحابية لتنفيذ {nameAr} بضغطة زر. معالجة سريعة وآمنة 100% ومجانية بالكامل بدون تسجيل.",
         "faqs": [
-            {"q": f"هل أداة {nameAr} مجانية بالكامل؟", "a": "نعم، جميع أدوات V-Infinity مجانية ولا تتطلب أي تسجيل دخول أو اشتراك."},
-            {"q": "هل يتم حفظ ملفاتي وبياناتي بعد المعالجة؟", "a": "لا، يتم مسح جميع البيانات والملفات تلقائياً وفوراً من السيرفر لحماية خصوصيتك."}
+            {
+                "q_ar": f"هل أداة {nameAr} مجانية بالكامل؟",
+                "q_en": f"Is the {nameEn} tool completely free?",
+                "a_ar": "نعم، جميع أدوات V-Infinity مجانية ولا تتطلب أي تسجيل دخول أو اشتراك.",
+                "a_en": "Yes, all V-Infinity tools are completely free and do not require any login or subscription."
+            },
+            {
+                "q_ar": "هل يتم حفظ ملفاتي وبياناتي بعد المعالجة؟",
+                "q_en": "Are my files and data saved after processing?",
+                "a_ar": "لا، يتم مسح جميع البيانات والملفات تلقائياً وفوراً من السيرفر لحماية خصوصيتك.",
+                "a_en": "No, all data and files are automatically and immediately deleted from the server to protect your privacy."
+            }
         ]
     }
 
