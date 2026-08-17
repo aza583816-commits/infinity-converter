@@ -180,18 +180,6 @@
         .i-img { background: var(--bg-img); color: var(--c-img); }
         .i-dev { background: var(--bg-dev); color: var(--c-dev); }
 
-        /* ستايل قسم الآراء (الجديد) */
-        .testimonials-section { width: 100%; max-width: 1200px; margin: 0 auto 40px; padding: 0 20px; }
-        .testimonials-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        .testimonial-card { background: var(--bg-surface); border: 1px solid var(--border); padding: 25px; border-radius: 16px; box-shadow: var(--shadow-sm); transition: all 0.3s; }
-        .testimonial-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); border-color: var(--primary); }
-        .stars { color: #fbbf24; font-size: 14px; margin-bottom: 12px; }
-        .testimonial-text { font-size: 14px; color: var(--text-muted); line-height: 1.7; margin-bottom: 20px; font-style: italic; }
-        .user-info { display: flex; align-items: center; gap: 12px; }
-        .user-avatar { width: 42px; height: 42px; border-radius: 50%; background: var(--upload-bg); display: flex; justify-content: center; align-items: center; color: var(--primary); font-weight: 800; font-size: 18px;}
-        .user-details h4 { font-size: 15px; color: var(--text-main); margin-bottom: 2px; }
-        .user-details span { font-size: 12px; color: var(--text-muted); }
-
         .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: #10b981; color: white; padding: 12px 24px; border-radius: 30px; box-shadow: var(--shadow-md); font-weight: bold; transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); z-index: 2000; opacity: 0; display: flex; align-items: center; gap: 10px; }
         .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
         .toast.error-toast { background: #ef4444; }
@@ -203,8 +191,6 @@
 
         html[dir="ltr"] .tool-card { text-align: left; }
         html[dir="rtl"] .tool-card { text-align: right; }
-        html[dir="ltr"] .testimonial-card { text-align: left; }
-        html[dir="rtl"] .testimonial-card { text-align: right; }
     </style>
 </head>
 <body>
@@ -568,46 +554,6 @@
             </div>
         </div>
 
-    </div>
-
-    <!-- قسم آراء الزوار (Social Proof) -->
-    <div class="testimonials-section">
-        <div class="section-title"><i class="fa-solid fa-star" style="color:#fbbf24"></i> <span data-ar="آراء مستخدمينا" data-en="User Reviews">آراء مستخدمينا</span></div>
-        <div class="testimonials-grid">
-            <div class="testimonial-card">
-                <div class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
-                <p class="testimonial-text" data-ar="أفضل موقع استخدمته لتحويل ملفات الـ PDF. سريع جداً وبدون إعلانات مزعجة تعيق العمل!" data-en="The best site I've used for converting PDF files. Very fast and no annoying ads to hinder work!">أفضل موقع استخدمته لتحويل ملفات الـ PDF. سريع جداً وبدون إعلانات مزعجة تعيق العمل!</p>
-                <div class="user-info">
-                    <div class="user-avatar">A</div>
-                    <div class="user-details">
-                        <h4 data-ar="أحمد س." data-en="Ahmed S.">أحمد س.</h4>
-                        <span data-ar="طالب جامعي" data-en="University Student">طالب جامعي</span>
-                    </div>
-                </div>
-            </div>
-            <div class="testimonial-card">
-                <div class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star-half-stroke"></i></div>
-                <p class="testimonial-text" data-ar="أداة دمج ملفات الـ PDF أنقذتني في شغلي. الجودة ممتازة وسهل الاستخدام حتى من الجوال." data-en="The PDF merging tool saved me at work. Excellent quality and easy to use even from mobile.">أداة دمج ملفات الـ PDF أنقذتني في شغلي. الجودة ممتازة وسهل الاستخدام حتى من الجوال.</p>
-                <div class="user-info">
-                    <div class="user-avatar">S</div>
-                    <div class="user-details">
-                        <h4 data-ar="سارة م." data-en="Sarah M.">سارة م.</h4>
-                        <span data-ar="مصممة جرافيك" data-en="Graphic Designer">مصممة جرافيك</span>
-                    </div>
-                </div>
-            </div>
-            <div class="testimonial-card">
-                <div class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
-                <p class="testimonial-text" data-ar="حرفياً 40 أداة في مكان واحد وبدون تسجيل دخول! اعتمدته كموقعي الأساسي لكل ملفاتي." data-en="Literally 40 tools in one place without logging in! I've adopted it as my main site for all my files.">حرفياً 40 أداة في مكان واحد وبدون تسجيل دخول! اعتمدته كموقعي الأساسي لكل ملفاتي.</p>
-                <div class="user-info">
-                    <div class="user-avatar">K</div>
-                    <div class="user-details">
-                        <h4 data-ar="خالد ال." data-en="Khalid Al.">خالد ال.</h4>
-                        <span data-ar="مطور واجهات" data-en="Frontend Developer">مطور واجهات</span>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- الفوتر -->
