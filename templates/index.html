@@ -4,14 +4,13 @@
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Infinity Converter PDF - المحول الشامل لملفات PDF والأدوات</title>
     
-    <!-- الوصف المحدث والاحترافي لجوجل -->
-    <meta name="description" content="منصة Infinity Converter الشاملة والمجانية لتحويل ملفات PDF، Word، Excel، والصور بضغطة زر. معالجة سحابية آمنة وسريعة بدون تخزين لملفاتك. اكتشف أكثر من 40 أداة الآن!">
+    <!-- 🚀 العناوين المتغيرة لـ SEO الذكي -->
+    <title>{% if tool_data %}{{ tool_data.seo_title }}{% else %}Infinity Converter PDF - المحول الشامل لملفات PDF والأدوات{% endif %}</title>
+    <meta name="description" content="{% if tool_data %}{{ tool_data.seo_desc }}{% else %}منصة Infinity Converter الشاملة والمجانية لتحويل ملفات PDF، Word، Excel، والصور بضغطة زر. معالجة سحابية آمنة وسريعة بدون تخزين لملفاتك. اكتشف أكثر من 40 أداة الآن!{% endif %}">
 
     <!-- كود جوجل أدسنس -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4343857922748618"
-     crossorigin="anonymous"></script>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4343857922748618" crossorigin="anonymous"></script>
 
     <!-- الخطوط -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -84,7 +83,7 @@
             box-shadow: var(--shadow-sm);
         }
 
-        .logo { font-size: 22px; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 8px; direction: ltr; white-space: nowrap; }
+        .logo { font-size: 22px; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 8px; direction: ltr; white-space: nowrap; text-decoration: none; }
         .logo i { color: var(--primary); font-size: 26px; }
 
         .controls { display: flex; gap: 12px; }
@@ -161,7 +160,7 @@
         }
 
         .tool-card {
-            background: var(--bg-surface); border: 1px solid var(--border);
+            background: var(--bg-surface); border: 1px solid var(--border); text-decoration: none; color: inherit;
             padding: 20px; border-radius: 16px; cursor: pointer; transition: all 0.2s ease;
             display: flex; align-items: flex-start; gap: 16px;
         }
@@ -196,9 +195,9 @@
 <body>
 
     <header>
-        <div class="logo" style="display:flex; align-items:center; gap:8px; direction: ltr; white-space: nowrap;">
+        <a href="/" class="logo">
             <i class="fa-solid fa-infinity"></i> <span data-ar="V-Infinity" data-en="V-Infinity">V-Infinity</span>
-        </div>
+        </a>
         <div class="controls">
             <button onclick="toggleLanguage()" id="langBtn">🇺🇸 English</button>
             <button onclick="toggleTheme()" id="themeBtn"><i class="fa-solid fa-sun"></i></button>
@@ -208,13 +207,12 @@
     <div class="workspace" id="workspace">
         <div class="workspace-card">
             <div class="workspace-header">
-                <h1 data-ar="مرحباً بك في المحول الشامل" data-en="Welcome to Infinity Converter">مرحباً بك في المحول الشامل</h1>
-                <p data-ar="اختر إحدى الأدوات من الأسفل للبدء في المعالجة." data-en="Select a tool from below to start processing.">اختر إحدى الأدوات من الأسفل للبدء في المعالجة.</p>
+                <h1 id="mainTitle" data-ar="مرحباً بك في المحول الشامل" data-en="Welcome to Infinity Converter">مرحباً بك في المحول الشامل</h1>
+                <p id="mainDesc" data-ar="اختر إحدى الأدوات من الأسفل للبدء في المعالجة." data-en="Select a tool from below to start processing.">اختر إحدى الأدوات من الأسفل للبدء في المعالجة.</p>
             </div>
 
             <div id="activeToolArea" style="display: none;">
                 
-                <!-- رسالة التحذير الجديدة -->
                 <div id="toolWarning" style="display: none; background: #fff3cd; color: #856404; padding: 12px; border-radius: 8px; border: 1px solid #ffeeba; margin-bottom: 20px; font-size: 14px; font-weight: 700;">
                     <i class="fa-solid fa-triangle-exclamation"></i> 
                     <span id="warningText"></span>
@@ -245,313 +243,328 @@
         </div>
     </div>
 
+    <!-- 🚀 قسم الأسئلة الشائعة SEO الذكي -->
+    {% if tool_data and tool_data.faqs %}
+    <div class="workspace" style="margin-top: -20px;">
+        <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 20px; padding: 30px; box-shadow: var(--shadow-sm);">
+            <h2 style="font-size: 22px; font-weight: 800; margin-bottom: 20px; color: var(--text-main);">الأسئلة الشائعة حول أداة {{ tool_data.nameAr }}</h2>
+            {% for faq in tool_data.faqs %}
+            <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--border);">
+                <h3 style="font-size: 16px; color: var(--primary); margin-bottom: 8px;"><i class="fa-solid fa-circle-question"></i> {{ faq.q }}</h3>
+                <p style="font-size: 14px; color: var(--text-muted); line-height: 1.6;">{{ faq.a }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
     <div class="tools-section">
         
         <div class="section-title"><i class="fa-solid fa-file-pdf" style="color:var(--c-pdf)"></i> <span data-ar="أدوات PDF والمستندات" data-en="PDF & Document Tools">أدوات PDF والمستندات</span></div>
         <div class="tools-grid">
-            <div class="tool-card" onclick="selectTool('pdf-to-docx', 'PDF إلى Word', 'PDF to Word', 'file', 'i-word', 'fa-file-word')">
+            <a href="/pdf-to-docx" class="tool-card" onclick="handleToolClick(event, 'pdf-to-docx', 'PDF إلى Word', 'PDF to Word', 'file', 'i-word', 'fa-file-word')">
                 <div class="tool-icon i-word"><i class="fa-solid fa-file-word"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="PDF إلى Word" data-en="PDF to Word">PDF إلى Word</h3>
                     <p data-ar="تحويل ملفات PDF إلى مستندات وورد قابلة للتعديل." data-en="Convert PDF files to editable Word documents.">تحويل ملفات PDF إلى مستندات وورد قابلة للتعديل.</p>
                 </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('word-to-pdf', 'Word إلى PDF', 'Word to PDF', 'file', 'i-pdf', 'fa-file-pdf')">
+            </a>
+            <a href="/word-to-pdf" class="tool-card" onclick="handleToolClick(event, 'word-to-pdf', 'Word إلى PDF', 'Word to PDF', 'file', 'i-pdf', 'fa-file-pdf')">
                 <div class="tool-icon i-pdf"><i class="fa-solid fa-file-pdf"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="Word إلى PDF" data-en="Word to PDF">Word إلى PDF</h3>
                     <p data-ar="تحويل مستندات وورد إلى PDF بكل سهولة." data-en="Convert Word documents to PDF easily.">تحويل مستندات وورد إلى PDF بكل سهولة.</p>
                 </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('pdf-to-ppt', 'PDF إلى PowerPoint', 'PDF to PPT', 'file', 'i-ppt', 'fa-file-powerpoint')">
+            </a>
+            <a href="/pdf-to-ppt" class="tool-card" onclick="handleToolClick(event, 'pdf-to-ppt', 'PDF إلى PowerPoint', 'PDF to PPT', 'file', 'i-ppt', 'fa-file-powerpoint')">
                 <div class="tool-icon i-ppt"><i class="fa-solid fa-file-powerpoint"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="PDF إلى PowerPoint" data-en="PDF to PPT">PDF إلى PowerPoint</h3>
                     <p data-ar="تحويل ملفات PDF إلى شرائح عرض باوربوينت." data-en="Convert PDF files to PowerPoint slides.">تحويل ملفات PDF إلى شرائح عرض باوربوينت.</p>
                 </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('pdf-to-excel', 'PDF إلى Excel', 'PDF to Excel', 'file', 'i-excel', 'fa-file-excel')">
+            </a>
+            <a href="/pdf-to-excel" class="tool-card" onclick="handleToolClick(event, 'pdf-to-excel', 'PDF إلى Excel', 'PDF to Excel', 'file', 'i-excel', 'fa-file-excel')">
                 <div class="tool-icon i-excel"><i class="fa-solid fa-file-excel"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="PDF إلى Excel" data-en="PDF to Excel">PDF إلى Excel</h3>
                     <p data-ar="استخراج الجداول من PDF إلى إكسل." data-en="Extract tables from PDF to Excel.">استخراج الجداول من PDF إلى إكسل.</p>
                 </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('merge-pdf', 'دمج ملفات PDF', 'Merge PDF Files', 'multiFile', 'i-dev', 'fa-object-group')">
+            </a>
+            <a href="/merge-pdf" class="tool-card" onclick="handleToolClick(event, 'merge-pdf', 'دمج ملفات PDF', 'Merge PDF Files', 'multiFile', 'i-dev', 'fa-object-group')">
                 <div class="tool-icon i-dev"><i class="fa-solid fa-object-group"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="دمج ملفات PDF" data-en="Merge PDF Files">دمج ملفات PDF</h3>
                     <p data-ar="جمع عدة ملفات PDF في ملف واحد منظم." data-en="Combine multiple PDFs into one organized file.">جمع عدة ملفات PDF في ملف واحد منظم.</p>
                 </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('split-pdf', 'تقسيم PDF', 'Split PDF', 'file', 'i-pdf', 'fa-file-dashed-line')">
+            </a>
+            <a href="/split-pdf" class="tool-card" onclick="handleToolClick(event, 'split-pdf', 'تقسيم PDF', 'Split PDF', 'file', 'i-pdf', 'fa-file-dashed-line')">
                 <div class="tool-icon i-pdf"><i class="fa-solid fa-file-dashed-line"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="تقسيم PDF" data-en="Split PDF">تقسيم PDF</h3>
                     <p data-ar="فصل صفحات الـ PDF إلى ملفات مستقلة." data-en="Separate PDF pages into individual files.">فصل صفحات الـ PDF إلى ملفات مستقلة.</p>
                 </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('pdf-to-csv', 'PDF إلى CSV', 'PDF to CSV', 'file', 'i-excel', 'fa-file-csv')">
+            </a>
+            <a href="/pdf-to-csv" class="tool-card" onclick="handleToolClick(event, 'pdf-to-csv', 'PDF إلى CSV', 'PDF to CSV', 'file', 'i-excel', 'fa-file-csv')">
                 <div class="tool-icon i-excel"><i class="fa-solid fa-file-csv"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="PDF إلى CSV" data-en="PDF to CSV">PDF إلى CSV</h3>
                     <p data-ar="استخراج الجداول والبيانات من PDF إلى CSV." data-en="Extract tables and data from PDF to CSV.">استخراج الجداول والبيانات من PDF إلى CSV.</p>
                 </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('csv-to-pdf', 'CSV إلى PDF', 'CSV to PDF', 'fileText', 'i-pdf', 'fa-file-pdf')">
+            </a>
+            <a href="/csv-to-pdf" class="tool-card" onclick="handleToolClick(event, 'csv-to-pdf', 'CSV إلى PDF', 'CSV to PDF', 'fileText', 'i-pdf', 'fa-file-pdf')">
                 <div class="tool-icon i-pdf"><i class="fa-solid fa-file-pdf"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="CSV إلى PDF" data-en="CSV to PDF">CSV إلى PDF</h3>
                     <p data-ar="تحويل بيانات وجداول CSV إلى مستند PDF." data-en="Convert CSV data and tables into a PDF.">تحويل بيانات وجداول CSV إلى مستند PDF.</p>
                 </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('word-to-csv', 'Word إلى CSV', 'Word to CSV', 'file', 'i-excel', 'fa-file-csv')">
+            </a>
+            <a href="/word-to-csv" class="tool-card" onclick="handleToolClick(event, 'word-to-csv', 'Word إلى CSV', 'Word to CSV', 'file', 'i-excel', 'fa-file-csv')">
                 <div class="tool-icon i-excel"><i class="fa-solid fa-file-csv"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="Word إلى CSV" data-en="Word to CSV">Word إلى CSV</h3>
                     <p data-ar="استخراج الجداول من ملفات Word إلى CSV." data-en="Extract tables from Word documents to CSV.">استخراج الجداول من ملفات Word إلى CSV.</p>
                 </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('csv-to-word', 'CSV إلى Word', 'CSV to Word', 'fileText', 'i-word', 'fa-file-word')">
+            </a>
+            <a href="/csv-to-word" class="tool-card" onclick="handleToolClick(event, 'csv-to-word', 'CSV إلى Word', 'CSV to Word', 'fileText', 'i-word', 'fa-file-word')">
                 <div class="tool-icon i-word"><i class="fa-solid fa-file-word"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="CSV إلى Word" data-en="CSV to Word">CSV إلى Word</h3>
                     <p data-ar="تحويل الجداول النصية إلى مستندات Word." data-en="Convert CSV text into Word documents.">تحويل الجداول النصية إلى مستندات Word.</p>
                 </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('text-to-pdf', 'نص إلى PDF', 'Text to PDF', 'text', 'i-pdf', 'fa-file-lines')">
+            </a>
+            <a href="/text-to-pdf" class="tool-card" onclick="handleToolClick(event, 'text-to-pdf', 'نص إلى PDF', 'Text to PDF', 'text', 'i-pdf', 'fa-file-lines')">
                 <div class="tool-icon i-pdf"><i class="fa-solid fa-file-lines"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="نص إلى PDF" data-en="Text to PDF">نص إلى PDF</h3>
                     <p data-ar="لصق نص وتحويله مباشرة إلى مستند PDF." data-en="Paste text and instantly turn it into a PDF.">لصق نص وتحويله مباشرة إلى مستند PDF.</p>
                 </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('pdf-to-pdf', 'تنسيق PDF', 'Reformat PDF', 'file', 'i-pdf', 'fa-file-pdf')">
+            </a>
+            <a href="/pdf-to-pdf" class="tool-card" onclick="handleToolClick(event, 'pdf-to-pdf', 'تنسيق PDF', 'Reformat PDF', 'file', 'i-pdf', 'fa-file-pdf')">
                 <div class="tool-icon i-pdf"><i class="fa-solid fa-file-pdf"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="تنسيق PDF" data-en="Reformat PDF">تنسيق PDF</h3>
                     <p data-ar="إعادة بناء وتنسيق ملفات PDF النصية." data-en="Rebuild and format text-based PDFs.">إعادة بناء وتنسيق ملفات PDF النصية.</p>
                 </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('pdf-to-text', 'استخراج نص PDF', 'Extract PDF Text', 'file', 'i-dev', 'fa-font')">
+            </a>
+            <a href="/pdf-to-text" class="tool-card" onclick="handleToolClick(event, 'pdf-to-text', 'استخراج نص PDF', 'Extract PDF Text', 'file', 'i-dev', 'fa-font')">
                 <div class="tool-icon i-dev"><i class="fa-solid fa-font"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="استخراج نص PDF" data-en="Extract PDF Text">استخراج نص PDF</h3>
                     <p data-ar="نسخ ولصق النصوص من داخل ملفات PDF." data-en="Copy and paste text directly from PDFs.">نسخ ولصق النصوص من داخل ملفات PDF.</p>
                 </div>
-            </div>
+            </a>
         </div>
 
         <div class="section-title"><i class="fa-solid fa-table" style="color:var(--c-excel)"></i> <span data-ar="أدوات البيانات والجداول" data-en="Data & Spreadsheets">أدوات البيانات والجداول</span></div>
         <div class="tools-grid">
-            <div class="tool-card" onclick="selectTool('text-to-excel', 'نص إلى Excel', 'Text to Excel', 'text', 'i-excel', 'fa-file-excel')">
+            <a href="/text-to-excel" class="tool-card" onclick="handleToolClick(event, 'text-to-excel', 'نص إلى Excel', 'Text to Excel', 'text', 'i-excel', 'fa-file-excel')">
                 <div class="tool-icon i-excel"><i class="fa-solid fa-file-excel"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="نص إلى Excel" data-en="Text to Excel">نص إلى Excel</h3>
                     <p data-ar="تحويل النصوص المنسقة إلى جداول إكسل." data-en="Convert formatted text into Excel tables.">تحويل النصوص المنسقة إلى جداول إكسل.</p>
                 </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('json-to-excel', 'JSON إلى Excel', 'JSON to Excel', 'fileText', 'i-excel', 'fa-file-excel')">
+            </a>
+            <a href="/json-to-excel" class="tool-card" onclick="handleToolClick(event, 'json-to-excel', 'JSON إلى Excel', 'JSON to Excel', 'fileText', 'i-excel', 'fa-file-excel')">
                 <div class="tool-icon i-excel"><i class="fa-solid fa-file-excel"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="JSON إلى Excel" data-en="JSON to Excel">JSON إلى Excel</h3>
                     <p data-ar="تحويل البيانات البرمجية (JSON) إلى إكسل." data-en="Convert JSON data into Excel sheets.">تحويل البيانات البرمجية (JSON) إلى إكسل.</p>
                 </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('excel-to-json', 'Excel إلى JSON', 'Excel to JSON', 'file', 'i-dev', 'fa-code')">
+            </a>
+            <a href="/excel-to-json" class="tool-card" onclick="handleToolClick(event, 'excel-to-json', 'Excel إلى JSON', 'Excel to JSON', 'file', 'i-dev', 'fa-code')">
                 <div class="tool-icon i-dev"><i class="fa-solid fa-code"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="Excel إلى JSON" data-en="Excel to JSON">Excel إلى JSON</h3>
                     <p data-ar="تحويل جداول إكسل إلى أكواد JSON." data-en="Convert Excel tables into JSON format.">تحويل جداول إكسل إلى أكواد JSON.</p>
                 </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('csv-to-json', 'CSV إلى JSON', 'CSV to JSON', 'fileText', 'i-dev', 'fa-code')">
+            </a>
+            <a href="/csv-to-json" class="tool-card" onclick="handleToolClick(event, 'csv-to-json', 'CSV إلى JSON', 'CSV to JSON', 'fileText', 'i-dev', 'fa-code')">
                 <div class="tool-icon i-dev"><i class="fa-solid fa-code"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="CSV إلى JSON" data-en="CSV to JSON">CSV إلى JSON</h3>
                     <p data-ar="تحويل بيانات CSV إلى أكواد JSON." data-en="Convert CSV data into JSON format.">تحويل بيانات CSV إلى أكواد JSON.</p>
                 </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('text-to-csv', 'نص إلى CSV', 'Text to CSV', 'text', 'i-excel', 'fa-file-csv')">
+            </a>
+            <a href="/text-to-csv" class="tool-card" onclick="handleToolClick(event, 'text-to-csv', 'نص إلى CSV', 'Text to CSV', 'text', 'i-excel', 'fa-file-csv')">
                 <div class="tool-icon i-excel"><i class="fa-solid fa-file-csv"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="نص إلى CSV" data-en="Text to CSV">نص إلى CSV</h3>
                     <p data-ar="تحويل النصوص المجدولة إلى ملف CSV." data-en="Convert tabulated text to a CSV file.">تحويل النصوص المجدولة إلى ملف CSV.</p>
                 </div>
-            </div>
+            </a>
         </div>
 
         <div class="section-title"><i class="fa-solid fa-image" style="color:var(--c-img)"></i> <span data-ar="أدوات الصور" data-en="Image Tools">أدوات الصور</span></div>
         <div class="tools-grid">
-            <div class="tool-card" onclick="selectTool('image-to-pdf', 'صورة إلى PDF', 'Image to PDF', 'file', 'i-img', 'fa-images')">
+            <a href="/image-to-pdf" class="tool-card" onclick="handleToolClick(event, 'image-to-pdf', 'صورة إلى PDF', 'Image to PDF', 'file', 'i-img', 'fa-images')">
                 <div class="tool-icon i-img"><i class="fa-solid fa-images"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="صورة إلى PDF" data-en="Image to PDF">صورة إلى PDF</h3>
                     <p data-ar="تحويل الصور (JPG, PNG) إلى مستند PDF." data-en="Convert images (JPG, PNG) into a PDF document.">تحويل الصور (JPG, PNG) إلى مستند PDF.</p>
                 </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('compress-image', 'ضغط الصور', 'Compress Image', 'file', 'i-excel', 'fa-compress')">
+            </a>
+            <a href="/compress-image" class="tool-card" onclick="handleToolClick(event, 'compress-image', 'ضغط الصور', 'Compress Image', 'file', 'i-excel', 'fa-compress')">
                 <div class="tool-icon i-excel"><i class="fa-solid fa-compress"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="ضغط الصور" data-en="Compress Image">ضغط الصور</h3>
                     <p data-ar="تقليل حجم الصور مع الحفاظ على الجودة." data-en="Reduce image file size while maintaining quality.">تقليل حجم الصور مع الحفاظ على الجودة.</p>
                 </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('image-to-jpg', 'تحويل لـ JPG', 'Convert to JPG', 'file', 'i-img', 'fa-image')">
+            </a>
+            <a href="/image-to-jpg" class="tool-card" onclick="handleToolClick(event, 'image-to-jpg', 'تحويل لـ JPG', 'Convert to JPG', 'file', 'i-img', 'fa-image')">
                 <div class="tool-icon i-img"><i class="fa-solid fa-image"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="تحويل لـ JPG" data-en="Convert to JPG">تحويل لـ JPG</h3>
                     <p data-ar="تحويل وتوحيد الصور لصيغة JPG القياسية." data-en="Convert and standardize images to JPG format.">تحويل وتوحيد الصور لصيغة JPG القياسية.</p>
                 </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('image-to-png', 'تحويل لـ PNG', 'Convert to PNG', 'file', 'i-img', 'fa-image')">
+            </a>
+            <a href="/image-to-png" class="tool-card" onclick="handleToolClick(event, 'image-to-png', 'تحويل لـ PNG', 'Convert to PNG', 'file', 'i-img', 'fa-image')">
                 <div class="tool-icon i-img"><i class="fa-regular fa-image"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="تحويل لـ PNG" data-en="Convert to PNG">تحويل لـ PNG</h3>
                     <p data-ar="تحويل أي صورة إلى صيغة PNG شفافة." data-en="Convert any image to transparent PNG format.">تحويل أي صورة إلى صيغة PNG شفافة.</p>
                 </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('heic-to-jpg', 'HEIC إلى JPG (للايفون)', 'HEIC to JPG', 'file', 'i-img', 'fa-mobile-screen')">
+            </a>
+            <a href="/heic-to-jpg" class="tool-card" onclick="handleToolClick(event, 'heic-to-jpg', 'HEIC إلى JPG', 'HEIC to JPG', 'file', 'i-img', 'fa-mobile-screen')">
                 <div class="tool-icon i-img"><i class="fa-solid fa-mobile-screen"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="HEIC إلى JPG" data-en="HEIC to JPG">HEIC إلى JPG</h3>
                     <p data-ar="تحويل صور الايفون (HEIC) لتفتح في أي مكان." data-en="Convert iPhone photos (HEIC) to open anywhere.">تحويل صور الايفون (HEIC) لتفتح في أي مكان.</p>
                 </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('image-to-base64', 'صورة إلى Base64', 'Image to Base64', 'file', 'i-dev', 'fa-code')">
+            </a>
+            <a href="/image-to-base64" class="tool-card" onclick="handleToolClick(event, 'image-to-base64', 'صورة إلى Base64', 'Image to Base64', 'file', 'i-dev', 'fa-code')">
                 <div class="tool-icon i-dev"><i class="fa-solid fa-code"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="صورة إلى Base64" data-en="Image to Base64">صورة إلى Base64</h3>
                     <p data-ar="تحويل الصور إلى نصوص Base64 للمطورين." data-en="Convert images to Base64 strings for developers.">تحويل الصور إلى نصوص Base64 للمطورين.</p>
                 </div>
-            </div>
+            </a>
         </div>
 
         <div class="section-title"><i class="fa-solid fa-code" style="color:var(--c-dev)"></i> <span data-ar="أدوات النصوص والمطورين" data-en="Text & Dev Tools">أدوات النصوص والمطورين</span></div>
         <div class="tools-grid">
-            <div class="tool-card" onclick="selectTool('markdown-to-html', 'Markdown إلى HTML', 'Markdown to HTML', 'text', 'i-dev', 'fa-file-code')">
+            <a href="/markdown-to-html" class="tool-card" onclick="handleToolClick(event, 'markdown-to-html', 'Markdown إلى HTML', 'Markdown to HTML', 'text', 'i-dev', 'fa-file-code')">
                 <div class="tool-icon i-dev"><i class="fa-solid fa-file-code"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="Markdown إلى HTML" data-en="Markdown to HTML">Markdown إلى HTML</h3>
                     <p data-ar="تحويل نصوص ماركداون إلى كود HTML جاهز." data-en="Convert Markdown text to ready HTML code.">تحويل نصوص ماركداون إلى كود HTML جاهز.</p>
                 </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('clean-text', 'تنظيف النص', 'Clean Text', 'text', 'i-word', 'fa-broom')">
+            </a>
+            <a href="/clean-text" class="tool-card" onclick="handleToolClick(event, 'clean-text', 'تنظيف النص', 'Clean Text', 'text', 'i-word', 'fa-broom')">
                 <div class="tool-icon i-word"><i class="fa-solid fa-broom"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="تنظيف النص من HTML" data-en="Clean HTML Tags">تنظيف النص من HTML</h3>
                     <p data-ar="إزالة الأكواد واستخراج النص النظيف فقط." data-en="Remove all tags and extract clean text only.">إزالة الأكواد واستخراج النص النظيف فقط.</p>
                 </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('base64-tool', 'تشفير Base64', 'Base64 Encode', 'text', 'i-dev', 'fa-shield-halved')">
+            </a>
+            <a href="/base64-tool" class="tool-card" onclick="handleToolClick(event, 'base64-tool', 'تشفير Base64', 'Base64 Encode', 'text', 'i-dev', 'fa-shield-halved')">
                 <div class="tool-icon i-dev"><i class="fa-solid fa-shield-halved"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="تشفير Base64" data-en="Base64 Encode">تشفير Base64</h3>
                     <p data-ar="تشفير وفك تشفير النصوص بصيغة Base64." data-en="Encode and decode text in Base64 format.">تشفير وفك تشفير النصوص بصيغة Base64.</p>
                 </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('url-encoder', 'تشفير الروابط URL', 'URL Encode', 'text', 'i-dev', 'fa-link')">
+            </a>
+            <a href="/url-encoder" class="tool-card" onclick="handleToolClick(event, 'url-encoder', 'تشفير الروابط URL', 'URL Encode', 'text', 'i-dev', 'fa-link')">
                 <div class="tool-icon i-dev"><i class="fa-solid fa-link"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="تشفير الروابط URL" data-en="URL Encode">تشفير الروابط URL</h3>
                     <p data-ar="تشفير وفك تشفير الروابط لتعمل في المتصفح." data-en="Encode and decode URLs for browser safety.">تشفير وفك تشفير الروابط لتعمل في المتصفح.</p>
                 </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('json-beautifier', 'تنسيق JSON', 'JSON Formatter', 'text', 'i-word', 'fa-brackets-curly')">
+            </a>
+            <a href="/json-beautifier" class="tool-card" onclick="handleToolClick(event, 'json-beautifier', 'تنسيق JSON', 'JSON Formatter', 'text', 'i-word', 'fa-brackets-curly')">
                 <div class="tool-icon i-word"><i class="fa-solid fa-brackets-curly"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="تنسيق JSON" data-en="JSON Formatter">تنسيق JSON</h3>
                     <p data-ar="ترتيب وتنظيف الأكواد البرمجية لسهولة القراءة." data-en="Format and prettify JSON code for readability.">ترتيب وتنظيف الأكواد البرمجية لسهولة القراءة.</p>
                 </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('css-js-minifier', 'ضغط CSS/JS', 'Minify CSS/JS', 'text', 'i-excel', 'fa-minimize')">
+            </a>
+            <a href="/css-js-minifier" class="tool-card" onclick="handleToolClick(event, 'css-js-minifier', 'ضغط CSS/JS', 'Minify CSS/JS', 'text', 'i-excel', 'fa-minimize')">
                 <div class="tool-icon i-excel"><i class="fa-solid fa-minimize"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="ضغط أكواد CSS/JS" data-en="Minify CSS/JS">ضغط أكواد CSS/JS</h3>
                     <p data-ar="إزالة المسافات لتقليل حجم ملفات البرمجة." data-en="Remove whitespace to reduce code file size.">إزالة المسافات لتقليل حجم ملفات البرمجة.</p>
                 </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('html-entity', 'تشفير HTML', 'HTML Entity Encode', 'text', 'i-dev', 'fa-code')">
+            </a>
+            <a href="/html-entity" class="tool-card" onclick="handleToolClick(event, 'html-entity', 'تشفير HTML', 'HTML Entity Encode', 'text', 'i-dev', 'fa-code')">
                 <div class="tool-icon i-dev"><i class="fa-solid fa-code"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="تشفير HTML Entities" data-en="HTML Entity Encode">تشفير HTML Entities</h3>
                     <p data-ar="تحويل الرموز الخاصة إلى كيانات HTML." data-en="Convert special characters to HTML entities.">تحويل الرموز الخاصة إلى كيانات HTML.</p>
                 </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('hash-generator', 'توليد التشفير Hash', 'Hash Generator', 'text', 'i-dev', 'fa-hashtag')">
+            </a>
+            <a href="/hash-generator" class="tool-card" onclick="handleToolClick(event, 'hash-generator', 'توليد التشفير Hash', 'Hash Generator', 'text', 'i-dev', 'fa-hashtag')">
                 <div class="tool-icon i-dev"><i class="fa-solid fa-hashtag"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="توليد MD5 / SHA" data-en="Hash Generator">توليد MD5 / SHA</h3>
                     <p data-ar="تشفير النصوص لحماية البيانات كـ Hash." data-en="Encrypt texts to protect data as Hashes.">تشفير النصوص لحماية البيانات كـ Hash.</p>
                 </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('text-diff', 'مقارنة النصوص', 'Text Compare', 'text', 'i-word', 'fa-not-equal')">
+            </a>
+            <a href="/text-diff" class="tool-card" onclick="handleToolClick(event, 'text-diff', 'مقارنة النصوص', 'Text Compare', 'text', 'i-word', 'fa-not-equal')">
                 <div class="tool-icon i-word"><i class="fa-solid fa-not-equal"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="مقارنة النصوص (Diff)" data-en="Text Compare">مقارنة النصوص (Diff)</h3>
                     <p data-ar="إيجاد الفروقات والاختلافات بين نصين." data-en="Find differences and changes between two texts.">إيجاد الفروقات والاختلافات بين نصين.</p>
                 </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('text-counter', 'عداد النصوص', 'Text Counter', 'text', 'i-word', 'fa-calculator')">
+            </a>
+            <a href="/text-counter" class="tool-card" onclick="handleToolClick(event, 'text-counter', 'عداد النصوص', 'Text Counter', 'text', 'i-word', 'fa-calculator')">
                 <div class="tool-icon i-word"><i class="fa-solid fa-calculator"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="عداد النصوص" data-en="Text Counter">عداد النصوص</h3>
                     <p data-ar="حساب عدد الأحرف، الكلمات، والأسطر." data-en="Count characters, words, and lines.">حساب عدد الأحرف، الكلمات، والأسطر.</p>
                 </div>
-            </div>
+            </a>
         </div>
 
         <div class="section-title"><i class="fa-solid fa-toolbox" style="color:var(--c-dev)"></i> <span data-ar="أدوات متنوعة" data-en="Utilities">أدوات متنوعة</span></div>
         <div class="tools-grid">
-            <div class="tool-card" onclick="selectTool('text-to-qr', 'توليد QR Code', 'QR Code Generator', 'text', 'i-excel', 'fa-qrcode')">
+            <a href="/text-to-qr" class="tool-card" onclick="handleToolClick(event, 'text-to-qr', 'توليد QR Code', 'QR Code Generator', 'text', 'i-excel', 'fa-qrcode')">
                 <div class="tool-icon i-excel"><i class="fa-solid fa-qrcode"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="توليد باركود QR" data-en="QR Code Generator">توليد باركود QR</h3>
                     <p data-ar="تحويل الروابط والنصوص إلى رمز استجابة سريعة." data-en="Turn links and text into a Quick Response code.">تحويل الروابط والنصوص إلى رمز استجابة سريعة.</p>
                 </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('password-generator', 'توليد كلمة سر', 'Password Generator', 'none', 'i-dev', 'fa-key')">
+            </a>
+            <a href="/password-generator" class="tool-card" onclick="handleToolClick(event, 'password-generator', 'توليد كلمة سر', 'Password Generator', 'none', 'i-dev', 'fa-key')">
                 <div class="tool-icon i-dev"><i class="fa-solid fa-key"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="كلمة سر قوية" data-en="Password Generator">كلمة سر قوية</h3>
                     <p data-ar="إنشاء كلمات مرور عشوائية وآمنة جداً." data-en="Create highly secure, random passwords.">إنشاء كلمات مرور عشوائية وآمنة جداً.</p>
                 </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('password-strength', 'فحص كلمة السر', 'Password Strength', 'text', 'i-dev', 'fa-shield')">
+            </a>
+            <a href="/password-strength" class="tool-card" onclick="handleToolClick(event, 'password-strength', 'فحص كلمة السر', 'Password Strength', 'text', 'i-dev', 'fa-shield')">
                 <div class="tool-icon i-dev"><i class="fa-solid fa-shield"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="فحص قوة كلمة السر" data-en="Check Password Strength">فحص قوة كلمة السر</h3>
                     <p data-ar="التحقق من مدى أمان وصعوبة كلمة مرورك." data-en="Verify the security and strength of your password.">التحقق من مدى أمان وصعوبة كلمة مرورك.</p>
                 </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('percentage-calc', 'حاسبة النسب', 'Percentage Calculator', 'text', 'i-word', 'fa-percent')">
+            </a>
+            <a href="/percentage-calc" class="tool-card" onclick="handleToolClick(event, 'percentage-calc', 'حاسبة النسب', 'Percentage Calculator', 'text', 'i-word', 'fa-percent')">
                 <div class="tool-icon i-word"><i class="fa-solid fa-percent"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="حاسبة النسب المئوية" data-en="Percentage Calculator">حاسبة النسب المئوية</h3>
                     <p data-ar="حساب النسب المئوية للأرقام بسهولة." data-en="Calculate percentages of numbers easily.">حساب النسب المئوية للأرقام بسهولة.</p>
                 </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('timestamp-converter', 'محول التاريخ Unix', 'Timestamp Converter', 'text', 'i-word', 'fa-clock')">
+            </a>
+            <a href="/timestamp-converter" class="tool-card" onclick="handleToolClick(event, 'timestamp-converter', 'محول التاريخ Unix', 'Timestamp Converter', 'text', 'i-word', 'fa-clock')">
                 <div class="tool-icon i-word"><i class="fa-solid fa-clock"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="محول التاريخ Unix" data-en="Timestamp Converter">محول التاريخ Unix</h3>
                     <p data-ar="تحويل أرقام Timestamp إلى تاريخ مقروء." data-en="Convert Unix Timestamp to readable date.">تحويل أرقام Timestamp إلى تاريخ مقروء.</p>
                 </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('byte-converter', 'محول الأحجام Bytes', 'Byte Converter', 'text', 'i-excel', 'fa-hard-drive')">
+            </a>
+            <a href="/byte-converter" class="tool-card" onclick="handleToolClick(event, 'byte-converter', 'محول الأحجام Bytes', 'Byte Converter', 'text', 'i-excel', 'fa-hard-drive')">
                 <div class="tool-icon i-excel"><i class="fa-solid fa-hard-drive"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="محول الأحجام (KB/MB)" data-en="Byte Converter">محول الأحجام (KB/MB)</h3>
                     <p data-ar="تحويل البايت إلى كيلوبايت وميجابايت." data-en="Convert Bytes to KB, MB, and GB.">تحويل البايت إلى كيلوبايت وميجابايت.</p>
                 </div>
-            </div>
-            <div class="tool-card" onclick="selectTool('unit-converter', 'محول الوحدات', 'Unit Converter', 'text', 'i-ppt', 'fa-ruler')">
+            </a>
+            <a href="/unit-converter" class="tool-card" onclick="handleToolClick(event, 'unit-converter', 'محول الوحدات', 'Unit Converter', 'text', 'i-ppt', 'fa-ruler')">
                 <div class="tool-icon i-ppt"><i class="fa-solid fa-ruler"></i></div>
                 <div class="tool-info">
                     <h3 data-ar="محول الوحدات" data-en="Unit Converter">محول الوحدات</h3>
                     <p data-ar="تحويل وحدات القياس (متر، قدم، بوصة)." data-en="Convert measurement units (meters, feet, inches).">تحويل وحدات القياس (متر، قدم، بوصة).</p>
                 </div>
-            </div>
+            </a>
         </div>
 
     </div>
@@ -575,6 +588,23 @@
         let fileBase64 = null;
         let filesBase64Array = []; 
         let isArabic = true; 
+
+        // 🚀 محرك التوجيه الديناميكي المتطور لـ SEO
+        function handleToolClick(e, action, nameAr, nameEn, type, iconClass, iconName) {
+            e.preventDefault(); 
+            window.history.pushState({}, '', '/' + action);
+            selectTool(action, nameAr, nameEn, type, iconClass, iconName);
+        }
+
+        // 🚀 الفتح التلقائي عند دخول الزائر من محرك البحث
+        {% if tool_data %}
+        window.addEventListener('DOMContentLoaded', () => {
+            selectTool("{{ tool_data.slug }}", "{{ tool_data.nameAr }}", "{{ tool_data.nameEn }}", "{{ tool_data.type }}", "{{ tool_data.iconClass }}", "{{ tool_data.iconName }}");
+            setTimeout(() => {
+                document.getElementById('workspace').scrollIntoView({ behavior: 'smooth' });
+            }, 300);
+        });
+        {% endif %}
 
         function toggleTheme() {
             document.body.classList.toggle('dark-mode');
@@ -615,7 +645,6 @@
             
             document.getElementById('activeToolArea').style.display = 'block';
             
-            // التحكم بظهور رسالة التحذير الخاصة بأداة PDF to Word
             const warningBox = document.getElementById('toolWarning');
             if(warningBox) {
                 if (action === 'pdf-to-docx') {
@@ -660,7 +689,8 @@
                 uploadArea.style.display = 'none'; textArea.style.display = 'none'; 
             }
 
-            document.getElementById('workspace').scrollIntoView({ behavior: 'smooth' });
+            document.getElementById('mainTitle').innerText = toolName;
+            document.getElementById('mainDesc').innerText = isArabic ? "قم برفع الملف أو إدخال البيانات للبدء" : "Upload your file or enter data to begin";
         }
 
         function showToast(msgAr, msgEn, isError = false) {
