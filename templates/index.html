@@ -243,15 +243,15 @@
         </div>
     </div>
 
-    <!-- 🚀 قسم الأسئلة الشائعة SEO الذكي -->
+        <!-- 🚀 قسم الأسئلة الشائعة SEO الذكي ثنائي اللغة -->
     {% if tool_data and tool_data.faqs %}
     <div class="workspace" style="margin-top: -20px;">
         <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 20px; padding: 30px; box-shadow: var(--shadow-sm);">
-            <h2 style="font-size: 22px; font-weight: 800; margin-bottom: 20px; color: var(--text-main);">الأسئلة الشائعة حول أداة {{ tool_data.nameAr }}</h2>
+            <h2 style="font-size: 22px; font-weight: 800; margin-bottom: 20px; color: var(--text-main);" data-ar="الأسئلة الشائعة حول أداة {{ tool_data.nameAr }}" data-en="Frequently Asked Questions about {{ tool_data.nameEn }}">الأسئلة الشائعة حول أداة {{ tool_data.nameAr }}</h2>
             {% for faq in tool_data.faqs %}
             <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--border);">
-                <h3 style="font-size: 16px; color: var(--primary); margin-bottom: 8px;"><i class="fa-solid fa-circle-question"></i> {{ faq.q }}</h3>
-                <p style="font-size: 14px; color: var(--text-muted); line-height: 1.6;">{{ faq.a }}</p>
+                <h3 style="font-size: 16px; color: var(--primary); margin-bottom: 8px;"><i class="fa-solid fa-circle-question"></i> <span data-ar="{{ faq.q_ar }}" data-en="{{ faq.q_en }}">{{ faq.q_ar }}</span></h3>
+                <p style="font-size: 14px; color: var(--text-muted); line-height: 1.6;" data-ar="{{ faq.a_ar }}" data-en="{{ faq.a_en }}">{{ faq.a_ar }}</p>
             </div>
             {% endfor %}
         </div>
