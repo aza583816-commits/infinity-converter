@@ -603,6 +603,9 @@
             e.preventDefault(); 
             window.history.pushState({}, '', '/' + action);
             selectTool(action, nameAr, nameEn, type, iconClass, iconName);
+            
+            // 👇 السطر الجديد عشان يرفع الزائر لأعلى الصفحة بسلاسة 👇
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         // 🚀 الفتح التلقائي عند دخول الزائر من محرك البحث
