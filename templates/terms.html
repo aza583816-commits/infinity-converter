@@ -1,40 +1,33 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>الشروط والأحكام | Infinity Converter</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { background-color: #0f172a; color: #f8fafc; font-family: 'Cairo', sans-serif; line-height: 1.8; padding: 40px 20px; }
-        .container { max-width: 800px; margin: 0 auto; background: #1e293b; padding: 40px; border-radius: 16px; border: 1px solid #334155; }
-        h1 { color: #8b5cf6; text-align: center; margin-bottom: 30px; }
-        h2 { color: #60a5fa; margin-top: 30px; }
-        p, li { color: #cbd5e1; font-size: 16px; }
-        .back-btn { display: inline-block; padding: 10px 20px; background: #4f46e5; color: white; text-decoration: none; border-radius: 8px; margin-bottom: 20px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V-Infinity | Terms of Service</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  body { background-color: #0f172a; color: #f8fafc; font-family: 'Cairo', sans-serif; padding: 30px 20px; line-height: 1.8; }
+  .container { max-width: 800px; margin: 0 auto; background: #1e293b; padding: 40px; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); }
+  h1 { color: #6366f1; text-align: center; margin-bottom: 30px; font-weight: 800; }
+  h2 { color: #818cf8; font-size: 22px; margin-top: 30px; font-weight: 800; }
+  p { color: #cbd5e1; font-size: 16px; }
+  .back-btn { display: inline-block; background: linear-gradient(135deg, #6366f1, #a855f7); color: #fff; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: 700; margin-bottom: 20px; transition: 0.3s; }
+  .back-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(99, 102, 241, 0.4); }
+</style>
 </head>
 <body>
-    <div class="container">
-        <a href="/" class="back-btn">العودة للرئيسية</a>
-        <h1>الشروط والأحكام (Terms of Service)</h1>
-        
-        <h2>1. قبول الشروط</h2>
-        <p>بدخولك واستخدامك لموقع V-Infinity Converter، فإنك تقر وتوافق على الالتزام بجميع هذه الشروط والأحكام. إذا كنت لا توافق على أي من هذه الشروط، يُحظر عليك استخدام هذه الخدمة.</p>
-
-        <h2>2. رخصة الاستخدام</h2>
-        <p>خدمات التحويل المقدمة في هذا الموقع مجانية للاستخدام الشخصي والمهني. ومع ذلك، يُحظر عليك:</p>
-        <ul>
-            <li>استخدام الخدمة في أي غرض غير قانوني أو لرفع ملفات تحتوي على برمجيات خبيثة.</li>
-            <li>محاولة اختراق أو تعطيل البنية التحتية للسيرفرات الخاصة بنا.</li>
-            <li>استخدام أنظمة آلية (Bots/Scrapers) لإرسال طلبات تحويل جماعية تضر بأداء الموقع.</li>
-        </ul>
-
-        <h2>3. إخلاء المسؤولية</h2>
-        <p>يتم تقديم الخدمات على موقعنا "كما هي" دون أي ضمانات. لا نضمن أن تكون النتائج المحولة دقيقة بنسبة 100% في جميع الحالات الممكنة، والمستخدم يتحمل مسؤولية مراجعة الملفات المحولة.</p>
-
-        <h2>4. التعديلات</h2>
-        <p>يحتفظ موقع V-Infinity بالحق في تعديل هذه الشروط في أي وقت دون إشعار مسبق. باستخدامك لهذا الموقع، فإنك توافق على الالتزام بالإصدار الحالي من هذه الشروط.</p>
-    </div>
+<div class="container">
+  <a href="/" class="back-btn" data-ar="العودة للرئيسية" data-en="Back to Home">العودة للرئيسية</a>
+  <h1 data-ar="شروط الاستخدام" data-en="Terms of Service">شروط الاستخدام</h1>
+  <h2 data-ar="1. الاستخدام العادل" data-en="1. Fair Use">1. الاستخدام العادل</h2>
+  <p data-ar="خدماتنا مجانية بالكامل. يُرجى عدم استخدام أدواتنا في أي أنظمة آلية (Bots)." data-en="Our services are completely free. Please do not use our tools in any automated systems (Bots).">خدماتنا مجانية بالكامل. يُرجى عدم استخدام أدواتنا في أي أنظمة آلية (Bots).</p>
+</div>
+<script>
+  const savedLang = localStorage.getItem('v_lang');
+  if (savedLang === 'en' || (!savedLang && !navigator.language.startsWith('ar'))) {
+    document.documentElement.lang = 'en'; document.documentElement.dir = 'ltr';
+    document.querySelectorAll('[data-en]').forEach(el => el.innerHTML = el.getAttribute('data-en'));
+  }
+</script>
 </body>
 </html>
