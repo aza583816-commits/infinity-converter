@@ -1046,6 +1046,15 @@ def sitemap():
     xml_content = f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{"".join(urls)}</urlset>'
     return Response(xml_content, mimetype='application/xml')
 
+@app.route('/robots.txt')
+def robots():
+    content = """User-agent: *
+Allow: /
+
+Sitemap: https://infinityconverter.com/sitemap.xml
+"""
+    return Response(content, mimetype='text/plain')
+
 @app.route("/convert", methods=["POST"])
 @limiter.limit(dynamic_convert_limit)
 def convert():
