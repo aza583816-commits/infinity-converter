@@ -1,33 +1,33 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>اتصل بنا | Infinity Converter</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { background-color: #0f172a; color: #f8fafc; font-family: 'Cairo', sans-serif; line-height: 1.8; padding: 40px 20px; }
-        .container { max-width: 800px; margin: 0 auto; background: #1e293b; padding: 40px; border-radius: 16px; border: 1px solid #334155; text-align: center; }
-        h1 { color: #8b5cf6; margin-bottom: 20px; }
-        p { color: #cbd5e1; font-size: 18px; margin-bottom: 30px; }
-        .email-box { display: inline-block; padding: 15px 30px; background: rgba(139, 92, 246, 0.2); border: 2px dashed #8b5cf6; border-radius: 12px; font-size: 20px; font-weight: bold; color: white; text-decoration: none; transition: 0.3s; }
-        .email-box:hover { background: rgba(139, 92, 246, 0.4); transform: translateY(-2px); }
-        .back-btn { display: inline-block; padding: 10px 20px; background: #4f46e5; color: white; text-decoration: none; border-radius: 8px; margin-bottom: 20px; float: right; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V-Infinity | Contact Us</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  body { background-color: #0f172a; color: #f8fafc; font-family: 'Cairo', sans-serif; padding: 30px 20px; line-height: 1.8; text-align: center; }
+  .container { max-width: 600px; margin: 0 auto; background: #1e293b; padding: 40px; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); }
+  h1 { color: #6366f1; margin-bottom: 20px; font-weight: 800; }
+  p { color: #cbd5e1; font-size: 16px; margin-bottom: 30px; }
+  .back-btn { display: inline-block; background: linear-gradient(135deg, #6366f1, #a855f7); color: #fff; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: 700; transition: 0.3s; margin-top: 15px;}
+  .back-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(99, 102, 241, 0.4); }
+  .email-box { display: block; background: #0f172a; padding: 15px; border-radius: 12px; border: 1px solid #6366f1; color: #818cf8; font-size: 20px; font-weight: bold; margin-bottom: 20px; text-decoration: none; }
+</style>
 </head>
 <body>
-    <div class="container">
-        <div style="overflow: hidden;"><a href="/" class="back-btn">العودة للرئيسية</a></div>
-        <h1>اتصل بنا (Contact Us)</h1>
-        <p>نحن نرحب دائمًا باستفساراتكم، اقتراحاتكم، وحتى بلاغاتكم عن أي مشاكل تواجهونها في استخدام أدوات الموقع. فريق V-Infinity مستعد لخدمتكم!</p>
-        
-        <p>يمكنكم التواصل معنا مباشرة عبر البريد الإلكتروني التالي:</p>
-        
-        <a href="mailto:contact@infinityconverter.com" class="email-box">
-            contact@infinityconverter.com
-        </a>
-        
-        <p style="margin-top: 30px; font-size: 14px;">نسعى للرد على جميع الرسائل خلال 24 - 48 ساعة عمل.</p>
-    </div>
+<div class="container">
+  <h1 data-ar="تواصل معنا" data-en="Contact Us">تواصل معنا</h1>
+  <p data-ar="نحن هنا لمساعدتك! لا تتردد في مراسلتنا عبر البريد الإلكتروني أدناه:" data-en="We are here to help! Feel free to email us below:">نحن هنا لمساعدتك! لا تتردد في مراسلتنا عبر البريد الإلكتروني أدناه:</p>
+  <a href="mailto:2saree3.tech@gmail.com" class="email-box">2saree3.tech@gmail.com</a>
+  <a href="/" class="back-btn" data-ar="العودة للرئيسية" data-en="Back to Home">العودة للرئيسية</a>
+</div>
+<script>
+  const savedLang = localStorage.getItem('v_lang');
+  if (savedLang === 'en' || (!savedLang && !navigator.language.startsWith('ar'))) {
+    document.documentElement.lang = 'en'; document.documentElement.dir = 'ltr';
+    document.querySelectorAll('[data-en]').forEach(el => el.innerHTML = el.getAttribute('data-en'));
+  }
+</script>
 </body>
 </html>
