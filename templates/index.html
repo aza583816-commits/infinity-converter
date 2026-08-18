@@ -190,6 +190,15 @@
 
         html[dir="ltr"] .tool-card { text-align: left; }
         html[dir="rtl"] .tool-card { text-align: right; }
+
+        /* إصلاح تداخل الأسطر في أداة استخراج النص */
+        #result-box, .result-text, pre, output, .result-area {
+            white-space: pre-wrap !important;
+            word-wrap: break-word !important;
+            line-height: 2 !important;
+            text-align: right !important;
+            font-family: 'Cairo', sans-serif !important;
+        }
     </style>
 </head>
 <body>
@@ -637,6 +646,8 @@
             document.querySelectorAll('textarea[data-ar-ph]').forEach(el => {
                 el.placeholder = isArabic ? el.getAttribute('data-ar-ph') : el.getAttribute('data-en-ph');
             });
+            // 👇 السطر الجديد لحفظ لغة الزائر في ذاكرة المتصفح 👇
+            localStorage.setItem('v_lang', isArabic ? 'ar' : 'en');
         }
 
         function selectTool(action, nameAr, nameEn, type, iconClass, iconName) {
