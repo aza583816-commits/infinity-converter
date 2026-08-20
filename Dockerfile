@@ -1,12 +1,12 @@
 FROM python:3.10-slim
 
 # تثبيت البرامج الأساسية: تحويل المستندات + الذكاء الاصطناعي للصور (عربي وإنجليزي)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libreoffice \
-    fontconfig \
+RUN apt-get update && apt-get install -y \
     tesseract-ocr \
     tesseract-ocr-ara \
+    libreoffice \
     && rm -rf /var/lib/apt/lists/*
+
 
 WORKDIR /app
 
