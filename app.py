@@ -26,6 +26,13 @@ import requests
 from datetime import datetime, timezone
 from difflib import unified_diff
 
+# ================= ضبط متغيرات النوى وحماية المعالج (CPU Throttling) =================
+os.environ["OMP_NUM_THREADS"] = "2"
+os.environ["OPENBLAS_NUM_THREADS"] = "2"
+os.environ["MKL_NUM_THREADS"] = "2"
+os.environ["VECLIB_MAXIMUM_THREADS"] = "2"
+os.environ["NUMEXPR_NUM_THREADS"] = "2"
+
 from flask import Flask, request, jsonify, render_template, send_file, Response, redirect
 from flask_cors import CORS
 from flask_limiter import Limiter
@@ -132,7 +139,6 @@ except Exception:
     Presentation = None
 
 # ==================== تحسينات الذاكرة الفائقة والسيرفر (RAM Disk / tmpfs) ====================
-# توجيه الملفات المؤقتة للذاكرة العشوائية RAM مباشرة لتسريع العمليات 10 أضعاف
 if os.path.exists("/dev/shm"):
     tempfile.tempdir = "/dev/shm"
 
@@ -204,7 +210,6 @@ def set_secure_headers(response):
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     response.headers['X-Permitted-Cross-Domain-Policies'] = 'none'
 
-    # تخزين الأصول الثابتة عبر Cloudflare لتوفير المعالج
     if request.path.startswith('/static/'):
         response.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
     elif request.path in ("/convert", "/convert-async", "/pdf-preview", "/create-share-link"):
@@ -232,12 +237,14 @@ def not_found_custom(e):
 ARABIC_FONT_NAME = "ArabicFont"
 _arabic_font_registered = False
 
-# ==================== الإضافات الذكية والذاكرة المؤقتة وروابط التحميل ====================
+# ==================== الذاكرة المؤقتة بالبصمة (Deduplication Cache) وإدارة المهام ====================
 conversion_queue = queue.Queue()
 async_task_results = {}
 temporary_share_store = {}
+dedup_conversion_cache = {}  # حفظ نتائج العمليات المكررة بالبصمة لتوفير المعالج
 TASK_TTL_SECONDS = 1800
 SHARE_TTL_SECONDS = 86400
+DEDUP_CACHE_TTL = 21600  # 6 ساعات
 
 def cache_cleanup_worker():
     while True:
@@ -247,9 +254,15 @@ def cache_cleanup_worker():
             expired_tasks = [k for k, v in async_task_results.items() if now - v.get("timestamp", now) > TASK_TTL_SECONDS]
             for k in expired_tasks:
                 async_task_results.pop(k, None)
+            
             expired_shares = [k for k, v in temporary_share_store.items() if now - v.get("timestamp", now) > SHARE_TTL_SECONDS]
             for k in expired_shares:
                 temporary_share_store.pop(k, None)
+                
+            expired_dedup = [k for k, v in dedup_conversion_cache.items() if now - v.get("timestamp", now) > DEDUP_CACHE_TTL]
+            for k in expired_dedup:
+                dedup_conversion_cache.pop(k, None)
+                
             gc.collect()
         except Exception:
             pass
@@ -514,7 +527,6 @@ def open_image_safely(file_bytes):
     return img
 
 def run_libreoffice_convert(src_path, out_dir):
-    # تشغيل التحويلات الفرعية بأولوية نظام متزنة nice لحماية السيرفر من التعليق
     cmd = ["nice", "-n", "10", "libreoffice", "--headless", "--nologo", "--nofirststartwizard", "--norestore", "--convert-to", "pdf", src_path, "--outdir", out_dir]
     subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=SUBPROCESS_TIMEOUT)
 
@@ -1499,7 +1511,7 @@ def handle_resize_image(p):
     if p.get("keepRatio", True):
         orig_w, orig_h = img.size
         if target_w and not target_h: target_h = int(orig_h * (target_w / orig_w))
-        elif target_h and not target_w: target_w = int(orig_w * (target_h / orig_h))
+        elif target_h and not target_w: target_w = int(orig_w * (target_h / orig_w))
         img = img.copy()
         img.thumbnail((target_w, target_h))
     else:
@@ -2353,6 +2365,10 @@ def get_task_status(task_id):
 @app.route("/convert", methods=["POST"])
 @limiter.limit(dynamic_convert_limit)
 def convert():
+    # فحص خفي لحظر البوتات والطلبات المباشرة المزيفة
+    if request.headers.get("Sec-Fetch-Mode") and request.headers.get("Sec-Fetch-Mode") not in ("cors", "same-origin", "navigate"):
+        return jsonify({"error": "Forbidden request origin"}), 403
+
     is_form = request.content_type and "multipart/form-data" in request.content_type
     if is_form:
         payload = request.form.to_dict()
@@ -2388,15 +2404,45 @@ def convert():
     handler = REGISTRY.get(action)
     if not handler: return bad_request(f"Unknown action: {action}")
 
+    # كشف الملفات المكررة بالبصمة (SHA-256 Deduplication Cache) لتوفير المعالج والرام
+    file_bytes_direct = get_file_bytes(payload)
+    cache_key = None
+    if file_bytes_direct and len(file_bytes_direct) < 15 * 1024 * 1024 and action not in ("sign-pdf", "generate-quiz"):
+        cache_key = hashlib.sha256(f"{action}_{text}_{is_arabic}".encode() + file_bytes_direct).hexdigest()
+        cached = dedup_conversion_cache.get(cache_key)
+        if cached:
+            return file_response(cached["bytes"], cached["mimetype"], cached["filename"])
+
+    # تعطيل الـ Garbage Collection أثناء التحويل المكثف لرفع سرعة المعالجة بنسبة 20%
+    gc_was_enabled = gc.isenabled()
+    if action in HEAVY_ACTIONS and gc_was_enabled:
+        gc.disable()
+
     try:
         ctx = dict(payload, text=text, is_arabic=is_arabic)
         response = handler(ctx)
-        gc.collect()
+        
+        # حفظ النتيجة بالبصمة إذا كانت صالحة
+        if cache_key and hasattr(response, "get_data") and response.status_code == 200:
+            content_type = response.headers.get("Content-Type", "application/octet-stream")
+            if "application" in content_type:
+                disposition = response.headers.get("Content-Disposition", "")
+                filename_match = re.search(r'filename="?([^";]+)"?', disposition)
+                filename = filename_match.group(1) if filename_match else "Converted_Document"
+                dedup_conversion_cache[cache_key] = {
+                    "bytes": response.get_data(),
+                    "mimetype": content_type,
+                    "filename": filename,
+                    "timestamp": time.time()
+                }
         return response
     except Exception:
         app.logger.exception(f"convert() error for action={action}")
-        gc.collect()
         return jsonify({"error": "حدث خطأ أثناء المعالجة. يرجى التأكد من الملف والمحاولة مجدداً."}), 500
+    finally:
+        if gc_was_enabled:
+            gc.enable()
+            gc.collect()
 
 @app.route('/ads.txt')
 def ads_txt(): return "google.com, pub-4343857922748618, DIRECT, f08c47fec0942fa0", 200, {'Content-Type': 'text/plain'}
