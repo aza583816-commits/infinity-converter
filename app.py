@@ -102,6 +102,7 @@ except Exception:
     gTTS = None
 
 try:
+    import deep_translator
     from deep_translator import GoogleTranslator
 except Exception:
     GoogleTranslator = None
@@ -118,19 +119,19 @@ except Exception:
     Presentation = None
 
 # ==================== الإعدادات العامة والحماية ====================
-MAX_FILE_MB = int(os.environ.get("MAX_FILE_MB", 100))
+MAX_FILE_MB = int(os.environ.get("MAX_FILE_MB", 25))
 MAX_FILE_BYTES = MAX_FILE_MB * 1024 * 1024
-MAX_MERGE_FILES = int(os.environ.get("MAX_MERGE_FILES", 100))
-MAX_PDF_PAGES = int(os.environ.get("MAX_PDF_PAGES", 5000))
-MAX_OCR_PAGES = int(os.environ.get("MAX_OCR_PAGES", 50))
-MAX_TEXT_CHARS = int(os.environ.get("MAX_TEXT_CHARS", 10_000_000))
+MAX_MERGE_FILES = int(os.environ.get("MAX_MERGE_FILES", 30))
+MAX_PDF_PAGES = int(os.environ.get("MAX_PDF_PAGES", 1000))
+MAX_OCR_PAGES = int(os.environ.get("MAX_OCR_PAGES", 25))
+MAX_TEXT_CHARS = int(os.environ.get("MAX_TEXT_CHARS", 5_000_000))
 SUBPROCESS_TIMEOUT = int(os.environ.get("SUBPROCESS_TIMEOUT", 300))
 ALLOWED_ORIGINS = [o.strip() for o in os.environ.get(
     "ALLOWED_ORIGINS", "https://infinityconverter.com,https://www.infinityconverter.com"
 ).split(",") if o.strip()]
 
 app_max_content = int(MAX_FILE_BYTES * MAX_MERGE_FILES * 1.4) + (5 * 1024 * 1024)
-Image.MAX_IMAGE_PIXELS = int(os.environ.get("MAX_IMAGE_PIXELS", 200_000_000))
+Image.MAX_IMAGE_PIXELS = int(os.environ.get("MAX_IMAGE_PIXELS", 100_000_000))
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = app_max_content
@@ -146,7 +147,7 @@ CORS(app, resources={r"/convert": {"origins": ALLOWED_ORIGINS}}, supports_creden
 limiter = Limiter(
     get_remote_address,
     app=app,
-    default_limits=["2000 per day", "300 per hour"],
+    default_limits=["1000 per day", "150 per hour"],
     storage_uri=os.environ.get("RATE_LIMIT_STORAGE_URI", "memory://"),
 )
 
@@ -158,7 +159,7 @@ HEAVY_ACTIONS = {
 
 def dynamic_convert_limit():
     payload = request.get_json(silent=True) or {}
-    return "20 per minute" if payload.get("action") in HEAVY_ACTIONS else "60 per minute"
+    return "10 per minute" if payload.get("action") in HEAVY_ACTIONS else "30 per minute"
 
 @app.after_request
 def set_secure_headers(response):
@@ -188,7 +189,17 @@ def internal_error_handler(e):
 ARABIC_FONT_NAME = "ArabicFont"
 _arabic_font_registered = False
 
-# ==================== القائمة الشاملة لجميع الأدوات ====================
+# ==================== طبقات المساندة والتدعيم الذكية (أضيفت للمساندة فقط بدون حذف أي شيء) ====================
+def support_arabic_text_normalization(text):
+    if not text: return text
+    return re.sub(r'[\u200b\u200c\u200d\ufeff]', '', text)
+
+def support_validate_table_structure(table_data):
+    if not table_data or not isinstance(table_data, list): return [["-"]]
+    max_cols = max(len(row) for row in table_data) if table_data else 1
+    return [[str(c).strip() if c else "" for c in (row + [""] * (max_cols - len(row)))] for row in table_data]
+
+# ==================== القائمة الشاملة لجميع الأدوات (كاملة الـ 50+) ====================
 TOOLS_DEF = [
     ("pdf-to-docx", "PDF إلى Word", "PDF to Word", "file", "i-word", "fa-file-word"),
     ("word-to-pdf", "Word إلى PDF", "Word to PDF", "file", "i-pdf", "fa-file-pdf"),
@@ -400,7 +411,7 @@ def text_to_pdf_bytes(text, is_arabic, title=None):
     return final_buf.getvalue()
 
 def csv_to_pdf_bytes(text, is_arabic):
-    rows = parse_csv_text(text)
+    rows = support_validate_table_structure(parse_csv_text(text))
     buf = io.BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=A4, topMargin=15 * mm, bottomMargin=15 * mm, leftMargin=15 * mm, rightMargin=15 * mm)
     font = pdf_font_name(is_arabic)
@@ -477,7 +488,7 @@ def is_probably_scanned(text, page_count):
     avg_chars = len(text.strip()) / max(page_count, 1)
     return avg_chars < 15
 
-# ================= أدوات الـ PDF (النسخة الخارقة المطورة) =================
+# ================= أدوات الـ PDF (الأصلية مضافاً إليها محركات السحاب المحلية) =================
 
 def handle_pdf_to_docx(p):
     """المحرك الثلاثي (المحلي + السحابي + الاحتياطي) لضمان أقصى دقة للجداول والنصوص"""
@@ -505,18 +516,13 @@ def handle_pdf_to_docx(p):
         with open(pdf_path, "wb") as f: 
             f.write(file_bytes)
 
-        # 1. المحرك السحابي (CloudConvert) - الأفضل عربياً في ترتيب الأرقام والجداول واللوجو
         if cc_key:
             try:
                 cloudconvert.configure(api_key=cc_key, sandbox=False)
                 job = cloudconvert.Job.create(payload={
                     "tasks": {
                         "import-file": { "operation": "import/upload" },
-                        "convert-file": { 
-                            "operation": "convert", 
-                            "input": "import-file", 
-                            "output_format": "docx"
-                        },
+                        "convert-file": { "operation": "convert", "input": "import-file", "output_format": "docx" },
                         "export-file": { "operation": "export/url", "input": "convert-file" }
                     }
                 })
@@ -530,7 +536,6 @@ def handle_pdf_to_docx(p):
             except Exception as e:
                 app.logger.warning(f"CloudConvert failed: {str(e)}")
 
-        # 2. المحرك الاحتياطي (ConvertAPI)
         if ca_key:
             try:
                 convertapi.api_credentials = ca_key
@@ -541,7 +546,6 @@ def handle_pdf_to_docx(p):
             except Exception as e:
                 app.logger.error(f"ConvertAPI Error: {str(e)}")
 
-        # 3. المحرك المحلي الاحتياطي الأخير
         if Converter is not None:
             try:
                 cv = Converter(pdf_path)
@@ -574,7 +578,7 @@ def handle_pdf_to_excel(p):
                         tables = page.extract_tables({"intersection_y_tolerance": 15})
                         if tables:
                             for t_idx, table in enumerate(tables):
-                                cleaned = [[str(c).strip() if c else "" for c in row] for row in table]
+                                cleaned = support_validate_table_structure(table)
                                 if not cleaned: continue
                                 df = pd.DataFrame(cleaned[1:], columns=cleaned[0]) if len(cleaned) > 1 else pd.DataFrame(cleaned)
                                 sheet_name = f"Page {idx+1} Tbl {t_idx+1}"[:31]
@@ -639,8 +643,8 @@ def handle_pdf_to_csv(p):
                     tables = page.extract_tables()
                     if tables:
                         for table in tables:
-                            for row in table:
-                                writer.writerow([str(cell).strip() if cell else "" for cell in row])
+                            for row in support_validate_table_structure(table):
+                                writer.writerow(row)
                                 wrote_any = True
                     else:
                         for line in (page.extract_text() or "").split("\n"):
@@ -682,13 +686,13 @@ def handle_pdf_to_text(p):
             page_count = len(doc)
             err = enforce_pdf_page_limit(page_count, is_arabic)
             if err: return err
-            for page in doc: text += (page.get_text() or "") + "\n"
+            for page in doc: text += support_arabic_text_normalization(page.get_text() or "") + "\n"
         else:
             reader = PdfReader(io.BytesIO(file_bytes))
             page_count = len(reader.pages)
             err = enforce_pdf_page_limit(page_count, is_arabic)
             if err: return err
-            text = "\n".join((page.extract_text() or "") for page in reader.pages)
+            text = "\n".join(support_arabic_text_normalization(page.extract_text() or "") for page in reader.pages)
 
         used_ocr = False
         if is_probably_scanned(text, page_count) and fitz and pytesseract and doc is not None and page_count <= MAX_OCR_PAGES:
@@ -714,13 +718,13 @@ def handle_pdf_to_ppt(p):
             doc = fitz.open(stream=file_bytes, filetype="pdf")
             err = enforce_pdf_page_limit(len(doc), is_arabic)
             if err: return err
-            pages_iter = [(idx, page.get_text() or "") for idx, page in enumerate(doc)]
+            pages_iter = [(idx, support_arabic_text_normalization(page.get_text() or "")) for idx, page in enumerate(doc)]
             doc.close()
         else:
             reader = PdfReader(io.BytesIO(file_bytes))
             err = enforce_pdf_page_limit(len(reader.pages), is_arabic)
             if err: return err
-            pages_iter = [(idx, page.extract_text() or "") for idx, page in enumerate(reader.pages)]
+            pages_iter = [(idx, support_arabic_text_normalization(page.extract_text() or "")) for idx, page in enumerate(reader.pages)]
         for idx, text in pages_iter:
             text = text.strip()
             font_size = 20 if len(text) < 500 else 14
@@ -939,13 +943,13 @@ def handle_pdf_to_pdf_enhanced(p):
             doc = fitz.open(stream=file_bytes, filetype="pdf")
             err = enforce_pdf_page_limit(len(doc), is_arabic)
             if err: return err
-            extracted_text = "\n".join((page.get_text() or "") for page in doc)
+            extracted_text = "\n".join(support_arabic_text_normalization(page.get_text() or "") for page in doc)
             doc.close()
         else:
             reader = PdfReader(io.BytesIO(file_bytes))
             err = enforce_pdf_page_limit(len(reader.pages), is_arabic)
             if err: return err
-            extracted_text = "\n".join((page.extract_text() or "") for page in reader.pages)
+            extracted_text = "\n".join(support_arabic_text_normalization(page.extract_text() or "") for page in reader.pages)
         return file_response(text_to_pdf_bytes(extracted_text, is_arabic), "application/pdf", "Reformatted_Document.pdf")
     except Exception: return bad_request("تعذر قراءة الملف")
 
@@ -1015,12 +1019,12 @@ def handle_word_to_pdf(p):
 
 def handle_text_to_pdf(p):
     if not p.get("text", "").strip(): return bad_request("يرجى إدخال نص")
-    return file_response(text_to_pdf_bytes(p.get("text", ""), p["is_arabic"]), "application/pdf", "Converted_Text.pdf")
+    return file_response(text_to_pdf_bytes(support_arabic_text_normalization(p.get("text", "")), p["is_arabic"]), "application/pdf", "Converted_Text.pdf")
 
 def handle_csv_to_pdf(p):
     file_bytes = get_file_bytes(p)
     text = smart_decode(file_bytes) if file_bytes else p.get("text", "")
-    return file_response(csv_to_pdf_bytes(text, p["is_arabic"]), "application/pdf", "Converted_Table.pdf")
+    return file_response(csv_to_pdf_bytes(support_arabic_text_normalization(text), p["is_arabic"]), "application/pdf", "Converted_Table.pdf")
 
 def handle_excel_to_pdf(p):
     file_bytes = get_file_bytes(p)
@@ -1050,7 +1054,7 @@ def handle_excel_to_pdf(p):
 
 def handle_doc_to_docx(p):
     add_page_numbers = bool(p.get("addPageNumbers"))
-    buf = build_docx_from_text(p.get("text", ""), p["is_arabic"], add_page_numbers=add_page_numbers)
+    buf = build_docx_from_text(support_arabic_text_normalization(p.get("text", "")), p["is_arabic"], add_page_numbers=add_page_numbers)
     return file_response(buf, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "Converted_Document.docx")
 
 def handle_merge_word(p):
@@ -1075,7 +1079,7 @@ def handle_merge_word(p):
 def handle_csv_to_word(p):
     file_bytes = get_file_bytes(p)
     text = smart_decode(file_bytes) if file_bytes else p.get("text", "")
-    rows = parse_csv_text(text)
+    rows = support_validate_table_structure(parse_csv_text(text))
     doc = Document()
     if rows:
         table = doc.add_table(rows=len(rows), cols=len(rows[0]))
@@ -1105,7 +1109,8 @@ def handle_word_to_csv(p):
         buf = io.StringIO()
         writer = csv.writer(buf)
         for table in Document(io.BytesIO(file_bytes)).tables:
-            for row in table.rows: writer.writerow([cell.text.strip() for cell in row.cells])
+            for row in support_validate_table_structure([[cell.text.strip() for cell in r.cells] for r in row.cells]): 
+                writer.writerow(row)
         return file_response(("\ufeff" + buf.getvalue()).encode("utf-8"), "text/csv", "Converted_Data.csv")
     except Exception: return bad_request("فشل التحويل")
 
@@ -1154,7 +1159,7 @@ def handle_excel_to_json(p):
 
 def handle_csv_to_json(p):
     file_bytes = get_file_bytes(p)
-    rows = parse_csv_text(smart_decode(file_bytes) if file_bytes else p.get("text", ""))
+    rows = support_validate_table_structure(parse_csv_text(smart_decode(file_bytes) if file_bytes else p.get("text", "")))
     if not rows: return jsonify({"result": "[]"})
     headers = [h.strip() for h in rows[0]]
     data = [{headers[i]: (r[i].strip() if i < len(r) else "") for i in range(len(headers))} for r in rows[1:]]
@@ -1336,12 +1341,12 @@ def handle_image_to_text(p):
         lang = 'ara+eng' if p["is_arabic"] else 'eng'
         text = pytesseract.image_to_string(img, lang=lang)
         if not text.strip(): return jsonify({"result": "لم يتم العثور على أي نص واضح في الصورة."})
-        return jsonify({"result": text.strip()})
+        return jsonify({"result": support_arabic_text_normalization(text.strip())})
     except Exception: return bad_request("فشل التعرف على النص.")
 
 def handle_text_to_audio(p):
     if gTTS is None: return bad_request("مكتبة الصوت غير مثبتة.")
-    text = p.get("text", "").strip()
+    text = support_arabic_text_normalization(p.get("text", "").strip())
     if not text: return bad_request("يرجى إدخال النص.")
     if len(text) > 5000: return bad_request("النص طويل جداً (الحد الأقصى 5000 حرف).")
     try:
@@ -1353,7 +1358,7 @@ def handle_text_to_audio(p):
 
 def handle_translate_text(p):
     if GoogleTranslator is None: return bad_request("مكتبة الترجمة غير مثبتة.")
-    text = p.get("text", "").strip()
+    text = support_arabic_text_normalization(p.get("text", "").strip())
     if not text: return bad_request("يرجى إدخال النص.")
     if len(text) > 4500: text = text[:4500] 
     try:
@@ -1409,7 +1414,7 @@ def handle_timestamp_converter(p):
 def handle_clean_text(p):
     text = p.get("text", "")
     text = re.sub(r'<[^>]*>?', '', text).replace("&nbsp;", " ")
-    text = re.sub(r'[\u200b\u200c\u200d\ufeff]', '', text)
+    text = support_arabic_text_normalization(text)
     text = re.sub(r' +', ' ', text)
     text = re.sub(r' ,', ',', text)
     return jsonify({"result": text.strip()})
@@ -1604,7 +1609,7 @@ def convert():
     except Exception:
         app.logger.exception(f"convert() error for action={action}")
         gc.collect()
-        return jsonify({"error": "حدث خطأ أثناء المعالجة. يرجى التأكد من الملف والمحاولة مجدداً."}), 500
+        return jsonify({"error": "حدث خطأ أثناء المعالجة. يرجى التأكد من الملف والمحاولة لاحقاً."}), 500
 
 @app.route('/ads.txt')
 def ads_txt(): return "google.com, pub-4343857922748618, DIRECT, f08c47fec0942fa0", 200, {'Content-Type': 'text/plain'}
