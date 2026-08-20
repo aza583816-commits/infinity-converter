@@ -159,7 +159,7 @@ HEAVY_ACTIONS = {
 }
 
 def dynamic_convert_limit():
-    payload = request.get_json(silent=True) or {}
+    payload = request.get_json(silent=True) or request.form or {}
     return "10 per minute" if payload.get("action") in HEAVY_ACTIONS else "30 per minute"
 
 @app.after_request
@@ -210,12 +210,15 @@ def background_worker():
 worker_thread = threading.Thread(target=background_worker, daemon=True)
 worker_thread.start()
 
-def ai_smart_ocr_extraction(image_bytes, is_arabic=True):
+def ai_smart_ocr_extraction(image_bytes, is_arabic=True, lang_code=None):
     if pytesseract is None: return "OCR Library not available."
     try:
         img = Image.open(io.BytesIO(image_bytes)).convert('L')
         img = ImageEnhance.Contrast(img).enhance(2.2)
-        lang = 'ara+eng' if is_arabic else 'eng'
+        if lang_code:
+            lang = lang_code
+        else:
+            lang = 'ara+eng' if is_arabic else 'eng'
         text = pytesseract.image_to_string(img, lang=lang)
         return re.sub(r'[\u200b\u200c\u200d\ufeff]', '', text).strip()
     except Exception as e:
@@ -351,11 +354,22 @@ def shape_arabic(text, wrap_width=None):
         except Exception: return text
     return text
 
-def is_arabic_text(t): return bool(re.search(r"[\u0600-\u06FF]", t or ""))
+def normalize_bidi_text(text):
+    if not text or not is_arabic_text(text): return text
+    if arabic_reshaper and get_display:
+        try:
+            return get_display(arabic_reshaper.reshape(str(text)))
+        except Exception:
+            return text
+    return text
+
+def is_arabic_text(t): return bool(re.search(r"[\u0600-\u06FF]", str(t or "")))
 def pdf_font_name(is_arabic): return ensure_arabic_font() if is_arabic else "Helvetica"
 def file_response(data_bytes, mimetype, filename): return send_file(io.BytesIO(data_bytes), mimetype=mimetype, as_attachment=True, download_name=filename)
 
 def get_file_bytes(p, key="fileBase64"):
+    if "_file_bytes" in p and p["_file_bytes"]:
+        return p["_file_bytes"]
     b64 = p.get(key)
     if not b64: return None
     try: return base64.b64decode(b64.replace('\n', '').replace('\r', ''), validate=True)
@@ -377,6 +391,18 @@ def open_image_safely(file_bytes):
 
 def run_libreoffice_convert(src_path, out_dir):
     subprocess.run(["libreoffice", "--headless", "--nologo", "--nofirststartwizard", "--norestore", "--convert-to", "pdf", src_path, "--outdir", out_dir], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=SUBPROCESS_TIMEOUT)
+
+def normalize_and_pad_grid(grid):
+    """إصلاح ومحاذاة أبعاد مصفوفات الجداول لمنع انحراف الأعمدة"""
+    if not grid: return []
+    max_cols = max(len(row) for row in grid) if grid else 0
+    aligned = []
+    for row in grid:
+        cleaned_row = [str(c).strip() if c is not None else "" for c in row]
+        if len(cleaned_row) < max_cols:
+            cleaned_row.extend([""] * (max_cols - len(cleaned_row)))
+        aligned.append(cleaned_row)
+    return aligned
 
 def auto_fit_excel_columns(writer, sheet_name="Sheet1", add_autofilter=True):
     worksheet = writer.sheets[sheet_name]
@@ -513,12 +539,6 @@ def is_probably_scanned(text, page_count):
 
 def handle_pdf_to_docx(p):
     """المحرك الثلاثي (المحلي + السحابي + الاحتياطي) لضمان أقصى دقة للجداول والنصوص"""
-    import cloudconvert
-    import convertapi
-    import requests
-    import tempfile
-    import os
-
     file_bytes = get_file_bytes(p)
     is_arabic = p.get("is_arabic", False)
     
@@ -537,9 +557,7 @@ def handle_pdf_to_docx(p):
         with open(pdf_path, "wb") as f: 
             f.write(file_bytes)
 
-        # ==========================================
-        # 1. المحرك الداخلي (pdf2docx) - الأقوى للحفاظ على الجداول محلياً
-        # ==========================================
+        # 1. المحرك الداخلي (pdf2docx)
         if Converter is not None:
             try:
                 cv = Converter(pdf_path)
@@ -552,9 +570,7 @@ def handle_pdf_to_docx(p):
             except Exception as e:
                 app.logger.warning(f"Local pdf2docx engine failed: {str(e)}")
 
-        # ==========================================
-        # 2. المحرك السحابي (CloudConvert) - خطة ب
-        # ==========================================
+        # 2. المحرك السحابي (CloudConvert)
         if cc_key:
             try:
                 cloudconvert.configure(api_key=cc_key, sandbox=False)
@@ -588,9 +604,7 @@ def handle_pdf_to_docx(p):
             except Exception as e:
                 app.logger.warning(f"CloudConvert failed, falling back to ConvertAPI. Reason: {str(e)}")
 
-        # ==========================================
-        # 3. المحرك الاحتياطي (ConvertAPI) - خطة ج
-        # ==========================================
+        # 3. المحرك الاحتياطي (ConvertAPI)
         if ca_key:
             try:
                 convertapi.api_credentials = ca_key
@@ -629,19 +643,20 @@ def handle_pdf_to_excel(p):
                         tables = page.extract_tables({"intersection_y_tolerance": 15})
                         if tables:
                             for t_idx, table in enumerate(tables):
-                                cleaned = [[str(c).strip() if c else "" for c in row] for row in table]
-                                if not cleaned: continue
-                                df = pd.DataFrame(cleaned[1:], columns=cleaned[0]) if len(cleaned) > 1 else pd.DataFrame(cleaned)
+                                aligned_table = normalize_and_pad_grid(table)
+                                if not aligned_table: continue
+                                df = pd.DataFrame(aligned_table[1:], columns=aligned_table[0]) if len(aligned_table) > 1 else pd.DataFrame(aligned_table)
                                 sheet_name = f"Page {idx+1} Tbl {t_idx+1}"[:31]
                                 df.to_excel(writer, sheet_name=sheet_name, index=False)
                                 auto_fit_excel_columns(writer, sheet_name, add_autofilter=False)
                                 has_data = True
                         else:
                             text = page.extract_text()
-                            rows = [line.split() for line in (text or "").split("\n") if line.strip()]
-                            if rows:
+                            raw_rows = [line.split() for line in (text or "").split("\n") if line.strip()]
+                            aligned_rows = normalize_and_pad_grid(raw_rows)
+                            if aligned_rows:
                                 sheet_name = f"Page {idx+1}"[:31]
-                                pd.DataFrame(rows).to_excel(writer, sheet_name=sheet_name, index=False, header=False)
+                                pd.DataFrame(aligned_rows).to_excel(writer, sheet_name=sheet_name, index=False, header=False)
                                 auto_fit_excel_columns(writer, sheet_name, add_autofilter=False)
                                 has_data = True
             except Exception: pass
@@ -649,26 +664,24 @@ def handle_pdf_to_excel(p):
             doc = fitz.open(stream=file_bytes, filetype="pdf")
             page_count = len(doc)
             for idx, page in enumerate(doc):
-                rows = [line.split() for line in (page.get_text() or "").split("\n") if line.strip()]
-                if rows:
-                    max_len = max(len(r) for r in rows)
-                    rows = [r + [""] * (max_len - len(r)) for r in rows]
+                raw_rows = [line.split() for line in (page.get_text() or "").split("\n") if line.strip()]
+                aligned_rows = normalize_and_pad_grid(raw_rows)
+                if aligned_rows:
                     sheet_name = f"Page {idx + 1}"[:31]
-                    pd.DataFrame(rows).to_excel(writer, sheet_name=sheet_name, index=False, header=False)
+                    pd.DataFrame(aligned_rows).to_excel(writer, sheet_name=sheet_name, index=False, header=False)
                     auto_fit_excel_columns(writer, sheet_name, add_autofilter=False)
                     has_data = True
             doc.close()
         if not has_data and fitz and pytesseract and page_count <= MAX_OCR_PAGES:
-            lang = 'ara+eng' if is_arabic else 'eng'
+            lang = p.get("ocr_lang") or ('ara+eng' if is_arabic else 'eng')
             doc = fitz.open(stream=file_bytes, filetype="pdf")
             for idx, page in enumerate(doc):
                 ocr_text = ocr_pdf_page_to_text(page, lang)
-                rows = [line.split() for line in ocr_text.split("\n") if line.strip()]
-                if rows:
-                    max_len = max(len(r) for r in rows)
-                    rows = [r + [""] * (max_len - len(r)) for r in rows]
+                raw_rows = [line.split() for line in ocr_text.split("\n") if line.strip()]
+                aligned_rows = normalize_and_pad_grid(raw_rows)
+                if aligned_rows:
                     sheet_name = f"OCR Page {idx + 1}"[:31]
-                    pd.DataFrame(rows).to_excel(writer, sheet_name=sheet_name, index=False, header=False)
+                    pd.DataFrame(aligned_rows).to_excel(writer, sheet_name=sheet_name, index=False, header=False)
                     auto_fit_excel_columns(writer, sheet_name, add_autofilter=False)
                     has_data = True
             doc.close()
@@ -694,13 +707,14 @@ def handle_pdf_to_csv(p):
                     tables = page.extract_tables()
                     if tables:
                         for table in tables:
-                            for row in table:
-                                writer.writerow([str(cell).strip() if cell else "" for cell in row])
+                            aligned = normalize_and_pad_grid(table)
+                            for row in aligned:
+                                writer.writerow([normalize_bidi_text(cell) for cell in row])
                                 wrote_any = True
                     else:
                         for line in (page.extract_text() or "").split("\n"):
                             if line.strip():
-                                writer.writerow(line.split())
+                                writer.writerow([normalize_bidi_text(item) for item in line.split()])
                                 wrote_any = True
         elif fitz:
             doc = fitz.open(stream=file_bytes, filetype="pdf")
@@ -710,15 +724,15 @@ def handle_pdf_to_csv(p):
             for page in doc:
                 for line in (page.get_text() or "").split("\n"):
                     if line.strip():
-                        writer.writerow(line.split())
+                        writer.writerow([normalize_bidi_text(item) for item in line.split()])
                         wrote_any = True
             doc.close()
         if not wrote_any and fitz and pytesseract and page_count <= MAX_OCR_PAGES:
-            lang = 'ara+eng' if is_arabic else 'eng'
+            lang = p.get("ocr_lang") or ('ara+eng' if is_arabic else 'eng')
             doc = fitz.open(stream=file_bytes, filetype="pdf")
             for page in doc:
                 for line in ocr_pdf_page_to_text(page, lang).split("\n"):
-                    if line.strip(): writer.writerow(line.split())
+                    if line.strip(): writer.writerow([normalize_bidi_text(item) for item in line.split()])
             doc.close()
         return file_response(("\ufeff" + buf.getvalue()).encode("utf-8"), "text/csv", "Converted_Data.csv")
     except Exception: return bad_request("تعذر استخراج الجداول")
@@ -747,7 +761,7 @@ def handle_pdf_to_text(p):
 
         used_ocr = False
         if is_probably_scanned(text, page_count) and fitz and pytesseract and doc is not None and page_count <= MAX_OCR_PAGES:
-            lang = 'ara+eng' if is_arabic else 'eng'
+            lang = p.get("ocr_lang") or ('ara+eng' if is_arabic else 'eng')
             ocr_text = "".join(ocr_pdf_page_to_text(page, lang) + "\n" for page in doc)
             if len(ocr_text.strip()) > len(text.strip()):
                 text = ocr_text
@@ -795,16 +809,19 @@ def handle_pdf_to_ppt(p):
     except Exception: return bad_request("فشل تحويل الملف إلى عرض تقديمي.")
 
 def handle_merge_pdf(p):
-    files = p.get("filesBase64") or ([p.get("fileBase64")] if p.get("fileBase64") else [])
+    files = p.get("_files_raw") or []
+    if not files:
+        b64_list = p.get("filesBase64") or ([p.get("fileBase64")] if p.get("fileBase64") else [])
+        for b64 in b64_list:
+            try: files.append(base64.b64decode(b64.replace('\n', '').replace('\r', ''), validate=True))
+            except Exception: return bad_request("أحد الملفات غير صالح")
+
     is_arabic = p["is_arabic"]
     if len(files) < 2: return bad_request("يرجى رفع ملفين PDF على الأقل")
     if len(files) > MAX_MERGE_FILES: return bad_request(f"الحد الأقصى {MAX_MERGE_FILES} ملفات")
     readers = []
     total_pages = 0
-    for b64 in files:
-        raw = None
-        try: raw = base64.b64decode(b64.replace('\n', '').replace('\r', ''), validate=True)
-        except Exception: return bad_request("أحد الملفات غير صالح")
+    for raw in files:
         if not validate_signature(raw, "pdf"): return bad_signature_response(is_arabic)
         try: reader = PdfReader(io.BytesIO(raw))
         except PdfReadError: return bad_request("أحد الملفات تالف أو محمي")
@@ -872,6 +889,27 @@ def handle_compress_pdf(p):
     file_bytes = get_file_bytes(p)
     if not file_bytes: return bad_request("No file provided")
     if not validate_signature(file_bytes, "pdf"): return bad_signature_response(is_arabic)
+
+    # محاولة الضغط التكيفي المتقدم عبر Ghostscript أولاً
+    try:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            in_pdf = os.path.join(tmp_dir, "input.pdf")
+            out_pdf = os.path.join(tmp_dir, "output.pdf")
+            with open(in_pdf, "wb") as f: f.write(file_bytes)
+            
+            gs_cmd = [
+                "gs", "-sDEVICE=pdfwrite", "-dCompatibilityLevel=1.4",
+                "-dPDFSETTINGS=/ebook", "-dNOPAUSE", "-dQUIET", "-dBATCH",
+                f"-sOutputFile={out_pdf}", in_pdf
+            ]
+            res = subprocess.run(gs_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=SUBPROCESS_TIMEOUT)
+            if res.returncode == 0 and os.path.exists(out_pdf) and os.path.getsize(out_pdf) > 0:
+                with open(out_pdf, "rb") as comp_f:
+                    return file_response(comp_f.read(), "application/pdf", "Compressed_Document.pdf")
+    except Exception as gs_err:
+        app.logger.warning(f"Ghostscript compression fallback to pypdf: {str(gs_err)}")
+
+    # Fallback في حال عدم توفر Ghostscript
     try: reader = PdfReader(io.BytesIO(file_bytes))
     except PdfReadError: return bad_request("الملف تالف أو محمي بكلمة سر")
     err = enforce_pdf_page_limit(len(reader.pages), is_arabic)
@@ -1006,12 +1044,6 @@ def handle_pdf_to_pdf_enhanced(p):
 
 # ================= أدوات تحويل المستندات والنصوص (Word, CSV, Excel) =================
 def handle_word_to_pdf(p):
-    import cloudconvert
-    import convertapi
-    import requests
-    import tempfile
-    import os
-
     file_bytes = get_file_bytes(p)
     is_arabic = p.get("is_arabic", False)
     
@@ -1023,15 +1055,22 @@ def handle_word_to_pdf(p):
     cc_key = os.environ.get("CLOUDCONVERT_API_KEY")
     ca_key = os.environ.get("CONVERT_API_KEY")
 
-    if not ca_key and not cc_key:
-        return bad_request("عذراً، خوادم التحويل غير متصلة حالياً.")
-
     with tempfile.TemporaryDirectory() as tmp_dir:
         docx_path = os.path.join(tmp_dir, "document.docx")
         pdf_path = os.path.join(tmp_dir, "document.pdf")
         
         with open(docx_path, "wb") as f: 
             f.write(file_bytes)
+
+        # LibreOffice المحرك المحلي أولاً لتوفير الرصيد السحابي
+        try:
+            run_libreoffice_convert(docx_path, tmp_dir)
+            auto_pdf = os.path.join(tmp_dir, "document.pdf")
+            if os.path.exists(auto_pdf) and os.path.getsize(auto_pdf) > 0:
+                with open(auto_pdf, "rb") as df:
+                    return file_response(df.read(), "application/pdf", "V-Infinity_Converted.pdf")
+        except Exception as local_err:
+            app.logger.warning(f"Local LibreOffice Word-to-PDF failed: {str(local_err)}")
 
         if cc_key:
             try:
@@ -1050,7 +1089,6 @@ def handle_word_to_pdf(p):
                 
                 upload_task = cloudconvert.Task.find(id=job['tasks'][0]['id'])
                 cloudconvert.Task.upload(file_name=docx_path, task=upload_task)
-                
                 job = cloudconvert.Job.wait(id=job['id'])
                 
                 for task in job['tasks']:
@@ -1059,29 +1097,20 @@ def handle_word_to_pdf(p):
                         res = requests.get(export_url, timeout=30)
                         with open(pdf_path, 'wb') as df:
                             df.write(res.content)
-                        
                         with open(pdf_path, "rb") as df: 
                             return file_response(df.read(), "application/pdf", "V-Infinity_Converted.pdf")
-            
             except Exception as e:
-                app.logger.warning(f"CloudConvert failed, falling back to ConvertAPI. Reason: {str(e)}")
+                app.logger.warning(f"CloudConvert failed: {str(e)}")
 
         if ca_key:
             try:
                 convertapi.api_credentials = ca_key
-                result = convertapi.convert(
-                    'pdf',
-                    {'File': docx_path},
-                    from_format='docx',
-                    timeout=120
-                )
+                result = convertapi.convert('pdf', {'File': docx_path}, from_format='docx', timeout=120)
                 result.file.save(pdf_path)
-                
                 with open(pdf_path, "rb") as df: 
                     return file_response(df.read(), "application/pdf", "V-Infinity_Converted.pdf")
-            
             except Exception as e:
-                app.logger.error(f"ConvertAPI Fallback Error: {str(e)}")
+                app.logger.error(f"ConvertAPI Error: {str(e)}")
 
         return bad_request("فشلت عملية التحويل من جميع الخوادم.")
 
@@ -1127,14 +1156,18 @@ def handle_doc_to_docx(p):
 
 def handle_merge_word(p):
     is_arabic = p["is_arabic"]
-    files = p.get("filesBase64") or []
+    files = p.get("_files_raw") or []
+    if not files:
+        b64_list = p.get("filesBase64") or []
+        for b64 in b64_list:
+            try: files.append(base64.b64decode(b64.replace('\n', '').replace('\r', ''), validate=True))
+            except Exception: return bad_request("ملف غير صالح")
+
     if len(files) < 2: return bad_request("يرجى رفع ملفين Word على الأقل")
     if len(files) > MAX_MERGE_FILES: return bad_request(f"الحد الأقصى {MAX_MERGE_FILES} ملفات")
     merged = Document()
     first = True
-    for b64 in files:
-        try: raw = base64.b64decode(b64.replace('\n', '').replace('\r', ''), validate=True)
-        except Exception: return bad_request("ملف غير صالح")
+    for raw in files:
         if not validate_signature(raw, "zip_office"): return bad_signature_response(is_arabic)
         sub_doc = Document(io.BytesIO(raw))
         if not first: merged.add_page_break()
@@ -1147,7 +1180,7 @@ def handle_merge_word(p):
 def handle_csv_to_word(p):
     file_bytes = get_file_bytes(p)
     text = smart_decode(file_bytes) if file_bytes else p.get("text", "")
-    rows = parse_csv_text(text)
+    rows = normalize_and_pad_grid(parse_csv_text(text))
     doc = Document()
     if rows:
         table = doc.add_table(rows=len(rows), cols=len(rows[0]))
@@ -1158,7 +1191,7 @@ def handle_csv_to_word(p):
         for r, row in enumerate(rows):
             for c, val in enumerate(row):
                 cell = table.cell(r, c)
-                cell.text = (val or "").strip()
+                cell.text = normalize_bidi_text(val or "")
                 if p["is_arabic"]:
                     for par in cell.paragraphs:
                         par.alignment = WD_ALIGN_PARAGRAPH.RIGHT
@@ -1177,7 +1210,8 @@ def handle_word_to_csv(p):
         buf = io.StringIO()
         writer = csv.writer(buf)
         for table in Document(io.BytesIO(file_bytes)).tables:
-            for row in table.rows: writer.writerow([cell.text.strip() for cell in row.cells])
+            for row in table.rows: 
+                writer.writerow([normalize_bidi_text(cell.text.strip()) for cell in row.cells])
         return file_response(("\ufeff" + buf.getvalue()).encode("utf-8"), "text/csv", "Converted_Data.csv")
     except Exception: return bad_request("فشل التحويل")
 
@@ -1405,7 +1439,7 @@ def handle_image_to_text(p):
     if err: return err
     try:
         img = enhance_image_for_ocr(img)
-        lang = 'ara+eng' if p["is_arabic"] else 'eng'
+        lang = p.get("ocr_lang") or ('ara+eng' if p["is_arabic"] else 'eng')
         text = pytesseract.image_to_string(img, lang=lang)
         if not text.strip(): return jsonify({"result": "لم يتم العثور على أي نص واضح في الصورة."})
         return jsonify({"result": text.strip()})
@@ -1429,7 +1463,7 @@ def handle_translate_text(p):
     if not text: return bad_request("يرجى إدخال النص.")
     if len(text) > 4500: text = text[:4500] 
     try:
-        target_lang = 'en' if p["is_arabic"] else 'ar'
+        target_lang = p.get("target_lang") or ('en' if p["is_arabic"] else 'ar')
         translated = GoogleTranslator(source='auto', target=target_lang).translate(text)
         return jsonify({"result": translated})
     except Exception: return bad_request("فشلت الترجمة، يرجى المحاولة لاحقاً أو بنص أقصر.")
@@ -1487,7 +1521,6 @@ def handle_clean_text(p):
     return jsonify({"result": text.strip()})
 
 def handle_text_to_qr(p):
-    is_arabic = p["is_arabic"]
     text = p.get("text", "")
     if not text.strip(): return bad_request("يرجى إدخال نص أو رابط")
     if len(text) > 2000: return bad_request("النص طويل جداً")
@@ -1647,7 +1680,16 @@ def robots(): return Response("User-agent: *\nAllow: /\n\nSitemap: https://infin
 @app.route("/convert", methods=["POST"])
 @limiter.limit(dynamic_convert_limit)
 def convert():
-    payload = request.get_json(silent=True)
+    # استخراج البيانات إما من Multipart Form أو JSON تلقائياً
+    is_form = request.content_type and "multipart/form-data" in request.content_type
+    if is_form:
+        payload = request.form.to_dict()
+        files = request.files.getlist("files") or ([request.files.get("file")] if request.files.get("file") else [])
+        payload["_files_raw"] = [f.read() for f in files if f and f.filename]
+        payload["_file_bytes"] = payload["_files_raw"][0] if payload["_files_raw"] else None
+    else:
+        payload = request.get_json(silent=True) or {}
+
     if not isinstance(payload, dict): return bad_request("Invalid request body")
     action = payload.get("action")
     if not isinstance(action, str): return bad_request("Unknown action")
@@ -1656,14 +1698,21 @@ def convert():
     if len(text) > MAX_TEXT_CHARS: return bad_request(f"النص يتجاوز الحد المسموح")
 
     is_arabic = payload.get("lang") == "ar" or is_arabic_text(text)
-    files_to_check = payload.get("filesBase64") or [] if action in NEEDS_MULTIPLE_FILES else ([payload.get("fileBase64")] if payload.get("fileBase64") else [])
-
-    if action in NEEDS_MULTIPLE_FILES and len(files_to_check) > MAX_MERGE_FILES:
-        return jsonify({"error": f"الحد الأقصى {MAX_MERGE_FILES} ملفات"}), 413
-
-    for b64 in files_to_check:
-        if b64 and (len(b64) * 3 / 4) > MAX_FILE_BYTES:
-            return jsonify({"error": f"حجم الملف أكبر من الحد المسموح"}), 413
+    
+    # فحص حجم الملفات المباشرة
+    if payload.get("_files_raw"):
+        if action in NEEDS_MULTIPLE_FILES and len(payload["_files_raw"]) > MAX_MERGE_FILES:
+            return jsonify({"error": f"الحد الأقصى {MAX_MERGE_FILES} ملفات"}), 413
+        for raw in payload["_files_raw"]:
+            if len(raw) > MAX_FILE_BYTES:
+                return jsonify({"error": f"حجم الملف أكبر من الحد المسموح"}), 413
+    else:
+        files_to_check = payload.get("filesBase64") or [] if action in NEEDS_MULTIPLE_FILES else ([payload.get("fileBase64")] if payload.get("fileBase64") else [])
+        if action in NEEDS_MULTIPLE_FILES and len(files_to_check) > MAX_MERGE_FILES:
+            return jsonify({"error": f"الحد الأقصى {MAX_MERGE_FILES} ملفات"}), 413
+        for b64 in files_to_check:
+            if b64 and (len(b64) * 3 / 4) > MAX_FILE_BYTES:
+                return jsonify({"error": f"حجم الملف أكبر من الحد المسموح"}), 413
 
     handler = REGISTRY.get(action)
     if not handler: return bad_request(f"Unknown action: {action}")
