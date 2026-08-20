@@ -205,10 +205,9 @@ _arabic_font_registered = False
 # ==================== الإضافات الذكية والذاكرة المؤقتة المنظفة ====================
 conversion_queue = queue.Queue()
 async_task_results = {}
-TASK_TTL_SECONDS = 1800  # تنظيف المهام بعد 30 دقيقة تلقائياً
+TASK_TTL_SECONDS = 1800
 
 def cache_cleanup_worker():
-    """خيط دوري لحذف المهام القديمة ومنع تسريب الذاكرة"""
     while True:
         try:
             time.sleep(300)
@@ -345,6 +344,41 @@ for action, nameAr, nameEn, type_, iconClass, iconName in TOOLS_DEF:
             {"q": "Are my uploaded files secure?", "a": "Absolutely! Processing is encrypted, and all files are automatically deleted from our servers immediately after you finish."}
         ]
     }
+
+# إضافة صفحات المنافسة والمقارنة لتعزيز تصدر محركات البحث (Competitor Landing Pages)
+COMPARISON_PAGES = {
+    "ilovepdf-alternative": {
+        "slug": "ilovepdf-alternative", "nameAr": "أفضل بديل مجاني لـ iLovePDF", "nameEn": "Best Free iLovePDF Alternative",
+        "type": "none", "iconClass": "i-pdf", "iconName": "fa-trophy",
+        "seo_title_ar": "أفضل بديل مجاني لـ iLovePDF بدون حدود للملفات | V-Infinity",
+        "seo_title_en": "Best Free iLovePDF Alternative without limits | V-Infinity",
+        "seo_desc_ar": "هل تبحث عن بديل مجاني وسريع لـ iLovePDF؟ منصة V-Infinity تتيح تحويل وتعديل ملفات PDF بدون اشتراكات أو حدود يومية مع دعم فائق للعربية.",
+        "seo_desc_en": "Looking for a free and fast alternative to iLovePDF? V-Infinity offers unlimited PDF conversion and editing with zero fees.",
+        "h1_ar": "أفضل بديل مجاني لـ iLovePDF لعام 2026", "h1_en": "The #1 Free iLovePDF Alternative in 2026",
+        "short_desc_ar": "جميع أدوات الـ PDF والمستندات مجانية 100% وبدون قيود أو حدود يومية.",
+        "short_desc_en": "All PDF and document tools 100% free with no daily limits.",
+        "long_desc_ar": "تعتبر V-Infinity البديل الأمثل لمنصة iLovePDF، حيث توفر معالجة سحابية فائقة السرعة مدعومة بالذكاء الاصطناعي لحل مشاكل الخطوط العربية المعكوسة وتنسيق الجداول، دون فرض أي رسوم أو قيود على عدد الملفات.",
+        "long_desc_en": "V-Infinity is the ultimate alternative to iLovePDF, offering AI-powered cloud document processing without restrictions or fees.",
+        "faq_ar": [{"q": "ما الفرق بين V-Infinity و iLovePDF؟", "a": "V-Infinity مجانية بالكامل، لا تفرض قيوداً يومية، وتوفر دعماً فائقاً لمعالجة النصوص العربية بدقة 100%."}],
+        "faq_en": [{"q": "Why choose V-Infinity over iLovePDF?", "a": "V-Infinity is completely free with no limits and advanced AI accuracy for complex documents."}]
+    },
+    "smallpdf-alternative": {
+        "slug": "smallpdf-alternative", "nameAr": "بديل Smallpdf المجاني", "nameEn": "Free Smallpdf Alternative",
+        "type": "none", "iconClass": "i-pdf", "iconName": "fa-bolt",
+        "seo_title_ar": "بديل Smallpdf المجاني بدون تسجيل | V-Infinity",
+        "seo_title_en": "Free Smallpdf Alternative No Sign-up | V-Infinity",
+        "seo_desc_ar": "حول واضغط ملفات PDF مجاناً دون الحاجة لاشتراك Smallpdf. معالجة آمنة وفورية للمستندات والصور.",
+        "seo_desc_en": "Convert and compress PDFs for free without a Smallpdf subscription. Instant and secure cloud tools.",
+        "h1_ar": "بديل Smallpdf المجاني والآمن بالكامل", "h1_en": "Free & Secure Smallpdf Alternative",
+        "short_desc_ar": "معالجة سحابية مشفرة وفورية لجميع ملفاتك دون الحاجة لتسجيل حساب.",
+        "short_desc_en": "Encrypted cloud processing for all your files without registration.",
+        "long_desc_ar": "استمتع بكافة أدوات تحويل وضغط الـ PDF والصور مجاناً دون الانتظار أو الحاجة لدفع اشتراك شهري مثل Smallpdf.",
+        "long_desc_en": "Enjoy all PDF conversion and compression features for free without monthly fees.",
+        "faq_ar": [{"q": "هل يتطلب الموقع إنشاء حساب؟", "a": "لا، يمكنك استخدام كافة الأدوات مباشرة بدون تسجيل."}],
+        "faq_en": [{"q": "Is account registration required?", "a": "No, all tools are instantly accessible without signing up."}]
+    }
+}
+TOOLS_SEO.update(COMPARISON_PAGES)
 
 # ==================== دوال الحماية والمساعدات ====================
 def sanitize_file_content(file_bytes):
@@ -934,8 +968,8 @@ def handle_rotate_pdf(p):
     return file_response(buf.getvalue(), "application/pdf", "Rotated_Document.pdf")
 
 def handle_compress_pdf(p):
-    file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
+    file_bytes = get_file_bytes(p)
     if not file_bytes: return bad_request("No file provided")
     if not validate_signature(file_bytes, "pdf"): return bad_signature_response(is_arabic)
 
