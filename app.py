@@ -478,13 +478,12 @@ def is_probably_scanned(text, page_count):
 
 # ================= أدوات الـ PDF (النسخة الخارقة المطورة) =================
 def handle_pdf_to_docx(p):
-    """تحويل PDF إلى Word بدقة كاملة عبر ConvertAPI مع دعم تام للعربية والجداول"""
+    """تحويل PDF إلى Word بدقة نصوص كاملة مع إجبار المحرك على التعرف على اللغة العربية"""
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
     if not file_bytes: return bad_request("يرجى رفع ملف PDF")
     if not validate_signature(file_bytes, "pdf"): return bad_signature_response(is_arabic)
 
-    # المفتاح الخاص بك
     convertapi.api_credentials = '1e3XUtacpKV01ZupWlK6L6j325EFXGaO'
 
     try:
@@ -495,18 +494,31 @@ def handle_pdf_to_docx(p):
             with open(pdf_path, "wb") as f: 
                 f.write(file_bytes)
             
-            # تنفيذ التحويل السحابي المتوافق تماماً مع النصوص والجداول العربية
-            result = convertapi.convert('docx', {'File': pdf_path}, from_format='pdf')
+            # إرسال إعدادات التعرف على النصوص العربية والجداول بدقة
+            result = convertapi.convert(
+                'docx',
+                {
+                    'File': pdf_path,
+                    'OcrMode': 'accurate',       # يجبر السيرفر على استخراج النصوص بدلاً من قصها كصور
+                    'OcrLanguage': 'ara',        # تحديد اللغة العربية
+                },
+                from_format='pdf'
+            )
             result.file.save(docx_path)
             
             with open(docx_path, "rb") as f: 
                 docx_bytes = f.read()
             
-            return file_response(docx_bytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "Converted_Document.docx")
+            return file_response(
+                docx_bytes,
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "Converted_Document.docx"
+            )
             
     except Exception as e:
         app.logger.error(f"ConvertAPI Error: {str(e)}")
         return bad_request("فشل تحويل الملف عبر المحرك السحابي.")
+
 
 def handle_pdf_to_excel(p):
     file_bytes = get_file_bytes(p)
