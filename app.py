@@ -976,17 +976,112 @@ def handle_pdf_to_pdf_enhanced(p):
 
 # ================= أدوات تحويل المستندات والنصوص (Word, CSV, Excel) =================
 def handle_word_to_pdf(p):
+    import cloudconvert
+    import convertapi
+    import requests
+    import tempfile
+    import os
+
     file_bytes = get_file_bytes(p)
-    is_arabic = p["is_arabic"]
-    if file_bytes:
+    is_arabic = p.get("is_arabic", False)
+    
+    if not file_bytes: 
+        return bad_request("يرجى رفع ملف Word")
+    if not validate_signature(file_bytes, "zip_office"): 
+        return bad_signature_response(is_arabic)
+
+    cc_key = os.environ.get("CLOUDCONVERT_API_KEY")
+    ca_key = os.environ.get("CONVERT_API_KEY")
+
+    if not ca_key and not cc_key:
+        return bad_request("عذراً، خوادم التحويل غير متصلة حالياً.")
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        docx_path = os.path.join(tmp_dir, "document.docx")
+        pdf_path = os.path.join(tmp_dir, "document.pdf")
+        
+        with open(docx_path, "wb") as f: 
+            f.write(file_bytes)
+
+        # ==========================================
+        # 1. المحرك الأساسي (CloudConvert)
+        # ==========================================
+        if cc_key:
+            try:
+                cloudconvert.configure(api_key=cc_key, sandbox=False)
+                job = cloudconvert.Job.create(payload={
+                    "tasks": {
+                        "import-file": { "operation": "import/upload" },
+                        "convert-file": { 
+                            "operation": "convert", 
+                            "input": "import-file", 
+                            "output_format": "pdf"
+                        },
+                        "export-file": { "operation": "export/url", "input": "convert-file" }
+                    }
+                })
+                
+                upload_task = cloudconvert.Task.find(id=job['tasks'][0]['id'])
+                cloudconvert.Task.upload(file_name=docx_path, task=upload_task)
+                
+                job = cloudconvert.Job.wait(id=job['id'])
+                
+                for task in job['tasks']:
+                    if task['name'] == 'export-file' and task['status'] == 'finished':
+                        export_url = task['result']['files'][0]['url']
+                        res = requests.get(export_url, timeout=30)
+                        with open(pdf_path, 'wb') as df:
+                            df.write(res.content)
+                        
+                        with open(pdf_path, "rb") as df: 
+                            return file_response(df.read(), "application/pdf", "V-Infinity_Converted.pdf")
+            
+            except Exception as e:
+                app.logger.warning(f"CloudConvert failed, falling back to ConvertAPI. Reason: {str(e)}")
+
+        # ==========================================
+        # 2. المحرك الاحتياطي (ConvertAPI)
+        # ==========================================
+        if ca_key:
+            try:
+                convertapi.api_credentials = ca_key
+                result = convertapi.convert(
+                    'pdf',
+                    {'File': docx_path},
+                    from_format='docx',
+                    timeout=120
+                )
+                result.file.save(pdf_path)
+                
+                with open(pdf_path, "rb") as df: 
+                    return file_response(df.read(), "application/pdf", "V-Infinity_Converted.pdf")
+            
+            except Exception as e:
+                app.logger.error(f"ConvertAPI Fallback Error: {str(e)}")
+
+        return bad_request("فشلت عملية التحويل من جميع الخوادم.")
+
+    def handle_text_to_pdf(p):
+        if not p.get("text", "").strip(): return bad_request("يرجى إدخال نص")
+        return file_response(text_to_pdf_bytes(p.get("text", ""), p["is_arabic"]), "application/pdf", "Converted_Text.pdf")
+    
+    def handle_csv_to_pdf(p):
+        file_bytes = get_file_bytes(p)
+        text = smart_decode(file_bytes) if file_bytes else p.get("text", "")
+        return file_response(csv_to_pdf_bytes(text, p["is_arabic"]), "application/pdf", "Converted_Table.pdf")
+    
+    def handle_excel_to_pdf(p):
+        file_bytes = get_file_bytes(p)
+        is_arabic = p["is_arabic"]
+        if not file_bytes: return bad_request("يرجى رفع ملف Excel")
         if not validate_signature(file_bytes, "zip_office"): return bad_signature_response(is_arabic)
         try:
             with tempfile.TemporaryDirectory() as tmp_dir:
-                tmp_docx_path = os.path.join(tmp_dir, f"{uuid.uuid4().hex}.docx")
-                with open(tmp_docx_path, "wb") as f: f.write(file_bytes)
-                run_libreoffice_convert(tmp_docx_path, tmp_dir)
-                pdf_path = os.path.join(tmp_dir, f"{os.path.splitext(os.path.basename(tmp_docx_path))[0]}.pdf")
-                if not os.path.exists(pdf_path): return bad_request("فشل التحويل.")
+                tmp_xlsx_path = os.path.join(tmp_dir, f"{uuid.uuid4().hex}.xlsx")
+                with open(tmp_xlsx_path, "wb") as f: f.write(file_bytes)
+                run_libreoffice_convert(tmp_xlsx_path, tmp_dir)
+                pdf_path = os.path.join(tmp_dir, f"{os.path.splitext(os.path.basename(tmp_xlsx_path))[0]}.pdf")
+                if not os.path.exists(pdf_path): return bad_request("تعذر التحويل")
                 reader = PdfReader(pdf_path)
                 err = enforce_pdf_page_limit(len(reader.pages), is_arabic)
                 if err: return err
@@ -997,45 +1092,9 @@ def handle_word_to_pdf(p):
                 apply_ghost_privacy(writer)
                 final_buf = io.BytesIO()
                 writer.write(final_buf)
-                return file_response(final_buf.getvalue(), "application/pdf", "Converted_Document.pdf")
+                return file_response(final_buf.getvalue(), "application/pdf", "Converted_Excel.pdf")
         except subprocess.TimeoutExpired: return bad_request("استغرقت المعالجة وقتاً طويلاً.")
-        except Exception: return bad_request("فشل التحويل. قد يكون السيرفر تحت ضغط.")
-    return file_response(text_to_pdf_bytes(p.get("text", ""), is_arabic), "application/pdf", "Converted_Document.pdf")
-
-def handle_text_to_pdf(p):
-    if not p.get("text", "").strip(): return bad_request("يرجى إدخال نص")
-    return file_response(text_to_pdf_bytes(p.get("text", ""), p["is_arabic"]), "application/pdf", "Converted_Text.pdf")
-
-def handle_csv_to_pdf(p):
-    file_bytes = get_file_bytes(p)
-    text = smart_decode(file_bytes) if file_bytes else p.get("text", "")
-    return file_response(csv_to_pdf_bytes(text, p["is_arabic"]), "application/pdf", "Converted_Table.pdf")
-
-def handle_excel_to_pdf(p):
-    file_bytes = get_file_bytes(p)
-    is_arabic = p["is_arabic"]
-    if not file_bytes: return bad_request("يرجى رفع ملف Excel")
-    if not validate_signature(file_bytes, "zip_office"): return bad_signature_response(is_arabic)
-    try:
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            tmp_xlsx_path = os.path.join(tmp_dir, f"{uuid.uuid4().hex}.xlsx")
-            with open(tmp_xlsx_path, "wb") as f: f.write(file_bytes)
-            run_libreoffice_convert(tmp_xlsx_path, tmp_dir)
-            pdf_path = os.path.join(tmp_dir, f"{os.path.splitext(os.path.basename(tmp_xlsx_path))[0]}.pdf")
-            if not os.path.exists(pdf_path): return bad_request("تعذر التحويل")
-            reader = PdfReader(pdf_path)
-            err = enforce_pdf_page_limit(len(reader.pages), is_arabic)
-            if err: return err
-            writer = PdfWriter()
-            for page in reader.pages:
-                page.compress_content_streams()
-                writer.add_page(page)
-            apply_ghost_privacy(writer)
-            final_buf = io.BytesIO()
-            writer.write(final_buf)
-            return file_response(final_buf.getvalue(), "application/pdf", "Converted_Excel.pdf")
-    except subprocess.TimeoutExpired: return bad_request("استغرقت المعالجة وقتاً طويلاً.")
-    except Exception: return bad_request("تعذر التحويل")
+        except Exception: return bad_request("تعذر التحويل")
 
 def handle_doc_to_docx(p):
     add_page_numbers = bool(p.get("addPageNumbers"))
