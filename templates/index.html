@@ -3,21 +3,16 @@
 <head>
     <!-- أيقونة الموقع الأساسية -->
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
-    <!-- دعم متصفحات أبل وجوجل السريع -->
     <link rel="apple-touch-icon" href="/static/favicon.svg">
-    <!-- تلوين شريط المتصفح في الجوال بلون موقعك -->
     <meta name="theme-color" content="#09090b">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <!-- 🚀 العناوين المتغيرة لـ SEO الذكي -->
     <title>{% if tool_data %}{{ tool_data.seo_title }}{% else %}Infinity Converter - المحول الشامل لملفات PDF والأدوات{% endif %}</title>
     <meta name="description" content="{% if tool_data %}{{ tool_data.seo_desc }}{% else %}منصة Infinity Converter الشاملة والمجانية لتحويل ملفات PDF، Word، Excel، والصور بضغطة زر. معالجة سحابية آمنة وسريعة بدون تخزين لملفاتك. اكتشف أكثر من 40 أداة الآن!{% endif %}">
 
-    <!-- كود جوجل أدسنس -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4343857922748618" crossorigin="anonymous"></script>
 
-    <!-- الخطوط -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -44,13 +39,12 @@
             --c-dev: #8b5cf6;  --bg-dev: #ede9fe;
         }
 
-        /* ====== التحديث الجديد: وضع داكن ملكي وفخم ====== */
         .dark-mode {
-            --bg-body: #09090b;       /* أسود عميق (خلفية الموقع) */
-            --bg-surface: #18181b;    /* رمادي غامق جداً (لون البطاقات) */
-            --text-main: #f4f4f5;     /* أبيض ناصع للنصوص */
-            --text-muted: #a1a1aa;    /* رمادي هادئ للنصوص الفرعية */
-            --border: #27272a;        /* حدود خفيفة جداً */
+            --bg-body: #09090b;       
+            --bg-surface: #18181b;    
+            --text-main: #f4f4f5;     
+            --text-muted: #a1a1aa;    
+            --border: #27272a;        
             --primary: #6366f1;       
             --primary-hover: #4f46e5;
             --upload-bg: rgba(99, 102, 241, 0.05);
@@ -104,14 +98,11 @@
         .workspace-header h1 { font-size: 32px; font-weight: 800; margin-bottom: 10px; color: var(--text-main); }
         .workspace-header p { font-size: 16px; color: var(--text-muted); }
 
-        /* ====== قسم البحث والتصفية ====== */
         .search-filter-container {
             max-width: 1200px; margin: 0 auto 30px; padding: 0 20px;
             display: flex; flex-direction: column; gap: 15px;
         }
-        .search-box {
-            position: relative; width: 100%; max-width: 600px; margin: 0 auto;
-        }
+        .search-box { position: relative; width: 100%; max-width: 600px; margin: 0 auto; }
         .search-box i {
             position: absolute; right: 18px; top: 50%; transform: translateY(-50%);
             color: var(--text-muted); font-size: 18px;
@@ -125,9 +116,7 @@
         }
         .search-box input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
         
-        .filter-buttons {
-            display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 10px;
-        }
+        .filter-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 10px; }
         .filter-buttons button {
             background: var(--bg-surface); border: 1px solid var(--border);
             color: var(--text-muted); padding: 8px 18px; border-radius: 30px;
@@ -135,10 +124,7 @@
             cursor: pointer; transition: all 0.2s;
         }
         .filter-buttons button:hover { border-color: var(--text-muted); color: var(--text-main); }
-        .filter-buttons button.active {
-            background: var(--primary); color: white; border-color: var(--primary);
-        }
-        /* ================================================= */
+        .filter-buttons button.active { background: var(--primary); color: white; border-color: var(--primary); }
 
         .selected-tool-badge {
             display: inline-flex; align-items: center; gap: 8px; background: var(--bg-word); color: var(--c-word);
@@ -179,7 +165,6 @@
 
         .tools-section { width: 100%; max-width: 1200px; margin: 0 auto 60px; padding: 0 20px; }
         
-        /* إخفاء الأقسام برمجياً للبحث */
         .category-group { margin-bottom: 40px; transition: all 0.3s ease;}
         .category-group.hidden { display: none; }
 
@@ -244,9 +229,9 @@
 
             <div id="activeToolArea" style="display: none;">
                 
-                <!-- تنبيه معدل ليتناسب مع الوضع الداكن -->
-                <div id="toolWarning" style="display: none; background: rgba(234, 179, 8, 0.1); color: #ca8a04; padding: 12px; border-radius: 8px; border: 1px solid rgba(234, 179, 8, 0.3); margin-bottom: 20px; font-size: 14px; font-weight: 700;">
-                    <i class="fa-solid fa-triangle-exclamation"></i> 
+                <!-- تنبيه احترافي للذكاء الاصطناعي -->
+                <div id="toolWarning" style="display: none; background: rgba(99, 102, 241, 0.1); color: #6366f1; padding: 12px; border-radius: 8px; border: 1px solid rgba(99, 102, 241, 0.3); margin-bottom: 20px; font-size: 14px; font-weight: 700;">
+                    <i class="fa-solid fa-bolt"></i> 
                     <span id="warningText"></span>
                 </div>
 
@@ -275,22 +260,7 @@
         </div>
     </div>
 
-    <!-- 🚀 قسم الأسئلة الشائعة SEO -->
-    {% if tool_data and tool_data.faqs %}
-    <div class="workspace" style="margin-top: -20px; margin-bottom:40px;">
-        <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 20px; padding: 30px; box-shadow: var(--shadow-sm);">
-            <h2 style="font-size: 22px; font-weight: 800; margin-bottom: 20px; color: var(--text-main);" data-ar="الأسئلة الشائعة حول أداة {{ tool_data.nameAr }}" data-en="Frequently Asked Questions about {{ tool_data.nameEn }}">الأسئلة الشائعة حول أداة {{ tool_data.nameAr }}</h2>
-            {% for faq in tool_data.faqs %}
-            <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--border);">
-                <h3 style="font-size: 16px; color: var(--primary); margin-bottom: 8px;"><i class="fa-solid fa-circle-question"></i> <span data-ar="{{ faq.q_ar }}" data-en="{{ faq.q_en }}">{{ faq.q_ar }}</span></h3>
-                <p style="font-size: 14px; color: var(--text-muted); line-height: 1.6;" data-ar="{{ faq.a_ar }}" data-en="{{ faq.a_en }}">{{ faq.a_ar }}</p>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- 🚀 قسم البحث والتصفية -->
+    <!-- 🚀 قسم البحث والتصفية الملكي -->
     <div class="search-filter-container">
         <div class="search-box">
             <i class="fa-solid fa-search"></i>
@@ -306,14 +276,13 @@
         </div>
     </div>
 
-    <!-- رسالة عند عدم وجود نتائج -->
     <div id="noResultsMsg" data-ar="عذراً، لم يتم العثور على أداة مطابقة لبحثك 😕" data-en="Sorry, no tool matches your search 😕">عذراً، لم يتم العثور على أداة مطابقة لبحثك 😕</div>
 
     <div class="tools-section">
         
         <!-- قسم الطلاب والمعلمين -->
         <div class="category-group" data-category="students">
-            <div class="section-title"><i class="fa-solid fa-graduation-cap" style="color:var(--primary)"></i> <span data-ar="أدوات الطلاب والمعلمين (الجديدة)" data-en="Students & Teachers Tools (New)">أدوات الطلاب والمعلمين (الجديدة)</span></div>
+            <div class="section-title"><i class="fa-solid fa-graduation-cap" style="color:var(--primary)"></i> <span data-ar="أدوات الطلاب والمعلمين" data-en="Students & Teachers Tools">أدوات الطلاب والمعلمين</span></div>
             <div class="tools-grid">
                 <a href="/text-to-audio" class="tool-card" onclick="handleToolClick(event, 'text-to-audio', 'تحويل النص لصوت MP3', 'Text to Audio', 'text', 'i-dev', 'fa-file-audio')">
                     <div class="tool-icon i-dev"><i class="fa-solid fa-file-audio"></i></div>
@@ -391,7 +360,35 @@
                         <h3 data-ar="تقسيم PDF" data-en="Split PDF">تقسيم PDF</h3>
                         <p data-ar="فصل صفحات الـ PDF إلى ملفات مستقلة." data-en="Separate PDF pages into individual files.">فصل صفحات الـ PDF إلى ملفات مستقلة.</p>
                     </div>
-            </a>
+                </a>
+                <a href="/rotate-pdf" class="tool-card" onclick="handleToolClick(event, 'rotate-pdf', 'تدوير صفحات PDF', 'Rotate PDF', 'file', 'i-pdf', 'fa-rotate')">
+                    <div class="tool-icon i-pdf"><i class="fa-solid fa-rotate"></i></div>
+                    <div class="tool-info">
+                        <h3 data-ar="تدوير صفحات PDF" data-en="Rotate PDF">تدوير صفحات PDF</h3>
+                        <p data-ar="تعديل اتجاه صفحات الـ PDF المقلوبة." data-en="Fix the orientation of upside-down PDF pages.">تعديل اتجاه صفحات الـ PDF المقلوبة.</p>
+                    </div>
+                </a>
+                <a href="/compress-pdf" class="tool-card" onclick="handleToolClick(event, 'compress-pdf', 'ضغط ملفات PDF', 'Compress PDF', 'file', 'i-pdf', 'fa-compress')">
+                    <div class="tool-icon i-pdf"><i class="fa-solid fa-compress"></i></div>
+                    <div class="tool-info">
+                        <h3 data-ar="ضغط ملفات PDF" data-en="Compress PDF">ضغط ملفات PDF</h3>
+                        <p data-ar="تقليل حجم ملف الـ PDF لسهولة المشاركة." data-en="Reduce PDF file size for easy sharing.">تقليل حجم ملف الـ PDF لسهولة المشاركة.</p>
+                    </div>
+                </a>
+                <a href="/protect-pdf" class="tool-card" onclick="handleToolClick(event, 'protect-pdf', 'حماية PDF بكلمة سر', 'Protect PDF', 'file', 'i-pdf', 'fa-lock')">
+                    <div class="tool-icon i-pdf"><i class="fa-solid fa-lock"></i></div>
+                    <div class="tool-info">
+                        <h3 data-ar="حماية PDF بكلمة سر" data-en="Protect PDF">حماية PDF بكلمة سر</h3>
+                        <p data-ar="إضافة تشفير آمن لملفك السري." data-en="Add secure encryption to your private file.">إضافة تشفير آمن لملفك السري.</p>
+                    </div>
+                </a>
+                <a href="/unlock-pdf" class="tool-card" onclick="handleToolClick(event, 'unlock-pdf', 'إزالة كلمة سر PDF', 'Unlock PDF', 'file', 'i-pdf', 'fa-unlock')">
+                    <div class="tool-icon i-pdf"><i class="fa-solid fa-unlock"></i></div>
+                    <div class="tool-info">
+                        <h3 data-ar="إزالة كلمة سر PDF" data-en="Unlock PDF">إزالة كلمة سر PDF</h3>
+                        <p data-ar="إزالة التشفير وكلمة المرور من ملفاتك." data-en="Remove encryption and passwords from your files.">إزالة التشفير وكلمة المرور من ملفاتك.</p>
+                    </div>
+                </a>
                 <a href="/pdf-to-pdf" class="tool-card" onclick="handleToolClick(event, 'pdf-to-pdf', 'تنسيق PDF', 'Reformat PDF', 'file', 'i-pdf', 'fa-file-pdf')">
                     <div class="tool-icon i-pdf"><i class="fa-solid fa-file-pdf"></i></div>
                     <div class="tool-info">
@@ -441,6 +438,13 @@
                         <p data-ar="تحويل الجداول النصية إلى مستندات Word." data-en="Convert CSV text into Word documents.">تحويل الجداول النصية إلى مستندات Word.</p>
                     </div>
                 </a>
+                <a href="/merge-word" class="tool-card" onclick="handleToolClick(event, 'merge-word', 'دمج ملفات Word', 'Merge Word', 'multiFile', 'i-word', 'fa-object-group')">
+                    <div class="tool-icon i-word"><i class="fa-solid fa-object-group"></i></div>
+                    <div class="tool-info">
+                        <h3 data-ar="دمج ملفات Word" data-en="Merge Word">دمج ملفات Word</h3>
+                        <p data-ar="جمع عدة ملفات Word في ملف واحد." data-en="Combine multiple Word files into one.">جمع عدة ملفات Word في ملف واحد.</p>
+                    </div>
+                </a>
                 <a href="/text-to-excel" class="tool-card" onclick="handleToolClick(event, 'text-to-excel', 'نص إلى Excel', 'Text to Excel', 'text', 'i-excel', 'fa-file-excel')">
                     <div class="tool-icon i-excel"><i class="fa-solid fa-file-excel"></i></div>
                     <div class="tool-info">
@@ -483,11 +487,11 @@
         <div class="category-group" data-category="image">
             <div class="section-title"><i class="fa-solid fa-image" style="color:var(--c-img)"></i> <span data-ar="أدوات الصور" data-en="Image Tools">أدوات الصور</span></div>
             <div class="tools-grid">
-                <a href="/image-to-text" class="tool-card" onclick="handleToolClick(event, 'image-to-text', 'استخراج نص من صورة', 'Image to Text (OCR)', 'file', 'i-dev', 'fa-file-signature')">
+                <a href="/image-to-text" class="tool-card" onclick="handleToolClick(event, 'image-to-text', 'استخراج نص من صورة (OCR)', 'Image to Text (OCR)', 'file', 'i-dev', 'fa-file-signature')">
                     <div class="tool-icon i-dev"><i class="fa-solid fa-file-signature"></i></div>
                     <div class="tool-info">
                         <h3 data-ar="استخراج نص من صورة" data-en="Image to Text (OCR)">استخراج نص من صورة</h3>
-                        <p data-ar="قراءة واستخراج النصوص من الصور بدقة عالية بالذكاء الاصطناعي." data-en="Extract and read text from images accurately using AI.">قراءة واستخراج النصوص من الصور بدقة عالية بالذكاء الاصطناعي.</p>
+                        <p data-ar="قراءة النصوص من الصور بدقة عالية بالذكاء الاصطناعي." data-en="Extract and read text from images accurately using AI.">قراءة النصوص من الصور بدقة عالية بالذكاء الاصطناعي.</p>
                     </div>
                 </a>
                 <a href="/image-to-pdf" class="tool-card" onclick="handleToolClick(event, 'image-to-pdf', 'صورة إلى PDF', 'Image to PDF', 'file', 'i-img', 'fa-images')">
@@ -502,6 +506,34 @@
                     <div class="tool-info">
                         <h3 data-ar="ضغط الصور" data-en="Compress Image">ضغط الصور</h3>
                         <p data-ar="تقليل حجم الصور مع الحفاظ على الجودة." data-en="Reduce image file size while maintaining quality.">تقليل حجم الصور مع الحفاظ على الجودة.</p>
+                    </div>
+                </a>
+                <a href="/resize-image" class="tool-card" onclick="handleToolClick(event, 'resize-image', 'تغيير أبعاد الصورة', 'Resize Image', 'file', 'i-img', 'fa-expand')">
+                    <div class="tool-icon i-img"><i class="fa-solid fa-expand"></i></div>
+                    <div class="tool-info">
+                        <h3 data-ar="تغيير أبعاد الصورة" data-en="Resize Image">تغيير أبعاد الصورة</h3>
+                        <p data-ar="تعديل طول وعرض الصورة بدقة." data-en="Adjust image width and height precisely.">تعديل طول وعرض الصورة بدقة.</p>
+                    </div>
+                </a>
+                <a href="/rotate-image" class="tool-card" onclick="handleToolClick(event, 'rotate-image', 'تدوير الصورة', 'Rotate Image', 'file', 'i-img', 'fa-rotate')">
+                    <div class="tool-icon i-img"><i class="fa-solid fa-rotate"></i></div>
+                    <div class="tool-info">
+                        <h3 data-ar="تدوير الصورة" data-en="Rotate Image">تدوير الصورة</h3>
+                        <p data-ar="تعديل اتجاه الصورة المقلوبة." data-en="Fix the orientation of an upside-down image.">تعديل اتجاه الصورة المقلوبة.</p>
+                    </div>
+                </a>
+                <a href="/watermark-image" class="tool-card" onclick="handleToolClick(event, 'watermark-image', 'علامة مائية للصورة', 'Watermark Image', 'file', 'i-img', 'fa-copyright')">
+                    <div class="tool-icon i-img"><i class="fa-solid fa-copyright"></i></div>
+                    <div class="tool-info">
+                        <h3 data-ar="علامة مائية للصورة" data-en="Watermark Image">علامة مائية للصورة</h3>
+                        <p data-ar="أضف نصاً لحماية حقوق صورتك." data-en="Add text to protect your image rights.">أضف نصاً لحماية حقوق صورتك.</p>
+                    </div>
+                </a>
+                <a href="/strip-exif" class="tool-card" onclick="handleToolClick(event, 'strip-exif', 'إزالة بيانات EXIF (خصوصية)', 'Strip EXIF Privacy', 'file', 'i-img', 'fa-user-shield')">
+                    <div class="tool-icon i-img"><i class="fa-solid fa-user-shield"></i></div>
+                    <div class="tool-info">
+                        <h3 data-ar="إزالة بيانات الخصوصية" data-en="Strip EXIF Data">إزالة بيانات الخصوصية</h3>
+                        <p data-ar="حذف موقع التقاط الصورة وبيانات الكاميرا." data-en="Remove GPS location and camera data from images.">حذف موقع التقاط الصورة وبيانات الكاميرا.</p>
                     </div>
                 </a>
                 <a href="/image-to-jpg" class="tool-card" onclick="handleToolClick(event, 'image-to-jpg', 'تحويل لـ JPG', 'Convert to JPG', 'file', 'i-img', 'fa-image')">
@@ -602,6 +634,13 @@
                         <p data-ar="تشفير النصوص لحماية البيانات كـ Hash." data-en="Encrypt texts to protect data as Hashes.">تشفير النصوص لحماية البيانات كـ Hash.</p>
                     </div>
                 </a>
+                <a href="/hmac-generator" class="tool-card" onclick="handleToolClick(event, 'hmac-generator', 'توليد HMAC', 'HMAC Generator', 'text', 'i-dev', 'fa-key')">
+                    <div class="tool-icon i-dev"><i class="fa-solid fa-key"></i></div>
+                    <div class="tool-info">
+                        <h3 data-ar="توليد HMAC" data-en="HMAC Generator">توليد HMAC</h3>
+                        <p data-ar="تشفير النصوص باستخدام مفتاح سري." data-en="Encrypt text using a secret key (HMAC).">تشفير النصوص باستخدام مفتاح سري.</p>
+                    </div>
+                </a>
                 <a href="/text-diff" class="tool-card" onclick="handleToolClick(event, 'text-diff', 'مقارنة النصوص', 'Text Compare', 'text', 'i-word', 'fa-not-equal')">
                     <div class="tool-icon i-word"><i class="fa-solid fa-not-equal"></i></div>
                     <div class="tool-info">
@@ -628,6 +667,13 @@
                     <div class="tool-info">
                         <h3 data-ar="توليد باركود QR" data-en="QR Code Generator">توليد باركود QR</h3>
                         <p data-ar="تحويل الروابط والنصوص إلى رمز استجابة سريعة." data-en="Turn links and text into a Quick Response code.">تحويل الروابط والنصوص إلى رمز استجابة سريعة.</p>
+                    </div>
+                </a>
+                <a href="/uuid-generator" class="tool-card" onclick="handleToolClick(event, 'uuid-generator', 'توليد UUID', 'UUID Generator', 'none', 'i-dev', 'fa-fingerprint')">
+                    <div class="tool-icon i-dev"><i class="fa-solid fa-fingerprint"></i></div>
+                    <div class="tool-info">
+                        <h3 data-ar="توليد معرفات UUID" data-en="UUID Generator">توليد معرفات UUID</h3>
+                        <p data-ar="توليد معرفات فريدة وعشوائية للمبرمجين." data-en="Generate random and unique UUIDs.">توليد معرفات فريدة وعشوائية للمبرمجين.</p>
                     </div>
                 </a>
                 <a href="/password-generator" class="tool-card" onclick="handleToolClick(event, 'password-generator', 'توليد كلمة سر', 'Password Generator', 'none', 'i-dev', 'fa-key')">
@@ -680,7 +726,7 @@
     <!-- الفوتر -->
     <div class="workspace">
         <div class="footer-disclaimer">
-            <p data-ar="V-Infinity Converter يوفر مجموعة شاملة من الأدوات الآمنة. تتم معالجة الملفات سحابياً ولا يتم تخزينها أبداً. نحن نستخدم ملفات تعريف الارتباط وخدمات إعلانات جوجل وفقاً للسياسات." data-en="V-Infinity Converter provides a comprehensive suite for secure file conversion. Files are processed on our servers and are never stored. We use cookies and Google AdSense according to policies.">V-Infinity Converter يوفر مجموعة شاملة من الأدوات الآمنة. تتم معالجة الملفات سحابياً ولا يتم تخزينها أبداً. نحن نستخدم ملفات تعريف الارتباط وخدمات إعلانات جوجل وفقاً للسياسات.</p>
+            <p data-ar="V-Infinity Converter يوفر مجموعة شاملة من الأدوات الآمنة المدعومة بالذكاء الاصطناعي. تتم معالجة الملفات سحابياً ولا يتم تخزينها أبداً لحماية خصوصيتك. نحن نستخدم ملفات تعريف الارتباط وخدمات إعلانات جوجل وفقاً للسياسات." data-en="V-Infinity Converter provides a comprehensive suite for secure, AI-powered file conversion. Files are processed on our servers and are never stored. We use cookies and Google AdSense according to policies.">V-Infinity Converter يوفر مجموعة شاملة من الأدوات الآمنة المدعومة بالذكاء الاصطناعي. تتم معالجة الملفات سحابياً ولا يتم تخزينها أبداً لحماية خصوصيتك. نحن نستخدم ملفات تعريف الارتباط وخدمات إعلانات جوجل وفقاً للسياسات.</p>
             <div class="footer-links">
                 <a href="/privacy" data-ar="سياسة الخصوصية" data-en="Privacy Policy">سياسة الخصوصية</a> | 
                 <a href="/terms" data-ar="الشروط والأحكام" data-en="Terms of Service">الشروط والأحكام</a> | 
@@ -697,7 +743,6 @@
         let filesBase64Array = []; 
         let isArabic = true; 
 
-        // 🚀 محرك التوجيه الديناميكي
         function handleToolClick(e, action, nameAr, nameEn, type, iconClass, iconName) {
             e.preventDefault(); 
             window.history.pushState({}, '', '/' + action);
@@ -712,7 +757,6 @@
         });
         {% endif %}
 
-        // 🚀 محرك البحث السريع
         function searchTools() {
             let input = document.getElementById('searchInput').value.toLowerCase();
             let cards = document.querySelectorAll('.tool-card');
@@ -741,7 +785,6 @@
             document.getElementById('noResultsMsg').style.display = hasResults ? 'none' : 'block';
         }
 
-        // 🚀 أزرار التصفية الجانبية
         function filterCategory(category, btnElement) {
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
             btnElement.classList.add('active');
@@ -807,11 +850,11 @@
             
             const warningBox = document.getElementById('toolWarning');
             if(warningBox) {
-                if (action === 'pdf-to-docx') {
+                if (action === 'pdf-to-docx' || action === 'pdf-to-excel' || action === 'image-to-text') {
                     warningBox.style.display = 'block';
-                    document.getElementById('warningText').innerText = isArabic ? 
-                        "ملاحظة: لضمان سرعة التحويل والحفاظ على دقة الجداول، تمت ترقية خوارزمية التعريب." : 
-                        "Note: Upgraded AI processing enabled for maximum table structure accuracy.";
+                    document.getElementById('warningText').innerHTML = isArabic ? 
+                        "هذه الأداة مدعومة بالذكاء الاصطناعي 🧠 لضمان أقصى دقة. قد تستغرق المعالجة بضع ثوانٍ إضافية." : 
+                        "This tool is powered by AI 🧠 for maximum accuracy. Processing may take a few extra seconds.";
                 } else {
                     warningBox.style.display = 'none';
                 }
