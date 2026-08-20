@@ -482,13 +482,6 @@ def is_probably_scanned(text, page_count):
 
 def handle_pdf_to_docx(p):
     """المحرك الهجين الأقوى: CloudConvert كأساسي، و ConvertAPI كاحتياطي طوارئ"""
-    # وضعنا الاستيرادات هنا لضمان عملها 100% وعدم نسيانها
-    import cloudconvert
-    import convertapi
-    import requests
-    import tempfile
-    import os
-
     file_bytes = get_file_bytes(p)
     is_arabic = p.get("is_arabic", False)
     
@@ -547,20 +540,19 @@ def handle_pdf_to_docx(p):
                 app.logger.warning(f"CloudConvert failed, falling back to ConvertAPI. Reason: {str(e)}")
 
         # ==========================================
-        # 2. المحرك الاحتياطي (ConvertAPI)
+        # 2. المحرك الاحتياطي (ConvertAPI) بدون OCR
         # ==========================================
         if ca_key:
             try:
                 convertapi.api_credentials = ca_key
+                # تمت إزالة OcrMode و OcrLanguage ليحافظ على التنسيق والجدول الأصلي
                 result = convertapi.convert(
                     'docx',
                     {
-                        'File': pdf_path,
-                        'OcrMode': 'auto',
-                        'OcrLanguage': 'ar'
+                        'File': pdf_path
                     },
                     from_format='pdf',
-                    timeout=60
+                    timeout=120
                 )
                 result.file.save(docx_path)
                 
