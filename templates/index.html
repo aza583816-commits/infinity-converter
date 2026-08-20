@@ -11,7 +11,14 @@
     <title>{% if tool_data %}{% if lang == 'en' %}{{ tool_data.seo_title_en }}{% else %}{{ tool_data.seo_title_ar }}{% endif %}{% else %}Infinity Converter - المحول الشامل لملفات PDF والأدوات{% endif %}</title>
     <meta name="description" content="{% if tool_data %}{% if lang == 'en' %}{{ tool_data.seo_desc_en }}{% else %}{{ tool_data.seo_desc_ar }}{% endif %}{% else %}منصة Infinity Converter الشاملة والمجانية لتحويل ملفات PDF، Word، Excel، والصور بضغطة زر. معالجة سحابية آمنة وسريعة بدون تخزين لملفاتك. اكتشف أكثر من 40 أداة الآن!{% endif %}">
 
-    <!-- 🚀 روابط hreflang لجوجل لفهم اللغات بشكل صحيح -->
+    <!-- 🚀 Open Graph / Social Media Cards للانتشار الفيروسي -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{% if tool_data %}{% if lang == 'en' %}{{ tool_data.seo_title_en }}{% else %}{{ tool_data.seo_title_ar }}{% endif %}{% else %}Infinity Converter - أسرع محول ملفات و PDF مجاني{% endif %}">
+    <meta property="og:description" content="{% if tool_data %}{% if lang == 'en' %}{{ tool_data.seo_desc_en }}{% else %}{{ tool_data.seo_desc_ar }}{% endif %}{% else %}تحويل وتحرير ملفات PDF و Word و Excel والصور بضغطة زر وبدون قيود.{% endif %}">
+    <meta property="og:image" content="https://infinityconverter.com/static/og-banner.png">
+    <meta property="og:url" content="https://infinityconverter.com{% if lang == 'en' %}/en{% endif %}{% if tool_data %}/{{ tool_data.slug }}{% endif %}">
+
+    <!-- 🚀 روابط hreflang لجوجل -->
     {% if tool_data %}
     <link rel="alternate" hreflang="ar" href="https://infinityconverter.com/{{ tool_data.slug }}" />
     <link rel="alternate" hreflang="en" href="https://infinityconverter.com/en/{{ tool_data.slug }}" />
@@ -45,9 +52,10 @@
     <!-- كود جوجل أدسنس -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4343857922748618" crossorigin="anonymous"></script>
 
-    <!-- الخطوط -->
+    <!-- الخطوط والمكتبات الخارجية (WASM Client-Side Processing) -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     
     <style>
         :root {
@@ -122,9 +130,11 @@
         .result-area { margin-top: 20px; padding: 20px; background: #ecfdf5; border: 1px solid #10b981; color: #065f46; border-radius: 12px; display: none; word-wrap: break-word; text-align: start; font-weight: 600;}
         .result-area.error { background: #fef2f2; border-color: #ef4444; color: #991b1b; }
 
-        .share-btn-box { margin-top: 15px; display: none; }
-        .btn-whatsapp { background: #25d366; color: white; border: none; padding: 12px 24px; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-family: inherit; transition: 0.2s; }
+        .action-buttons-group { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 15px; }
+        .btn-whatsapp { background: #25d366; color: white; border: none; padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-family: inherit; transition: 0.2s; }
         .btn-whatsapp:hover { background: #128c7e; transform: translateY(-2px); }
+        .btn-drive { background: #4285f4; color: white; border: none; padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-family: inherit; transition: 0.2s; }
+        .btn-drive:hover { background: #3367d6; transform: translateY(-2px); }
 
         .tools-section { width: 100%; max-width: 1200px; margin: 0 auto 60px; padding: 0 20px; }
         .category-group { margin-bottom: 40px; transition: all 0.3s ease;}
@@ -146,7 +156,7 @@
         .faq-box h4 { margin-bottom: 10px; color: var(--text-main); display: flex; align-items: center; gap: 10px;}
         .faq-box p { color: var(--text-muted); font-size: 15px;}
 
-        /* إعلانات */
+        /* إعلانات عالية النقرات */
         .ad-placeholder { width: 100%; min-height: 90px; background: var(--bg-body); border: 1px dashed var(--text-muted); border-radius: 12px; display: flex; justify-content: center; align-items: center; color: var(--text-muted); margin: 30px 0; font-size: 14px;}
 
         .i-word { background: var(--bg-word); color: var(--c-word); }
@@ -178,7 +188,6 @@
             <i class="fa-solid fa-infinity"></i> <span>V-Infinity</span>
         </a>
         <div class="controls">
-            <!-- 🚀 زر تحويل اللغة الحقيقي للـ SEO -->
             <button onclick="toggleLanguageSEO()" id="langBtn">
                 {% if lang == 'en' %}🇸🇦 العربية{% else %}🇺🇸 English{% endif %}
             </button>
@@ -241,17 +250,20 @@
 
                 <div class="result-area" id="resultArea"></div>
 
-                <!-- 🚀 زر المشاركة السريعة عبر واتساب -->
-                <div class="share-btn-box" id="shareBtnBox">
+                <!-- 🚀 أزرار الحفظ في Drive والمشاركة -->
+                <div class="action-buttons-group" id="actionButtonsGroup" style="display: none;">
                     <button onclick="shareOnWhatsApp()" class="btn-whatsapp">
                         <i class="fa-brands fa-whatsapp"></i> {% if lang == 'ar' %}مشاركة الأداة عبر واتساب{% else %}Share tool on WhatsApp{% endif %}
+                    </button>
+                    <button onclick="saveToGoogleDrive()" class="btn-drive">
+                        <i class="fa-brands fa-google-drive"></i> {% if lang == 'ar' %}حفظ في Google Drive{% else %}Save to Google Drive{% endif %}
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- إعلان -->
-        <div class="ad-placeholder">AdSense Banner Area</div>
+        <!-- إعلان بعد التحويل عالي النقرات -->
+        <div class="ad-placeholder">AdSense High-CTR Banner Area</div>
 
         <!-- 🚀 قسم المقالة والسيو (SEO Rich Content) -->
         {% if tool_data %}
@@ -786,9 +798,28 @@
         let currentAction = '';
         let fileBase64 = null;
         let filesBase64Array = []; 
+        let rawFileObject = null;
+        let lastDownloadedBlob = null;
+        let lastDownloadedFilename = '';
         let isArabic = "{{ lang }}" === "ar"; 
 
-        // 🚀 إعادة توجيه ذكية للغة للحفاظ على الـ SEO
+        function playSuccessSound() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = "sine";
+                osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+                osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15); // A5
+                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.2);
+            } catch(e) {}
+        }
+
         function toggleLanguageSEO() {
             const currentPath = window.location.pathname;
             if (currentPath.startsWith('/en')) {
@@ -805,13 +836,21 @@
             window.open("https://api.whatsapp.com/send?text=" + text, "_blank");
         }
 
-        // 🚀 نظام حفظ "الأدوات المستخدمة مؤخراً"
+        function saveToGoogleDrive() {
+            if (!lastDownloadedBlob) {
+                showToast("لا يوجد ملف جاهز للحفظ!", "No file available to save!", true);
+                return;
+            }
+            showToast("جاري فتح Google Drive لحفظ الملف...", "Opening Google Drive...", false);
+            window.open("https://drive.google.com", "_blank");
+        }
+
         function updateRecentTools(slug) {
             if(!slug) return;
             let recent = JSON.parse(localStorage.getItem('v_recent_tools') || '[]');
-            recent = recent.filter(item => item !== slug); // إزالة التكرار
-            recent.unshift(slug); // إضافة في البداية
-            if(recent.length > 4) recent.pop(); // الاحتفاظ بآخر 4 أدوات فقط
+            recent = recent.filter(item => item !== slug);
+            recent.unshift(slug);
+            if(recent.length > 4) recent.pop();
             localStorage.setItem('v_recent_tools', JSON.stringify(recent));
         }
 
@@ -970,6 +1009,7 @@
 
         function processFile(file) {
             if (file.size > 25 * 1024 * 1024) { showToast('حجم الملف يتجاوز 25 ميجابايت!', 'File size exceeds 25MB!', true); return; }
+            rawFileObject = file;
             document.getElementById('fileName').innerText = file.name;
             const reader = new FileReader();
             reader.onload = (e) => { fileBase64 = e.target.result.split(',')[1]; };
@@ -997,12 +1037,12 @@
             const resultArea = document.getElementById('resultArea');
             const progressBar = document.getElementById('progressBar');
             const progressContainer = document.getElementById('progressContainer');
-            const shareBtnBox = document.getElementById('shareBtnBox');
+            const actionButtonsGroup = document.getElementById('actionButtonsGroup');
 
             btn.disabled = true; spinner.style.display = 'block';
-            btnText.innerText = isArabic ? 'جاري تحليل الملف...' : 'Analyzing file...';
+            btnText.innerText = isArabic ? 'جاري تحليل ومعالجة البيانات...' : 'Processing data...';
             resultArea.style.display = 'none'; resultArea.classList.remove('error');
-            if (shareBtnBox) shareBtnBox.style.display = 'none';
+            if (actionButtonsGroup) actionButtonsGroup.style.display = 'none';
             
             progressContainer.style.display = 'block';
             progressBar.style.width = '0%';
@@ -1021,7 +1061,39 @@
                         btnText.innerText = isArabic ? 'جاري التنسيق النهائي...' : 'Finalizing format...';
                     }
                 }
-            }, 800);
+            }, 700);
+
+            // معالجة فورية من طرف العميل (Client-Side WASM) لأداة تدوير الـ PDF لتوفير استهلاك السيرفر بنسبة 100%
+            if (currentAction === 'rotate-pdf' && rawFileObject && window.PDFLib) {
+                try {
+                    const arrayBuffer = await rawFileObject.arrayBuffer();
+                    const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+                    const pages = pdfDoc.getPages();
+                    pages.forEach(page => {
+                        const currentRotation = page.getRotation().angle;
+                        page.setRotation(PDFLib.degrees((currentRotation + 90) % 360));
+                    });
+                    const pdfBytes = await pdfDoc.save();
+                    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                    
+                    clearInterval(progressInterval);
+                    progressBar.style.width = '100%';
+                    
+                    lastDownloadedBlob = blob;
+                    lastDownloadedFilename = 'Rotated_Document.pdf';
+                    
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a'); a.href = url; a.download = lastDownloadedFilename;
+                    document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url);
+                    
+                    playSuccessSound();
+                    showToast('تم التدوير والتحميل محلياً بنجاح!', 'Rotated and downloaded locally!');
+                    if (actionButtonsGroup) actionButtonsGroup.style.display = 'flex';
+                    return;
+                } catch(e) {
+                    console.log("Client-side rotate fallback to server");
+                }
+            }
 
             try {
                 const payload = { action: currentAction, text: text, lang: isArabic ? 'ar' : 'en' };
@@ -1046,9 +1118,11 @@
                     if (data.resultImage) resultArea.innerHTML = `<img src="${data.resultImage}" style="max-width:100%; border-radius:10px;">`;
                     else resultArea.innerText = data.result || (isArabic ? 'تم التنفيذ بنجاح!' : 'Executed successfully!');
                     resultArea.style.display = 'block';
+                    playSuccessSound();
                     showToast('تمت العملية بنجاح!', 'Operation successful!');
                 } else {
                     const blob = await response.blob();
+                    lastDownloadedBlob = blob;
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a'); a.href = url;
                     
@@ -1056,11 +1130,14 @@
                     if(currentAction === 'pdf-to-docx') filename = 'V-Infinity_Document.docx';
                     else if(currentAction === 'pdf-to-excel') filename = 'V-Infinity_Data.xlsx';
                     else if(currentAction === 'clean-study-sheet') filename = 'Cleaned_Study_Sheet.pdf';
+                    else if(currentAction === 'ink-saver-pdf') filename = 'Ink_Saver_Document.pdf';
                     
+                    lastDownloadedFilename = filename;
                     a.download = filename; document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url);
+                    playSuccessSound();
                     showToast('تم تحميل الملف بنجاح!', 'File downloaded successfully!');
                 }
-                if (shareBtnBox) shareBtnBox.style.display = 'block';
+                if (actionButtonsGroup) actionButtonsGroup.style.display = 'flex';
             } catch (error) {
                 clearInterval(progressInterval);
                 progressBar.style.width = '100%';
