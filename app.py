@@ -161,12 +161,18 @@ app.config["MAX_CONTENT_LENGTH"] = app_max_content
 app.config["COMPRESS_MIMETYPES"] = ['text/html', 'text/css', 'text/xml', 'application/json', 'application/javascript']
 app.config["COMPRESS_LEVEL"] = 6
 app.config["COMPRESS_MIN_SIZE"] = 500
+app.config["COMPRESS_ALGORITHM"] = ['br', 'gzip']
 
 if Compress:
     Compress(app)
 
+SERVER_START_TIME = time.time()
+TOTAL_REQUESTS_PROCESSED = 0
+
 @app.before_request
 def enforce_custom_domain():
+    global TOTAL_REQUESTS_PROCESSED
+    TOTAL_REQUESTS_PROCESSED += 1
     if request.host == "infinity-converter-1.onrender.com":
         return redirect("https://infinityconverter.com" + request.full_path, code=301)
 
@@ -241,10 +247,10 @@ _arabic_font_registered = False
 conversion_queue = queue.Queue()
 async_task_results = {}
 temporary_share_store = {}
-dedup_conversion_cache = {}  # حفظ نتائج العمليات المكررة بالبصمة لتوفير المعالج
+dedup_conversion_cache = {}
 TASK_TTL_SECONDS = 1800
 SHARE_TTL_SECONDS = 86400
-DEDUP_CACHE_TTL = 21600  # 6 ساعات
+DEDUP_CACHE_TTL = 21600
 
 def cache_cleanup_worker():
     while True:
@@ -2205,11 +2211,28 @@ REGISTRY = {
 
 NEEDS_MULTIPLE_FILES = {"merge-pdf", "merge-word", "pdf-compare"}
 
-# ================= مسارات (Routes) الـ SEO والـ PWA والروابط المؤقتة وتكامل Telegram =================
+# ================= مسارات (Routes) الـ SEO والـ PWA والمراقبة والمقاييس التنبؤية =================
 
 @app.route("/healthz")
 def health_check():
-    return jsonify({"status": "ok", "time": time.time(), "active_tasks": len(async_task_results)}), 200
+    return jsonify({
+        "status": "healthy",
+        "uptime_seconds": int(time.time() - SERVER_START_TIME),
+        "active_queue_tasks": conversion_queue.qsize(),
+        "cached_items": len(dedup_conversion_cache),
+        "total_requests": TOTAL_REQUESTS_PROCESSED
+    }), 200
+
+@app.route("/metrics")
+def metrics():
+    return jsonify({
+        "server": "V-Infinity Cloud Engine",
+        "status": "running",
+        "cached_dedup_count": len(dedup_conversion_cache),
+        "active_shares": len(temporary_share_store),
+        "queue_size": conversion_queue.qsize(),
+        "total_requests_served": TOTAL_REQUESTS_PROCESSED
+    }), 200
 
 @app.route("/api/telegram-webhook", methods=["POST"])
 def telegram_webhook():
@@ -2365,7 +2388,6 @@ def get_task_status(task_id):
 @app.route("/convert", methods=["POST"])
 @limiter.limit(dynamic_convert_limit)
 def convert():
-    # فحص خفي لحظر البوتات والطلبات المباشرة المزيفة
     if request.headers.get("Sec-Fetch-Mode") and request.headers.get("Sec-Fetch-Mode") not in ("cors", "same-origin", "navigate"):
         return jsonify({"error": "Forbidden request origin"}), 403
 
@@ -2404,7 +2426,6 @@ def convert():
     handler = REGISTRY.get(action)
     if not handler: return bad_request(f"Unknown action: {action}")
 
-    # كشف الملفات المكررة بالبصمة (SHA-256 Deduplication Cache) لتوفير المعالج والرام
     file_bytes_direct = get_file_bytes(payload)
     cache_key = None
     if file_bytes_direct and len(file_bytes_direct) < 15 * 1024 * 1024 and action not in ("sign-pdf", "generate-quiz"):
@@ -2413,7 +2434,6 @@ def convert():
         if cached:
             return file_response(cached["bytes"], cached["mimetype"], cached["filename"])
 
-    # تعطيل الـ Garbage Collection أثناء التحويل المكثف لرفع سرعة المعالجة بنسبة 20%
     gc_was_enabled = gc.isenabled()
     if action in HEAVY_ACTIONS and gc_was_enabled:
         gc.disable()
@@ -2422,7 +2442,6 @@ def convert():
         ctx = dict(payload, text=text, is_arabic=is_arabic)
         response = handler(ctx)
         
-        # حفظ النتيجة بالبصمة إذا كانت صالحة
         if cache_key and hasattr(response, "get_data") and response.status_code == 200:
             content_type = response.headers.get("Content-Type", "application/octet-stream")
             if "application" in content_type:
