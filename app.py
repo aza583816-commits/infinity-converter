@@ -18,6 +18,7 @@ import zipfile
 import gc
 import threading
 import queue
+import time
 import cloudconvert
 import convertapi
 import requests
@@ -94,6 +95,11 @@ except Exception:
     pdfplumber = None
 
 try:
+    import tabula
+except Exception:
+    tabula = None
+
+try:
     import pytesseract
 except Exception:
     pytesseract = None
@@ -143,7 +149,7 @@ def enforce_custom_domain():
         return redirect("https://infinityconverter.com" + request.full_path, code=301)
 
 logging.basicConfig(level=logging.INFO)
-CORS(app, resources={r"/convert": {"origins": ALLOWED_ORIGINS}}, supports_credentials=False)
+CORS(app, resources={r"/convert": {"origins": ALLOWED_ORIGINS}, r"/convert-async": {"origins": ALLOWED_ORIGINS}, r"/task-status/*": {"origins": ALLOWED_ORIGINS}, r"/pdf-preview": {"origins": ALLOWED_ORIGINS}}, supports_credentials=False)
 
 limiter = Limiter(
     get_remote_address,
@@ -171,7 +177,7 @@ def set_secure_headers(response):
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     response.headers['X-Permitted-Cross-Domain-Policies'] = 'none'
 
-    if request.path == "/convert":
+    if request.path in ("/convert", "/convert-async", "/pdf-preview"):
         response.headers['Content-Security-Policy'] = "default-src 'none'; frame-ancestors 'self'"
         response.headers['Cache-Control'] = 'no-store'
     return response
@@ -192,16 +198,23 @@ _arabic_font_registered = False
 
 # ==================== الإضافات الذكية المدعومة (طوابير العمل و الذكاء الاصطناعي المحلي) ====================
 conversion_queue = queue.Queue()
+async_task_results = {}
 
 def background_worker():
     while True:
         try:
-            task_func, args, callback = conversion_queue.get()
+            task_id, task_func, args, callback = conversion_queue.get()
             if task_func is None: break
+            if task_id:
+                async_task_results[task_id] = {"status": "processing", "progress": 25}
             try:
                 res = task_func(*args)
+                if task_id:
+                    async_task_results[task_id] = {"status": "completed", "progress": 100, "result": res}
                 if callback: callback(res, None)
             except Exception as e:
+                if task_id:
+                    async_task_results[task_id] = {"status": "failed", "progress": 100, "error": str(e)}
                 if callback: callback(None, str(e))
             finally:
                 conversion_queue.task_done()
@@ -215,10 +228,7 @@ def ai_smart_ocr_extraction(image_bytes, is_arabic=True, lang_code=None):
     try:
         img = Image.open(io.BytesIO(image_bytes)).convert('L')
         img = ImageEnhance.Contrast(img).enhance(2.2)
-        if lang_code:
-            lang = lang_code
-        else:
-            lang = 'ara+eng' if is_arabic else 'eng'
+        lang = lang_code if lang_code else ('ara+eng' if is_arabic else 'eng')
         text = pytesseract.image_to_string(img, lang=lang)
         return re.sub(r'[\u200b\u200c\u200d\ufeff]', '', text).strip()
     except Exception as e:
@@ -237,7 +247,7 @@ TOOLS_DEF = [
     ("protect-pdf", "حماية PDF بكلمة سر", "Protect PDF", "file", "i-pdf", "fa-lock"),
     ("unlock-pdf", "إزالة كلمة سر PDF", "Unlock PDF", "file", "i-pdf", "fa-unlock"),
     ("watermark-pdf", "علامة مائية للـ PDF", "Watermark PDF", "fileText", "i-pdf", "fa-copyright"),
-    ("remove-pdf-pages", "حذف صفحات من PDF", "Remove PDF Pages", "fileText", "i-pdf", "fa-file-circle-minus"),
+    ("remove-pdf-pages", "حذف صفحات من PDF", "Remove PDF Pages", "fileText", "i-pdf", "fa-circle-minus"),
     ("text-to-audio", "تحويل النص لصوت MP3", "Text to Audio", "text", "i-dev", "fa-file-audio"),
     ("translate-text", "مترجم النصوص", "Translate Text", "text", "i-word", "fa-language"),
     ("pdf-to-csv", "PDF إلى CSV", "PDF to CSV", "file", "i-excel", "fa-file-csv"),
@@ -310,8 +320,17 @@ for action, nameAr, nameEn, type_, iconClass, iconName in TOOLS_DEF:
     }
 
 # ==================== دوال الحماية والمساعدات ====================
+def sanitize_file_content(file_bytes):
+    if not file_bytes: return False
+    # فحص خلو الملفات من البرمجيات أو الأوامر التنفيذية التخريبية الشائعة
+    danger_patterns = [b"<?php", b"<script", b"eval(", b"/bin/sh", b"/bin/bash"]
+    for p in danger_patterns:
+        if p in file_bytes[:1024]: return False
+    return True
+
 def validate_signature(file_bytes, kind):
     if not file_bytes: return False
+    if not sanitize_file_content(file_bytes): return False
     if kind == "pdf": return file_bytes[:5] == b"%PDF-"
     if kind == "zip_office": return file_bytes[:4] in (b"PK\x03\x04", b"PK\x05\x06", b"PK\x07\x08")
     if kind == "heic": return b"ftyp" in file_bytes[:32]
@@ -393,7 +412,6 @@ def run_libreoffice_convert(src_path, out_dir):
     subprocess.run(["libreoffice", "--headless", "--nologo", "--nofirststartwizard", "--norestore", "--convert-to", "pdf", src_path, "--outdir", out_dir], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=SUBPROCESS_TIMEOUT)
 
 def normalize_and_pad_grid(grid):
-    """إصلاح ومحاذاة أبعاد مصفوفات الجداول لمنع انحراف الأعمدة"""
     if not grid: return []
     max_cols = max(len(row) for row in grid) if grid else 0
     aligned = []
@@ -538,7 +556,6 @@ def is_probably_scanned(text, page_count):
 # ================= أدوات الـ PDF (النسخة الخارقة المطورة) =================
 
 def handle_pdf_to_docx(p):
-    """المحرك الثلاثي (المحلي + السحابي + الاحتياطي) لضمان أقصى دقة للجداول والنصوص"""
     file_bytes = get_file_bytes(p)
     is_arabic = p.get("is_arabic", False)
     
@@ -557,7 +574,6 @@ def handle_pdf_to_docx(p):
         with open(pdf_path, "wb") as f: 
             f.write(file_bytes)
 
-        # 1. المحرك الداخلي (pdf2docx)
         if Converter is not None:
             try:
                 cv = Converter(pdf_path)
@@ -570,7 +586,6 @@ def handle_pdf_to_docx(p):
             except Exception as e:
                 app.logger.warning(f"Local pdf2docx engine failed: {str(e)}")
 
-        # 2. المحرك السحابي (CloudConvert)
         if cc_key:
             try:
                 cloudconvert.configure(api_key=cc_key, sandbox=False)
@@ -588,7 +603,6 @@ def handle_pdf_to_docx(p):
                 
                 upload_task = cloudconvert.Task.find(id=job['tasks'][0]['id'])
                 cloudconvert.Task.upload(file_name=pdf_path, task=upload_task)
-                
                 job = cloudconvert.Job.wait(id=job['id'])
                 
                 for task in job['tasks']:
@@ -597,28 +611,18 @@ def handle_pdf_to_docx(p):
                         res = requests.get(export_url, timeout=30)
                         with open(docx_path, 'wb') as df:
                             df.write(res.content)
-                        
                         with open(docx_path, "rb") as df: 
                             return file_response(df.read(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "V-Infinity_Cloud.docx")
-            
             except Exception as e:
-                app.logger.warning(f"CloudConvert failed, falling back to ConvertAPI. Reason: {str(e)}")
+                app.logger.warning(f"CloudConvert failed: {str(e)}")
 
-        # 3. المحرك الاحتياطي (ConvertAPI)
         if ca_key:
             try:
                 convertapi.api_credentials = ca_key
-                result = convertapi.convert(
-                    'docx',
-                    {'File': pdf_path},
-                    from_format='pdf',
-                    timeout=120
-                )
+                result = convertapi.convert('docx', {'File': pdf_path}, from_format='pdf', timeout=120)
                 result.file.save(docx_path)
-                
                 with open(docx_path, "rb") as df: 
                     return file_response(df.read(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "V-Infinity_Fallback.docx")
-            
             except Exception as e:
                 app.logger.error(f"ConvertAPI Fallback Error: {str(e)}")
 
@@ -633,7 +637,24 @@ def handle_pdf_to_excel(p):
     with pd.ExcelWriter(buf, engine="openpyxl") as writer:
         has_data = False
         page_count = 0
-        if pdfplumber:
+        
+        # محاولة Tabula لاستخراج الجداول بدقة فائقة
+        if tabula:
+            try:
+                with tempfile.NamedTemporaryFile(suffix=".pdf", delete=True) as tf:
+                    tf.write(file_bytes)
+                    tf.flush()
+                    dfs = tabula.read_pdf(tf.name, pages='all', multiple_tables=True)
+                    for i, table_df in enumerate(dfs):
+                        if not table_df.empty:
+                            sheet_name = f"Table {i+1}"[:31]
+                            table_df.to_excel(writer, sheet_name=sheet_name, index=False)
+                            auto_fit_excel_columns(writer, sheet_name, add_autofilter=False)
+                            has_data = True
+            except Exception as tabula_err:
+                app.logger.warning(f"Tabula extraction skipped: {str(tabula_err)}")
+
+        if not has_data and pdfplumber:
             try:
                 with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
                     page_count = len(pdf.pages)
@@ -660,6 +681,7 @@ def handle_pdf_to_excel(p):
                                 auto_fit_excel_columns(writer, sheet_name, add_autofilter=False)
                                 has_data = True
             except Exception: pass
+
         if not has_data and fitz:
             doc = fitz.open(stream=file_bytes, filetype="pdf")
             page_count = len(doc)
@@ -672,6 +694,7 @@ def handle_pdf_to_excel(p):
                     auto_fit_excel_columns(writer, sheet_name, add_autofilter=False)
                     has_data = True
             doc.close()
+
         if not has_data and fitz and pytesseract and page_count <= MAX_OCR_PAGES:
             lang = p.get("ocr_lang") or ('ara+eng' if is_arabic else 'eng')
             doc = fitz.open(stream=file_bytes, filetype="pdf")
@@ -685,6 +708,7 @@ def handle_pdf_to_excel(p):
                     auto_fit_excel_columns(writer, sheet_name, add_autofilter=False)
                     has_data = True
             doc.close()
+
         if not has_data: pd.DataFrame([["-"]]).to_excel(writer, sheet_name="Sheet1", index=False, header=False)
     return file_response(buf.getvalue(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Converted_Excel.xlsx")
 
@@ -890,7 +914,6 @@ def handle_compress_pdf(p):
     if not file_bytes: return bad_request("No file provided")
     if not validate_signature(file_bytes, "pdf"): return bad_signature_response(is_arabic)
 
-    # محاولة الضغط التكيفي المتقدم عبر Ghostscript أولاً
     try:
         with tempfile.TemporaryDirectory() as tmp_dir:
             in_pdf = os.path.join(tmp_dir, "input.pdf")
@@ -909,7 +932,6 @@ def handle_compress_pdf(p):
     except Exception as gs_err:
         app.logger.warning(f"Ghostscript compression fallback to pypdf: {str(gs_err)}")
 
-    # Fallback في حال عدم توفر Ghostscript
     try: reader = PdfReader(io.BytesIO(file_bytes))
     except PdfReadError: return bad_request("الملف تالف أو محمي بكلمة سر")
     err = enforce_pdf_page_limit(len(reader.pages), is_arabic)
@@ -1062,7 +1084,6 @@ def handle_word_to_pdf(p):
         with open(docx_path, "wb") as f: 
             f.write(file_bytes)
 
-        # LibreOffice المحرك المحلي أولاً لتوفير الرصيد السحابي
         try:
             run_libreoffice_convert(docx_path, tmp_dir)
             auto_pdf = os.path.join(tmp_dir, "document.pdf")
@@ -1639,7 +1660,7 @@ REGISTRY = {
 
 NEEDS_MULTIPLE_FILES = {"merge-pdf", "merge-word"}
 
-# ================= مسارات (Routes) الـ SEO واللغات 🚀 =================
+# ================= مسارات (Routes) الـ SEO واللغات والمعاينة 🚀 =================
 
 @app.route("/")
 def index_ar():
@@ -1677,10 +1698,71 @@ def sitemap():
 @app.route('/robots.txt')
 def robots(): return Response("User-agent: *\nAllow: /\n\nSitemap: https://infinityconverter.com/sitemap.xml\n", mimetype='text/plain')
 
+@app.route("/pdf-preview", methods=["POST"])
+@limiter.limit("20 per minute")
+def get_pdf_preview():
+    file_bytes = None
+    if request.files.get("file"):
+        file_bytes = request.files["file"].read()
+    elif request.json and request.json.get("fileBase64"):
+        file_bytes = base64.b64decode(request.json["fileBase64"])
+
+    if not file_bytes or not validate_signature(file_bytes, "pdf"):
+        return bad_request("Invalid PDF file")
+
+    if not fitz:
+        return bad_request("PyMuPDF required for preview")
+
+    try:
+        doc = fitz.open(stream=file_bytes, filetype="pdf")
+        thumbnails = []
+        max_preview_pages = min(len(doc), 15)
+        for i in range(max_preview_pages):
+            page = doc[i]
+            pix = page.get_pixmap(matrix=fitz.Matrix(0.5, 0.5))
+            b64_thumb = base64.b64encode(pix.tobytes("png")).decode("ascii")
+            thumbnails.append({"page": i + 1, "image": f"data:image/png;base64,{b64_thumb}"})
+        doc.close()
+        return jsonify({"totalPages": len(doc), "previews": thumbnails})
+    except Exception as e:
+        return bad_request(f"Error generating preview: {str(e)}")
+
+@app.route("/convert-async", methods=["POST"])
+@limiter.limit(dynamic_convert_limit)
+def convert_async():
+    is_form = request.content_type and "multipart/form-data" in request.content_type
+    if is_form:
+        payload = request.form.to_dict()
+        files = request.files.getlist("files") or ([request.files.get("file")] if request.files.get("file") else [])
+        payload["_files_raw"] = [f.read() for f in files if f and f.filename]
+        payload["_file_bytes"] = payload["_files_raw"][0] if payload["_files_raw"] else None
+    else:
+        payload = request.get_json(silent=True) or {}
+
+    action = payload.get("action")
+    handler = REGISTRY.get(action)
+    if not handler: return bad_request(f"Unknown action: {action}")
+
+    task_id = str(uuid.uuid4())
+    text = payload.get("text", "") or ""
+    is_arabic = payload.get("lang") == "ar" or is_arabic_text(text)
+    ctx = dict(payload, text=text, is_arabic=is_arabic)
+
+    async_task_results[task_id] = {"status": "queued", "progress": 5}
+    conversion_queue.put((task_id, handler, [ctx], None))
+
+    return jsonify({"task_id": task_id, "status": "queued"})
+
+@app.route("/task-status/<task_id>", methods=["GET"])
+def get_task_status(task_id):
+    task = async_task_results.get(task_id)
+    if not task:
+        return jsonify({"error": "Task not found"}), 404
+    return jsonify(task)
+
 @app.route("/convert", methods=["POST"])
 @limiter.limit(dynamic_convert_limit)
 def convert():
-    # استخراج البيانات إما من Multipart Form أو JSON تلقائياً
     is_form = request.content_type and "multipart/form-data" in request.content_type
     if is_form:
         payload = request.form.to_dict()
@@ -1699,7 +1781,6 @@ def convert():
 
     is_arabic = payload.get("lang") == "ar" or is_arabic_text(text)
     
-    # فحص حجم الملفات المباشرة
     if payload.get("_files_raw"):
         if action in NEEDS_MULTIPLE_FILES and len(payload["_files_raw"]) > MAX_MERGE_FILES:
             return jsonify({"error": f"الحد الأقصى {MAX_MERGE_FILES} ملفات"}), 413
