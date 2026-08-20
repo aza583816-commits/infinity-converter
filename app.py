@@ -478,7 +478,7 @@ def is_probably_scanned(text, page_count):
 
 # ================= أدوات الـ PDF (النسخة الخارقة المطورة) =================
 def handle_pdf_to_docx(p):
-    """تحويل PDF إلى Word مع تفعيل التعرف البصري للغة العربية (OCR) وأسماء ملفات آمنة"""
+    """تحويل PDF إلى Word مع تفعيل التعرف البصري الصحيح للغة العربية (OCR)"""
     file_bytes = get_file_bytes(p)
     is_arabic = p.get("is_arabic", False)
     if not file_bytes: 
@@ -491,20 +491,19 @@ def handle_pdf_to_docx(p):
 
     try:
         with tempfile.TemporaryDirectory() as tmp_dir:
-            # استخدام اسم إنجليزي مؤقت لتفادي أخطاء المسار
             pdf_path = os.path.join(tmp_dir, "document.pdf")
             docx_path = os.path.join(tmp_dir, "document.docx")
             
             with open(pdf_path, "wb") as f: 
                 f.write(file_bytes)
             
-            # إرسال الملف مع تفعيل OCR العربي بدقة كاملة والجداول
+            # القيم الصحيحة المقبولة في خوادمهم للـ OCR العربي
             result = convertapi.convert(
                 'docx',
                 {
                     'File': pdf_path,
-                    'OcrMode': 'accurate',
-                    'OcrLanguage': 'ara'
+                    'OcrMode': 'auto',
+                    'OcrLanguage': 'ar'
                 },
                 from_format='pdf'
             )
