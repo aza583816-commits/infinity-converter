@@ -19,7 +19,7 @@ import gc
 from datetime import datetime, timezone
 from difflib import unified_diff
 
-from flask import Flask, request, jsonify, render_template, send_file, Response
+from flask import Flask, request, jsonify, render_template, send_file, Response, redirect
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -132,7 +132,6 @@ Image.MAX_IMAGE_PIXELS = int(os.environ.get("MAX_IMAGE_PIXELS", 100_000_000))
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = app_max_content
 
-from flask import redirect
 @app.before_request
 def enforce_custom_domain():
     if request.host == "infinity-converter-1.onrender.com":
@@ -186,7 +185,7 @@ def internal_error_handler(e):
 ARABIC_FONT_NAME = "ArabicFont"
 _arabic_font_registered = False
 
-# ==================== القائمة الشاملة لجميع الأدوات (بدون حذف) ====================
+# ==================== القائمة الشاملة لجميع الأدوات ====================
 TOOLS_DEF = [
     ("pdf-to-docx", "PDF إلى Word", "PDF to Word", "file", "i-word", "fa-file-word"),
     ("word-to-pdf", "Word إلى PDF", "Word to PDF", "file", "i-pdf", "fa-file-pdf"),
@@ -248,12 +247,29 @@ TOOLS_DEF = [
     ("unit-converter", "محول الوحدات", "Unit Converter", "text", "i-ppt", "fa-ruler"),
 ]
 
+# 🚀 توليد المحتوى الديناميكي (SEO) لجميع الأدوات
 TOOLS_SEO = {}
 for action, nameAr, nameEn, type_, iconClass, iconName in TOOLS_DEF:
     TOOLS_SEO[action] = {
         "slug": action, "nameAr": nameAr, "nameEn": nameEn, "type": type_, "iconClass": iconClass, "iconName": iconName,
-        "seo_title": f"أداة {nameAr} مجاناً أونلاين | V-Infinity",
-        "seo_desc": f"أفضل أداة سحابية لتنفيذ {nameAr} بضغطة زر. معالجة سريعة وآمنة 100% ومجانية بالكامل بدون تسجيل.",
+        "seo_title_ar": f"أداة {nameAr} مجاناً أونلاين | V-Infinity",
+        "seo_title_en": f"Free {nameEn} Online Tool | V-Infinity",
+        "seo_desc_ar": f"أفضل أداة سحابية لتنفيذ {nameAr} بضغطة زر. معالجة سريعة وآمنة 100% ومجانية بالكامل بدون تخزين للملفات.",
+        "seo_desc_en": f"Best cloud tool for {nameEn} with one click. Fast, secure, and 100% free with no file storage.",
+        "h1_ar": nameAr,
+        "h1_en": nameEn,
+        "short_desc_ar": f"قم بإنجاز {nameAr} بسهولة وبدون تعقيد عبر تقنياتنا المتطورة.",
+        "short_desc_en": f"Easily perform {nameEn} without complexity using our advanced tools.",
+        "long_desc_ar": f"منصة V-Infinity تقدم لك أداة '{nameAr}' المجانية بالكامل. تم تصميم هذه الأداة لتكون سريعة جداً وتعمل بالذكاء الاصطناعي لضمان أعلى جودة ممكنة. أمان ملفاتك هو أولويتنا القصوى، حيث نقوم بمعالجة البيانات سحابياً وحذفها تلقائياً بمجرد انتهاء العملية دون الاحتفاظ بأي نسخ.",
+        "long_desc_en": f"V-Infinity platform offers the completely free '{nameEn}' tool. This tool is designed to be extremely fast and uses advanced AI to ensure the highest quality possible. Your file security is our top priority; we process data in the cloud and automatically delete it once the operation is complete.",
+        "faq_ar": [
+            {"q": f"هل استخدام أداة {nameAr} مجاني؟", "a": "نعم، الأداة مجانية بالكامل ولا تتطلب أي تسجيل أو رسوم مخفية."},
+            {"q": "هل ملفاتي آمنة عند الرفع؟", "a": "بالتأكيد! تتم المعالجة بشكل مشفر، وتُحذف جميع الملفات من خوادمنا تلقائياً فور انتهائك."}
+        ],
+        "faq_en": [
+            {"q": f"Is the {nameEn} tool free to use?", "a": "Yes, the tool is completely free with no hidden fees or registration required."},
+            {"q": "Are my uploaded files secure?", "a": "Absolutely! Processing is encrypted, and all files are automatically deleted from our servers immediately after you finish."}
+        ]
     }
 
 # ==================== دوال الحماية والمساعدات ====================
@@ -439,20 +455,18 @@ def build_docx_from_text(text, is_arabic, add_page_numbers=False):
 
 # ==================== طبقة الذكاء الاصطناعي لتحسين جودة القراءة ====================
 def enhance_image_for_ocr(img):
-    """تنظيف وتوضيح الصورة بالذكاء الاصطناعي لرفع دقة قراءة النص لـ 95%"""
     try:
-        img = img.convert('L') # تحويل لأبيض وأسود للوضوح
-        img = ImageEnhance.Contrast(img).enhance(2.0) # زيادة التباين للخطوط الخفيفة
+        img = img.convert('L')
+        img = ImageEnhance.Contrast(img).enhance(2.0)
         return img
     except: return img
 
 def ocr_pdf_page_to_text(fitz_page, lang):
-    """استخراج النصوص من ملفات الـ PDF الممسوحة ضوئياً"""
     if pytesseract is None: return ""
     try:
         pix = fitz_page.get_pixmap(matrix=fitz.Matrix(2, 2))
         img = Image.open(io.BytesIO(pix.tobytes("png")))
-        img = enhance_image_for_ocr(img) # تنظيف قبل القراءة
+        img = enhance_image_for_ocr(img)
         return pytesseract.image_to_string(img, lang=lang)
     except Exception: return ""
 
@@ -462,15 +476,12 @@ def is_probably_scanned(text, page_count):
     return avg_chars < 15
 
 # ================= أدوات الـ PDF (النسخة الخارقة المطورة) =================
-
 def handle_pdf_to_docx(p):
-    """تحويل PDF إلى Word بقوة ملعونة: يحافظ على الجداول، ويحل مشكلة تداخل العربي"""
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
     if not file_bytes: return bad_request("يرجى رفع ملف PDF")
     if Converter is None: return bad_request("مكتبة pdf2docx غير مثبتة")
     if not validate_signature(file_bytes, "pdf"): return bad_signature_response(is_arabic)
-
     try:
         if fitz:
             doc_check = fitz.open(stream=file_bytes, filetype="pdf")
@@ -478,34 +489,27 @@ def handle_pdf_to_docx(p):
             doc_check.close()
         else: err = enforce_pdf_page_limit(len(PdfReader(io.BytesIO(file_bytes)).pages), is_arabic)
         if err: return err
-
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_pdf_path = os.path.join(tmp_dir, f"{uuid.uuid4().hex}.pdf")
             with open(tmp_pdf_path, "wb") as f: f.write(file_bytes)
             docx_path = os.path.join(tmp_dir, f"{os.path.splitext(os.path.basename(tmp_pdf_path))[0]}.docx")
-            
-            # 1. التحويل مع الحفاظ التام على هيكل الصفحة (الجداول والصور)
             cv = Converter(tmp_pdf_path)
             cv.convert(docx_path, start=0, end=None, kwargs={
-                "maintain_layout": True, # يحفظ الجداول من التكسر
+                "maintain_layout": True,
                 "connected_border_tolerance": 2.5,
                 "line_overlap_threshold": 0.8,
                 "line_margin": 0.2, 
                 "word_margin": 0.2,
             })
             cv.close()
-
-            # 2. كود جبار لإجبار الـ Word يكون (يمين - يسار) بدون ما يكسر التنسيق
             if is_arabic:
                 try:
                     doc = Document(docx_path)
-                    # تعديل الفقرات الأساسية
                     for paragraph in doc.paragraphs:
                         if is_arabic_text(paragraph.text):
                             paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
                             pPr = paragraph._element.get_or_add_pPr()
                             pPr.insert(0, OxmlElement('w:bidi'))
-                    # تعديل الخلايا داخل الجداول الملعونة
                     for table in doc.tables:
                         tblPr = table._element.xpath('w:tblPr')
                         if tblPr: tblPr[0].append(OxmlElement('w:bidiVisual'))
@@ -517,23 +521,19 @@ def handle_pdf_to_docx(p):
                                     pPr.insert(0, OxmlElement('w:bidi'))
                     doc.save(docx_path)
                 except Exception: pass
-
             with open(docx_path, "rb") as f: docx_bytes = f.read()
             return file_response(docx_bytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "Converted_Document.docx")
     except Exception: return bad_request("فشل التحويل، الملف معقد جداً.")
 
 def handle_pdf_to_excel(p):
-    """نظام 4 طبقات قوي لاستخراج الجداول حتى من الملفات المصورة!"""
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
     if not file_bytes: return bad_request("No file provided")
     if not validate_signature(file_bytes, "pdf"): return bad_signature_response(is_arabic)
-
     buf = io.BytesIO()
     with pd.ExcelWriter(buf, engine="openpyxl") as writer:
         has_data = False
         page_count = 0
-        # الطبقة 1: PdfPlumber للجداول المرتبة
         if pdfplumber:
             try:
                 with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
@@ -560,7 +560,6 @@ def handle_pdf_to_excel(p):
                                 auto_fit_excel_columns(writer, sheet_name, add_autofilter=False)
                                 has_data = True
             except Exception: pass
-        # الطبقة 2: PyMuPDF كاحتياط سريع
         if not has_data and fitz:
             doc = fitz.open(stream=file_bytes, filetype="pdf")
             page_count = len(doc)
@@ -574,7 +573,6 @@ def handle_pdf_to_excel(p):
                     auto_fit_excel_columns(writer, sheet_name, add_autofilter=False)
                     has_data = True
             doc.close()
-        # الطبقة 3: OCR للملفات الممسوحة (الذكاء الاصطناعي)
         if not has_data and fitz and pytesseract and page_count <= MAX_OCR_PAGES:
             lang = 'ara+eng' if is_arabic else 'eng'
             doc = fitz.open(stream=file_bytes, filetype="pdf")
@@ -693,24 +691,19 @@ def handle_pdf_to_ppt(p):
             err = enforce_pdf_page_limit(len(reader.pages), is_arabic)
             if err: return err
             pages_iter = [(idx, page.extract_text() or "") for idx, page in enumerate(reader.pages)]
-
         for idx, text in pages_iter:
             text = text.strip()
-            # تصغير الخط ديناميكياً إذا النص طويل
             font_size = 20 if len(text) < 500 else 14
             if len(text) > 1800: text = text[:1797] + "..."
-            
             slide = prs.slides.add_slide(blank_layout)
             t_box = slide.shapes.add_textbox(Inches(0.4), Inches(0.3), Inches(9), Inches(0.8))
             t_box.text_frame.text = f"Page {idx + 1}"
             t_box.text_frame.paragraphs[0].font.size = Pt(24)
             t_box.text_frame.paragraphs[0].font.bold = True
-            
             b_box = slide.shapes.add_textbox(Inches(0.4), Inches(1.2), Inches(9), Inches(5))
             b_box.text_frame.text = text
             b_box.text_frame.word_wrap = True
             for paragraph in b_box.text_frame.paragraphs: paragraph.font.size = Pt(font_size)
-
         buf = io.BytesIO()
         prs.save(buf)
         return file_response(buf.getvalue(), "application/vnd.openxmlformats-officedocument.presentationml.presentation", "Converted_Presentation.pptx")
@@ -896,7 +889,6 @@ def handle_remove_pdf_pages(p):
                     pages_to_remove.update(range(start - 1, end))
                 except Exception: pass
             elif part.isdigit(): pages_to_remove.add(int(part) - 1)
-
         writer = PdfWriter()
         for i, page in enumerate(reader.pages):
             if i not in pages_to_remove: writer.add_page(page)
@@ -928,7 +920,6 @@ def handle_pdf_to_pdf_enhanced(p):
     except Exception: return bad_request("تعذر قراءة الملف")
 
 # ================= أدوات تحويل المستندات والنصوص (Word, CSV, Excel) =================
-
 def handle_word_to_pdf(p):
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
@@ -1275,7 +1266,6 @@ def handle_image_to_text(p):
     img, err = _load_validated_image(p, p["is_arabic"])
     if err: return err
     try:
-        # 🚀 تنظيف الصورة بالذكاء الاصطناعي قبل القراءة لرفع الدقة بشكل ملعون!
         img = enhance_image_for_ocr(img)
         lang = 'ara+eng' if p["is_arabic"] else 'eng'
         text = pytesseract.image_to_string(img, lang=lang)
@@ -1478,22 +1468,38 @@ REGISTRY = {
 
 NEEDS_MULTIPLE_FILES = {"merge-pdf", "merge-word"}
 
-# ================= مسارات (Routes) الـ SEO =================
+# ================= مسارات (Routes) الـ SEO واللغات 🚀 =================
+
 @app.route("/")
+def index_ar():
+    return render_template("index.html", tool_data=None, lang="ar")
+
+@app.route("/en/")
+def index_en():
+    return render_template("index.html", tool_data=None, lang="en")
+
 @app.route("/<tool_slug>")
-def index(tool_slug=None):
-    if tool_slug in ("privacy", "terms", "contact"): return render_template(f"{tool_slug}.html")
-    tool_data = None
-    if tool_slug:
-        if tool_slug not in TOOLS_SEO: return "Page Not Found", 404
-        tool_data = TOOLS_SEO[tool_slug]
-    return render_template("index.html", tool_data=tool_data)
+def tool_page_ar(tool_slug):
+    if tool_slug in ("privacy", "terms", "contact"): return render_template(f"{tool_slug}.html", lang="ar")
+    if tool_slug not in TOOLS_SEO: return "Page Not Found", 404
+    return render_template("index.html", tool_data=TOOLS_SEO[tool_slug], lang="ar")
+
+@app.route("/en/<tool_slug>")
+def tool_page_en(tool_slug):
+    if tool_slug in ("privacy", "terms", "contact"): return render_template(f"{tool_slug}.html", lang="en")
+    if tool_slug not in TOOLS_SEO: return "Page Not Found", 404
+    return render_template("index.html", tool_data=TOOLS_SEO[tool_slug], lang="en")
 
 @app.route('/sitemap.xml')
 def sitemap():
     base_url = "https://infinityconverter.com"
-    urls = [f"<url><loc>{base_url}/</loc><priority>1.0</priority></url>"]
-    for slug in TOOLS_SEO.keys(): urls.append(f"<url><loc>{base_url}/{slug}</loc><priority>0.8</priority></url>")
+    urls = [
+        f"<url><loc>{base_url}/</loc><priority>1.0</priority></url>",
+        f"<url><loc>{base_url}/en/</loc><priority>1.0</priority></url>"
+    ]
+    for slug in TOOLS_SEO.keys(): 
+        urls.append(f"<url><loc>{base_url}/{slug}</loc><priority>0.8</priority></url>")
+        urls.append(f"<url><loc>{base_url}/en/{slug}</loc><priority>0.8</priority></url>")
     xml_content = f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{"".join(urls)}</urlset>'
     return Response(xml_content, mimetype='application/xml')
 
