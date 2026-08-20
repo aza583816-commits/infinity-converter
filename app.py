@@ -478,59 +478,98 @@ def is_probably_scanned(text, page_count):
     return avg_chars < 15
 
 # ================= أدوات الـ PDF (النسخة الخارقة المطورة) =================
+
 def handle_pdf_to_docx(p):
-    """تحويل PDF إلى Word باستخدام المحرك الأقوى عالمياً iLovePDF للحفاظ على العربية والتنسيق"""
+    """المحرك الهجين الأقوى: CloudConvert كأساسي، و ConvertAPI كاحتياطي طوارئ"""
     file_bytes = get_file_bytes(p)
     is_arabic = p.get("is_arabic", False)
+    
     if not file_bytes: 
         return bad_request("يرجى رفع ملف PDF")
     if not validate_signature(file_bytes, "pdf"): 
         return bad_signature_response(is_arabic)
 
-    # سحب المفتاح الجديد من Render
-    public_key = os.environ.get("ILOVEPDF_PUBLIC_KEY")
-    
-    if not public_key:
-        return bad_request("عذراً، لم يتم إعداد مفتاح iLovePDF في السيرفر.")
+    # سحب المفاتيح من الخزنة
+    cc_key = os.environ.get("CLOUDCONVERT_API_KEY")
+    ca_key = os.environ.get("CONVERT_API_KEY")
 
-    try:
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            pdf_path = os.path.join(tmp_dir, "document.pdf")
+    if not ca_key and not cc_key:
+        return bad_request("عذراً، خوادم التحويل غير متصلة حالياً.")
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        pdf_path = os.path.join(tmp_dir, "document.pdf")
+        docx_path = os.path.join(tmp_dir, "document.docx")
+        
+        with open(pdf_path, "wb") as f: 
+            f.write(file_bytes)
+
+        # ==========================================
+        # 1. المحرك الأساسي (CloudConvert) - دقة 99%
+        # ==========================================
+        if cc_key:
+            try:
+                cloudconvert.configure(api_key=cc_key, sandbox=False)
+                job = cloudconvert.Job.create(payload={
+                    "tasks": {
+                        "import-file": { "operation": "import/upload" },
+                        "convert-file": { 
+                            "operation": "convert", 
+                            "input": "import-file", 
+                            "output_format": "docx",
+                            "engine": "solid" # أقوى محرك عالمي مدعوم لديهم
+                        },
+                        "export-file": { "operation": "export/url", "input": "convert-file" }
+                    }
+                })
+                
+                # رفع الملف
+                upload_task = cloudconvert.Task.find(id=job['tasks'][0]['id'])
+                cloudconvert.Task.upload(file_name=pdf_path, task=upload_task)
+                
+                # انتظار المعالجة
+                job = cloudconvert.Job.wait(id=job['id'])
+                
+                # استخراج النتيجة
+                for task in job['tasks']:
+                    if task['name'] == 'export-file' and task['status'] == 'finished':
+                        export_url = task['result']['files'][0]['url']
+                        res = requests.get(export_url, timeout=30)
+                        with open(docx_path, 'wb') as df:
+                            df.write(res.content)
+                        
+                        with open(docx_path, "rb") as df: 
+                            return file_response(df.read(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "Converted_Document_Pro.docx")
             
-            # حفظ الملف المرفوع
-            with open(pdf_path, "wb") as f: 
-                f.write(file_bytes)
+            except Exception as e:
+                # إذا فشل الأول (خلص الرصيد مثلاً)، يسجل الخطأ في اللوج وينتقل للثاني فوراً
+                app.logger.warning(f"CloudConvert failed, falling back to ConvertAPI. Reason: {str(e)}")
+
+        # ==========================================
+        # 2. المحرك الاحتياطي (ConvertAPI) - خطة الطوارئ
+        # ==========================================
+        if ca_key:
+            try:
+                convertapi.api_credentials = ca_key
+                result = convertapi.convert(
+                    'docx',
+                    {
+                        'File': pdf_path,
+                        'OcrMode': 'auto',
+                        'OcrLanguage': 'ar'
+                    },
+                    from_format='pdf',
+                    timeout=60
+                )
+                result.file.save(docx_path)
+                
+                with open(docx_path, "rb") as df: 
+                    return file_response(df.read(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "Converted_Document.docx")
             
-            # بدء سحر iLovePDF
-            ilovepdf = ILovePdf(public_key, verify_ssl=True)
-            task = ilovepdf.new_task('pdfword')
-            task.add_file(pdf_path)
-            task.set_output_folder(tmp_dir)
-            task.execute()
-            task.download()
-            
-            # البحث عن ملف الوورد الناتج وتجهيزه للتحميل
-            docx_path = None
-            for file in os.listdir(tmp_dir):
-                if file.endswith('.docx'):
-                    docx_path = os.path.join(tmp_dir, file)
-                    break
-                    
-            if not docx_path:
-                raise Exception("فشل العثور على الملف بعد التحويل.")
-            
-            with open(docx_path, "rb") as f: 
-                docx_bytes = f.read()
-            
-            return file_response(
-                docx_bytes,
-                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                "Converted_Document.docx"
-            )
-            
-    except Exception as e:
-        app.logger.error(f"iLovePDF Error: {str(e)}")
-        return bad_request("حدث خطأ أثناء معالجة الملف، يرجى المحاولة مرة أخرى.")
+            except Exception as e:
+                app.logger.error(f"ConvertAPI Fallback Error: {str(e)}")
+                return bad_request("حدث ضغط عالي جداً على الخوادم، يرجى المحاولة بعد قليل.")
+
+        return bad_request("فشلت عملية التحويل من جميع الخوادم.")
 
 def handle_pdf_to_excel(p):
     file_bytes = get_file_bytes(p)
