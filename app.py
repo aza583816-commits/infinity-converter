@@ -479,7 +479,7 @@ def is_probably_scanned(text, page_count):
 
 # ================= أدوات الـ PDF (النسخة الخارقة المطورة) =================
 def handle_pdf_to_docx(p):
-    """تحويل PDF إلى Word مع تفعيل التعرف البصري الصحيح للغة العربية (OCR)"""
+    """تحويل PDF إلى Word باستخدام المحرك الأقوى عالمياً iLovePDF للحفاظ على العربية والتنسيق"""
     file_bytes = get_file_bytes(p)
     is_arabic = p.get("is_arabic", False)
     if not file_bytes: 
@@ -487,28 +487,37 @@ def handle_pdf_to_docx(p):
     if not validate_signature(file_bytes, "pdf"): 
         return bad_signature_response(is_arabic)
 
-    # سحب المفتاح الآمن من خادم Render
-    convertapi.api_credentials = os.environ.get("CONVERT_API_KEY")
+    # سحب المفتاح الجديد من Render
+    public_key = os.environ.get("ILOVEPDF_PUBLIC_KEY")
+    
+    if not public_key:
+        return bad_request("عذراً، لم يتم إعداد مفتاح iLovePDF في السيرفر.")
 
     try:
         with tempfile.TemporaryDirectory() as tmp_dir:
             pdf_path = os.path.join(tmp_dir, "document.pdf")
-            docx_path = os.path.join(tmp_dir, "document.docx")
             
+            # حفظ الملف المرفوع
             with open(pdf_path, "wb") as f: 
                 f.write(file_bytes)
             
-            # القيم الصحيحة المقبولة في خوادمهم للـ OCR العربي
-            result = convertapi.convert(
-                'docx',
-                {
-                    'File': pdf_path,
-                    'OcrMode': 'auto',
-                    'OcrLanguage': 'ar'
-                },
-                from_format='pdf'
-            )
-            result.file.save(docx_path)
+            # بدء سحر iLovePDF
+            ilovepdf = ILovePdf(public_key, verify_ssl=True)
+            task = ilovepdf.new_task('pdfword')
+            task.add_file(pdf_path)
+            task.set_output_folder(tmp_dir)
+            task.execute()
+            task.download()
+            
+            # البحث عن ملف الوورد الناتج وتجهيزه للتحميل
+            docx_path = None
+            for file in os.listdir(tmp_dir):
+                if file.endswith('.docx'):
+                    docx_path = os.path.join(tmp_dir, file)
+                    break
+                    
+            if not docx_path:
+                raise Exception("فشل العثور على الملف بعد التحويل.")
             
             with open(docx_path, "rb") as f: 
                 docx_bytes = f.read()
@@ -520,7 +529,7 @@ def handle_pdf_to_docx(p):
             )
             
     except Exception as e:
-        app.logger.error(f"ConvertAPI Error: {str(e)}")
+        app.logger.error(f"iLovePDF Error: {str(e)}")
         return bad_request("حدث خطأ أثناء معالجة الملف، يرجى المحاولة مرة أخرى.")
 
 def handle_pdf_to_excel(p):
