@@ -33,10 +33,8 @@ os.environ["MKL_NUM_THREADS"] = "2"
 os.environ["VECLIB_MAXIMUM_THREADS"] = "2"
 os.environ["NUMEXPR_NUM_THREADS"] = "2"
 
-# تقييد سقف الذاكرة على مستوى نواة النظام لحماية الخادم من الانهيار (POSIX OOM Guard)
 try:
     import resource
-    # تعيين سقف أقصى للذاكرة الافتراضية لكل عملية فرعية بـ 1.5 جيجابايت
     MAX_VIRTUAL_MEM = 1536 * 1024 * 1024
     resource.setrlimit(resource.RLIMIT_AS, (MAX_VIRTUAL_MEM, MAX_VIRTUAL_MEM))
 except Exception:
@@ -182,7 +180,17 @@ TOTAL_REQUESTS_PROCESSED = 0
 def enforce_custom_domain():
     global TOTAL_REQUESTS_PROCESSED
     TOTAL_REQUESTS_PROCESSED += 1
-    if request.host == "infinity-converter-1.onrender.com":
+    
+    # استثناء مسارات الصحة وملفات الأرشفة والـ API لتفادي أي حلقة توجيه لا نهائية تضر بروبوتات جوجل
+    if request.path in ("/healthz", "/metrics", "/manifest.json", "/robots.txt", "/sitemap.xml") or request.path.startswith("/api/") or request.path.startswith("/static/"):
+        return
+    
+    parsed_host = request.host.split(':')[0]
+    if parsed_host == "infinity-converter-1.onrender.com":
+        return redirect("https://infinityconverter.com" + request.full_path, code=301)
+        
+    proto = request.headers.get('X-Forwarded-Proto', 'http')
+    if proto == 'http' and parsed_host == 'infinityconverter.com':
         return redirect("https://infinityconverter.com" + request.full_path, code=301)
 
 logging.basicConfig(level=logging.INFO)
@@ -197,7 +205,6 @@ CORS(app, resources={
 }, supports_credentials=False)
 
 def advanced_fingerprint_key():
-    """احتساب قيد الاستخدام بناءً على IP مع بصمة المتصفح لتفادي تجاوز الحدود"""
     remote_ip = get_remote_address()
     user_agent = request.headers.get("User-Agent", "generic")
     ua_hash = hashlib.md5(user_agent.encode()).hexdigest()[:8]
@@ -462,7 +469,6 @@ TOOLS_SEO.update(COMPARISON_PAGES)
 
 # ==================== دوال الحماية والمساعدات المتقدمة ====================
 def sanitize_file_content(file_bytes):
-    """فحص المحتوى الثنائي العميق لمنع رفع الشيل والبرمجيات الخبيثة"""
     if not file_bytes: return False
     danger_patterns = [b"<?php", b"<script", b"eval(", b"/bin/sh", b"/bin/bash", b"powershell", b"WScript.Shell"]
     for p in danger_patterns:
@@ -470,13 +476,11 @@ def sanitize_file_content(file_bytes):
     return True
 
 def validate_zip_bomb(file_bytes):
-    """درع فحص القنابل المضغوطة Decompression / Zip-Bomb Guard"""
     try:
         with zipfile.ZipFile(io.BytesIO(file_bytes)) as zf:
             total_uncompressed = 0
             for file_info in zf.infolist():
                 total_uncompressed += file_info.file_size
-                # رفض أي ملف يتجاوز حجمه بعد فك الضغط 100 ميجابايت أو نسبة ضغط غير طبيعية
                 if total_uncompressed > 100 * 1024 * 1024:
                     return False
             if len(file_bytes) > 0 and (total_uncompressed / len(file_bytes)) > 15:
@@ -503,7 +507,6 @@ def enforce_pdf_page_limit(page_count, is_arabic):
     return None
 
 def apply_ghost_privacy(writer):
-    """تطهير الميتاداتا وحذف بيانات المؤلف ومسار الجهاز لضمان الخصوصية التامة"""
     try: writer.add_metadata({"/Author": "", "/Creator": "", "/Producer": "", "/CreationDate": "", "/ModDate": ""})
     except Exception: pass
 
@@ -544,10 +547,7 @@ def normalize_bidi_text(text):
 
 def is_arabic_text(t): return bool(re.search(r"[\u0600-\u06FF]", str(t or "")))
 def pdf_font_name(is_arabic): return ensure_arabic_font() if is_arabic else "Helvetica"
-def file_response(data_bytes, mimetype, filename): 
-    # إرجاع الملف وتدمير مصفوفة البايتات المؤقتة فور إرسالها
-    res = send_file(io.BytesIO(data_bytes), mimetype=mimetype, as_attachment=True, download_name=filename)
-    return res
+def file_response(data_bytes, mimetype, filename): return send_file(io.BytesIO(data_bytes), mimetype=mimetype, as_attachment=True, download_name=filename)
 
 def get_file_bytes(p, key="fileBase64"):
     if "_file_bytes" in p and p["_file_bytes"]:
@@ -1080,8 +1080,9 @@ def handle_compress_pdf(p):
 
     try:
         with tempfile.TemporaryDirectory() as tmp_dir:
-            in_pdf = os.path.join(tmp_dir, f"{uuid.uuid4().hex}.pdf")
-            out_pdf = os.path.join(tmp_dir, f"{uuid.uuid4().hex}_comp.pdf")
+            unique_id = uuid.uuid4().hex
+            in_pdf = os.path.join(tmp_dir, f"{unique_id}_in.pdf")
+            out_pdf = os.path.join(tmp_dir, f"{unique_id}_out.pdf")
             with open(in_pdf, "wb") as f: f.write(file_bytes)
             
             gs_cmd = [
@@ -1206,7 +1207,7 @@ def handle_remove_pdf_pages(p):
         final_buf = io.BytesIO()
         writer.write(final_buf)
         return file_response(final_buf.getvalue(), "application/pdf", "Edited_Document.pdf")
-    except Exception: return bad_request("فشل قص الصفحات، يرجى كتابة الأرقام بشكل صحيح.")
+    except Exception: return bad_request("فشل قص الصفحات، يرجى كتابة أرقام الصفحات بشكل صحيح.")
 
 def handle_pdf_to_pdf_enhanced(p):
     file_bytes = get_file_bytes(p)
@@ -1274,7 +1275,7 @@ def handle_word_to_pdf(p):
                 })
                 
                 upload_task = cloudconvert.Task.find(id=job['tasks'][0]['id'])
-                cloudconvert.Task.upload(file_name=docx_path, task=upload_task)
+                cloudconvert.Task.upload(file_name=pdf_path, task=upload_task)
                 job = cloudconvert.Job.wait(id=job['id'])
                 
                 for task in job['tasks']:
