@@ -217,7 +217,7 @@ TOOLS_DEF = [
     ("excel-to-json", "Excel إلى JSON", "Excel to JSON", "file", "i-dev", "fa-code"),
     ("csv-to-json", "CSV إلى JSON", "CSV to JSON", "fileText", "i-dev", "fa-code"),
     ("text-to-csv", "نص إلى CSV", "Text to CSV", "text", "i-excel", "fa-file-csv"),
-    ("json-to-csv", "JSON إلى CSV", "JSON to CSV", "fileText", "i-dev", "fa-file-csv"),
+    ("json-to-csv", "JSON إلى CSV", "JSON to CSV", "fileText", "i-excel", "fa-file-csv"),
     ("image-to-pdf", "صورة إلى PDF", "Image to PDF", "file", "i-img", "fa-images"),
     ("compress-image", "ضغط الصور", "Compress Image", "file", "i-excel", "fa-compress"),
     ("image-to-jpg", "تحويل لـ JPG", "Convert to JPG", "file", "i-img", "fa-image"),
@@ -250,7 +250,6 @@ TOOLS_DEF = [
     ("unit-converter", "محول الوحدات", "Unit Converter", "text", "i-ppt", "fa-ruler"),
 ]
 
-# 🚀 توليد المحتوى الديناميكي (SEO) لجميع الأدوات
 TOOLS_SEO = {}
 for action, nameAr, nameEn, type_, iconClass, iconName in TOOLS_DEF:
     TOOLS_SEO[action] = {
@@ -259,8 +258,7 @@ for action, nameAr, nameEn, type_, iconClass, iconName in TOOLS_DEF:
         "seo_title_en": f"Free {nameEn} Online Tool | V-Infinity",
         "seo_desc_ar": f"أفضل أداة سحابية لتنفيذ {nameAr} بضغطة زر. معالجة سريعة وآمنة 100% ومجانية بالكامل بدون تخزين للملفات.",
         "seo_desc_en": f"Best cloud tool for {nameEn} with one click. Fast, secure, and 100% free with no file storage.",
-        "h1_ar": nameAr,
-        "h1_en": nameEn,
+        "h1_ar": nameAr, "h1_en": nameEn,
         "short_desc_ar": f"قم بإنجاز {nameAr} بسهولة وبدون تعقيد عبر تقنياتنا المتطورة.",
         "short_desc_en": f"Easily perform {nameEn} without complexity using our advanced tools.",
         "long_desc_ar": f"منصة V-Infinity تقدم لك أداة '{nameAr}' المجانية بالكامل. تم تصميم هذه الأداة لتكون سريعة جداً وتعمل بالذكاء الاصطناعي لضمان أعلى جودة ممكنة. أمان ملفاتك هو أولويتنا القصوى، حيث نقوم بمعالجة البيانات سحابياً وحذفها تلقائياً بمجرد انتهاء العملية دون الاحتفاظ بأي نسخ.",
@@ -275,7 +273,6 @@ for action, nameAr, nameEn, type_, iconClass, iconName in TOOLS_DEF:
         ]
     }
 
-# ==================== دوال الحماية والمساعدات ====================
 def validate_signature(file_bytes, kind):
     if not file_bytes: return False
     if kind == "pdf": return file_bytes[:5] == b"%PDF-"
@@ -1008,32 +1005,49 @@ def handle_word_to_pdf(p):
                 job = cloudconvert.Job.create(payload={
                     "tasks": {
                         "import-file": { "operation": "import/upload" },
-                        "convert-file": { "operation": "convert", "input": "import-file", "output_format": "pdf" },
+                        "convert-file": { 
+                            "operation": "convert", 
+                            "input": "import-file", 
+                            "output_format": "pdf"
+                        },
                         "export-file": { "operation": "export/url", "input": "convert-file" }
                     }
                 })
+                
                 upload_task = cloudconvert.Task.find(id=job['tasks'][0]['id'])
                 cloudconvert.Task.upload(file_name=docx_path, task=upload_task)
+                
                 job = cloudconvert.Job.wait(id=job['id'])
+                
                 for task in job['tasks']:
                     if task['name'] == 'export-file' and task['status'] == 'finished':
                         export_url = task['result']['files'][0]['url']
                         res = requests.get(export_url, timeout=30)
-                        with open(pdf_path, 'wb') as df: df.write(res.content)
+                        with open(pdf_path, 'wb') as df:
+                            df.write(res.content)
+                        
                         with open(pdf_path, "rb") as df: 
                             return file_response(df.read(), "application/pdf", "V-Infinity_Converted.pdf")
+            
             except Exception as e:
-                app.logger.warning(f"CloudConvert failed: {str(e)}")
+                app.logger.warning(f"CloudConvert failed, falling back to ConvertAPI. Reason: {str(e)}")
 
         if ca_key:
             try:
                 convertapi.api_credentials = ca_key
-                result = convertapi.convert('pdf', {'File': docx_path}, from_format='docx', timeout=120)
+                result = convertapi.convert(
+                    'pdf',
+                    {'File': docx_path},
+                    from_format='docx',
+                    timeout=120
+                )
                 result.file.save(pdf_path)
+                
                 with open(pdf_path, "rb") as df: 
                     return file_response(df.read(), "application/pdf", "V-Infinity_Converted.pdf")
+            
             except Exception as e:
-                app.logger.error(f"ConvertAPI Error: {str(e)}")
+                app.logger.error(f"ConvertAPI Fallback Error: {str(e)}")
 
         return bad_request("فشلت عملية التحويل من جميع الخوادم.")
 
