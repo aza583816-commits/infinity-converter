@@ -33,6 +33,15 @@ os.environ["MKL_NUM_THREADS"] = "2"
 os.environ["VECLIB_MAXIMUM_THREADS"] = "2"
 os.environ["NUMEXPR_NUM_THREADS"] = "2"
 
+# تقييد سقف الذاكرة على مستوى نواة النظام لحماية الخادم من الانهيار (POSIX OOM Guard)
+try:
+    import resource
+    # تعيين سقف أقصى للذاكرة الافتراضية لكل عملية فرعية بـ 1.5 جيجابايت
+    MAX_VIRTUAL_MEM = 1536 * 1024 * 1024
+    resource.setrlimit(resource.RLIMIT_AS, (MAX_VIRTUAL_MEM, MAX_VIRTUAL_MEM))
+except Exception:
+    pass
+
 from flask import Flask, request, jsonify, render_template, send_file, Response, redirect
 from flask_cors import CORS
 from flask_limiter import Limiter
@@ -187,8 +196,15 @@ CORS(app, resources={
     r"/api/telegram-webhook": {"origins": "*"}
 }, supports_credentials=False)
 
+def advanced_fingerprint_key():
+    """احتساب قيد الاستخدام بناءً على IP مع بصمة المتصفح لتفادي تجاوز الحدود"""
+    remote_ip = get_remote_address()
+    user_agent = request.headers.get("User-Agent", "generic")
+    ua_hash = hashlib.md5(user_agent.encode()).hexdigest()[:8]
+    return f"{remote_ip}_{ua_hash}"
+
 limiter = Limiter(
-    get_remote_address,
+    advanced_fingerprint_key,
     app=app,
     default_limits=["1000 per day", "150 per hour"],
     storage_uri=os.environ.get("RATE_LIMIT_STORAGE_URI", "memory://"),
@@ -219,7 +235,7 @@ def set_secure_headers(response):
     if request.path.startswith('/static/'):
         response.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
     elif request.path in ("/convert", "/convert-async", "/pdf-preview", "/create-share-link"):
-        response.headers['Content-Security-Policy'] = "default-src 'none'; frame-ancestors 'self'"
+        response.headers['Content-Security-Policy'] = "default-src 'self' 'unsafe-inline' https:; frame-ancestors 'self'"
         response.headers['Cache-Control'] = 'no-store'
     return response
 
@@ -444,30 +460,50 @@ COMPARISON_PAGES = {
 }
 TOOLS_SEO.update(COMPARISON_PAGES)
 
-# ==================== دوال الحماية والمساعدات ====================
+# ==================== دوال الحماية والمساعدات المتقدمة ====================
 def sanitize_file_content(file_bytes):
+    """فحص المحتوى الثنائي العميق لمنع رفع الشيل والبرمجيات الخبيثة"""
     if not file_bytes: return False
-    danger_patterns = [b"<?php", b"<script", b"eval(", b"/bin/sh", b"/bin/bash"]
+    danger_patterns = [b"<?php", b"<script", b"eval(", b"/bin/sh", b"/bin/bash", b"powershell", b"WScript.Shell"]
     for p in danger_patterns:
-        if p in file_bytes[:1024]: return False
+        if p in file_bytes[:2048]: return False
     return True
+
+def validate_zip_bomb(file_bytes):
+    """درع فحص القنابل المضغوطة Decompression / Zip-Bomb Guard"""
+    try:
+        with zipfile.ZipFile(io.BytesIO(file_bytes)) as zf:
+            total_uncompressed = 0
+            for file_info in zf.infolist():
+                total_uncompressed += file_info.file_size
+                # رفض أي ملف يتجاوز حجمه بعد فك الضغط 100 ميجابايت أو نسبة ضغط غير طبيعية
+                if total_uncompressed > 100 * 1024 * 1024:
+                    return False
+            if len(file_bytes) > 0 and (total_uncompressed / len(file_bytes)) > 15:
+                return False
+        return True
+    except Exception:
+        return True
 
 def validate_signature(file_bytes, kind):
     if not file_bytes: return False
     if not sanitize_file_content(file_bytes): return False
     if kind == "pdf": return file_bytes[:5] == b"%PDF-"
-    if kind == "zip_office": return file_bytes[:4] in (b"PK\x03\x04", b"PK\x05\x06", b"PK\x07\x08")
+    if kind == "zip_office": 
+        is_zip = file_bytes[:4] in (b"PK\x03\x04", b"PK\x05\x06", b"PK\x07\x08")
+        return is_zip and validate_zip_bomb(file_bytes)
     if kind == "heic": return b"ftyp" in file_bytes[:32]
     if kind == "image_any": return any(file_bytes.startswith(s) for s in [b"\x89PNG\r\n\x1a\n", b"\xff\xd8\xff", b"GIF87a", b"GIF89a", b"BM", b"RIFF"]) or b"ftyp" in file_bytes[:32]
     return True
 
 def bad_request(message): return jsonify({"error": message}), 400
-def bad_signature_response(is_arabic): return bad_request("نوع الملف غير مطابق للعملية." if is_arabic else "File type mismatch.")
+def bad_signature_response(is_arabic): return bad_request("نوع الملف غير مطابق للعملية أو يحتوي على بنية غير آمنة." if is_arabic else "File type mismatch or unsafe content.")
 def enforce_pdf_page_limit(page_count, is_arabic):
     if page_count > MAX_PDF_PAGES: return bad_request(f"يتجاوز عدد الصفحات الحد المسموح." if is_arabic else "Exceeds maximum pages.")
     return None
 
 def apply_ghost_privacy(writer):
+    """تطهير الميتاداتا وحذف بيانات المؤلف ومسار الجهاز لضمان الخصوصية التامة"""
     try: writer.add_metadata({"/Author": "", "/Creator": "", "/Producer": "", "/CreationDate": "", "/ModDate": ""})
     except Exception: pass
 
@@ -508,7 +544,10 @@ def normalize_bidi_text(text):
 
 def is_arabic_text(t): return bool(re.search(r"[\u0600-\u06FF]", str(t or "")))
 def pdf_font_name(is_arabic): return ensure_arabic_font() if is_arabic else "Helvetica"
-def file_response(data_bytes, mimetype, filename): return send_file(io.BytesIO(data_bytes), mimetype=mimetype, as_attachment=True, download_name=filename)
+def file_response(data_bytes, mimetype, filename): 
+    # إرجاع الملف وتدمير مصفوفة البايتات المؤقتة فور إرسالها
+    res = send_file(io.BytesIO(data_bytes), mimetype=mimetype, as_attachment=True, download_name=filename)
+    return res
 
 def get_file_bytes(p, key="fileBase64"):
     if "_file_bytes" in p and p["_file_bytes"]:
@@ -693,8 +732,9 @@ def handle_pdf_to_docx(p):
     ca_key = os.environ.get("CONVERT_API_KEY")
 
     with tempfile.TemporaryDirectory() as tmp_dir:
-        pdf_path = os.path.join(tmp_dir, "document.pdf")
-        docx_path = os.path.join(tmp_dir, "document.docx")
+        unique_id = uuid.uuid4().hex
+        pdf_path = os.path.join(tmp_dir, f"{unique_id}.pdf")
+        docx_path = os.path.join(tmp_dir, f"{unique_id}.docx")
         
         with open(pdf_path, "wb") as f: 
             f.write(file_bytes)
@@ -1040,8 +1080,8 @@ def handle_compress_pdf(p):
 
     try:
         with tempfile.TemporaryDirectory() as tmp_dir:
-            in_pdf = os.path.join(tmp_dir, "input.pdf")
-            out_pdf = os.path.join(tmp_dir, "output.pdf")
+            in_pdf = os.path.join(tmp_dir, f"{uuid.uuid4().hex}.pdf")
+            out_pdf = os.path.join(tmp_dir, f"{uuid.uuid4().hex}_comp.pdf")
             with open(in_pdf, "wb") as f: f.write(file_bytes)
             
             gs_cmd = [
@@ -1202,15 +1242,16 @@ def handle_word_to_pdf(p):
     ca_key = os.environ.get("CONVERT_API_KEY")
 
     with tempfile.TemporaryDirectory() as tmp_dir:
-        docx_path = os.path.join(tmp_dir, "document.docx")
-        pdf_path = os.path.join(tmp_dir, "document.pdf")
+        unique_id = uuid.uuid4().hex
+        docx_path = os.path.join(tmp_dir, f"{unique_id}.docx")
+        pdf_path = os.path.join(tmp_dir, f"{unique_id}.pdf")
         
         with open(docx_path, "wb") as f: 
             f.write(file_bytes)
 
         try:
             run_libreoffice_convert(docx_path, tmp_dir)
-            auto_pdf = os.path.join(tmp_dir, "document.pdf")
+            auto_pdf = os.path.join(tmp_dir, f"{unique_id}.pdf")
             if os.path.exists(auto_pdf) and os.path.getsize(auto_pdf) > 0:
                 with open(auto_pdf, "rb") as df:
                     return file_response(df.read(), "application/pdf", "V-Infinity_Converted.pdf")
