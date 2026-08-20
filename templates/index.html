@@ -929,7 +929,7 @@
             });
         }
 
-                async function processConversion() {
+        async function processConversion() {
             if (!currentAction) { showToast('رجاءً اختر أداة أولاً!', 'Please select a tool first!', true); return; }
             
             const text = document.getElementById('textInput') ? document.getElementById('textInput').value : '';
@@ -948,7 +948,7 @@
             progressBar.style.width = '0%';
             let width = 0;
             
-            // شريط تقدم ذكي يغير النص كلما طال الوقت
+            // شريط تقدم ذكي يغير النص كلما طال الوقت ليطمئن المستخدم أثناء الانتقال بين الخوادم
             let progressInterval = setInterval(() => {
                 if (width >= 95) { 
                     clearInterval(progressInterval); 
@@ -1018,7 +1018,6 @@
                 btnText.innerHTML = isArabic ? 'تحويل الآن' : 'Convert Now';
             }
         }
-
         
         if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
             document.body.classList.remove('dark-mode');
