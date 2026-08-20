@@ -65,6 +65,13 @@ except Exception:
 
 from pypdf import PdfReader, PdfWriter
 from pypdf.errors import PdfReadError
+
+# إضافة مكتبة PyMuPDF الخارقة (الاسم الجديد لـ fitz) لزيادة دقة استخراج النصوص
+try:
+    import fitz
+except Exception:
+    fitz = None
+
 import qrcode
 from qrcode.constants import ERROR_CORRECT_H
 from qrcode.image.styledpil import StyledPilImage
@@ -84,19 +91,19 @@ try:
 except Exception:
     Presentation = None
 
-# ==================== الإعدادات العامة والحماية ====================
-MAX_FILE_MB = int(os.environ.get("MAX_FILE_MB", 4))
+# ==================== الإعدادات العامة والحماية (النسخة الخارقة) ====================
+MAX_FILE_MB = int(os.environ.get("MAX_FILE_MB", 25))
 MAX_FILE_BYTES = MAX_FILE_MB * 1024 * 1024
-MAX_MERGE_FILES = int(os.environ.get("MAX_MERGE_FILES", 15))
-MAX_PDF_PAGES = int(os.environ.get("MAX_PDF_PAGES", 500))
-MAX_TEXT_CHARS = int(os.environ.get("MAX_TEXT_CHARS", 2_000_000))
-SUBPROCESS_TIMEOUT = int(os.environ.get("SUBPROCESS_TIMEOUT", 60))
+MAX_MERGE_FILES = int(os.environ.get("MAX_MERGE_FILES", 30))
+MAX_PDF_PAGES = int(os.environ.get("MAX_PDF_PAGES", 1000))
+MAX_TEXT_CHARS = int(os.environ.get("MAX_TEXT_CHARS", 5_000_000))
+SUBPROCESS_TIMEOUT = int(os.environ.get("SUBPROCESS_TIMEOUT", 120))
 ALLOWED_ORIGINS = [o.strip() for o in os.environ.get(
     "ALLOWED_ORIGINS", "https://infinityconverter.com,https://www.infinityconverter.com"
 ).split(",") if o.strip()]
 
-app_max_content = int(MAX_FILE_BYTES * MAX_MERGE_FILES * 1.4) + (2 * 1024 * 1024)
-Image.MAX_IMAGE_PIXELS = int(os.environ.get("MAX_IMAGE_PIXELS", 50_000_000))
+app_max_content = int(MAX_FILE_BYTES * MAX_MERGE_FILES * 1.4) + (5 * 1024 * 1024)
+Image.MAX_IMAGE_PIXELS = int(os.environ.get("MAX_IMAGE_PIXELS", 100_000_000))
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = app_max_content
@@ -120,7 +127,7 @@ HEAVY_ACTIONS = {
 def dynamic_convert_limit():
     payload = request.get_json(silent=True) or {}
     action = payload.get("action")
-    return "6 per minute" if action in HEAVY_ACTIONS else "20 per minute"
+    return "10 per minute" if action in HEAVY_ACTIONS else "30 per minute"
 
 @app.after_request
 def set_secure_headers(response):
@@ -492,26 +499,43 @@ def handle_pdf_to_text(p):
     if not file_bytes: return bad_request("No file provided")
     if not validate_signature(file_bytes, "pdf"): return bad_signature_response(p["is_arabic"])
     try:
-        reader = PdfReader(io.BytesIO(file_bytes))
-        err = enforce_pdf_page_limit(reader, p["is_arabic"])
-        if err: return err
-        text = "\n".join((page.extract_text() or "") for page in reader.pages)
+        text = ""
+        # استخدام المكتبة الخارقة PyMuPDF إذا توفرت
+        if fitz:
+            doc = fitz.open(stream=file_bytes, filetype="pdf")
+            if len(doc) > MAX_PDF_PAGES: return bad_request("يتجاوز الحد المسموح" if p["is_arabic"] else "Exceeds max pages")
+            for page in doc:
+                text += page.get_text() + "\n"
+        else:
+            # الطريقة القديمة في حال فشلت المكتبة الجديدة
+            reader = PdfReader(io.BytesIO(file_bytes))
+            err = enforce_pdf_page_limit(reader, p["is_arabic"])
+            if err: return err
+            text = "\n".join((page.extract_text() or "") for page in reader.pages)
         return jsonify({"result": text.strip()})
-    except PdfReadError: return bad_request("الملف تالف أو محمي بكلمة سر" if p["is_arabic"] else "Corrupted or protected")
+    except Exception: 
+        return bad_request("الملف تالف أو تعذر استخراج النص" if p["is_arabic"] else "Corrupted file or could not extract")
 
 def handle_pdf_to_csv(p):
     file_bytes = get_file_bytes(p)
     if not file_bytes: return bad_request("No file provided")
     if not validate_signature(file_bytes, "pdf"): return bad_signature_response(p["is_arabic"])
     try:
-        reader = PdfReader(io.BytesIO(file_bytes))
-        err = enforce_pdf_page_limit(reader, p["is_arabic"])
-        if err: return err
         buf = io.StringIO()
         writer = csv.writer(buf)
-        for page in reader.pages:
-            for line in (page.extract_text() or "").split("\n"):
-                if line.strip(): writer.writerow(line.split())
+        if fitz:
+            doc = fitz.open(stream=file_bytes, filetype="pdf")
+            if len(doc) > MAX_PDF_PAGES: return bad_request("يتجاوز الحد المسموح" if p["is_arabic"] else "Exceeds max pages")
+            for page in doc:
+                for line in (page.get_text() or "").split("\n"):
+                    if line.strip(): writer.writerow(line.split())
+        else:
+            reader = PdfReader(io.BytesIO(file_bytes))
+            err = enforce_pdf_page_limit(reader, p["is_arabic"])
+            if err: return err
+            for page in reader.pages:
+                for line in (page.extract_text() or "").split("\n"):
+                    if line.strip(): writer.writerow(line.split())
         return file_response(("\ufeff" + buf.getvalue()).encode("utf-8"), "text/csv", "Converted_Data.csv")
     except Exception: return bad_request("تعذر استخراج الجداول" if p["is_arabic"] else "Could not extract tables")
 
@@ -593,20 +617,33 @@ def handle_pdf_to_excel(p):
     file_bytes = get_file_bytes(p)
     if not file_bytes: return bad_request("No file provided")
     if not validate_signature(file_bytes, "pdf"): return bad_signature_response(p["is_arabic"])
-    reader = PdfReader(io.BytesIO(file_bytes))
-    err = enforce_pdf_page_limit(reader, p["is_arabic"])
-    if err: return err
     buf = io.BytesIO()
     with pd.ExcelWriter(buf, engine="openpyxl") as writer:
-        for idx, page in enumerate(reader.pages):
-            rows = [line.split() for line in (page.extract_text() or "").split("\n") if line.strip()]
-            if not rows: rows = [[""]]
-            max_len = max(len(r) for r in rows)
-            rows = [r + [""] * (max_len - len(r)) for r in rows]
-            df = pd.DataFrame(rows)
-            sheet_name = f"Page {idx + 1}"[:31]
-            df.to_excel(writer, sheet_name=sheet_name, index=False, header=False)
-            auto_fit_excel_columns(writer, sheet_name, add_autofilter=False)
+        if fitz:
+            doc = fitz.open(stream=file_bytes, filetype="pdf")
+            if len(doc) > MAX_PDF_PAGES: return bad_request("يتجاوز الحد المسموح" if p["is_arabic"] else "Exceeds max pages")
+            for idx, page in enumerate(doc):
+                rows = [line.split() for line in (page.get_text() or "").split("\n") if line.strip()]
+                if not rows: rows = [[""]]
+                max_len = max(len(r) for r in rows)
+                rows = [r + [""] * (max_len - len(r)) for r in rows]
+                df = pd.DataFrame(rows)
+                sheet_name = f"Page {idx + 1}"[:31]
+                df.to_excel(writer, sheet_name=sheet_name, index=False, header=False)
+                auto_fit_excel_columns(writer, sheet_name, add_autofilter=False)
+        else:
+            reader = PdfReader(io.BytesIO(file_bytes))
+            err = enforce_pdf_page_limit(reader, p["is_arabic"])
+            if err: return err
+            for idx, page in enumerate(reader.pages):
+                rows = [line.split() for line in (page.extract_text() or "").split("\n") if line.strip()]
+                if not rows: rows = [[""]]
+                max_len = max(len(r) for r in rows)
+                rows = [r + [""] * (max_len - len(r)) for r in rows]
+                df = pd.DataFrame(rows)
+                sheet_name = f"Page {idx + 1}"[:31]
+                df.to_excel(writer, sheet_name=sheet_name, index=False, header=False)
+                auto_fit_excel_columns(writer, sheet_name, add_autofilter=False)
     return file_response(buf.getvalue(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Converted_Excel.xlsx")
 
 def handle_pdf_to_ppt(p):
@@ -614,22 +651,38 @@ def handle_pdf_to_ppt(p):
     file_bytes = get_file_bytes(p)
     if not file_bytes: return bad_request("No file provided")
     if not validate_signature(file_bytes, "pdf"): return bad_signature_response(p["is_arabic"])
-    reader = PdfReader(io.BytesIO(file_bytes))
-    err = enforce_pdf_page_limit(reader, p["is_arabic"])
-    if err: return err
     prs = Presentation()
     blank_layout = prs.slide_layouts[6]
-    for idx, page in enumerate(reader.pages):
-        text = (page.extract_text() or "").strip()
-        if len(text) > 1500: text = text[:1497] + "..."
-        slide = prs.slides.add_slide(blank_layout)
-        t_box = slide.shapes.add_textbox(Inches(0.4), Inches(0.3), Inches(9), Inches(0.8))
-        t_box.text_frame.text = f"Page {idx + 1}"
-        t_box.text_frame.paragraphs[0].font.size = Pt(20)
-        t_box.text_frame.paragraphs[0].font.bold = True
-        b_box = slide.shapes.add_textbox(Inches(0.4), Inches(1.2), Inches(9), Inches(5))
-        b_box.text_frame.text = text
-        b_box.text_frame.word_wrap = True
+    if fitz:
+        doc = fitz.open(stream=file_bytes, filetype="pdf")
+        if len(doc) > MAX_PDF_PAGES: return bad_request("يتجاوز الحد المسموح" if p["is_arabic"] else "Exceeds max pages")
+        for idx, page in enumerate(doc):
+            text = (page.get_text() or "").strip()
+            if len(text) > 1500: text = text[:1497] + "..."
+            slide = prs.slides.add_slide(blank_layout)
+            t_box = slide.shapes.add_textbox(Inches(0.4), Inches(0.3), Inches(9), Inches(0.8))
+            t_box.text_frame.text = f"Page {idx + 1}"
+            t_box.text_frame.paragraphs[0].font.size = Pt(20)
+            t_box.text_frame.paragraphs[0].font.bold = True
+            b_box = slide.shapes.add_textbox(Inches(0.4), Inches(1.2), Inches(9), Inches(5))
+            b_box.text_frame.text = text
+            b_box.text_frame.word_wrap = True
+    else:
+        reader = PdfReader(io.BytesIO(file_bytes))
+        err = enforce_pdf_page_limit(reader, p["is_arabic"])
+        if err: return err
+        for idx, page in enumerate(reader.pages):
+            text = (page.extract_text() or "").strip()
+            if len(text) > 1500: text = text[:1497] + "..."
+            slide = prs.slides.add_slide(blank_layout)
+            t_box = slide.shapes.add_textbox(Inches(0.4), Inches(0.3), Inches(9), Inches(0.8))
+            t_box.text_frame.text = f"Page {idx + 1}"
+            t_box.text_frame.paragraphs[0].font.size = Pt(20)
+            t_box.text_frame.paragraphs[0].font.bold = True
+            b_box = slide.shapes.add_textbox(Inches(0.4), Inches(1.2), Inches(9), Inches(5))
+            b_box.text_frame.text = text
+            b_box.text_frame.word_wrap = True
+            
     buf = io.BytesIO(); prs.save(buf)
     return file_response(buf.getvalue(), "application/vnd.openxmlformats-officedocument.presentationml.presentation", "Converted_Presentation.pptx")
 
