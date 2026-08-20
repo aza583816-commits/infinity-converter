@@ -188,9 +188,17 @@ def enforce_custom_domain():
     parsed_host = request.host.split(':')[0]
     if parsed_host == "infinity-converter-1.onrender.com":
         return redirect("https://infinityconverter.com" + request.full_path, code=301)
-        
-    proto = request.headers.get('X-Forwarded-Proto', 'http')
-    if proto == 'http' and parsed_host == 'infinityconverter.com':
+
+    # قد يمر الطلب عبر أكثر من بروكسي (Cloudflare -> Render) فيصير الهيدر
+    # قائمة مفصولة بفواصل مثل "https,http" بدل قيمة واحدة، فنأخذ أول قيمة فقط.
+    # كذلك نجعل الافتراضي "https" بدل "http" حتى لا نفرض إعادة توجيه في حال
+    # غياب الهيدر أو عدم وثوقيته، وهو ما كان يسبب حلقة لا نهائية مع بعض
+    # إعدادات Cloudflare (وضع Flexible SSL).
+    forwarded_proto = request.headers.get('X-Forwarded-Proto', 'https')
+    proto = forwarded_proto.split(',')[0].strip().lower()
+    is_secure = proto == 'https' or request.is_secure
+
+    if not is_secure and parsed_host == 'infinityconverter.com':
         return redirect("https://infinityconverter.com" + request.full_path, code=301)
 
 logging.basicConfig(level=logging.INFO)
