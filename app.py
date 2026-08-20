@@ -153,7 +153,9 @@ CORS(app, resources={
     r"/convert": {"origins": ALLOWED_ORIGINS},
     r"/convert-async": {"origins": ALLOWED_ORIGINS},
     r"/task-status/*": {"origins": ALLOWED_ORIGINS},
-    r"/pdf-preview": {"origins": ALLOWED_ORIGINS}
+    r"/pdf-preview": {"origins": ALLOWED_ORIGINS},
+    r"/create-share-link": {"origins": ALLOWED_ORIGINS},
+    r"/download/*": {"origins": ALLOWED_ORIGINS}
 }, supports_credentials=False)
 
 limiter = Limiter(
@@ -167,7 +169,7 @@ HEAVY_ACTIONS = {
     "word-to-pdf", "excel-to-pdf", "pdf-to-docx", "pdf-to-doc", "pdf-to-ppt", "pdf-to-excel",
     "merge-pdf", "compress-image", "image-to-text", "text-to-audio", "translate-text",
     "watermark-pdf", "compress-pdf", "protect-pdf", "clean-study-sheet", "summarize-doc",
-    "pdf-page-number", "ink-saver-pdf"
+    "pdf-page-number", "ink-saver-pdf", "sign-pdf", "remove-blank-pages", "generate-quiz"
 }
 
 def dynamic_convert_limit():
@@ -183,7 +185,7 @@ def set_secure_headers(response):
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     response.headers['X-Permitted-Cross-Domain-Policies'] = 'none'
 
-    if request.path in ("/convert", "/convert-async", "/pdf-preview"):
+    if request.path in ("/convert", "/convert-async", "/pdf-preview", "/create-share-link"):
         response.headers['Content-Security-Policy'] = "default-src 'none'; frame-ancestors 'self'"
         response.headers['Cache-Control'] = 'no-store'
     return response
@@ -202,19 +204,24 @@ def internal_error_handler(e):
 ARABIC_FONT_NAME = "ArabicFont"
 _arabic_font_registered = False
 
-# ==================== الإضافات الذكية والذاكرة المؤقتة المنظفة ====================
+# ==================== الإضافات الذكية والذاكرة المؤقتة وروابط التحميل ====================
 conversion_queue = queue.Queue()
 async_task_results = {}
+temporary_share_store = {}
 TASK_TTL_SECONDS = 1800
+SHARE_TTL_SECONDS = 86400  # روابط التحميل صالحة لمدة 24 ساعة
 
 def cache_cleanup_worker():
     while True:
         try:
             time.sleep(300)
             now = time.time()
-            expired_keys = [k for k, v in async_task_results.items() if now - v.get("timestamp", now) > TASK_TTL_SECONDS]
-            for k in expired_keys:
+            expired_tasks = [k for k, v in async_task_results.items() if now - v.get("timestamp", now) > TASK_TTL_SECONDS]
+            for k in expired_tasks:
                 async_task_results.pop(k, None)
+            expired_shares = [k for k, v in temporary_share_store.items() if now - v.get("timestamp", now) > SHARE_TTL_SECONDS]
+            for k in expired_shares:
+                temporary_share_store.pop(k, None)
             gc.collect()
         except Exception:
             pass
@@ -320,6 +327,9 @@ TOOLS_DEF = [
     ("ink-saver-pdf", "توفير حبر الطباعة (رمادي)", "Ink Saver PDF", "file", "i-pdf", "fa-print"),
     ("summarize-doc", "تلخيص المستندات والنصوص", "Summarize Text/Doc", "text", "i-word", "fa-brain"),
     ("citation-generator", "مولد التوثيق الأكاديمي (APA/MLA)", "Citation Generator", "text", "i-word", "fa-book-bookmark"),
+    ("sign-pdf", "توقيع ملفات PDF إلكترونياً", "Sign PDF Online", "fileText", "i-pdf", "fa-signature"),
+    ("remove-blank-pages", "حذف الصفحات الفارغة من PDF", "Remove Blank Pages", "file", "i-pdf", "fa-file-circle-xmark"),
+    ("generate-quiz", "توليد أسئلة واختبارات من ملف", "Quiz & Flashcard Generator", "fileText", "i-word", "fa-spell-check")
 ]
 
 TOOLS_SEO = {}
@@ -345,7 +355,6 @@ for action, nameAr, nameEn, type_, iconClass, iconName in TOOLS_DEF:
         ]
     }
 
-# إضافة صفحات المنافسة والمقارنة لتعزيز تصدر محركات البحث (Competitor Landing Pages)
 COMPARISON_PAGES = {
     "ilovepdf-alternative": {
         "slug": "ilovepdf-alternative", "nameAr": "أفضل بديل مجاني لـ iLovePDF", "nameEn": "Best Free iLovePDF Alternative",
@@ -613,7 +622,7 @@ def is_probably_scanned(text, page_count):
     avg_chars = len(text.strip()) / max(page_count, 1)
     return avg_chars < 15
 
-# ================= أدوات الـ PDF (النسخة الخارقة المطورة) =================
+# ================= أدوات الـ PDF =================
 
 def handle_pdf_to_docx(p):
     file_bytes = get_file_bytes(p)
@@ -1512,7 +1521,7 @@ def handle_strip_exif(p):
     clean.save(buf, format=fmt, quality=95, optimize=True)
     return file_response(buf.getvalue(), "image/png" if fmt == "PNG" else "image/jpeg", f"Privacy_Cleaned.{'png' if fmt=='PNG' else 'jpg'}")
 
-# ================= أدوات الطلاب والمعلمين والذكاء الاصطناعي والمستندات المطورة =================
+# ================= أدوات الطلاب والمعلمين والتوقيع والذكاء الاصطناعي =================
 def handle_clean_study_sheet(p):
     img, err = _load_validated_image(p, p["is_arabic"])
     if err: return err
@@ -1633,6 +1642,108 @@ def handle_citation_generator(p):
 
     res = f"📑 التوثيق الأكاديمي المعتمد:\n\n1. APA:\n{apa}\n\n2. MLA:\n{mla}\n\n3. Chicago:\n{chicago}"
     return jsonify({"result": res})
+
+def handle_sign_pdf(p):
+    """دمج التوقيع الإلكتروني والرسم اليدوي مباشرة في ملف PDF"""
+    file_bytes = get_file_bytes(p)
+    sig_b64 = p.get("signatureBase64")
+    is_arabic = p["is_arabic"]
+    if not file_bytes: return bad_request("يرجى رفع ملف PDF")
+    if not sig_b64: return bad_request("يرجى رسم التوقيع أولاً")
+    if not validate_signature(file_bytes, "pdf"): return bad_signature_response(is_arabic)
+
+    try:
+        sig_data = base64.b64decode(sig_b64.split(",")[-1])
+        sig_img = Image.open(io.BytesIO(sig_data)).convert("RGBA")
+        
+        reader = PdfReader(io.BytesIO(file_bytes))
+        writer = PdfWriter()
+        total_pages = len(reader.pages)
+        
+        last_page = reader.pages[-1]
+        pw = float(last_page.mediabox.width)
+        ph = float(last_page.mediabox.height)
+
+        sig_pdf_buf = io.BytesIO()
+        c = rl_canvas.Canvas(sig_pdf_buf, pagesize=(pw, ph))
+        
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=True) as temp_sig:
+            sig_img.save(temp_sig.name, format="PNG")
+            c.drawImage(temp_sig.name, pw - 220, 40, width=180, height=80, mask='auto')
+        c.save()
+
+        sig_overlay = PdfReader(io.BytesIO(sig_pdf_buf.getvalue())).pages[0]
+        
+        for i, page in enumerate(reader.pages):
+            if i == total_pages - 1:
+                page.merge_page(sig_overlay)
+            writer.add_page(page)
+
+        apply_ghost_privacy(writer)
+        final_buf = io.BytesIO()
+        writer.write(final_buf)
+        return file_response(final_buf.getvalue(), "application/pdf", "Signed_Document.pdf")
+    except Exception:
+        return bad_request("تعذر إضافة التوقيع إلى المستند.")
+
+def handle_remove_blank_pages(p):
+    """فحص الصفحات الفارغة وحذفها تلقائياً"""
+    file_bytes = get_file_bytes(p)
+    is_arabic = p["is_arabic"]
+    if not file_bytes: return bad_request("يرجى رفع ملف PDF")
+    if not validate_signature(file_bytes, "pdf"): return bad_signature_response(is_arabic)
+
+    if not fitz: return bad_request("PyMuPDF غير متوفر")
+    try:
+        doc = fitz.open(stream=file_bytes, filetype="pdf")
+        out_doc = fitz.open()
+        removed_count = 0
+
+        for page in doc:
+            text = (page.get_text() or "").strip()
+            pix = page.get_pixmap(dpi=72)
+            # فحص خلو الصفحة من المحتوى النصي والصور
+            if len(text) == 0 and len(page.get_images()) == 0:
+                removed_count += 1
+                continue
+            out_doc.insert_pdf(doc, from_page=page.number, to_page=page.number)
+
+        if len(out_doc) == 0:
+            out_doc.insert_pdf(doc, from_page=0, to_page=0)
+
+        final_bytes = out_doc.tobytes(deflate=True)
+        doc.close()
+        out_doc.close()
+        return file_response(final_bytes, "application/pdf", "Cleaned_No_Blanks.pdf")
+    except Exception:
+        return bad_request("تعذر فحص وحذف الصفحات الفارغة.")
+
+def handle_generate_quiz(p):
+    """توليد أسئلة واختبارات فلاش كارد من النصوص والمستندات"""
+    text = (p.get("text") or "").strip()
+    file_bytes = get_file_bytes(p)
+    if not text and file_bytes and fitz:
+        doc = fitz.open(stream=file_bytes, filetype="pdf")
+        text = "\n".join((page.get_text() or "") for page in doc)
+        doc.close()
+
+    if not text: return bad_request("يرجى إدخال محتوى أو رفع ملف لتوليد الاختبار.")
+
+    sentences = [s.strip() for s in re.split(r'[.\n!؟?]', text) if len(s.strip().split()) >= 6]
+    if not sentences: return jsonify({"result": "المحتوى قصير جداً لتوليد أسئلة."})
+
+    quiz_items = []
+    for i, s in enumerate(sentences[:min(5, len(sentences))]):
+        words = [w for w in re.findall(r'\w+', s) if len(w) > 4]
+        if words:
+            target_word = words[0]
+            masked_sentence = s.replace(target_word, " [ ...... ] ")
+            quiz_items.append(f"س{i+1}: أكمل الفراغ في الجملة التالية:\n« {masked_sentence} »\n( الإجابة الصحيحة: {target_word} )")
+        else:
+            quiz_items.append(f"س{i+1}: وضح الفكرة التالية:\n« {s} »")
+
+    final_quiz = "🧠 بنك الأسئلة والبطاقات الذكية:\n\n" + "\n\n".join(quiz_items)
+    return jsonify({"result": final_quiz})
 
 def handle_image_to_text(p):
     if pytesseract is None: return bad_request("مكتبة OCR غير مثبتة بالسيرفر")
@@ -1837,12 +1948,32 @@ REGISTRY = {
     "uuid-generator": handle_uuid_generator, "markdown-to-html": handle_markdown_to_html, "html-to-markdown": handle_markdown_to_html, 
     "text-diff": handle_text_diff, "text-to-audio": handle_text_to_audio, "translate-text": handle_translate_text,
     "clean-study-sheet": handle_clean_study_sheet, "pdf-page-number": handle_pdf_page_number,
-    "ink-saver-pdf": handle_ink_saver_pdf, "summarize-doc": handle_summarize_doc, "citation-generator": handle_citation_generator
+    "ink-saver-pdf": handle_ink_saver_pdf, "summarize-doc": handle_summarize_doc, "citation-generator": handle_citation_generator,
+    "sign-pdf": handle_sign_pdf, "remove-blank-pages": handle_remove_blank_pages, "generate-quiz": handle_generate_quiz
 }
 
 NEEDS_MULTIPLE_FILES = {"merge-pdf", "merge-word"}
 
-# ================= مسارات (Routes) الـ SEO واللغات والمعاينة 🚀 =================
+# ================= مسارات (Routes) الـ SEO والـ PWA والروابط المؤقتة =================
+
+@app.route("/healthz")
+def health_check():
+    return jsonify({"status": "ok", "time": time.time(), "active_tasks": len(async_task_results)}), 200
+
+@app.route("/manifest.json")
+def manifest():
+    manifest_data = {
+        "name": "V-Infinity File Converter",
+        "short_name": "V-Infinity",
+        "start_url": "/",
+        "display": "standalone",
+        "background_color": "#09090b",
+        "theme_color": "#09090b",
+        "icons": [
+            {"src": "/static/favicon.svg", "sizes": "192x192 512x512", "type": "image/svg+xml"}
+        ]
+    }
+    return jsonify(manifest_data)
 
 @app.route("/")
 def index_ar():
@@ -1908,6 +2039,30 @@ def get_pdf_preview():
         return jsonify({"totalPages": len(doc), "previews": thumbnails})
     except Exception as e:
         return bad_request(f"Error generating preview: {str(e)}")
+
+@app.route("/create-share-link", methods=["POST"])
+@limiter.limit("30 per minute")
+def create_share_link():
+    data = request.get_json(silent=True) or {}
+    b64 = data.get("fileBase64")
+    filename = data.get("filename", "Converted_Document.pdf")
+    if not b64: return bad_request("No file data provided")
+    
+    share_id = secrets.token_urlsafe(16)
+    temporary_share_store[share_id] = {
+        "file_bytes": base64.b64decode(b64),
+        "filename": filename,
+        "timestamp": time.time()
+    }
+    share_url = request.host_url.rstrip("/") + f"/download/{share_id}"
+    return jsonify({"share_url": share_url, "expires_in_hours": 24})
+
+@app.route("/download/<share_id>")
+def download_shared_file(share_id):
+    item = temporary_share_store.get(share_id)
+    if not item:
+        return "الرابط منتهي الصلاحية أو غير موجود.", 404
+    return file_response(item["file_bytes"], "application/octet-stream", item["filename"])
 
 @app.route("/convert-async", methods=["POST"])
 @limiter.limit(dynamic_convert_limit)
