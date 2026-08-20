@@ -257,7 +257,7 @@
         </div>
     </div>
 
-        <!-- 🚀 قسم الأسئلة الشائعة SEO الذكي ثنائي اللغة -->
+    <!-- 🚀 قسم الأسئلة الشائعة SEO الذكي ثنائي اللغة -->
     {% if tool_data and tool_data.faqs %}
     <div class="workspace" style="margin-top: -20px;">
         <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 20px; padding: 30px; box-shadow: var(--shadow-sm);">
@@ -274,6 +274,38 @@
 
     <div class="tools-section">
         
+        <div class="section-title"><i class="fa-solid fa-graduation-cap" style="color:var(--primary)"></i> <span data-ar="أدوات الطلاب والمعلمين (جديد)" data-en="Students & Teachers Tools (New)">أدوات الطلاب والمعلمين (جديد)</span></div>
+        <div class="tools-grid">
+            <a href="/text-to-audio" class="tool-card" onclick="handleToolClick(event, 'text-to-audio', 'تحويل النص لصوت MP3', 'Text to Audio', 'text', 'i-dev', 'fa-file-audio')">
+                <div class="tool-icon i-dev"><i class="fa-solid fa-file-audio"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="تحويل النص لصوت (MP3)" data-en="Text to Audio (MP3)">تحويل النص لصوت (MP3)</h3>
+                    <p data-ar="استمع للملخصات والنصوص بدلاً من قراءتها." data-en="Listen to your notes and summaries instead of reading.">استمع للملخصات والنصوص بدلاً من قراءتها.</p>
+                </div>
+            </a>
+            <a href="/translate-text" class="tool-card" onclick="handleToolClick(event, 'translate-text', 'مترجم النصوص', 'Translate Text', 'text', 'i-word', 'fa-language')">
+                <div class="tool-icon i-word"><i class="fa-solid fa-language"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="مترجم البحوث والنصوص" data-en="Research Translator">مترجم البحوث والنصوص</h3>
+                    <p data-ar="ترجمة دقيقة ومجانية للنصوص بضغطة زر." data-en="Accurate and free translation for texts and research.">ترجمة دقيقة ومجانية للنصوص بضغطة زر.</p>
+                </div>
+            </a>
+            <a href="/watermark-pdf" class="tool-card" onclick="handleToolClick(event, 'watermark-pdf', 'علامة مائية للـ PDF', 'Watermark PDF', 'fileText', 'i-pdf', 'fa-copyright')">
+                <div class="tool-icon i-pdf"><i class="fa-solid fa-copyright"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="حماية المذكرات (علامة مائية)" data-en="Watermark PDF">حماية المذكرات (علامة مائية)</h3>
+                    <p data-ar="أضف اسمك كعلامة شفافة لحفظ حقوقك." data-en="Add your name as a transparent watermark to protect rights.">أضف اسمك كعلامة شفافة لحفظ حقوقك.</p>
+                </div>
+            </a>
+            <a href="/remove-pdf-pages" class="tool-card" onclick="handleToolClick(event, 'remove-pdf-pages', 'حذف صفحات من PDF', 'Remove PDF Pages', 'fileText', 'i-pdf', 'fa-file-circle-minus')">
+                <div class="tool-icon i-pdf"><i class="fa-solid fa-file-circle-minus"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="قص وحذف صفحات PDF" data-en="Remove PDF Pages">قص وحذف صفحات PDF</h3>
+                    <p data-ar="اكتب أرقام الصفحات (مثال: 1, 5) ليتم حذفها." data-en="Type page numbers (e.g., 1, 5) to remove them.">اكتب أرقام الصفحات (مثال: 1, 5) ليتم حذفها.</p>
+                </div>
+            </a>
+        </div>
+
         <div class="section-title"><i class="fa-solid fa-file-pdf" style="color:var(--c-pdf)"></i> <span data-ar="أدوات PDF والمستندات" data-en="PDF & Document Tools">أدوات PDF والمستندات</span></div>
         <div class="tools-grid">
             <a href="/pdf-to-docx" class="tool-card" onclick="handleToolClick(event, 'pdf-to-docx', 'PDF إلى Word', 'PDF to Word', 'file', 'i-word', 'fa-file-word')">
@@ -410,6 +442,13 @@
 
         <div class="section-title"><i class="fa-solid fa-image" style="color:var(--c-img)"></i> <span data-ar="أدوات الصور" data-en="Image Tools">أدوات الصور</span></div>
         <div class="tools-grid">
+            <a href="/image-to-text" class="tool-card" onclick="handleToolClick(event, 'image-to-text', 'استخراج نص من صورة', 'Image to Text (OCR)', 'file', 'i-dev', 'fa-file-signature')">
+                <div class="tool-icon i-dev"><i class="fa-solid fa-file-signature"></i></div>
+                <div class="tool-info">
+                    <h3 data-ar="استخراج نص من صورة" data-en="Image to Text (OCR)">استخراج نص من صورة</h3>
+                    <p data-ar="قراءة واستخراج النصوص من الصور بدقة عالية بالذكاء الاصطناعي." data-en="Extract and read text from images accurately using AI.">قراءة واستخراج النصوص من الصور بدقة عالية بالذكاء الاصطناعي.</p>
+                </div>
+            </a>
             <a href="/image-to-pdf" class="tool-card" onclick="handleToolClick(event, 'image-to-pdf', 'صورة إلى PDF', 'Image to PDF', 'file', 'i-img', 'fa-images')">
                 <div class="tool-icon i-img"><i class="fa-solid fa-images"></i></div>
                 <div class="tool-info">
