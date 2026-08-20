@@ -478,50 +478,32 @@ def is_probably_scanned(text, page_count):
 
 # ================= أدوات الـ PDF (النسخة الخارقة المطورة) =================
 def handle_pdf_to_docx(p):
-    """تحويل PDF إلى Word عبر ConvertAPI مع معالجة آمنة لأسماء الملفات واللغة العربية"""
+    """تحويل PDF إلى Word باستخدام المفتاح الآمن من خادم Render"""
     file_bytes = get_file_bytes(p)
     is_arabic = p.get("is_arabic", False)
-    if not file_bytes: 
-        return bad_request("يرجى رفع ملف PDF")
-    if not validate_signature(file_bytes, "pdf"): 
-        return bad_signature_response(is_arabic)
+    if not file_bytes: return bad_request("يرجى رفع ملف PDF")
+    if not validate_signature(file_bytes, "pdf"): return bad_signature_response(is_arabic)
 
-    # ضبط التوكن المباشر
-    convertapi.api_credentials = '1e3XUtacpKV01ZupWlK6L6j325EFXGaO'
+    # 🚀 السيرفر يسحب المفتاح من الخزنة السرية تلقائياً بأمان تام
+    convertapi.api_credentials = os.environ.get("CONVERT_API_KEY")
 
     try:
         with tempfile.TemporaryDirectory() as tmp_dir:
-            # استخدام اسم إنجليزي بحت لتفادي أخطاء النمط (Pattern)
             pdf_path = os.path.join(tmp_dir, "document.pdf")
             docx_path = os.path.join(tmp_dir, "document.docx")
             
-            with open(pdf_path, "wb") as f: 
-                f.write(file_bytes)
+            with open(pdf_path, "wb") as f: f.write(file_bytes)
             
-            # تنفيذ التحويل عبر ConvertAPI
-            result = convertapi.convert(
-                'docx',
-                {
-                    'File': pdf_path
-                },
-                from_format='pdf'
-            )
+            result = convertapi.convert('docx', {'File': pdf_path}, from_format='pdf')
             result.file.save(docx_path)
             
-            with open(docx_path, "rb") as f: 
-                docx_bytes = f.read()
+            with open(docx_path, "rb") as f: docx_bytes = f.read()
             
-            # إرجاع الملف باسم إنجليزي آمن 100% لتفادي خطأ المتصفح
-            return file_response(
-                docx_bytes,
-                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                "Converted_Document.docx"
-            )
+            return file_response(docx_bytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "Converted_Document.docx")
             
     except Exception as e:
         app.logger.error(f"ConvertAPI Error: {str(e)}")
-        return bad_request("حدث خطأ أثناء معالجة الملف، يرجى المحاولة مرة أخرى.")
-
+        return bad_request("حدث خطأ أثناء معالجة الملف.")
 
 def handle_pdf_to_excel(p):
     file_bytes = get_file_bytes(p)
