@@ -133,6 +133,12 @@ Image.MAX_IMAGE_PIXELS = int(os.environ.get("MAX_IMAGE_PIXELS", 60_000_000))
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = app_max_content
+from flask import redirect
+@app.before_request
+def enforce_custom_domain():
+    # هذا الكود يطرد الرابط الطويل ويحول الزائر لرابطك الرسمي فوراً
+    if request.host == "infinity-converter-1.onrender.com":
+        return redirect("https://infinityconverter.com" + request.full_path, code=301)
 logging.basicConfig(level=logging.INFO)
 CORS(app, resources={r"/convert": {"origins": ALLOWED_ORIGINS}}, supports_credentials=False)
 
