@@ -1290,7 +1290,7 @@ def handle_resize_image(p):
     if p.get("keepRatio", True):
         orig_w, orig_h = img.size
         if target_w and not target_h: target_h = int(orig_h * (target_w / orig_w))
-        elif target_h and not target_w: target_w = int(orig_w * (target_h / orig_w))
+        elif target_h and not target_w: target_w = int(orig_w * (target_h / orig_h))
         img = img.copy()
         img.thumbnail((target_w, target_h))
     else:
