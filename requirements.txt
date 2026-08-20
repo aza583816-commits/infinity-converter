@@ -24,5 +24,3 @@ deep-translator==1.11.4
 convertapi
 cloudconvert
 requests
-
-
