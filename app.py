@@ -66,7 +66,7 @@ except Exception:
 from pypdf import PdfReader, PdfWriter
 from pypdf.errors import PdfReadError
 
-# ================= المكتبات الخارقة للذكاء الاصطناعي والـ PDF =================
+# ================= المكتبات الخارقة للتعليم والذكاء الاصطناعي =================
 try:
     import fitz  # PyMuPDF
 except Exception:
@@ -81,15 +81,16 @@ try:
     import pytesseract
 except Exception:
     pytesseract = None
-# =========================================================================
 
-import qrcode
-from qrcode.constants import ERROR_CORRECT_H
-from qrcode.image.styledpil import StyledPilImage
-from qrcode.image.styles.moduledrawers import RoundedModuleDrawer
-from qrcode.image.styles.colormasks import RadialGradiantColorMask
+try:
+    from gtts import gTTS
+except Exception:
+    gTTS = None
 
-import markdown as md_lib
+try:
+    from deep_translator import GoogleTranslator
+except Exception:
+    GoogleTranslator = None
 
 try:
     from pdf2docx import Converter
@@ -102,13 +103,13 @@ try:
 except Exception:
     Presentation = None
 
-# ==================== الإعدادات العامة والحماية (النسخة الخارقة) ====================
+# ==================== الإعدادات العامة والحماية ====================
 MAX_FILE_MB = int(os.environ.get("MAX_FILE_MB", 25))
 MAX_FILE_BYTES = MAX_FILE_MB * 1024 * 1024
 MAX_MERGE_FILES = int(os.environ.get("MAX_MERGE_FILES", 30))
 MAX_PDF_PAGES = int(os.environ.get("MAX_PDF_PAGES", 1000))
 MAX_TEXT_CHARS = int(os.environ.get("MAX_TEXT_CHARS", 5_000_000))
-SUBPROCESS_TIMEOUT = int(os.environ.get("SUBPROCESS_TIMEOUT", 300)) # تم رفع الوقت لـ 5 دقائق للملفات المعقدة
+SUBPROCESS_TIMEOUT = int(os.environ.get("SUBPROCESS_TIMEOUT", 300))
 ALLOWED_ORIGINS = [o.strip() for o in os.environ.get(
     "ALLOWED_ORIGINS", "https://infinityconverter.com,https://www.infinityconverter.com"
 ).split(",") if o.strip()]
@@ -118,9 +119,7 @@ Image.MAX_IMAGE_PIXELS = int(os.environ.get("MAX_IMAGE_PIXELS", 100_000_000))
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = app_max_content
-
 logging.basicConfig(level=logging.INFO)
-
 CORS(app, resources={r"/convert": {"origins": ALLOWED_ORIGINS}}, supports_credentials=False)
 
 limiter = Limiter(
@@ -130,39 +129,30 @@ limiter = Limiter(
     storage_uri=os.environ.get("RATE_LIMIT_STORAGE_URI", "memory://"),
 )
 
-HEAVY_ACTIONS = {
-    "word-to-pdf", "excel-to-pdf", "pdf-to-docx", "pdf-to-doc",
-    "pdf-to-ppt", "pdf-to-excel", "merge-pdf", "compress-image", "image-to-text"
-}
+HEAVY_ACTIONS = {"word-to-pdf", "excel-to-pdf", "pdf-to-docx", "pdf-to-doc", "pdf-to-ppt", "pdf-to-excel", "merge-pdf", "compress-image", "image-to-text", "text-to-audio", "watermark-pdf"}
 
 def dynamic_convert_limit():
     payload = request.get_json(silent=True) or {}
-    action = payload.get("action")
-    return "10 per minute" if action in HEAVY_ACTIONS else "30 per minute"
+    return "10 per minute" if payload.get("action") in HEAVY_ACTIONS else "30 per minute"
 
 @app.after_request
 def set_secure_headers(response):
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     response.headers['X-XSS-Protection'] = '1; mode=block'
-    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
-    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
-    if request.path == "/convert":
-        response.headers['Content-Security-Policy'] = "default-src 'none'; frame-ancestors 'self'"
-        response.headers['Cache-Control'] = 'no-store'
     return response
 
 @app.errorhandler(429)
-def ratelimit_handler(e): return jsonify(error="تم تجاوز الحد المسموح. يرجى الانتظار قليلاً لحماية السيرفر."), 429
+def ratelimit_handler(e): return jsonify(error="تم تجاوز الحد المسموح. يرجى الانتظار قليلاً."), 429
 @app.errorhandler(413)
 def too_large_handler(e): return jsonify(error=f"حجم الطلب أكبر من الحد المسموح."), 413
 @app.errorhandler(500)
-def internal_error_handler(e): return jsonify(error="حدث خطأ غير متوقع بالسيرفر. تم إبلاغ الفريق التقني."), 500
+def internal_error_handler(e): return jsonify(error="حدث خطأ غير متوقع بالسيرفر."), 500
 
 ARABIC_FONT_NAME = "ArabicFont"
 _arabic_font_registered = False
 
-# ==================== بيانات الـ SEO ومحرك الصفحات المستقلة ====================
+# ==================== القائمة الشاملة للأدوات ====================
 TOOLS_DEF = [
     ("pdf-to-docx", "PDF إلى Word", "PDF to Word", "file", "i-word", "fa-file-word"),
     ("word-to-pdf", "Word إلى PDF", "Word to PDF", "file", "i-pdf", "fa-file-pdf"),
@@ -170,6 +160,10 @@ TOOLS_DEF = [
     ("pdf-to-excel", "PDF إلى Excel", "PDF to Excel", "file", "i-excel", "fa-file-excel"),
     ("merge-pdf", "دمج ملفات PDF", "Merge PDF", "multiFile", "i-dev", "fa-object-group"),
     ("split-pdf", "تقسيم PDF", "Split PDF", "file", "i-pdf", "fa-file-dashed-line"),
+    ("watermark-pdf", "علامة مائية للـ PDF", "Watermark PDF", "fileText", "i-pdf", "fa-copyright"), 
+    ("remove-pdf-pages", "حذف صفحات من PDF", "Remove PDF Pages", "fileText", "i-pdf", "fa-file-circle-minus"), 
+    ("text-to-audio", "تحويل النص لصوت MP3", "Text to Audio", "text", "i-dev", "fa-file-audio"), 
+    ("translate-text", "مترجم النصوص", "Translate Text", "text", "i-word", "fa-language"), 
     ("pdf-to-csv", "PDF إلى CSV", "PDF to CSV", "file", "i-excel", "fa-file-csv"),
     ("csv-to-pdf", "CSV إلى PDF", "CSV to PDF", "fileText", "i-pdf", "fa-file-pdf"),
     ("word-to-csv", "Word إلى CSV", "Word to CSV", "file", "i-excel", "fa-file-csv"),
@@ -189,7 +183,7 @@ TOOLS_DEF = [
     ("image-to-png", "تحويل لـ PNG", "Convert to PNG", "file", "i-img", "fa-image"),
     ("heic-to-jpg", "HEIC إلى JPG", "HEIC to JPG", "file", "i-img", "fa-mobile-screen"),
     ("image-to-base64", "صورة إلى Base64", "Image to Base64", "file", "i-dev", "fa-code"),
-    ("image-to-text", "استخراج نص من صورة", "Image to Text (OCR)", "file", "i-dev", "fa-file-signature"), # الأداة الجديدة
+    ("image-to-text", "استخراج نص من صورة", "Image to Text (OCR)", "file", "i-dev", "fa-file-signature"),
     ("markdown-to-html", "Markdown إلى HTML", "Markdown to HTML", "text", "i-dev", "fa-file-code"),
     ("clean-text", "تنظيف النص", "Clean Text", "text", "i-word", "fa-broom"),
     ("base64-tool", "تشفير Base64", "Base64 Encode", "text", "i-dev", "fa-shield-halved"),
@@ -215,50 +209,57 @@ for action, nameAr, nameEn, type_, iconClass, iconName in TOOLS_DEF:
         "slug": action, "nameAr": nameAr, "nameEn": nameEn, "type": type_, "iconClass": iconClass, "iconName": iconName,
         "seo_title": f"أداة {nameAr} مجاناً أونلاين | V-Infinity",
         "seo_desc": f"أفضل أداة سحابية لتنفيذ {nameAr} بضغطة زر. معالجة سريعة وآمنة 100% ومجانية بالكامل بدون تسجيل.",
-        "faqs": [
-            {
-                "q_ar": f"هل أداة {nameAr} مجانية بالكامل؟",
-                "q_en": f"Is the {nameEn} tool completely free?",
-                "a_ar": "نعم، جميع أدوات V-Infinity مجانية ولا تتطلب أي تسجيل دخول أو اشتراك.",
-                "a_en": "Yes, all V-Infinity tools are completely free and do not require any login or subscription."
-            },
-            {
-                "q_ar": "هل يتم حفظ ملفاتي وبياناتي بعد المعالجة؟",
-                "q_en": "Are my files and data saved after processing?",
-                "a_ar": "لا، يتم مسح جميع البيانات والملفات تلقائياً وفوراً من السيرفر لحماية خصوصيتك.",
-                "a_en": "No, all data and files are automatically and immediately deleted from the server to protect your privacy."
-            }
-        ]
     }
 
-TOOLS_SEO["pdf-to-docx"].update({"seo_title": "تحويل PDF إلى Word مجاناً يدعم العربية | V-Infinity", "seo_desc": "قم بتحويل ملفات PDF إلى مستندات Word قابلة للتعديل بسهولة. تدعم اللغة العربية والجداول."})
-TOOLS_SEO["merge-pdf"].update({"seo_title": "دمج ملفات PDF في ملف واحد مجاناً | V-Infinity", "seo_desc": "أداة دمج ملفات PDF السريعة والآمنة. قم بدمج عدة ملفات في مستند واحد بضغطة زر وبدون فقدان الجودة."})
-
-# ==================== دوال الحماية والمساعدات السحرية ====================
-
+# ==================== دوال الحماية والمساعدات ====================
 def validate_signature(file_bytes, kind):
     if not file_bytes: return False
     if kind == "pdf": return file_bytes[:5] == b"%PDF-"
     if kind == "zip_office": return file_bytes[:4] in (b"PK\x03\x04", b"PK\x05\x06", b"PK\x07\x08")
-    if kind == "heic": return b"ftyp" in file_bytes[:32]
     if kind == "image_any":
-        sigs = [b"\x89PNG\r\n\x1a\n", b"\xff\xd8\xff", b"GIF87a", b"GIF89a", b"BM", b"RIFF"]
-        return any(file_bytes.startswith(s) for s in sigs) or validate_signature(file_bytes, "heic")
+        return any(file_bytes.startswith(s) for s in [b"\x89PNG\r\n\x1a\n", b"\xff\xd8\xff", b"GIF87a", b"GIF89a", b"BM", b"RIFF"]) or b"ftyp" in file_bytes[:32]
     return True
 
-def bad_signature_response(is_arabic): return bad_request("نوع الملف غير مطابق أو تالف." if is_arabic else "File type mismatch or corrupted.")
 def enforce_pdf_page_limit(reader, is_arabic):
     if len(reader.pages) > MAX_PDF_PAGES: return bad_request(f"يتجاوز الحد المسموح ({MAX_PDF_PAGES} صفحة)." if is_arabic else f"Exceeds maximum pages ({MAX_PDF_PAGES}).")
     return None
 
-def smart_decode(file_bytes):
-    for enc in ['utf-8-sig', 'utf-8', 'windows-1256', 'cp1256', 'iso-8859-6']:
-        try: return file_bytes.decode(enc)
-        except UnicodeDecodeError: continue
-    return file_bytes.decode('utf-8', errors='ignore')
+def apply_ghost_privacy(writer): writer.add_metadata({"/Author": "", "/Creator": "", "/Producer": "", "/CreationDate": "", "/ModDate": ""})
 
-def apply_ghost_privacy(writer):
-    writer.add_metadata({"/Author": "", "/Creator": "", "/Producer": "", "/CreationDate": "", "/ModDate": ""})
+def ensure_arabic_font():
+    global _arabic_font_registered
+    if _arabic_font_registered: return ARABIC_FONT_NAME
+    font_path = "/tmp/Cairo-Regular.ttf"
+    if not os.path.exists(font_path):
+        try: urllib.request.urlretrieve("https://github.com/googlefonts/cairo/raw/main/fonts/ttf/Cairo-Regular.ttf", font_path)
+        except: pass
+    for path in [font_path, "static/fonts/NotoNaskhArabic-Regular.ttf", "static/Cairo-Regular.ttf"]:
+        if os.path.exists(path):
+            try:
+                pdfmetrics.registerFont(TTFont(ARABIC_FONT_NAME, path))
+                _arabic_font_registered = True
+                return ARABIC_FONT_NAME
+            except: continue
+    return "Helvetica"
+
+def shape_arabic(text, wrap_width=None):
+    if not text: return text
+    if arabic_reshaper and get_display:
+        try:
+            reshaped = arabic_reshaper.reshape(text)
+            if wrap_width: return "<br/>".join(get_display(line) for line in textwrap.wrap(reshaped, wrap_width))
+            return get_display(reshaped)
+        except: return text
+    return text
+
+def is_arabic_text(t): return bool(re.search(r"[\u0600-\u06FF]", t or ""))
+def file_response(data_bytes, mimetype, filename): return send_file(io.BytesIO(data_bytes), mimetype=mimetype, as_attachment=True, download_name=filename)
+def bad_request(message): return jsonify({"error": message}), 400
+def get_file_bytes(p, key="fileBase64"):
+    b64 = p.get(key)
+    if not b64: return None
+    try: return base64.b64decode(b64.replace('\n', '').replace('\r', ''), validate=True)
+    except: raise ValueError("Invalid file data")
 
 def auto_fit_excel_columns(writer, sheet_name="Sheet1", add_autofilter=True):
     worksheet = writer.sheets[sheet_name]
@@ -292,43 +293,6 @@ def auto_fit_excel_columns(writer, sheet_name="Sheet1", add_autofilter=True):
     if add_autofilter and worksheet.max_row > 1:
         worksheet.auto_filter.ref = f"A1:{get_column_letter(worksheet.max_column)}{worksheet.max_row}"
 
-def ensure_arabic_font():
-    global _arabic_font_registered
-    if _arabic_font_registered: return ARABIC_FONT_NAME
-    font_path = "/tmp/Cairo-Regular.ttf"
-    if not os.path.exists(font_path):
-        try: urllib.request.urlretrieve("https://github.com/googlefonts/cairo/raw/main/fonts/ttf/Cairo-Regular.ttf", font_path)
-        except: pass
-    for path in [font_path, "static/fonts/NotoNaskhArabic-Regular.ttf", "static/Cairo-Regular.ttf"]:
-        if os.path.exists(path):
-            try:
-                pdfmetrics.registerFont(TTFont(ARABIC_FONT_NAME, path))
-                _arabic_font_registered = True
-                return ARABIC_FONT_NAME
-            except: continue
-    return "Helvetica"
-
-def shape_arabic(text, wrap_width=None):
-    if not text: return text
-    if arabic_reshaper and get_display:
-        try:
-            reshaped = arabic_reshaper.reshape(text)
-            if wrap_width: return "<br/>".join(get_display(line) for line in textwrap.wrap(reshaped, wrap_width))
-            return get_display(reshaped)
-        except: return text
-    return text
-
-def is_arabic_text(t): return bool(re.search(r"[\u0600-\u06FF]", t or ""))
-def pdf_font_name(is_arabic): return ensure_arabic_font() if is_arabic else "Helvetica"
-def file_response(data_bytes, mimetype, filename): return send_file(io.BytesIO(data_bytes), mimetype=mimetype, as_attachment=True, download_name=filename)
-def bad_request(message): return jsonify({"error": message}), 400
-
-def get_file_bytes(payload, key="fileBase64"):
-    b64 = payload.get(key)
-    if not b64: return None
-    try: return base64.b64decode(b64.replace('\n', '').replace('\r', ''), validate=True)
-    except: raise ValueError("Invalid file data")
-
 def parse_csv_text(text): return list(csv.reader(io.StringIO((text or "").strip())))
 def escape_html(s): return str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
@@ -337,91 +301,107 @@ def open_image_safely(file_bytes):
     img.load()  
     return img
 
-def build_docx_from_text(text, is_arabic):
-    doc = Document()
-    for line in (text or "").split("\n"):
-        p = doc.add_paragraph()
-        if is_arabic:
-            p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-            pPr = p._p.get_or_add_pPr()
-            pPr.append(pPr.makeelement(qn("w:bidi"), {}))
-        run = p.add_run(line if line else " ")
-        if is_arabic:
-            rPr = run._r.get_or_add_rPr()
-            rPr.append(rPr.makeelement(qn("w:rtl"), {}))
-    buf = io.BytesIO()
-    doc.save(buf)
-    return buf.getvalue()
+# ================= أدوات التعليم الجديدة (Teachers & Students) =================
 
-def text_to_pdf_bytes(text, is_arabic, title=None):
-    buf = io.BytesIO()
-    doc = SimpleDocTemplate(buf, pagesize=A4, topMargin=15 * mm, bottomMargin=15 * mm, leftMargin=15 * mm, rightMargin=15 * mm)
-    font = pdf_font_name(is_arabic)
-    story = []
-    for line in (text or "").split("\n"):
-        content = shape_arabic(line, wrap_width=85) if is_arabic else line
-        p_style = ParagraphStyle('Body', fontName=font, fontSize=11, leading=16, alignment=2 if is_arabic else 0)
-        t_cell = Table([[RLParagraph(escape_html(content).replace("&lt;br/&gt;", "<br/>") or "&nbsp;", p_style)]], colWidths=[480])
-        t_cell.setStyle(TableStyle([("ALIGN", (0, 0), (-1, -1), "RIGHT" if is_arabic else "LEFT"), ("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("BOTTOMPADDING", (0, 0), (-1, -1), 4)]))
-        story.append(t_cell)
-        story.append(Spacer(1, 4))
-    doc.build(story)
+def handle_text_to_audio(p):
+    if gTTS is None: return bad_request("مكتبة gTTS غير مثبتة.")
+    text = p.get("text", "").strip()
+    if not text: return bad_request("يرجى إدخال النص." if p["is_arabic"] else "Please enter text.")
+    if len(text) > 5000: return bad_request("النص طويل جداً (الحد الأقصى 5000 حرف)." if p["is_arabic"] else "Text too long.")
+    try:
+        lang_code = 'ar' if p["is_arabic"] else 'en'
+        tts = gTTS(text=text, lang=lang_code, slow=False)
+        buf = io.BytesIO()
+        tts.write_to_fp(buf)
+        return file_response(buf.getvalue(), "audio/mpeg", "Audio_Speech.mp3")
+    except Exception as e:
+        return bad_request("فشل توليد الصوت." if p["is_arabic"] else "Audio generation failed.")
 
-    reader = PdfReader(io.BytesIO(buf.getvalue()))
-    writer = PdfWriter()
-    for page in reader.pages:
-        page.compress_content_streams()
-        writer.add_page(page)
+def handle_translate_text(p):
+    if GoogleTranslator is None: return bad_request("مكتبة الترجمة غير مثبتة.")
+    text = p.get("text", "").strip()
+    if not text: return bad_request("يرجى إدخال النص." if p["is_arabic"] else "Please enter text.")
+    try:
+        target_lang = 'en' if p["is_arabic"] else 'ar'
+        translated = GoogleTranslator(source='auto', target=target_lang).translate(text)
+        return jsonify({"result": translated})
+    except Exception:
+        return bad_request("فشل الترجمة، يرجى المحاولة لاحقاً.")
 
-    apply_ghost_privacy(writer)
-    final_buf = io.BytesIO()
-    writer.write(final_buf)
-    return final_buf.getvalue()
+def handle_watermark_pdf(p):
+    file_bytes = get_file_bytes(p)
+    text = p.get("text", "V-Infinity").strip()
+    is_arabic = p["is_arabic"]
+    if not file_bytes: return bad_request("يرجى رفع ملف PDF" if is_arabic else "Upload PDF")
+    if not validate_signature(file_bytes, "pdf"): return bad_request("الملف غير صالح")
+    
+    try:
+        buf_watermark = io.BytesIO()
+        c = rl_canvas.Canvas(buf_watermark, pagesize=A4)
+        font = ensure_arabic_font()
+        c.setFont(font, 65)
+        c.setFillColorRGB(0.5, 0.5, 0.5, alpha=0.3) 
+        c.translate(A4[0]/2, A4[1]/2) 
+        c.rotate(45) 
+        c.drawCentredString(0, 0, shape_arabic(text))
+        c.save()
+        watermark_pdf = PdfReader(io.BytesIO(buf_watermark.getvalue()))
+        watermark_page = watermark_pdf.pages[0]
 
-def csv_to_pdf_bytes(text, is_arabic):
-    rows = parse_csv_text(text)
-    buf = io.BytesIO()
-    doc = SimpleDocTemplate(buf, pagesize=A4, topMargin=15 * mm, bottomMargin=15 * mm, leftMargin=15 * mm, rightMargin=15 * mm)
-    font = pdf_font_name(is_arabic)
-    table_data = []
-    for row in rows:
-        formatted_row = []
-        for c in row:
-            style_cell = ParagraphStyle('TableCell', fontName=font, fontSize=11, leading=16, alignment=1)
-            formatted_row.append(RLParagraph(escape_html(shape_arabic((c or "").strip()) if is_arabic else (c or "").strip()), style_cell))
-        if is_arabic: formatted_row.reverse()
-        table_data.append(formatted_row)
+        reader = PdfReader(io.BytesIO(file_bytes))
+        err = enforce_pdf_page_limit(reader, is_arabic)
+        if err: return err
+        
+        writer = PdfWriter()
+        for page in reader.pages:
+            page.merge_page(watermark_page) 
+            writer.add_page(page)
+            
+        final_buf = io.BytesIO()
+        writer.write(final_buf)
+        return file_response(final_buf.getvalue(), "application/pdf", "Watermarked.pdf")
+    except Exception as e:
+        return bad_request("فشل إضافة العلامة المائية.")
 
-    if not table_data: table_data = [[RLParagraph("", ParagraphStyle('Empty', fontName=font, fontSize=11))]]
-    col_widths = [(A4[0] - 30 * mm) / max(len(table_data[0]), 1)] * max(len(table_data[0]), 1)
-    table = Table(table_data, colWidths=col_widths, hAlign="CENTER", repeatRows=1)
+def handle_remove_pdf_pages(p):
+    file_bytes = get_file_bytes(p)
+    text = p.get("text", "").strip()
+    is_arabic = p["is_arabic"]
+    if not file_bytes: return bad_request("يرجى رفع ملف PDF")
+    if not text: return bad_request("يرجى كتابة أرقام الصفحات المراد حذفها (مثال: 1, 3, 5-7)")
+    
+    try:
+        reader = PdfReader(io.BytesIO(file_bytes))
+        err = enforce_pdf_page_limit(reader, is_arabic)
+        if err: return err
+        
+        pages_to_remove = set()
+        for part in text.replace("،", ",").split(","):
+            part = part.strip()
+            if "-" in part:
+                try:
+                    start, end = map(int, part.split("-"))
+                    pages_to_remove.update(range(start - 1, end))
+                except: pass
+            elif part.isdigit():
+                pages_to_remove.add(int(part) - 1)
+                
+        writer = PdfWriter()
+        for i, page in enumerate(reader.pages):
+            if i not in pages_to_remove: 
+                writer.add_page(page)
+                
+        if len(writer.pages) == 0: return bad_request("لا يمكنك حذف جميع صفحات الملف!")
+        
+        final_buf = io.BytesIO()
+        writer.write(final_buf)
+        return file_response(final_buf.getvalue(), "application/pdf", "Edited_Document.pdf")
+    except Exception:
+        return bad_request("فشل قص الصفحات، يرجى كتابة الأرقام بشكل صحيح.")
 
-    style_commands = [
-        ("FONTNAME", (0, 0), (-1, -1), font), ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e293b")), ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("ALIGN", (0, 0), (-1, -1), "CENTER"), ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("TOPPADDING", (0, 0), (-1, -1), 12), ("BOTTOMPADDING", (0, 0), (-1, -1), 12)
-    ]
-    for i in range(1, len(table_data)):
-        style_commands.append(("BACKGROUND", (0, i), (-1, i), colors.HexColor("#f8fafc") if i % 2 == 0 else colors.white))
-    table.setStyle(TableStyle(style_commands))
-    doc.build([table])
-
-    reader = PdfReader(io.BytesIO(buf.getvalue()))
-    writer = PdfWriter()
-    for page in reader.pages:
-        page.compress_content_streams()
-        writer.add_page(page)
-
-    apply_ghost_privacy(writer)
-    final_buf = io.BytesIO()
-    writer.write(final_buf)
-    return final_buf.getvalue()
-
-def run_libreoffice_convert(src_path, out_dir):
+# ================= الأدوات الأساسية والذكاء الاصطناعي (محدثة بالكامل) =================
+def run_libreoffice_convert(src_path, out_dir): 
     subprocess.run(["libreoffice", "--headless", "--nologo", "--nofirststartwizard", "--norestore", "--convert-to", "pdf", src_path, "--outdir", out_dir], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=SUBPROCESS_TIMEOUT)
-
-# ================= الأدوات الجبارة للـ PDF (AI & High Accuracy) =================
 
 def handle_word_to_pdf(p):
     file_bytes = get_file_bytes(p)
@@ -452,117 +432,7 @@ def handle_word_to_pdf(p):
         except Exception: return bad_request("فشل التحويل. قد يكون السيرفر تحت ضغط." if is_arabic else "Conversion failed.")
         finally:
             if tmp_docx_path and os.path.exists(tmp_docx_path): os.remove(tmp_docx_path)
-    return file_response(text_to_pdf_bytes(p.get("text", ""), is_arabic), "application/pdf", "Converted_Document.pdf")
-
-def handle_text_to_pdf(p):
-    if not p.get("text", "").strip(): return bad_request("يرجى إدخال نص" if p["is_arabic"] else "Please enter text")
-    return file_response(text_to_pdf_bytes(p.get("text", ""), p["is_arabic"]), "application/pdf", "Converted_Text.pdf")
-
-def handle_pdf_to_pdf_enhanced(p):
-    file_bytes = get_file_bytes(p)
-    if not file_bytes: return bad_request("يرجى رفع ملف PDF" if p["is_arabic"] else "Please upload a PDF")
-    if not validate_signature(file_bytes, "pdf"): return bad_signature_response(p["is_arabic"])
-    try:
-        reader = PdfReader(io.BytesIO(file_bytes))
-        err = enforce_pdf_page_limit(reader, p["is_arabic"])
-        if err: return err
-        extracted_text = "\n".join((page.extract_text() or "") for page in reader.pages)
-        return file_response(text_to_pdf_bytes(extracted_text, p["is_arabic"]), "application/pdf", "Reformatted_Document.pdf")
-    except PdfReadError: return bad_request("الملف تالف أو محمي بكلمة سر" if p["is_arabic"] else "Corrupted or protected file")
-    except Exception: return bad_request("تعذر قراءة الملف" if p["is_arabic"] else "Could not read PDF")
-
-def handle_csv_to_pdf(p):
-    file_bytes = get_file_bytes(p)
-    text = smart_decode(file_bytes) if file_bytes else p.get("text", "")
-    return file_response(csv_to_pdf_bytes(text, p["is_arabic"]), "application/pdf", "Converted_Table.pdf")
-
-def handle_excel_to_pdf(p):
-    file_bytes = get_file_bytes(p)
-    is_arabic = p["is_arabic"]
-    if not file_bytes: return bad_request("يرجى رفع ملف Excel" if is_arabic else "Please upload an Excel file")
-    if not validate_signature(file_bytes, "zip_office"): return bad_signature_response(is_arabic)
-    tmp_xlsx_path = None
-    try:
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            tmp_xlsx_path = os.path.join(tmp_dir, f"{uuid.uuid4().hex}.xlsx")
-            with open(tmp_xlsx_path, "wb") as f: f.write(file_bytes)
-            run_libreoffice_convert(tmp_xlsx_path, tmp_dir)
-            pdf_path = os.path.join(tmp_dir, f"{os.path.splitext(os.path.basename(tmp_xlsx_path))[0]}.pdf")
-            if not os.path.exists(pdf_path): return bad_request("تعذر التحويل" if is_arabic else "Could not convert")
-            
-            reader = PdfReader(pdf_path)
-            err = enforce_pdf_page_limit(reader, is_arabic)
-            if err: return err
-            writer = PdfWriter()
-            for page in reader.pages:
-                page.compress_content_streams()
-                writer.add_page(page)
-            apply_ghost_privacy(writer)
-            final_buf = io.BytesIO()
-            writer.write(final_buf)
-            return file_response(final_buf.getvalue(), "application/pdf", "Converted_Excel.pdf")
-    except subprocess.TimeoutExpired: return bad_request("استغرقت المعالجة وقتاً طويلاً جداً." if is_arabic else "Processing took too long.")
-    except Exception: return bad_request("تعذر التحويل" if is_arabic else "Could not convert")
-    finally:
-        if tmp_xlsx_path and os.path.exists(tmp_xlsx_path): os.remove(tmp_xlsx_path)
-
-def handle_pdf_to_text(p):
-    file_bytes = get_file_bytes(p)
-    if not file_bytes: return bad_request("No file provided")
-    if not validate_signature(file_bytes, "pdf"): return bad_signature_response(p["is_arabic"])
-    try:
-        text = ""
-        # استخدام المكتبة الخارقة PyMuPDF إذا توفرت لسرعة ودقة فائقة
-        if fitz:
-            doc = fitz.open(stream=file_bytes, filetype="pdf")
-            if len(doc) > MAX_PDF_PAGES: return bad_request("يتجاوز الحد المسموح" if p["is_arabic"] else "Exceeds max pages")
-            for page in doc:
-                text += page.get_text() + "\n"
-        else:
-            # الطريقة القديمة
-            reader = PdfReader(io.BytesIO(file_bytes))
-            err = enforce_pdf_page_limit(reader, p["is_arabic"])
-            if err: return err
-            text = "\n".join((page.extract_text() or "") for page in reader.pages)
-        return jsonify({"result": text.strip()})
-    except Exception: 
-        return bad_request("الملف تالف أو تعذر استخراج النص" if p["is_arabic"] else "Corrupted file or could not extract")
-
-def handle_pdf_to_csv(p):
-    file_bytes = get_file_bytes(p)
-    if not file_bytes: return bad_request("No file provided")
-    if not validate_signature(file_bytes, "pdf"): return bad_signature_response(p["is_arabic"])
-    try:
-        buf = io.StringIO()
-        writer = csv.writer(buf)
-        # الذكاء الاصطناعي (pdfplumber) لاستخراج الجداول الدقيقة
-        if pdfplumber:
-            with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
-                if len(pdf.pages) > MAX_PDF_PAGES: return bad_request("يتجاوز الحد المسموح")
-                for page in pdf.pages:
-                    tables = page.extract_tables()
-                    if tables:
-                        for table in tables:
-                            for row in table:
-                                writer.writerow([str(cell).strip() if cell else "" for cell in row])
-                    else:
-                        for line in (page.extract_text() or "").split("\n"):
-                            if line.strip(): writer.writerow(line.split())
-        elif fitz:
-            doc = fitz.open(stream=file_bytes, filetype="pdf")
-            if len(doc) > MAX_PDF_PAGES: return bad_request("يتجاوز الحد المسموح")
-            for page in doc:
-                for line in (page.get_text() or "").split("\n"):
-                    if line.strip(): writer.writerow(line.split())
-        else:
-            reader = PdfReader(io.BytesIO(file_bytes))
-            err = enforce_pdf_page_limit(reader, p["is_arabic"])
-            if err: return err
-            for page in reader.pages:
-                for line in (page.extract_text() or "").split("\n"):
-                    if line.strip(): writer.writerow(line.split())
-        return file_response(("\ufeff" + buf.getvalue()).encode("utf-8"), "text/csv", "Converted_Data.csv")
-    except Exception: return bad_request("تعذر استخراج الجداول" if p["is_arabic"] else "Could not extract tables")
+    return bad_request("يرجى رفع ملف.")
 
 def handle_pdf_to_docx(p):
     file_bytes = get_file_bytes(p)
@@ -583,7 +453,6 @@ def handle_pdf_to_docx(p):
 
             docx_path = os.path.join(tmp_dir, f"{os.path.splitext(os.path.basename(tmp_pdf_path))[0]}.docx")
             cv = Converter(tmp_pdf_path)
-            # قوة الدقة القصوى مع maintain_layout
             cv.convert(docx_path, start=0, end=None, kwargs={
                 "connected_border_tolerance": 2.5, "line_overlap_threshold": 0.9,
                 "line_margin": 0.2, "word_margin": 0.2, "maintain_layout": True
@@ -618,29 +487,6 @@ def handle_pdf_to_docx(p):
     finally:
         if tmp_pdf_path and os.path.exists(tmp_pdf_path): os.remove(tmp_pdf_path)
 
-def handle_pdf_to_doc(p): return handle_pdf_to_docx(p)
-
-def handle_doc_to_docx(p):
-    buf = build_docx_from_text(p.get("text", ""), p["is_arabic"])
-    return file_response(buf, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "Converted_Document.docx")
-
-def handle_merge_word(p):
-    is_arabic = p["is_arabic"]
-    files = p.get("filesBase64") or []
-    if len(files) < 2: return bad_request("يرجى رفع ملفين Word على الأقل" if is_arabic else "Upload at least 2 Word files")
-    merged = Document()
-    first = True
-    for b64 in files:
-        try: raw = base64.b64decode(b64.replace('\n','').replace('\r',''), validate=True)
-        except Exception: return bad_request("ملف غير صالح" if is_arabic else "Invalid file")
-        if not validate_signature(raw, "zip_office"): return bad_signature_response(is_arabic)
-        sub_doc = Document(io.BytesIO(raw))
-        if not first: merged.add_page_break()
-        first = False
-        for element in sub_doc.element.body: merged.element.body.append(element)
-    buf = io.BytesIO(); merged.save(buf)
-    return file_response(buf.getvalue(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "Merged_Document.docx")
-
 def handle_pdf_to_excel(p):
     file_bytes = get_file_bytes(p)
     if not file_bytes: return bad_request("No file provided")
@@ -649,11 +495,10 @@ def handle_pdf_to_excel(p):
     buf = io.BytesIO()
     with pd.ExcelWriter(buf, engine="openpyxl") as writer:
         has_data = False
-        # الذكاء الاصطناعي (pdfplumber) لاستخراج الجداول الدقيقة
         if pdfplumber:
             try:
                 with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
-                    err = enforce_pdf_page_limit(len(pdf.pages), p["is_arabic"])
+                    err = enforce_pdf_page_limit(pdf, p["is_arabic"])
                     if err: return err
                     for idx, page in enumerate(pdf.pages):
                         tables = page.extract_tables()
@@ -676,14 +521,12 @@ def handle_pdf_to_excel(p):
                                 has_data = True
             except Exception: pass
             
-        # لو ما نجح pdfplumber، نرجع للبديل الذكي PyMuPDF
         if not has_data and fitz:
             doc = fitz.open(stream=file_bytes, filetype="pdf")
-            err = enforce_pdf_page_limit(len(doc), p["is_arabic"])
-            if err: return err
+            if len(doc) > MAX_PDF_PAGES: return bad_request("يتجاوز الحد المسموح")
             for idx, page in enumerate(doc):
                 rows = [line.split() for line in (page.get_text() or "").split("\n") if line.strip()]
-                if not rows: rows = [[""]]
+                if not rows: continue
                 max_len = max(len(r) for r in rows)
                 rows = [r + [""] * (max_len - len(r)) for r in rows]
                 df = pd.DataFrame(rows)
@@ -692,14 +535,13 @@ def handle_pdf_to_excel(p):
                 auto_fit_excel_columns(writer, sheet_name, add_autofilter=False)
                 has_data = True
                 
-        # لو لا هذا ولا هذا، نستخدم القديم العادي
         if not has_data:
             reader = PdfReader(io.BytesIO(file_bytes))
             err = enforce_pdf_page_limit(reader, p["is_arabic"])
             if err: return err
             for idx, page in enumerate(reader.pages):
                 rows = [line.split() for line in (page.extract_text() or "").split("\n") if line.strip()]
-                if not rows: rows = [[""]]
+                if not rows: continue
                 max_len = max(len(r) for r in rows)
                 rows = [r + [""] * (max_len - len(r)) for r in rows]
                 df = pd.DataFrame(rows)
@@ -708,6 +550,39 @@ def handle_pdf_to_excel(p):
                 auto_fit_excel_columns(writer, sheet_name, add_autofilter=False)
                 
     return file_response(buf.getvalue(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Converted_Excel.xlsx")
+
+def handle_image_to_text(p):
+    if pytesseract is None: return bad_request("مكتبة OCR غير مثبتة بالسيرفر (يرجى إضافتها في requirements.txt)")
+    file_bytes = get_file_bytes(p)
+    if not file_bytes: return bad_request("يرجى رفع صورة")
+    if not validate_signature(file_bytes, "image_any"): return bad_signature_response(p["is_arabic"])
+    try:
+        img = Image.open(io.BytesIO(file_bytes))
+        img.load()
+        lang = 'ara+eng' if p["is_arabic"] else 'eng'
+        text = pytesseract.image_to_string(img, lang=lang)
+        if not text.strip(): return jsonify({"result": "لم يتم العثور على أي نص واضح في الصورة." if p["is_arabic"] else "No text found."})
+        return jsonify({"result": text.strip()})
+    except Exception:
+        return bad_request("فشل التعرف على النص. يرجى التأكد من تثبيت حزم Tesseract-OCR في ملف Dockerfile.")
+
+def handle_pdf_to_text(p):
+    file_bytes = get_file_bytes(p)
+    if not file_bytes: return bad_request("No file provided")
+    if not validate_signature(file_bytes, "pdf"): return bad_signature_response(p["is_arabic"])
+    try:
+        text = ""
+        if fitz:
+            doc = fitz.open(stream=file_bytes, filetype="pdf")
+            if len(doc) > MAX_PDF_PAGES: return bad_request("يتجاوز الحد المسموح" if p["is_arabic"] else "Exceeds max pages")
+            for page in doc: text += page.get_text() + "\n"
+        else:
+            reader = PdfReader(io.BytesIO(file_bytes))
+            err = enforce_pdf_page_limit(reader, p["is_arabic"])
+            if err: return err
+            text = "\n".join((page.extract_text() or "") for page in reader.pages)
+        return jsonify({"result": text.strip()})
+    except Exception: return bad_request("الملف تالف أو تعذر استخراج النص")
 
 def handle_pdf_to_ppt(p):
     if Presentation is None: return bad_request("python-pptx غير مثبّت")
@@ -718,7 +593,7 @@ def handle_pdf_to_ppt(p):
     blank_layout = prs.slide_layouts[6]
     if fitz:
         doc = fitz.open(stream=file_bytes, filetype="pdf")
-        if len(doc) > MAX_PDF_PAGES: return bad_request("يتجاوز الحد المسموح" if p["is_arabic"] else "Exceeds max pages")
+        if len(doc) > MAX_PDF_PAGES: return bad_request("يتجاوز الحد المسموح")
         for idx, page in enumerate(doc):
             text = (page.get_text() or "").strip()
             if len(text) > 1500: text = text[:1497] + "..."
@@ -740,36 +615,27 @@ def handle_pdf_to_ppt(p):
             slide = prs.slides.add_slide(blank_layout)
             t_box = slide.shapes.add_textbox(Inches(0.4), Inches(0.3), Inches(9), Inches(0.8))
             t_box.text_frame.text = f"Page {idx + 1}"
-            t_box.text_frame.paragraphs[0].font.size = Pt(20)
-            t_box.text_frame.paragraphs[0].font.bold = True
             b_box = slide.shapes.add_textbox(Inches(0.4), Inches(1.2), Inches(9), Inches(5))
             b_box.text_frame.text = text
-            b_box.text_frame.word_wrap = True
-            
     buf = io.BytesIO(); prs.save(buf)
     return file_response(buf.getvalue(), "application/vnd.openxmlformats-officedocument.presentationml.presentation", "Converted_Presentation.pptx")
 
 def handle_merge_pdf(p):
     files = p.get("filesBase64") or ([p.get("fileBase64")] if p.get("fileBase64") else [])
-    if len(files) < 2: return bad_request("يرجى رفع ملفين PDF على الأقل" if p["is_arabic"] else "Upload at least 2 PDFs")
+    if len(files) < 2: return bad_request("يرجى رفع ملفين PDF على الأقل")
     writer = PdfWriter()
     page_count = 0
-    decoded_readers = []
-    for b64 in files:
+    for i, b64 in enumerate(files):
         try: raw = base64.b64decode(b64.replace('\n', '').replace('\r', ''), validate=True)
-        except Exception: return bad_request("ملف غير صالح" if p["is_arabic"] else "Invalid file")
-        if not validate_signature(raw, "pdf"): return bad_signature_response(p["is_arabic"])
+        except: continue
+        if not validate_signature(raw, "pdf"): continue
         try: reader = PdfReader(io.BytesIO(raw))
-        except PdfReadError: return bad_request("ملف تالف" if p["is_arabic"] else "Corrupted file")
-        decoded_readers.append(reader)
-
-    for i, reader in enumerate(decoded_readers):
-        writer.add_outline_item(f"ملف {i + 1}" if p["is_arabic"] else f"Document {i + 1}", page_count)
+        except: continue
+        writer.add_outline_item(f"ملف {i + 1}", page_count)
         for page in reader.pages:
-            page.compress_content_streams() # ضغط خيالي للصفحات المدمجة
+            page.compress_content_streams()
             writer.add_page(page)
             page_count += 1
-
     apply_ghost_privacy(writer)
     buf = io.BytesIO(); writer.write(buf)
     return file_response(buf.getvalue(), "application/pdf", "Merged_Document.pdf")
@@ -779,7 +645,7 @@ def handle_split_pdf(p):
     if not file_bytes: return bad_request("No file provided")
     if not validate_signature(file_bytes, "pdf"): return bad_signature_response(p["is_arabic"])
     try: reader = PdfReader(io.BytesIO(file_bytes))
-    except PdfReadError: return bad_request("الملف تالف" if p["is_arabic"] else "Corrupted file")
+    except PdfReadError: return bad_request("الملف تالف")
     err = enforce_pdf_page_limit(reader, p["is_arabic"])
     if err: return err
     zip_buf = io.BytesIO()
@@ -792,6 +658,77 @@ def handle_split_pdf(p):
             page_buf = io.BytesIO(); writer.write(page_buf)
             zf.writestr(f"Page_{i + 1}.pdf", page_buf.getvalue())
     return file_response(zip_buf.getvalue(), "application/zip", "Split_Pages.zip")
+
+def handle_text_to_pdf(p):
+    if not p.get("text", "").strip(): return bad_request("يرجى إدخال نص" if p["is_arabic"] else "Please enter text")
+    return file_response(text_to_pdf_bytes(p.get("text", ""), p["is_arabic"]), "application/pdf", "Converted_Text.pdf")
+
+def handle_pdf_to_pdf_enhanced(p):
+    file_bytes = get_file_bytes(p)
+    if not file_bytes: return bad_request("يرجى رفع ملف PDF" if p["is_arabic"] else "Please upload a PDF")
+    if not validate_signature(file_bytes, "pdf"): return bad_signature_response(p["is_arabic"])
+    try:
+        reader = PdfReader(io.BytesIO(file_bytes))
+        err = enforce_pdf_page_limit(reader, p["is_arabic"])
+        if err: return err
+        extracted_text = "\n".join((page.extract_text() or "") for page in reader.pages)
+        return file_response(text_to_pdf_bytes(extracted_text, p["is_arabic"]), "application/pdf", "Reformatted_Document.pdf")
+    except Exception: return bad_request("تعذر قراءة الملف")
+
+def handle_csv_to_pdf(p):
+    file_bytes = get_file_bytes(p)
+    text = smart_decode(file_bytes) if file_bytes else p.get("text", "")
+    return file_response(csv_to_pdf_bytes(text, p["is_arabic"]), "application/pdf", "Converted_Table.pdf")
+
+def handle_pdf_to_csv(p):
+    file_bytes = get_file_bytes(p)
+    if not file_bytes: return bad_request("No file provided")
+    if not validate_signature(file_bytes, "pdf"): return bad_signature_response(p["is_arabic"])
+    try:
+        buf = io.StringIO()
+        writer = csv.writer(buf)
+        if pdfplumber:
+            with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
+                if len(pdf.pages) > MAX_PDF_PAGES: return bad_request("يتجاوز الحد المسموح")
+                for page in pdf.pages:
+                    tables = page.extract_tables()
+                    if tables:
+                        for table in tables:
+                            for row in table:
+                                writer.writerow([str(cell).strip() if cell else "" for cell in row])
+                    else:
+                        for line in (page.extract_text() or "").split("\n"):
+                            if line.strip(): writer.writerow(line.split())
+        else:
+            reader = PdfReader(io.BytesIO(file_bytes))
+            err = enforce_pdf_page_limit(reader, p["is_arabic"])
+            if err: return err
+            for page in reader.pages:
+                for line in (page.extract_text() or "").split("\n"):
+                    if line.strip(): writer.writerow(line.split())
+        return file_response(("\ufeff" + buf.getvalue()).encode("utf-8"), "text/csv", "Converted_Data.csv")
+    except Exception: return bad_request("تعذر استخراج الجداول")
+
+def handle_doc_to_docx(p):
+    buf = build_docx_from_text(p.get("text", ""), p["is_arabic"])
+    return file_response(buf, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "Converted_Document.docx")
+
+def handle_merge_word(p):
+    is_arabic = p["is_arabic"]
+    files = p.get("filesBase64") or []
+    if len(files) < 2: return bad_request("يرجى رفع ملفين Word على الأقل")
+    merged = Document()
+    first = True
+    for b64 in files:
+        try: raw = base64.b64decode(b64.replace('\n','').replace('\r',''), validate=True)
+        except Exception: continue
+        if not validate_signature(raw, "zip_office"): continue
+        sub_doc = Document(io.BytesIO(raw))
+        if not first: merged.add_page_break()
+        first = False
+        for element in sub_doc.element.body: merged.element.body.append(element)
+    buf = io.BytesIO(); merged.save(buf)
+    return file_response(buf.getvalue(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "Merged_Document.docx")
 
 def handle_csv_to_word(p):
     file_bytes = get_file_bytes(p)
@@ -826,7 +763,7 @@ def handle_word_to_csv(p):
         for table in Document(io.BytesIO(file_bytes)).tables:
             for row in table.rows: writer.writerow([cell.text.strip() for cell in row.cells])
         return file_response(("\ufeff" + buf.getvalue()).encode("utf-8"), "text/csv", "Converted_Data.csv")
-    except Exception: return bad_request("فشل التحويل" if p["is_arabic"] else "Failed")
+    except Exception: return bad_request("فشل التحويل")
 
 def handle_text_to_excel(p):
     file_bytes = get_file_bytes(p)
@@ -865,7 +802,7 @@ def handle_excel_to_json(p):
     if not file_bytes: return bad_request("No file provided")
     if not validate_signature(file_bytes, "zip_office"): return bad_signature_response(p["is_arabic"])
     try: df = pd.read_excel(io.BytesIO(file_bytes))
-    except Exception: return bad_request("تعذر قراءة ملف الإكسل" if p["is_arabic"] else "Could not read Excel")
+    except Exception: return bad_request("تعذر قراءة ملف الإكسل")
     df = df.map(lambda x: x.strip() if isinstance(x, str) else x).where(pd.notnull(df), None)
     return jsonify({"result": df.to_json(orient="records", force_ascii=False, indent=2)})
 
@@ -888,24 +825,17 @@ def handle_json_to_csv(p):
         writer.writeheader()
         writer.writerows(data)
         return file_response(("\ufeff" + buf.getvalue()).encode("utf-8"), "text/csv", "Converted_Data.csv")
-    except Exception: return bad_request("تنسيق JSON غير صحيح" if p["is_arabic"] else "Invalid JSON")
+    except Exception: return bad_request("تنسيق JSON غير صحيح")
 
 def handle_text_to_csv(p):
     file_bytes = get_file_bytes(p)
     return file_response(("\ufeff" + (smart_decode(file_bytes) if file_bytes else p.get("text", ""))).encode("utf-8"), "text/csv", "Converted_Data.csv")
 
-# ================= أدوات الصور =================
-def _load_validated_image(p, is_arabic):
-    file_bytes = get_file_bytes(p)
-    if not file_bytes: return None, bad_request("No image provided")
-    if not validate_signature(file_bytes, "image_any"): return None, bad_signature_response(is_arabic)
-    try: return open_image_safely(file_bytes), None
-    except Image.DecompressionBombError: return None, bad_request("أبعاد الصورة كبيرة جداً" if is_arabic else "Unsafely large image")
-    except UnidentifiedImageError: return None, bad_signature_response(is_arabic)
-
 def handle_compress_image(p):
-    img, err = _load_validated_image(p, p["is_arabic"])
-    if err: return err
+    file_bytes = get_file_bytes(p)
+    if not file_bytes: return bad_request("No image")
+    try: img = Image.open(io.BytesIO(file_bytes))
+    except: return bad_request("Invalid image")
     try: quality = max(10, min(95, int(p.get("quality", 70))))
     except Exception: quality = 70
     img = img.convert("RGB")
@@ -919,16 +849,20 @@ def handle_compress_image(p):
     return file_response(buf.getvalue(), "image/jpeg", "Compressed_Image.jpg")
 
 def handle_image_to_png(p):
-    img, err = _load_validated_image(p, p["is_arabic"])
-    if err: return err
+    file_bytes = get_file_bytes(p)
+    if not file_bytes: return bad_request("No image")
+    try: img = Image.open(io.BytesIO(file_bytes))
+    except: return bad_request("Invalid")
     img = ImageOps.exif_transpose(img)
     buf = io.BytesIO()
     img.save(buf, format="PNG", optimize=True)
     return file_response(buf.getvalue(), "image/png", "Converted_Image.png")
 
 def handle_image_to_jpg(p):
-    img, err = _load_validated_image(p, p["is_arabic"])
-    if err: return err
+    file_bytes = get_file_bytes(p)
+    if not file_bytes: return bad_request("No image")
+    try: img = Image.open(io.BytesIO(file_bytes))
+    except: return bad_request("Invalid")
     img = ImageOps.exif_transpose(img)
     bg = Image.new("RGB", img.size, (255, 255, 255))
     if img.mode in ("RGBA", "LA"): bg.paste(img, mask=img.split()[-1])
@@ -938,8 +872,10 @@ def handle_image_to_jpg(p):
     return file_response(buf.getvalue(), "image/jpeg", "Converted_Image.jpg")
 
 def handle_image_to_base64(p):
-    img, err = _load_validated_image(p, p["is_arabic"])
-    if err: return err
+    file_bytes = get_file_bytes(p)
+    if not file_bytes: return bad_request("No image")
+    try: img = Image.open(io.BytesIO(file_bytes))
+    except: return bad_request("Invalid")
     img = ImageOps.exif_transpose(img)
     buf = io.BytesIO()
     img.save(buf, format=img.format or "PNG")
@@ -948,8 +884,10 @@ def handle_image_to_base64(p):
     return jsonify({"result": f"data:{mime};base64,{base64.b64encode(buf.getvalue()).decode('ascii')}"})
 
 def handle_image_to_pdf(p):
-    img, err = _load_validated_image(p, p["is_arabic"])
-    if err: return err
+    file_bytes = get_file_bytes(p)
+    if not file_bytes: return bad_request("No image")
+    try: img = Image.open(io.BytesIO(file_bytes))
+    except: return bad_request("Invalid")
     img = img.convert("RGB")
     img = ImageOps.exif_transpose(img)
     buf = io.BytesIO()
@@ -959,29 +897,13 @@ def handle_image_to_pdf(p):
 def handle_heic_to_jpg(p):
     if pillow_heif is None: return bad_request("pillow-heif غير مثبّت")
     file_bytes = get_file_bytes(p)
-    if not file_bytes: return bad_request("No image provided")
-    if not validate_signature(file_bytes, "heic"): return bad_signature_response(p["is_arabic"])
-    try: img = open_image_safely(file_bytes).convert("RGB")
-    except Exception: return bad_request("أبعاد الصورة كبيرة جداً" if p["is_arabic"] else "Unsafely large image")
+    if not file_bytes: return bad_request("No image")
+    try: img = Image.open(io.BytesIO(file_bytes)).convert("RGB")
+    except Exception: return bad_request("Invalid image")
     buf = io.BytesIO()
     img.save(buf, format="JPEG", quality=92, optimize=True, progressive=True)
     return file_response(buf.getvalue(), "image/jpeg", "Converted_Image.jpg")
 
-# ================= أداة الذكاء الاصطناعي لاستخراج النص من الصور OCR =================
-def handle_image_to_text(p):
-    if pytesseract is None: return bad_request("مكتبة OCR غير مثبتة بالسيرفر (يرجى إضافتها في requirements.txt)")
-    img, err = _load_validated_image(p, p["is_arabic"])
-    if err: return err
-    try:
-        # قراءة النصوص عربي وانجليزي بدقة عالية
-        lang = 'ara+eng' if p["is_arabic"] else 'eng'
-        text = pytesseract.image_to_string(img, lang=lang)
-        if not text.strip(): return jsonify({"result": "لم يتم العثور على أي نص واضح في الصورة." if p["is_arabic"] else "No text found."})
-        return jsonify({"result": text.strip()})
-    except Exception:
-        return bad_request("فشل التعرف على النص. يرجى التأكد من تثبيت حزم Tesseract-OCR في ملف Dockerfile.")
-
-# ================= أدوات النصوص والمطورين =================
 def handle_base64_tool(p):
     text = p.get("text", "")
     try:
@@ -1002,7 +924,7 @@ def handle_url_encoder(p):
 
 def handle_json_beautifier(p):
     try: return jsonify({"result": json.dumps(json.loads(p.get("text", "")), ensure_ascii=False, indent=4, sort_keys=True)})
-    except Exception: return bad_request("تنسيق JSON غير صحيح" if p["is_arabic"] else "Invalid JSON")
+    except Exception: return bad_request("تنسيق JSON غير صحيح")
 
 def handle_css_js_minifier(p):
     return jsonify({"result": re.sub(r"\s+", " ", re.sub(r"/\*[\s\S]*?\*/|//.*", "", p.get("text", ""))).strip()})
@@ -1016,14 +938,14 @@ def handle_hash_generator(p):
 
 def handle_hmac_generator(p):
     key, text = p.get("key", ""), p.get("text", "")
-    if not key: return bad_request("يرجى إدخال المفتاح السري" if p["is_arabic"] else "Provide secret key")
+    if not key: return bad_request("يرجى إدخال المفتاح السري")
     algo = p.get("algorithm", "sha256")
     if algo not in hashlib.algorithms_available: algo = "sha256"
     return jsonify({"result": f"HMAC-{algo.upper()}: {hmac.new(key.encode('utf-8'), text.encode('utf-8'), algo).hexdigest()}"})
 
 def handle_timestamp_converter(p):
     try: return jsonify({"result": datetime.fromtimestamp(int(p.get("text", "").strip()), tz=timezone.utc).strftime("%a, %d %b %Y %H:%M:%S GMT")})
-    except Exception: return bad_request("رقم Timestamp غير صحيح" if p["is_arabic"] else "Invalid Timestamp")
+    except Exception: return bad_request("رقم Timestamp غير صحيح")
 
 def handle_clean_text(p):
     text = p.get("text", "")
@@ -1035,8 +957,8 @@ def handle_clean_text(p):
 
 def handle_text_to_qr(p):
     text = p.get("text", "")
-    if not text.strip(): return bad_request("يرجى إدخال نص أو رابط" if p["is_arabic"] else "Enter text or link")
-    if len(text) > 2000: return bad_request("النص طويل جداً" if p["is_arabic"] else "Text too long")
+    if not text.strip(): return bad_request("يرجى إدخال نص أو رابط")
+    if len(text) > 2000: return bad_request("النص طويل جداً")
 
     qr = qrcode.QRCode(error_correction=ERROR_CORRECT_H, box_size=10, border=1)
     qr.add_data(text)
@@ -1047,18 +969,6 @@ def handle_text_to_qr(p):
         module_drawer=RoundedModuleDrawer(),
         color_mask=RadialGradiantColorMask(back_color=(255,255,255), center_color=(30,41,59), edge_color=(15,23,42))
     ).convert("RGB")
-
-    logo_b64 = p.get("logoBase64")
-    if logo_b64:
-        try:
-            logo_bytes = base64.b64decode(logo_b64.replace('\n','').replace('\r',''), validate=True)
-            if validate_signature(logo_bytes, "image_any"):
-                logo = open_image_safely(logo_bytes).convert("RGBA")
-                logo_size = img.size[0] // 4
-                logo.thumbnail((logo_size, logo_size))
-                pos = ((img.size[0] - logo.size[0]) // 2, (img.size[1] - logo.size[1]) // 2)
-                img.paste(logo, pos, mask=logo)
-        except Exception: pass
 
     buf = io.BytesIO()
     img.save(buf, format="PNG")
@@ -1088,7 +998,7 @@ def handle_text_counter(p):
 
 def handle_percentage_calc(p):
     nums = re.findall(r"-?\d+(?:\.\d+)?", p.get("text", ""))
-    if len(nums) < 2: return jsonify({"result": "يرجى إدخال رقمين" if p["is_arabic"] else "Please enter two numbers"})
+    if len(nums) < 2: return jsonify({"result": "يرجى إدخال رقمين"})
     return jsonify({"result": f"{nums[0]}% of {nums[1]} = {(float(nums[0]) / 100) * float(nums[1])}"})
 
 def handle_byte_converter(p):
@@ -1130,99 +1040,99 @@ def handle_text_diff(p):
     out_lines = [("+ " if l.startswith("+") else ("- " if l.startswith("-") else "  ")) + l[1:] for l in unified_diff(lines[:mid], lines[mid:], lineterm="") if not l.startswith(("+++", "---", "@@"))]
     return jsonify({"result": "\n".join(out_lines)})
 
-# ================= السجل (Registry) الكامل =================
+# ================= السجل (Registry) الكامل لجميع الأدوات =================
 REGISTRY = {
-    "word-to-pdf": handle_word_to_pdf, "text-to-pdf": handle_text_to_pdf, "pdf-to-pdf": handle_pdf_to_pdf_enhanced,
-    "csv-to-pdf": handle_csv_to_pdf, "excel-to-pdf": handle_excel_to_pdf, "pdf-to-text": handle_pdf_to_text,
-    "pdf-to-csv": handle_pdf_to_csv, "pdf-to-doc": handle_pdf_to_doc, "pdf-to-docx": handle_pdf_to_docx,
-    "doc-to-docx": handle_doc_to_docx, "merge-word": handle_merge_word, "pdf-to-excel": handle_pdf_to_excel,
-    "pdf-to-ppt": handle_pdf_to_ppt, "merge-pdf": handle_merge_pdf, "split-pdf": handle_split_pdf,
-    "csv-to-word": handle_csv_to_word, "word-to-csv": handle_word_to_csv, "text-to-excel": handle_text_to_excel, 
-    "json-to-excel": handle_json_to_excel, "excel-to-json": handle_excel_to_json, "csv-to-json": handle_csv_to_json, 
-    "json-to-csv": handle_json_to_csv, "text-to-csv": handle_text_to_csv, "compress-image": handle_compress_image, 
-    "image-to-png": handle_image_to_png, "image-to-jpg": handle_image_to_jpg, "image-to-base64": handle_image_to_base64, 
-    "image-to-text": handle_image_to_text, # تسجيل الأداة الجديدة
-    "image-to-pdf": handle_image_to_pdf, "heic-to-jpg": handle_heic_to_jpg, "base64-tool": handle_base64_tool, 
-    "url-encoder": handle_url_encoder, "json-beautifier": handle_json_beautifier, "css-js-minifier": handle_css_js_minifier, 
-    "html-entity": handle_html_entity, "hash-generator": handle_hash_generator, "hmac-generator": handle_hmac_generator, 
-    "timestamp-converter": handle_timestamp_converter, "clean-text": handle_clean_text, "text-to-qr": handle_text_to_qr, 
-    "password-generator": handle_password_generator, "password-strength": handle_password_strength, "text-counter": handle_text_counter, 
-    "percentage-calc": handle_percentage_calc, "byte-converter": handle_byte_converter, "unit-converter": handle_unit_converter, 
-    "uuid-generator": handle_uuid_generator, "markdown-to-html": handle_markdown_to_html, "text-diff": handle_text_diff,
+    "text-to-audio": handle_text_to_audio,
+    "translate-text": handle_translate_text,
+    "watermark-pdf": handle_watermark_pdf,
+    "remove-pdf-pages": handle_remove_pdf_pages,
+    "image-to-text": handle_image_to_text,
+    "word-to-pdf": handle_word_to_pdf, 
+    "text-to-pdf": handle_text_to_pdf, 
+    "pdf-to-pdf": handle_pdf_to_pdf_enhanced,
+    "csv-to-pdf": handle_csv_to_pdf, 
+    "excel-to-pdf": handle_excel_to_pdf, 
+    "pdf-to-text": handle_pdf_to_text,
+    "pdf-to-csv": handle_pdf_to_csv, 
+    "pdf-to-doc": handle_pdf_to_docx, 
+    "pdf-to-docx": handle_pdf_to_docx,
+    "doc-to-docx": handle_doc_to_docx, 
+    "merge-word": handle_merge_word, 
+    "pdf-to-excel": handle_pdf_to_excel,
+    "pdf-to-ppt": handle_pdf_to_ppt, 
+    "merge-pdf": handle_merge_pdf, 
+    "split-pdf": handle_split_pdf,
+    "csv-to-word": handle_csv_to_word, 
+    "word-to-csv": handle_word_to_csv, 
+    "text-to-excel": handle_text_to_excel, 
+    "json-to-excel": handle_json_to_excel, 
+    "excel-to-json": handle_excel_to_json, 
+    "csv-to-json": handle_csv_to_json, 
+    "json-to-csv": handle_json_to_csv, 
+    "text-to-csv": handle_text_to_csv, 
+    "compress-image": handle_compress_image, 
+    "image-to-png": handle_image_to_png, 
+    "image-to-jpg": handle_image_to_jpg, 
+    "image-to-base64": handle_image_to_base64, 
+    "image-to-pdf": handle_image_to_pdf, 
+    "heic-to-jpg": handle_heic_to_jpg, 
+    "base64-tool": handle_base64_tool, 
+    "url-encoder": handle_url_encoder, 
+    "json-beautifier": handle_json_beautifier, 
+    "css-js-minifier": handle_css_js_minifier, 
+    "html-entity": handle_html_entity, 
+    "hash-generator": handle_hash_generator, 
+    "hmac-generator": handle_hmac_generator, 
+    "timestamp-converter": handle_timestamp_converter, 
+    "clean-text": handle_clean_text, 
+    "text-to-qr": handle_text_to_qr, 
+    "password-generator": handle_password_generator, 
+    "password-strength": handle_password_strength, 
+    "text-counter": handle_text_counter, 
+    "percentage-calc": handle_percentage_calc, 
+    "byte-converter": handle_byte_converter, 
+    "unit-converter": handle_unit_converter, 
+    "uuid-generator": handle_uuid_generator, 
+    "markdown-to-html": handle_markdown_to_html, 
+    "text-diff": handle_text_diff,
 }
 
 NEEDS_MULTIPLE_FILES = {"merge-pdf", "merge-word"}
 
-# ================= مسارات (Routes) الـ SEO الجبارة =================
 @app.route("/")
 @app.route("/<tool_slug>")
 def index(tool_slug=None):
-    if tool_slug in ["privacy", "terms", "contact"]:
-        return render_template(f"{tool_slug}.html")
-    
-    tool_data = None
-    if tool_slug:
-        if tool_slug not in TOOLS_SEO:
-            return "Page Not Found", 404
-        tool_data = TOOLS_SEO[tool_slug]
-        
+    if tool_slug in ["privacy", "terms", "contact"]: return render_template(f"{tool_slug}.html")
+    tool_data = TOOLS_SEO.get(tool_slug) if tool_slug else None
     return render_template("index.html", tool_data=tool_data)
-
-@app.route('/sitemap.xml')
-def sitemap():
-    base_url = "https://infinityconverter.com"
-    urls = [f"<url><loc>{base_url}/</loc><priority>1.0</priority></url>"]
-    for slug in TOOLS_SEO.keys():
-        urls.append(f"<url><loc>{base_url}/{slug}</loc><priority>0.8</priority></url>")
-    xml_content = f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{"".join(urls)}</urlset>'
-    return Response(xml_content, mimetype='application/xml')
-
-@app.route('/robots.txt')
-def robots():
-    content = """User-agent: *
-Allow: /
-
-Sitemap: https://infinityconverter.com/sitemap.xml
-"""
-    return Response(content, mimetype='text/plain')
 
 @app.route("/convert", methods=["POST"])
 @limiter.limit(dynamic_convert_limit)
 def convert():
     payload = request.get_json(silent=True)
     if not isinstance(payload, dict): return bad_request("Invalid request body")
-
     action = payload.get("action")
-    if not isinstance(action, str): return bad_request("Unknown action")
-
     text = payload.get("text", "") or ""
     is_arabic = payload.get("lang") == "ar" or is_arabic_text(text)
-
+    
     files_to_check = payload.get("filesBase64") or [] if action in NEEDS_MULTIPLE_FILES else ([payload.get("fileBase64")] if payload.get("fileBase64") else [])
-
-    if action in NEEDS_MULTIPLE_FILES and len(files_to_check) > MAX_MERGE_FILES:
-        return jsonify({"error": f"الحد الأقصى {MAX_MERGE_FILES} ملفات" if is_arabic else f"Maximum {MAX_MERGE_FILES} files"}), 413
-
+    
+    if action in NEEDS_MULTIPLE_FILES and len(files_to_check) > MAX_MERGE_FILES: return jsonify({"error": f"الحد الأقصى {MAX_MERGE_FILES} ملفات"}), 413
+    
     for b64 in files_to_check:
-        if b64 and (len(b64) * 3 / 4) > MAX_FILE_BYTES:
-            return jsonify({"error": f"حجم الملف أكبر من الحد المسموح ({MAX_FILE_MB}MB)" if is_arabic else f"File exceeds allowed size ({MAX_FILE_MB}MB)"}), 413
+        if b64 and (len(b64) * 3 / 4) > MAX_FILE_BYTES: return jsonify({"error": f"حجم الملف أكبر من الحد المسموح ({MAX_FILE_MB}MB)"}), 413
 
     handler = REGISTRY.get(action)
     if not handler: return bad_request(f"Unknown action: {action}")
-
+    
     try:
         ctx = dict(payload, text=text, is_arabic=is_arabic)
         response = handler(ctx)
-        
-        # 🚀 تنظيف إجباري للذاكرة عشان السيرفر ما يعلق!
-        gc.collect() 
+        gc.collect() # تنظيف الذاكرة
         return response
     except Exception as e:
-        app.logger.exception(f"convert() error for action={action}")
-        return jsonify({"error": "حدث خطأ أثناء المعالجة. تأكد من صحة الملف وحاول مجدداً." if is_arabic else "An error occurred. Check file and try again."}), 500
-
-@app.route('/ads.txt')
-def ads_txt(): return "google.com, pub-4343857922748618, DIRECT, f08c47fec0942fa0", 200, {'Content-Type': 'text/plain'}
+        gc.collect()
+        return jsonify({"error": "حدث خطأ أثناء المعالجة."}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
