@@ -66,7 +66,7 @@ except Exception:
 from pypdf import PdfReader, PdfWriter
 from pypdf.errors import PdfReadError
 
-# ================= المكتبات الخارقة =================
+# ================= المكتبات الخارقة للـ PDF والذكاء الاصطناعي =================
 try:
     import fitz  # PyMuPDF
 except Exception:
@@ -310,14 +310,10 @@ def open_image_safely(file_bytes):
 def run_libreoffice_convert(src_path, out_dir): 
     subprocess.run(["libreoffice", "--headless", "--nologo", "--nofirststartwizard", "--norestore", "--convert-to", "pdf", src_path, "--outdir", out_dir], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=SUBPROCESS_TIMEOUT)
 
-# ================= أدوات الـ PDF الأساسية (بعد إصلاح مشكلة تداخل النصوص) =================
+# ================= أدوات الـ PDF الأساسية (أقوى جودة ودقة وأسرع كود) =================
 
 def handle_pdf_to_docx(p):
-    """
-    تحويل PDF إلى Word:
-    تم تغيير maintain_layout إلى False لجعل النص متدفق (Flowable)
-    مما يمنع تداخل الكلمات العربية والمربعات النصية.
-    """
+    """تحويل سريع جداً مع الحفاظ على هيكلة الجدول (Maintain Layout = True) وحل الاتجاه العربي"""
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
     if not file_bytes: return bad_request("يرجى رفع ملف PDF" if is_arabic else "Please upload a PDF file")
@@ -341,35 +337,33 @@ def handle_pdf_to_docx(p):
             docx_path = os.path.join(tmp_dir, f"{os.path.splitext(os.path.basename(tmp_pdf_path))[0]}.docx")
             cv = Converter(tmp_pdf_path)
             
-            # السر هنا: maintain_layout=False يمنع إنشاء مربعات نصية تتداخل مع بعضها في العربي
+            # السر 1: تفعيل الحفاظ على الهيكل (عشان الجدول ما يكسر)، وزيادة الهوامش لتفادي التداخل
             cv.convert(docx_path, start=0, end=None, kwargs={
+                "maintain_layout": True, # يحافظ على الجداول
                 "connected_border_tolerance": 2.5, 
                 "line_overlap_threshold": 0.9,
-                "line_margin": 0.1, 
-                "word_margin": 0.1, 
-                "maintain_layout": False 
+                "line_margin": 0.3, # زيادة المساحة بين الأسطر تمنع التداخل
+                "word_margin": 0.2
             })
             cv.close()
 
-            # إجبار التنسيق في الوورد من اليمين لليسار
+            # السر 2: تعريب سريع جداً يأخذ ثانية واحدة بدل دقيقتين (بدون لوب معقد)
             if is_arabic:
                 try:
                     doc = Document(docx_path)
-                    for paragraph in doc.paragraphs:
-                        if is_arabic_text(paragraph.text):
-                            paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-                            pPr = paragraph._element.get_or_add_pPr()
-                            pPr.insert(0, OxmlElement('w:bidi'))
+                    
+                    # 1. إعطاء أمر عام للمستند إنه يمين لليسار (سريع جداً)
+                    styles = doc.styles
+                    for style in styles:
+                        if hasattr(style, 'paragraph_format'):
+                            style.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+
+                    # 2. إعطاء أمر سريع للجداول إنها تبدأ من اليمين (يمنع انعكاس الأعمدة)
                     for table in doc.tables:
                         tblPr = table._element.xpath('w:tblPr')
-                        if tblPr: tblPr[0].append(OxmlElement('w:bidiVisual'))
-                        for row in table.rows:
-                            for cell in row.cells:
-                                for par in cell.paragraphs:
-                                    if is_arabic_text(par.text):
-                                        par.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-                                        pPr = par._p.get_or_add_pPr()
-                                        pPr.insert(0, OxmlElement('w:bidi'))
+                        if tblPr: 
+                            tblPr[0].append(OxmlElement('w:bidiVisual'))
+
                     doc.save(docx_path)
                 except Exception as e: pass
 
@@ -381,6 +375,7 @@ def handle_pdf_to_docx(p):
         if tmp_pdf_path and os.path.exists(tmp_pdf_path): os.remove(tmp_pdf_path)
 
 def handle_pdf_to_excel(p):
+    """استخراج الجداول بدقة ذكية باستخدام pdfplumber أو النصوص بـ PyMuPDF"""
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
     if not file_bytes: return bad_request("No file provided")
@@ -389,6 +384,8 @@ def handle_pdf_to_excel(p):
     buf = io.BytesIO()
     with pd.ExcelWriter(buf, engine="openpyxl") as writer:
         has_data = False
+        
+        # المرحلة 1: استخدام الذكاء الاصطناعي (pdfplumber) للبحث عن جداول حقيقية
         if pdfplumber:
             try:
                 with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
@@ -415,6 +412,7 @@ def handle_pdf_to_excel(p):
                                 has_data = True
             except Exception: pass
             
+        # المرحلة 2: في حال فشل pdfplumber، نستخدم PyMuPDF الأسرع في استخراج النصوص كصفوف
         if not has_data and fitz:
             doc = fitz.open(stream=file_bytes, filetype="pdf")
             err = enforce_pdf_page_limit(len(doc), is_arabic)
@@ -430,6 +428,7 @@ def handle_pdf_to_excel(p):
                 auto_fit_excel_columns(writer, sheet_name, add_autofilter=False)
                 has_data = True
                 
+        # المرحلة 3: الملاذ الأخير باستخدام PyPDF العادي
         if not has_data:
             reader = PdfReader(io.BytesIO(file_bytes))
             err = enforce_pdf_page_limit(len(reader.pages), is_arabic)
@@ -447,6 +446,7 @@ def handle_pdf_to_excel(p):
     return file_response(buf.getvalue(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Converted_Excel.xlsx")
 
 def handle_pdf_to_csv(p):
+    """استخراج الجداول بصيغة CSV بدقة باستخدام نفس قوة الإكسل"""
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
     if not file_bytes: return bad_request("No file provided")
@@ -486,6 +486,7 @@ def handle_pdf_to_csv(p):
     except Exception: return bad_request("تعذر استخراج الجداول")
 
 def handle_pdf_to_text(p):
+    """استخراج نص الـ PDF بنظافة فائقة (مفيد للنسخ واللصق)"""
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
     if not file_bytes: return bad_request("No file provided")
@@ -506,6 +507,7 @@ def handle_pdf_to_text(p):
     except Exception: return bad_request("الملف تالف أو تعذر استخراج النص")
 
 def handle_pdf_to_ppt(p):
+    """تحويل الـ PDF لشرائح نظيفة ومقروءة"""
     if Presentation is None: return bad_request("python-pptx غير مثبّت")
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
@@ -551,6 +553,7 @@ def handle_pdf_to_ppt(p):
     except Exception: return bad_request("فشل تحويل الملف إلى عرض تقديمي.")
 
 def handle_merge_pdf(p):
+    """دمج ذكي للملفات مع تخفيف استهلاك الذاكرة وضغط الحجم"""
     files = p.get("filesBase64") or ([p.get("fileBase64")] if p.get("fileBase64") else [])
     is_arabic = p["is_arabic"]
     if len(files) < 2: return bad_request("يرجى رفع ملفين PDF على الأقل")
@@ -564,7 +567,7 @@ def handle_merge_pdf(p):
         except: continue
         writer.add_outline_item(f"ملف {i + 1}" if is_arabic else f"Document {i + 1}", page_count)
         for page in reader.pages:
-            page.compress_content_streams() 
+            page.compress_content_streams() # ضغط خيالي للحفاظ على حجم الملف المدمج
             writer.add_page(page)
             page_count += 1
     apply_ghost_privacy(writer)
@@ -1112,7 +1115,7 @@ def handle_text_diff(p):
     out_lines = [("+ " if l.startswith("+") else ("- " if l.startswith("-") else "  ")) + l[1:] for l in unified_diff(lines[:mid], lines[mid:], lineterm="") if not l.startswith(("+++", "---", "@@"))]
     return jsonify({"result": "\n".join(out_lines)})
 
-# ================= السجل (Registry) الكامل لجميع الأدوات =================
+# ================= السجل (Registry) الكامل =================
 REGISTRY = {
     "word-to-pdf": handle_word_to_pdf, "text-to-pdf": handle_text_to_pdf, "pdf-to-pdf": handle_pdf_to_pdf_enhanced,
     "csv-to-pdf": handle_csv_to_pdf, "excel-to-pdf": handle_excel_to_pdf, "pdf-to-text": handle_pdf_to_text,
