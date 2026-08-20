@@ -16,7 +16,7 @@ import urllib.request
 import uuid
 import zipfile
 import gc
-from pylovepdf.ilovepdf import ILovePdf
+import convertapi
 from datetime import datetime, timezone
 from difflib import unified_diff
 
