@@ -1,18 +1,41 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="{% if lang == 'en' %}en{% else %}ar{% endif %}" dir="{% if lang == 'en' %}ltr{% else %}rtl{% endif %}">
 <head>
-    <!-- أيقونة الموقع الأساسية -->
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
-    <!-- دعم متصفحات أبل وجوجل السريع -->
     <link rel="apple-touch-icon" href="/static/favicon.svg">
-    <!-- تلوين شريط المتصفح في الجوال بلون موقعك -->
     <meta name="theme-color" content="#09090b">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <!-- 🚀 العناوين المتغيرة لـ SEO الذكي -->
-    <title>{% if tool_data %}{{ tool_data.seo_title }}{% else %}Infinity Converter - المحول الشامل لملفات PDF والأدوات{% endif %}</title>
-    <meta name="description" content="{% if tool_data %}{{ tool_data.seo_desc }}{% else %}منصة Infinity Converter الشاملة والمجانية لتحويل ملفات PDF، Word، Excel، والصور بضغطة زر. معالجة سحابية آمنة وسريعة بدون تخزين لملفاتك. اكتشف أكثر من 40 أداة الآن!{% endif %}">
+    <!-- 🚀 عناوين وأوصاف SEO الديناميكية لكل أداة ولغة -->
+    <title>{% if tool_data %}{% if lang == 'en' %}{{ tool_data.seo_title_en }}{% else %}{{ tool_data.seo_title_ar }}{% endif %}{% else %}Infinity Converter - المحول الشامل لملفات PDF والأدوات{% endif %}</title>
+    <meta name="description" content="{% if tool_data %}{% if lang == 'en' %}{{ tool_data.seo_desc_en }}{% else %}{{ tool_data.seo_desc_ar }}{% endif %}{% else %}منصة Infinity Converter الشاملة والمجانية لتحويل ملفات PDF، Word، Excel، والصور بضغطة زر. معالجة سحابية آمنة وسريعة بدون تخزين لملفاتك. اكتشف أكثر من 40 أداة الآن!{% endif %}">
+
+    <!-- 🚀 روابط hreflang لجوجل لفهم اللغات بشكل صحيح -->
+    {% if tool_data %}
+    <link rel="alternate" hreflang="ar" href="https://infinityconverter.com/{{ tool_data.slug }}" />
+    <link rel="alternate" hreflang="en" href="https://infinityconverter.com/en/{{ tool_data.slug }}" />
+    <link rel="alternate" hreflang="x-default" href="https://infinityconverter.com/{{ tool_data.slug }}" />
+    {% else %}
+    <link rel="alternate" hreflang="ar" href="https://infinityconverter.com/" />
+    <link rel="alternate" hreflang="en" href="https://infinityconverter.com/en/" />
+    <link rel="alternate" hreflang="x-default" href="https://infinityconverter.com/" />
+    {% endif %}
+
+    <!-- 🚀 Schema.org Markup (بناء الثقة مع محركات البحث) -->
+    {% if tool_data %}
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "{% if lang == 'ar' %}{{ tool_data.nameAr }}{% else %}{{ tool_data.nameEn }}{% endif %}",
+      "description": "{% if lang == 'en' %}{{ tool_data.seo_desc_en }}{% else %}{{ tool_data.seo_desc_ar }}{% endif %}",
+      "url": "https://infinityconverter.com{% if lang == 'en' %}/en{% endif %}/{{ tool_data.slug }}",
+      "applicationCategory": "UtilityApplication",
+      "operatingSystem": "All"
+    }
+    </script>
+    {% endif %}
 
     <!-- كود جوجل أدسنس -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4343857922748618" crossorigin="anonymous"></script>
@@ -23,147 +46,71 @@
     
     <style>
         :root {
-            --bg-body: #f8fafc;
-            --bg-surface: #ffffff;
-            --text-main: #0f172a;
-            --text-muted: #64748b;
-            --border: #e2e8f0;
-            --primary: #4f46e5;      
-            --primary-hover: #4338ca;
-            --upload-bg: #eff6ff;
-            --upload-border: #3b82f6;
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
-            --shadow-hover: 0 10px 25px -5px rgba(0,0,0,0.1);
+            --bg-body: #f8fafc; --bg-surface: #ffffff; --text-main: #0f172a; --text-muted: #64748b; --border: #e2e8f0;
+            --primary: #4f46e5; --primary-hover: #4338ca; --upload-bg: #eff6ff; --upload-border: #3b82f6;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05); --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1); --shadow-hover: 0 10px 25px -5px rgba(0,0,0,0.1);
             
-            --c-word: #2563eb; --bg-word: #dbeafe;
-            --c-pdf: #ef4444;  --bg-pdf: #fee2e2;
-            --c-excel: #10b981; --bg-excel: #d1fae5;
-            --c-ppt: #f97316;  --bg-ppt: #ffedd5;
-            --c-img: #0ea5e9;  --bg-img: #e0f2fe;
-            --c-dev: #8b5cf6;  --bg-dev: #ede9fe;
+            --c-word: #2563eb; --bg-word: #dbeafe; --c-pdf: #ef4444; --bg-pdf: #fee2e2; --c-excel: #10b981; --bg-excel: #d1fae5;
+            --c-ppt: #f97316; --bg-ppt: #ffedd5; --c-img: #0ea5e9; --bg-img: #e0f2fe; --c-dev: #8b5cf6; --bg-dev: #ede9fe;
         }
 
-        /* ====== الوضع الداكن الملكي وفخم ====== */
         .dark-mode {
-            --bg-body: #09090b;       
-            --bg-surface: #18181b;    
-            --text-main: #f4f4f5;     
-            --text-muted: #a1a1aa;    
-            --border: #27272a;        
-            --primary: #6366f1;       
-            --primary-hover: #4f46e5;
-            --upload-bg: rgba(99, 102, 241, 0.05);
-            --upload-border: #4f46e5;
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.8);
-            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.8);
+            --bg-body: #09090b; --bg-surface: #18181b; --text-main: #f4f4f5; --text-muted: #a1a1aa; --border: #27272a;
+            --primary: #6366f1; --primary-hover: #4f46e5; --upload-bg: rgba(99, 102, 241, 0.05); --upload-border: #4f46e5;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.8); --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.8);
             --shadow-hover: 0 0 0 1px rgba(255,255,255,0.1), 0 10px 25px -5px rgba(0,0,0,0.8);
 
-            --bg-word: rgba(37, 99, 235, 0.15);
-            --bg-pdf: rgba(239, 68, 68, 0.15);
-            --bg-excel: rgba(16, 185, 129, 0.15);
-            --bg-ppt: rgba(249, 115, 22, 0.15);
-            --bg-img: rgba(14, 165, 233, 0.15);
-            --bg-dev: rgba(139, 92, 246, 0.15);
+            --bg-word: rgba(37, 99, 235, 0.15); --bg-pdf: rgba(239, 68, 68, 0.15); --bg-excel: rgba(16, 185, 129, 0.15);
+            --bg-ppt: rgba(249, 115, 22, 0.15); --bg-img: rgba(14, 165, 233, 0.15); --bg-dev: rgba(139, 92, 246, 0.15);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            background-color: var(--bg-body); color: var(--text-main);
-            font-family: 'Cairo', 'Poppins', sans-serif; min-height: 100vh;
-            display: flex; flex-direction: column; transition: background-color 0.3s ease, color 0.3s ease;
-            overflow-x: hidden;
-        }
-
-        header {
-            width: 100%; padding: 15px 5%; background-color: var(--bg-surface);
-            border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;
-            position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow-sm);
-        }
-
+        body { background-color: var(--bg-body); color: var(--text-main); font-family: 'Cairo', 'Poppins', sans-serif; min-height: 100vh; display: flex; flex-direction: column; transition: background-color 0.3s ease, color 0.3s ease; overflow-x: hidden; }
+        
+        header { width: 100%; padding: 15px 5%; background-color: var(--bg-surface); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow-sm); }
         .logo { font-size: 22px; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 8px; direction: ltr; white-space: nowrap; text-decoration: none; }
         .logo i { color: var(--primary); font-size: 26px; }
 
         .controls { display: flex; gap: 12px; }
-        .controls button {
-            background: var(--bg-body); border: 1px solid var(--border);
-            color: var(--text-main); padding: 8px 16px; border-radius: 8px;
-            cursor: pointer; font-family: inherit; font-weight: 600; transition: all 0.2s;
-            display: flex; align-items: center; gap: 8px;
-        }
+        .controls button { background: var(--bg-body); border: 1px solid var(--border); color: var(--text-main); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-family: inherit; font-weight: 600; transition: all 0.2s; display: flex; align-items: center; gap: 8px; }
         .controls button:hover { background: var(--border); }
 
         .workspace { width: 100%; max-width: 900px; margin: 40px auto 20px; padding: 0 20px; }
-        .workspace-card {
-            background: var(--bg-surface); border: 1px solid var(--border);
-            border-radius: 20px; padding: 40px; text-align: center;
-            box-shadow: var(--shadow-md); transition: all 0.3s;
-        }
+        .workspace-card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 20px; padding: 40px; text-align: center; box-shadow: var(--shadow-md); transition: all 0.3s; }
         .workspace-header { margin-bottom: 30px; }
         .workspace-header h1 { font-size: 32px; font-weight: 800; margin-bottom: 10px; color: var(--text-main); }
         .workspace-header p { font-size: 16px; color: var(--text-muted); }
 
-        /* ====== قسم البحث والتصفية ====== */
-        .search-filter-container {
-            max-width: 1200px; margin: 0 auto 30px; padding: 0 20px;
-            display: flex; flex-direction: column; gap: 15px;
-        }
+        .search-filter-container { max-width: 1200px; margin: 0 auto 30px; padding: 0 20px; display: flex; flex-direction: column; gap: 15px; }
         .search-box { position: relative; width: 100%; max-width: 600px; margin: 0 auto; }
-        .search-box i {
-            position: absolute; right: 18px; top: 50%; transform: translateY(-50%);
-            color: var(--text-muted); font-size: 18px;
-        }
+        .search-box i { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 18px; }
         html[dir="ltr"] .search-box i { right: auto; left: 18px; }
-        .search-box input {
-            width: 100%; padding: 16px 45px; background: var(--bg-surface);
-            border: 1px solid var(--border); border-radius: 14px;
-            color: var(--text-main); font-family: inherit; font-size: 16px;
-            box-shadow: var(--shadow-sm); transition: all 0.3s; outline: none;
-        }
+        .search-box input { width: 100%; padding: 16px 45px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 14px; color: var(--text-main); font-family: inherit; font-size: 16px; box-shadow: var(--shadow-sm); transition: all 0.3s; outline: none; }
         .search-box input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
         
         .filter-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 10px; }
-        .filter-buttons button {
-            background: var(--bg-surface); border: 1px solid var(--border);
-            color: var(--text-muted); padding: 8px 18px; border-radius: 30px;
-            font-family: inherit; font-weight: 600; font-size: 14px;
-            cursor: pointer; transition: all 0.2s;
-        }
+        .filter-buttons button { background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-muted); padding: 8px 18px; border-radius: 30px; font-family: inherit; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s; }
         .filter-buttons button:hover { border-color: var(--text-muted); color: var(--text-main); }
         .filter-buttons button.active { background: var(--primary); color: white; border-color: var(--primary); }
 
-        .selected-tool-badge {
-            display: inline-flex; align-items: center; gap: 8px; background: var(--bg-word); color: var(--c-word);
-            padding: 8px 16px; border-radius: 20px; font-weight: 700; margin-bottom: 20px; font-size: 14px;
-        }
-
-        .upload-area {
-            border: 2px dashed var(--upload-border); background: var(--upload-bg);
-            padding: 50px 20px; border-radius: 16px; cursor: pointer; transition: all 0.2s ease; margin-bottom: 20px;
-        }
+        .selected-tool-badge { display: inline-flex; align-items: center; gap: 8px; background: var(--bg-word); color: var(--c-word); padding: 8px 16px; border-radius: 20px; font-weight: 700; margin-bottom: 20px; font-size: 14px; }
+        .upload-area { border: 2px dashed var(--upload-border); background: var(--upload-bg); padding: 50px 20px; border-radius: 16px; cursor: pointer; transition: all 0.2s ease; margin-bottom: 20px; }
         .upload-area:hover, .upload-area.dragover { background: rgba(99, 102, 241, 0.1); border-color: var(--primary); transform: scale(1.01); }
         .upload-area i { font-size: 48px; color: var(--primary); margin-bottom: 15px; }
         .upload-area h3 { font-size: 20px; margin-bottom: 5px; color: var(--text-main); }
         .upload-area p { color: var(--text-muted); font-size: 14px; }
         #fileInput, #multiFileInput { display: none; }
 
-        textarea {
-            width: 100%; height: 180px; background: var(--bg-body); border: 1px solid var(--border);
-            border-radius: 12px; padding: 20px; color: var(--text-main); font-family: inherit; font-size: 15px;
-            resize: vertical; margin-bottom: 20px; outline: none; transition: all 0.3s;
-        }
+        textarea { width: 100%; height: 180px; background: var(--bg-body); border: 1px solid var(--border); border-radius: 12px; padding: 20px; color: var(--text-main); font-family: inherit; font-size: 15px; resize: vertical; margin-bottom: 20px; outline: none; transition: all 0.3s; }
         textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
 
-        .execute-btn {
-            width: 100%; padding: 18px; background: var(--primary); color: white;
-            border: none; border-radius: 12px; font-size: 18px; font-weight: 700;
-            cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px;
-            transition: all 0.2s; font-family: inherit; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
-        }
+        /* 🚀 شريط التقدم الجديد (Progress Bar) */
+        .progress-container { width: 100%; height: 8px; background-color: var(--border); border-radius: 10px; margin-bottom: 20px; display: none; overflow: hidden;}
+        .progress-bar { height: 100%; width: 0%; background-color: var(--primary); border-radius: 10px; transition: width 0.4s ease; box-shadow: 0 0 10px var(--primary);}
+
+        .execute-btn { width: 100%; padding: 18px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 18px; font-weight: 700; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px; transition: all 0.2s; font-family: inherit; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3); }
         .execute-btn:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 6px 15px rgba(99, 102, 241, 0.4); }
         .execute-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
-
         .spinner { display: none; width: 22px; height: 22px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 1s ease-in-out infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         
@@ -171,25 +118,27 @@
         .result-area.error { background: #fef2f2; border-color: #ef4444; color: #991b1b; }
 
         .tools-section { width: 100%; max-width: 1200px; margin: 0 auto 60px; padding: 0 20px; }
-        
         .category-group { margin-bottom: 40px; transition: all 0.3s ease;}
         .category-group.hidden { display: none; }
-
         .section-title { font-size: 22px; font-weight: 800; margin-bottom: 20px; color: var(--text-main); display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); padding-bottom: 10px;}
-        
         .tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
 
-        .tool-card {
-            background: var(--bg-surface); border: 1px solid var(--border); text-decoration: none; color: inherit;
-            padding: 20px; border-radius: 16px; cursor: pointer; transition: all 0.2s ease;
-            display: flex; align-items: flex-start; gap: 16px;
-        }
+        .tool-card { background: var(--bg-surface); border: 1px solid var(--border); text-decoration: none; color: inherit; padding: 20px; border-radius: 16px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: flex-start; gap: 16px; }
         .tool-card.hidden { display: none; }
         .tool-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); border-color: var(--primary); }
-        
         .tool-icon { width: 50px; height: 50px; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 24px; flex-shrink: 0; }
         .tool-info h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; color: var(--text-main); }
         .tool-info p { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
+
+        /* 🚀 قسم السيو والمقالات */
+        .seo-content { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 20px; padding: 40px; margin-top: 40px; box-shadow: var(--shadow-sm); text-align: justify; line-height: 1.9;}
+        .seo-content h2 { font-size: 24px; font-weight: 800; color: var(--primary); margin-bottom: 20px;}
+        .faq-box { background: var(--bg-body); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 15px;}
+        .faq-box h4 { margin-bottom: 10px; color: var(--text-main); display: flex; align-items: center; gap: 10px;}
+        .faq-box p { color: var(--text-muted); font-size: 15px;}
+
+        /* إعلانات */
+        .ad-placeholder { width: 100%; min-height: 90px; background: var(--bg-body); border: 1px dashed var(--text-muted); border-radius: 12px; display: flex; justify-content: center; align-items: center; color: var(--text-muted); margin: 30px 0; font-size: 14px;}
 
         .i-word { background: var(--bg-word); color: var(--c-word); }
         .i-pdf { background: var(--bg-pdf); color: var(--c-pdf); }
@@ -209,20 +158,21 @@
 
         html[dir="ltr"] .tool-card { text-align: left; }
         html[dir="rtl"] .tool-card { text-align: right; }
-
         #result-box, .result-text, pre, output, .result-area { white-space: pre-wrap !important; word-wrap: break-word !important; line-height: 2 !important; text-align: right !important; font-family: 'Cairo', sans-serif !important; }
-        
         #noResultsMsg { text-align: center; color: var(--text-muted); padding: 40px; font-size: 18px; font-weight: 600; display: none; }
     </style>
 </head>
 <body>
 
     <header>
-        <a href="/" class="logo">
-            <i class="fa-solid fa-infinity"></i> <span data-ar="V-Infinity" data-en="V-Infinity">V-Infinity</span>
+        <a href="{% if lang == 'en' %}/en/{% else %}/{% endif %}" class="logo">
+            <i class="fa-solid fa-infinity"></i> <span>V-Infinity</span>
         </a>
         <div class="controls">
-            <button onclick="toggleLanguage()" id="langBtn">🇺🇸 English</button>
+            <!-- 🚀 زر تحويل اللغة الحقيقي للـ SEO -->
+            <button onclick="toggleLanguageSEO()" id="langBtn">
+                {% if lang == 'en' %}🇸🇦 العربية{% else %}🇺🇸 English{% endif %}
+            </button>
             <button onclick="toggleTheme()" id="themeBtn"><i class="fa-solid fa-sun"></i></button>
         </div>
     </header>
@@ -230,499 +180,536 @@
     <div class="workspace" id="workspace">
         <div class="workspace-card">
             <div class="workspace-header">
-                <h1 id="mainTitle" data-ar="مرحباً بك في المحول الشامل" data-en="Welcome to Infinity Converter">مرحباً بك في المحول الشامل</h1>
-                <p id="mainDesc" data-ar="اختر إحدى الأدوات من الأسفل للبدء في المعالجة." data-en="Select a tool from below to start processing.">اختر إحدى الأدوات من الأسفل للبدء في المعالجة.</p>
+                <h1 id="mainTitle">
+                    {% if tool_data %}
+                        {% if lang == 'ar' %}{{ tool_data.h1_ar }}{% else %}{{ tool_data.h1_en }}{% endif %}
+                    {% else %}
+                        {% if lang == 'ar' %}مرحباً بك في المحول الشامل{% else %}Welcome to Infinity Converter{% endif %}
+                    {% endif %}
+                </h1>
+                <p id="mainDesc">
+                    {% if tool_data %}
+                        {% if lang == 'ar' %}{{ tool_data.short_desc_ar }}{% else %}{{ tool_data.short_desc_en }}{% endif %}
+                    {% else %}
+                        {% if lang == 'ar' %}اختر إحدى الأدوات من الأسفل للبدء في المعالجة.{% else %}Select a tool below to start processing.{% endif %}
+                    {% endif %}
+                </p>
             </div>
 
-            <div id="activeToolArea" style="display: none;">
+            <!-- مساحة الأداة (تظهر فقط إذا كان هناك tool_data) -->
+            <div id="activeToolArea" style="display: {% if tool_data %}block{% else %}none{% endif %};">
                 
-                <!-- تنبيه احترافي للذكاء الاصطناعي -->
                 <div id="toolWarning" style="display: none; background: rgba(99, 102, 241, 0.1); color: #6366f1; padding: 12px; border-radius: 8px; border: 1px solid rgba(99, 102, 241, 0.3); margin-bottom: 20px; font-size: 14px; font-weight: 700;">
-                    <i class="fa-solid fa-bolt"></i> 
-                    <span id="warningText"></span>
+                    <i class="fa-solid fa-bolt"></i> <span id="warningText"></span>
                 </div>
 
-                <div class="selected-tool-badge" id="selectedToolBadge">
-                    <i class="fa-solid fa-wand-magic-sparkles"></i> <span id="selectedToolText">الأداة المحددة</span>
+                {% if tool_data %}
+                <div class="selected-tool-badge {{ tool_data.iconClass }}" id="selectedToolBadge">
+                    <i class="fa-solid {{ tool_data.iconName }}"></i> <span>{% if lang == 'ar' %}{{ tool_data.nameAr }}{% else %}{{ tool_data.nameEn }}{% endif %}</span>
                 </div>
+                {% endif %}
 
-                <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()" style="display: none;">
                     <i class="fa-solid fa-cloud-arrow-up"></i>
-                    <h3 id="uploadText" data-ar="اختر ملفاً أو اسحبه هنا" data-en="Choose a file or drag it here">اختر ملفاً أو اسحبه هنا</h3>
-                    <p data-ar="الحد الأقصى للملف: 25MB" data-en="Max file size: 25MB">الحد الأقصى للملف: 25MB</p>
+                    <h3 id="uploadText">{% if lang == 'ar' %}اسحب وأفلت الملف هنا أو اضغط للاختيار{% else %}Drag & Drop file here or click to select{% endif %}</h3>
+                    <p>{% if lang == 'ar' %}الحد الأقصى للملف: 25MB{% else %}Max file size: 25MB{% endif %}</p>
                     <p id="fileName" style="margin-top: 10px; color: var(--primary); font-weight: bold;"></p>
                     <input type="file" id="fileInput" onchange="handleFileSelect(event)">
                     <input type="file" id="multiFileInput" multiple style="display:none;" onchange="handleMultiFileSelect(event)">
                 </div>
 
-                <textarea id="textInput" data-ar-ph="الصق النص أو المحتوى هنا..." data-en-ph="Paste text or content here..." placeholder="الصق النص أو المحتوى هنا..."></textarea>
+                <textarea id="textInput" style="display: none;" placeholder="{% if lang == 'ar' %}الصق النص أو المحتوى هنا...{% else %}Paste text or content here...{% endif %}"></textarea>
+
+                <!-- 🚀 Progress Bar -->
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
 
                 <button class="execute-btn" id="executeBtn" onclick="processConversion()">
-                    <span id="btnText" data-ar="تحويل الآن" data-en="Convert Now">تحويل الآن</span>
+                    <span id="btnText">{% if lang == 'ar' %}تحويل الآن{% else %}Convert Now{% endif %}</span>
                     <div class="spinner" id="spinner"></div>
                 </button>
 
                 <div class="result-area" id="resultArea"></div>
             </div>
         </div>
+
+        <!-- إعلان -->
+        <div class="ad-placeholder">AdSense Banner Area</div>
+
+        <!-- 🚀 قسم المقالة والسيو (SEO Rich Content) -->
+        {% if tool_data %}
+        <div class="seo-content">
+            <h2><i class="fa-solid fa-book-open"></i> {% if lang == 'ar' %}نبذة عن الأداة{% else %}About This Tool{% endif %}</h2>
+            <p>{% if lang == 'ar' %}{{ tool_data.long_desc_ar }}{% else %}{{ tool_data.long_desc_en }}{% endif %}</p>
+            <br>
+            <h2><i class="fa-solid fa-clipboard-question"></i> {% if lang == 'ar' %}الأسئلة الشائعة{% else %}FAQs{% endif %}</h2>
+            {% set faqs = tool_data.faq_ar if lang == 'ar' else tool_data.faq_en %}
+            {% for faq in faqs %}
+                <div class="faq-box">
+                    <h4><i class="fa-solid fa-circle-question"></i> {{ faq.q }}</h4>
+                    <p>{{ faq.a }}</p>
+                </div>
+            {% endfor %}
+        </div>
+        {% endif %}
     </div>
 
-    <!-- 🚀 قسم البحث والتصفية الملكي -->
     <div class="search-filter-container">
         <div class="search-box">
             <i class="fa-solid fa-search"></i>
-            <input type="text" id="searchInput" oninput="searchTools()" data-ar-ph="ابحث عن أداة (مثال: PDF, دمج, صورة)..." data-en-ph="Search tools (e.g., PDF, Merge, Image)..." placeholder="ابحث عن أداة (مثال: PDF, دمج, صورة)...">
+            <input type="text" id="searchInput" oninput="searchTools()" placeholder="{% if lang == 'ar' %}ابحث عن أداة (مثال: PDF, دمج, صورة)...{% else %}Search tools (e.g., PDF, Merge, Image)...{% endif %}">
         </div>
         <div class="filter-buttons">
-            <button class="filter-btn active" onclick="filterCategory('all', this)" data-ar="الكل" data-en="All">الكل</button>
-            <button class="filter-btn" onclick="filterCategory('students', this)" data-ar="للطلاب والمعلمين" data-en="For Students & Teachers">للطلاب والمعلمين</button>
-            <button class="filter-btn" onclick="filterCategory('pdf', this)" data-ar="أدوات PDF" data-en="PDF Tools">أدوات PDF</button>
-            <button class="filter-btn" onclick="filterCategory('data', this)" data-ar="البيانات والجداول" data-en="Data & Spreadsheets">البيانات والجداول</button>
-            <button class="filter-btn" onclick="filterCategory('image', this)" data-ar="أدوات الصور" data-en="Image Tools">أدوات الصور</button>
-            <button class="filter-btn" onclick="filterCategory('dev', this)" data-ar="النصوص والمطورين" data-en="Text & Dev Tools">النصوص والمطورين</button>
+            <button class="filter-btn active" onclick="filterCategory('all', this)">{% if lang == 'ar' %}الكل{% else %}All{% endif %}</button>
+            <button class="filter-btn" onclick="filterCategory('students', this)">{% if lang == 'ar' %}للطلاب والمعلمين{% else %}For Students & Teachers{% endif %}</button>
+            <button class="filter-btn" onclick="filterCategory('pdf', this)">{% if lang == 'ar' %}أدوات PDF{% else %}PDF Tools{% endif %}</button>
+            <button class="filter-btn" onclick="filterCategory('data', this)">{% if lang == 'ar' %}البيانات والجداول{% else %}Data & Spreadsheets{% endif %}</button>
+            <button class="filter-btn" onclick="filterCategory('image', this)">{% if lang == 'ar' %}أدوات الصور{% else %}Image Tools{% endif %}</button>
+            <button class="filter-btn" onclick="filterCategory('dev', this)">{% if lang == 'ar' %}النصوص والمطورين{% else %}Text & Dev Tools{% endif %}</button>
         </div>
     </div>
 
-    <div id="noResultsMsg" data-ar="عذراً، لم يتم العثور على أداة مطابقة لبحثك 😕" data-en="Sorry, no tool matches your search 😕">عذراً، لم يتم العثور على أداة مطابقة لبحثك 😕</div>
+    <div id="noResultsMsg">{% if lang == 'ar' %}عذراً، لم يتم العثور على أداة مطابقة לבحثك 😕{% else %}Sorry, no tool matches your search 😕{% endif %}</div>
 
     <div class="tools-section">
         
-        <!-- قسم الطلاب والمعلمين -->
+        <!-- 🚀 قسم الأدوات المستخدمة مؤخراً -->
+        <div class="category-group" id="recentCategory" style="display: none;">
+            <div class="section-title"><i class="fa-solid fa-clock-rotate-left" style="color:var(--primary)"></i> <span>{% if lang == 'ar' %}استخدمتها مؤخراً{% else %}Recently Used{% endif %}</span></div>
+            <div class="tools-grid" id="recentToolsGrid"></div>
+        </div>
+
         <div class="category-group" data-category="students">
-            <div class="section-title"><i class="fa-solid fa-graduation-cap" style="color:var(--primary)"></i> <span data-ar="أدوات الطلاب والمعلمين" data-en="Students & Teachers Tools">أدوات الطلاب والمعلمين</span></div>
+            <div class="section-title"><i class="fa-solid fa-graduation-cap" style="color:var(--primary)"></i> <span>{% if lang == 'ar' %}أدوات الطلاب والمعلمين{% else %}Students & Teachers Tools{% endif %}</span></div>
             <div class="tools-grid">
-                <a href="/text-to-audio" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/text-to-audio" class="tool-card" data-slug="text-to-audio">
                     <div class="tool-icon i-dev"><i class="fa-solid fa-file-audio"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="تحويل النص لصوت (MP3)" data-en="Text to Audio (MP3)">تحويل النص لصوت (MP3)</h3>
-                        <p data-ar="استمع للملخصات والنصوص بدلاً من قراءتها." data-en="Listen to your notes and summaries instead of reading.">استمع للملخصات والنصوص بدلاً من قراءتها.</p>
+                        <h3>{% if lang == 'ar' %}تحويل النص لصوت (MP3){% else %}Text to Audio (MP3){% endif %}</h3>
+                        <p>{% if lang == 'ar' %}استمع للملخصات والنصوص بدلاً من قراءتها.{% else %}Listen to your notes and summaries instead of reading.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/translate-text" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/translate-text" class="tool-card" data-slug="translate-text">
                     <div class="tool-icon i-word"><i class="fa-solid fa-language"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="مترجم البحوث والنصوص" data-en="Research Translator">مترجم البحوث والنصوص</h3>
-                        <p data-ar="ترجمة دقيقة ومجانية للنصوص بضغطة زر." data-en="Accurate and free translation for texts and research.">ترجمة دقيقة ومجانية للنصوص بضغطة زر.</p>
+                        <h3>{% if lang == 'ar' %}مترجم البحوث والنصوص{% else %}Research Translator{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}ترجمة دقيقة ومجانية للنصوص بضغطة زر.{% else %}Accurate and free translation for texts and research.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/watermark-pdf" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/watermark-pdf" class="tool-card" data-slug="watermark-pdf">
                     <div class="tool-icon i-pdf"><i class="fa-solid fa-copyright"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="حماية المذكرات (علامة مائية)" data-en="Watermark PDF">حماية المذكرات (علامة مائية)</h3>
-                        <p data-ar="أضف اسمك كعلامة شفافة لحفظ حقوقك." data-en="Add your name as a transparent watermark to protect rights.">أضف اسمك كعلامة شفافة لحفظ حقوقك.</p>
+                        <h3>{% if lang == 'ar' %}حماية المذكرات (علامة مائية){% else %}Watermark PDF{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}أضف اسمك كعلامة شفافة لحفظ حقوقك.{% else %}Add your name as a transparent watermark to protect rights.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/remove-pdf-pages" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/remove-pdf-pages" class="tool-card" data-slug="remove-pdf-pages">
                     <div class="tool-icon i-pdf"><i class="fa-solid fa-file-circle-minus"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="قص وحذف صفحات PDF" data-en="Remove PDF Pages">قص وحذف صفحات PDF</h3>
-                        <p data-ar="اكتب أرقام الصفحات (مثال: 1, 5) ليتم حذفها." data-en="Type page numbers (e.g., 1, 5) to remove them.">اكتب أرقام الصفحات (مثال: 1, 5) ليتم حذفها.</p>
+                        <h3>{% if lang == 'ar' %}قص وحذف صفحات PDF{% else %}Remove PDF Pages{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}اكتب أرقام الصفحات (مثال: 1, 5) ليتم حذفها.{% else %}Type page numbers (e.g., 1, 5) to remove them.{% endif %}</p>
                     </div>
                 </a>
             </div>
         </div>
 
-        <!-- قسم أدوات PDF -->
         <div class="category-group" data-category="pdf">
-            <div class="section-title"><i class="fa-solid fa-file-pdf" style="color:var(--c-pdf)"></i> <span data-ar="أدوات PDF والمستندات" data-en="PDF & Document Tools">أدوات PDF والمستندات</span></div>
+            <div class="section-title"><i class="fa-solid fa-file-pdf" style="color:var(--c-pdf)"></i> <span>{% if lang == 'ar' %}أدوات PDF والمستندات{% else %}PDF & Document Tools{% endif %}</span></div>
             <div class="tools-grid">
-                <a href="/pdf-to-docx" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/pdf-to-docx" class="tool-card" data-slug="pdf-to-docx">
                     <div class="tool-icon i-word"><i class="fa-solid fa-file-word"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="PDF إلى Word" data-en="PDF to Word">PDF إلى Word</h3>
-                        <p data-ar="تحويل ملفات PDF إلى مستندات وورد مع الحفاظ على التنسيق." data-en="Convert PDF files to formatted Word documents.">تحويل ملفات PDF إلى مستندات وورد مع الحفاظ على التنسيق.</p>
+                        <h3>{% if lang == 'ar' %}PDF إلى Word{% else %}PDF to Word{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}تحويل ملفات PDF إلى مستندات وورد مع الحفاظ على التنسيق.{% else %}Convert PDF files to formatted Word documents.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/word-to-pdf" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/word-to-pdf" class="tool-card" data-slug="word-to-pdf">
                     <div class="tool-icon i-pdf"><i class="fa-solid fa-file-pdf"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="Word إلى PDF" data-en="Word to PDF">Word إلى PDF</h3>
-                        <p data-ar="تحويل مستندات وورد إلى PDF بكل سهولة." data-en="Convert Word documents to PDF easily.">تحويل مستندات وورد إلى PDF بكل سهولة.</p>
+                        <h3>{% if lang == 'ar' %}Word إلى PDF{% else %}Word to PDF{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}تحويل مستندات وورد إلى PDF بكل سهولة.{% else %}Convert Word documents to PDF easily.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/pdf-to-ppt" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/pdf-to-ppt" class="tool-card" data-slug="pdf-to-ppt">
                     <div class="tool-icon i-ppt"><i class="fa-solid fa-file-powerpoint"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="PDF إلى PowerPoint" data-en="PDF to PPT">PDF إلى PowerPoint</h3>
-                        <p data-ar="تحويل ملفات PDF إلى شرائح عرض باوربوينت." data-en="Convert PDF files to PowerPoint slides.">تحويل ملفات PDF إلى شرائح عرض باوربوينت.</p>
+                        <h3>{% if lang == 'ar' %}PDF إلى PowerPoint{% else %}PDF to PPT{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}تحويل ملفات PDF إلى شرائح عرض باوربوينت.{% else %}Convert PDF files to PowerPoint slides.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/pdf-to-excel" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/pdf-to-excel" class="tool-card" data-slug="pdf-to-excel">
                     <div class="tool-icon i-excel"><i class="fa-solid fa-file-excel"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="PDF إلى Excel" data-en="PDF to Excel">PDF إلى Excel</h3>
-                        <p data-ar="استخراج الجداول من PDF إلى إكسل بدقة." data-en="Extract tables from PDF to Excel.">استخراج الجداول من PDF إلى إكسل بدقة.</p>
+                        <h3>{% if lang == 'ar' %}PDF إلى Excel{% else %}PDF to Excel{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}استخراج الجداول من PDF إلى إكسل بدقة.{% else %}Extract tables from PDF to Excel.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/merge-pdf" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/merge-pdf" class="tool-card" data-slug="merge-pdf">
                     <div class="tool-icon i-dev"><i class="fa-solid fa-object-group"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="دمج ملفات PDF" data-en="Merge PDF Files">دمج ملفات PDF</h3>
-                        <p data-ar="جمع عدة ملفات PDF في ملف واحد منظم." data-en="Combine multiple PDFs into one organized file.">جمع عدة ملفات PDF في ملف واحد منظم.</p>
+                        <h3>{% if lang == 'ar' %}دمج ملفات PDF{% else %}Merge PDF Files{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}جمع عدة ملفات PDF في ملف واحد منظم.{% else %}Combine multiple PDFs into one organized file.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/split-pdf" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/split-pdf" class="tool-card" data-slug="split-pdf">
                     <div class="tool-icon i-pdf"><i class="fa-solid fa-file-dashed-line"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="تقسيم PDF" data-en="Split PDF">تقسيم PDF</h3>
-                        <p data-ar="فصل صفحات الـ PDF إلى ملفات مستقلة." data-en="Separate PDF pages into individual files.">فصل صفحات الـ PDF إلى ملفات مستقلة.</p>
+                        <h3>{% if lang == 'ar' %}تقسيم PDF{% else %}Split PDF{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}فصل صفحات الـ PDF إلى ملفات مستقلة.{% else %}Separate PDF pages into individual files.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/rotate-pdf" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/rotate-pdf" class="tool-card" data-slug="rotate-pdf">
                     <div class="tool-icon i-pdf"><i class="fa-solid fa-rotate"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="تدوير صفحات PDF" data-en="Rotate PDF">تدوير صفحات PDF</h3>
-                        <p data-ar="تعديل اتجاه صفحات الـ PDF المقلوبة." data-en="Fix the orientation of upside-down PDF pages.">تعديل اتجاه صفحات الـ PDF المقلوبة.</p>
+                        <h3>{% if lang == 'ar' %}تدوير صفحات PDF{% else %}Rotate PDF{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}تعديل اتجاه صفحات الـ PDF المقلوبة.{% else %}Fix the orientation of upside-down PDF pages.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/compress-pdf" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/compress-pdf" class="tool-card" data-slug="compress-pdf">
                     <div class="tool-icon i-pdf"><i class="fa-solid fa-compress"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="ضغط ملفات PDF" data-en="Compress PDF">ضغط ملفات PDF</h3>
-                        <p data-ar="تقليل حجم ملف الـ PDF لسهولة المشاركة." data-en="Reduce PDF file size for easy sharing.">تقليل حجم ملف الـ PDF لسهولة المشاركة.</p>
+                        <h3>{% if lang == 'ar' %}ضغط ملفات PDF{% else %}Compress PDF{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}تقليل حجم ملف الـ PDF لسهولة المشاركة.{% else %}Reduce PDF file size for easy sharing.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/protect-pdf" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/protect-pdf" class="tool-card" data-slug="protect-pdf">
                     <div class="tool-icon i-pdf"><i class="fa-solid fa-lock"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="حماية PDF بكلمة سر" data-en="Protect PDF">حماية PDF بكلمة سر</h3>
-                        <p data-ar="إضافة تشفير آمن لملفك السري." data-en="Add secure encryption to your private file.">إضافة تشفير آمن لملفك السري.</p>
+                        <h3>{% if lang == 'ar' %}حماية PDF بكلمة سر{% else %}Protect PDF{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}إضافة تشفير آمن لملفك السري.{% else %}Add secure encryption to your private file.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/unlock-pdf" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/unlock-pdf" class="tool-card" data-slug="unlock-pdf">
                     <div class="tool-icon i-pdf"><i class="fa-solid fa-unlock"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="إزالة كلمة سر PDF" data-en="Unlock PDF">إزالة كلمة سر PDF</h3>
-                        <p data-ar="إزالة التشفير وكلمة المرور من ملفاتك." data-en="Remove encryption and passwords from your files.">إزالة التشفير وكلمة المرور من ملفاتك.</p>
+                        <h3>{% if lang == 'ar' %}إزالة كلمة سر PDF{% else %}Unlock PDF{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}إزالة التشفير وكلمة المرور من ملفاتك.{% else %}Remove encryption and passwords from your files.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/pdf-to-pdf" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/pdf-to-pdf" class="tool-card" data-slug="pdf-to-pdf">
                     <div class="tool-icon i-pdf"><i class="fa-solid fa-file-pdf"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="تنسيق PDF" data-en="Reformat PDF">تنسيق PDF</h3>
-                        <p data-ar="إعادة بناء وتنسيق ملفات PDF النصية." data-en="Rebuild and format text-based PDFs.">إعادة بناء وتنسيق ملفات PDF النصية.</p>
+                        <h3>{% if lang == 'ar' %}تنسيق PDF{% else %}Reformat PDF{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}إعادة بناء وتنسيق ملفات PDF النصية.{% else %}Rebuild and format text-based PDFs.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/pdf-to-text" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/pdf-to-text" class="tool-card" data-slug="pdf-to-text">
                     <div class="tool-icon i-dev"><i class="fa-solid fa-font"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="استخراج نص PDF" data-en="Extract PDF Text">استخراج نص PDF</h3>
-                        <p data-ar="نسخ ولصق النصوص من داخل ملفات PDF." data-en="Copy and paste text directly from PDFs.">نسخ ولصق النصوص من داخل ملفات PDF.</p>
+                        <h3>{% if lang == 'ar' %}استخراج نص PDF{% else %}Extract PDF Text{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}نسخ ولصق النصوص من داخل ملفات PDF.{% else %}Copy and paste text directly from PDFs.{% endif %}</p>
                     </div>
                 </a>
             </div>
         </div>
 
-        <!-- قسم البيانات والجداول -->
         <div class="category-group" data-category="data">
-            <div class="section-title"><i class="fa-solid fa-table" style="color:var(--c-excel)"></i> <span data-ar="أدوات البيانات والجداول" data-en="Data & Spreadsheets">أدوات البيانات والجداول</span></div>
+            <div class="section-title"><i class="fa-solid fa-table" style="color:var(--c-excel)"></i> <span>{% if lang == 'ar' %}أدوات البيانات والجداول{% else %}Data & Spreadsheets{% endif %}</span></div>
             <div class="tools-grid">
-                <a href="/pdf-to-csv" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/pdf-to-csv" class="tool-card" data-slug="pdf-to-csv">
                     <div class="tool-icon i-excel"><i class="fa-solid fa-file-csv"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="PDF إلى CSV" data-en="PDF to CSV">PDF إلى CSV</h3>
-                        <p data-ar="استخراج الجداول والبيانات من PDF إلى CSV." data-en="Extract tables and data from PDF to CSV.">استخراج الجداول والبيانات من PDF إلى CSV.</p>
+                        <h3>{% if lang == 'ar' %}PDF إلى CSV{% else %}PDF to CSV{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}استخراج الجداول والبيانات من PDF إلى CSV.{% else %}Extract tables and data from PDF to CSV.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/csv-to-pdf" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/csv-to-pdf" class="tool-card" data-slug="csv-to-pdf">
                     <div class="tool-icon i-pdf"><i class="fa-solid fa-file-pdf"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="CSV إلى PDF" data-en="CSV to PDF">CSV إلى PDF</h3>
-                        <p data-ar="تحويل بيانات وجداول CSV إلى مستند PDF." data-en="Convert CSV data and tables into a PDF.">تحويل بيانات وجداول CSV إلى مستند PDF.</p>
+                        <h3>{% if lang == 'ar' %}CSV إلى PDF{% else %}CSV to PDF{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}تحويل بيانات وجداول CSV إلى مستند PDF.{% else %}Convert CSV data and tables into a PDF.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/word-to-csv" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/word-to-csv" class="tool-card" data-slug="word-to-csv">
                     <div class="tool-icon i-excel"><i class="fa-solid fa-file-csv"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="Word إلى CSV" data-en="Word to CSV">Word إلى CSV</h3>
-                        <p data-ar="استخراج الجداول من ملفات Word إلى CSV." data-en="Extract tables from Word documents to CSV.">استخراج الجداول من ملفات Word إلى CSV.</p>
+                        <h3>{% if lang == 'ar' %}Word إلى CSV{% else %}Word to CSV{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}استخراج الجداول من ملفات Word إلى CSV.{% else %}Extract tables from Word documents to CSV.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/csv-to-word" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/csv-to-word" class="tool-card" data-slug="csv-to-word">
                     <div class="tool-icon i-word"><i class="fa-solid fa-file-word"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="CSV إلى Word" data-en="CSV to Word">CSV إلى Word</h3>
-                        <p data-ar="تحويل الجداول النصية إلى مستندات Word." data-en="Convert CSV text into Word documents.">تحويل الجداول النصية إلى مستندات Word.</p>
+                        <h3>{% if lang == 'ar' %}CSV إلى Word{% else %}CSV to Word{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}تحويل الجداول النصية إلى مستندات Word.{% else %}Convert CSV text into Word documents.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/merge-word" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/merge-word" class="tool-card" data-slug="merge-word">
                     <div class="tool-icon i-word"><i class="fa-solid fa-object-group"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="دمج ملفات Word" data-en="Merge Word">دمج ملفات Word</h3>
-                        <p data-ar="جمع عدة ملفات Word في ملف واحد." data-en="Combine multiple Word files into one.">جمع عدة ملفات Word في ملف واحد.</p>
+                        <h3>{% if lang == 'ar' %}دمج ملفات Word{% else %}Merge Word{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}جمع عدة ملفات Word في ملف واحد.{% else %}Combine multiple Word files into one.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/text-to-excel" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/text-to-excel" class="tool-card" data-slug="text-to-excel">
                     <div class="tool-icon i-excel"><i class="fa-solid fa-file-excel"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="نص إلى Excel" data-en="Text to Excel">نص إلى Excel</h3>
-                        <p data-ar="تحويل النصوص المنسقة إلى جداول إكسل." data-en="Convert formatted text into Excel tables.">تحويل النصوص المنسقة إلى جداول إكسل.</p>
+                        <h3>{% if lang == 'ar' %}نص إلى Excel{% else %}Text to Excel{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}تحويل النصوص المنسقة إلى جداول إكسل.{% else %}Convert formatted text into Excel tables.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/json-to-excel" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/json-to-excel" class="tool-card" data-slug="json-to-excel">
                     <div class="tool-icon i-excel"><i class="fa-solid fa-file-excel"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="JSON إلى Excel" data-en="JSON to Excel">JSON إلى Excel</h3>
-                        <p data-ar="تحويل البيانات البرمجية (JSON) إلى إكسل." data-en="Convert JSON data into Excel sheets.">تحويل البيانات البرمجية (JSON) إلى إكسل.</p>
+                        <h3>{% if lang == 'ar' %}JSON إلى Excel{% else %}JSON to Excel{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}تحويل البيانات البرمجية (JSON) إلى إكسل.{% else %}Convert JSON data into Excel sheets.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/excel-to-json" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/excel-to-json" class="tool-card" data-slug="excel-to-json">
                     <div class="tool-icon i-dev"><i class="fa-solid fa-code"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="Excel إلى JSON" data-en="Excel to JSON">Excel إلى JSON</h3>
-                        <p data-ar="تحويل جداول إكسل إلى أكواد JSON." data-en="Convert Excel tables into JSON format.">تحويل جداول إكسل إلى أكواد JSON.</p>
+                        <h3>{% if lang == 'ar' %}Excel إلى JSON{% else %}Excel to JSON{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}تحويل جداول إكسل إلى أكواد JSON.{% else %}Convert Excel tables into JSON format.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/csv-to-json" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/csv-to-json" class="tool-card" data-slug="csv-to-json">
                     <div class="tool-icon i-dev"><i class="fa-solid fa-code"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="CSV إلى JSON" data-en="CSV to JSON">CSV إلى JSON</h3>
-                        <p data-ar="تحويل بيانات CSV إلى أكواد JSON." data-en="Convert CSV data into JSON format.">تحويل بيانات CSV إلى أكواد JSON.</p>
+                        <h3>{% if lang == 'ar' %}CSV إلى JSON{% else %}CSV to JSON{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}تحويل بيانات CSV إلى أكواد JSON.{% else %}Convert CSV data into JSON format.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/text-to-csv" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/text-to-csv" class="tool-card" data-slug="text-to-csv">
                     <div class="tool-icon i-excel"><i class="fa-solid fa-file-csv"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="نص إلى CSV" data-en="Text to CSV">نص إلى CSV</h3>
-                        <p data-ar="تحويل النصوص المجدولة إلى ملف CSV." data-en="Convert tabulated text to a CSV file.">تحويل النصوص المجدولة إلى ملف CSV.</p>
+                        <h3>{% if lang == 'ar' %}نص إلى CSV{% else %}Text to CSV{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}تحويل النصوص المجدولة إلى ملف CSV.{% else %}Convert tabulated text to a CSV file.{% endif %}</p>
                     </div>
                 </a>
             </div>
         </div>
 
-        <!-- قسم أدوات الصور -->
         <div class="category-group" data-category="image">
-            <div class="section-title"><i class="fa-solid fa-image" style="color:var(--c-img)"></i> <span data-ar="أدوات الصور" data-en="Image Tools">أدوات الصور</span></div>
+            <div class="section-title"><i class="fa-solid fa-image" style="color:var(--c-img)"></i> <span>{% if lang == 'ar' %}أدوات الصور{% else %}Image Tools{% endif %}</span></div>
             <div class="tools-grid">
-                <a href="/image-to-text" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/image-to-text" class="tool-card" data-slug="image-to-text">
                     <div class="tool-icon i-dev"><i class="fa-solid fa-file-signature"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="استخراج نص من صورة" data-en="Image to Text (OCR)">استخراج نص من صورة</h3>
-                        <p data-ar="قراءة النصوص من الصور بدقة عالية بالذكاء الاصطناعي." data-en="Extract and read text from images accurately using AI.">قراءة النصوص من الصور بدقة عالية بالذكاء الاصطناعي.</p>
+                        <h3>{% if lang == 'ar' %}استخراج نص من صورة{% else %}Image to Text (OCR){% endif %}</h3>
+                        <p>{% if lang == 'ar' %}قراءة النصوص من الصور بدقة عالية بالذكاء الاصطناعي.{% else %}Extract and read text from images accurately using AI.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/image-to-pdf" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/image-to-pdf" class="tool-card" data-slug="image-to-pdf">
                     <div class="tool-icon i-img"><i class="fa-solid fa-images"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="صورة إلى PDF" data-en="Image to PDF">صورة إلى PDF</h3>
-                        <p data-ar="تحويل الصور (JPG, PNG) إلى مستند PDF." data-en="Convert images (JPG, PNG) into a PDF document.">تحويل الصور (JPG, PNG) إلى مستند PDF.</p>
+                        <h3>{% if lang == 'ar' %}صورة إلى PDF{% else %}Image to PDF{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}تحويل الصور (JPG, PNG) إلى مستند PDF.{% else %}Convert images (JPG, PNG) into a PDF document.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/compress-image" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/compress-image" class="tool-card" data-slug="compress-image">
                     <div class="tool-icon i-excel"><i class="fa-solid fa-compress"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="ضغط الصور" data-en="Compress Image">ضغط الصور</h3>
-                        <p data-ar="تقليل حجم الصور مع الحفاظ على الجودة." data-en="Reduce image file size while maintaining quality.">تقليل حجم الصور مع الحفاظ على الجودة.</p>
+                        <h3>{% if lang == 'ar' %}ضغط الصور{% else %}Compress Image{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}تقليل حجم الصور مع الحفاظ على الجودة.{% else %}Reduce image file size while maintaining quality.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/resize-image" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/resize-image" class="tool-card" data-slug="resize-image">
                     <div class="tool-icon i-img"><i class="fa-solid fa-expand"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="تغيير أبعاد الصورة" data-en="Resize Image">تغيير أبعاد الصورة</h3>
-                        <p data-ar="تعديل طول وعرض الصورة بدقة." data-en="Adjust image width and height precisely.">تعديل طول وعرض الصورة بدقة.</p>
+                        <h3>{% if lang == 'ar' %}تغيير أبعاد الصورة{% else %}Resize Image{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}تعديل طول وعرض الصورة بدقة.{% else %}Adjust image width and height precisely.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/rotate-image" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/rotate-image" class="tool-card" data-slug="rotate-image">
                     <div class="tool-icon i-img"><i class="fa-solid fa-rotate"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="تدوير الصورة" data-en="Rotate Image">تدوير الصورة</h3>
-                        <p data-ar="تعديل اتجاه الصورة المقلوبة." data-en="Fix the orientation of an upside-down image.">تعديل اتجاه الصورة المقلوبة.</p>
+                        <h3>{% if lang == 'ar' %}تدوير الصورة{% else %}Rotate Image{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}تعديل اتجاه الصورة المقلوبة.{% else %}Fix the orientation of an upside-down image.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/watermark-image" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/watermark-image" class="tool-card" data-slug="watermark-image">
                     <div class="tool-icon i-img"><i class="fa-solid fa-copyright"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="علامة مائية للصورة" data-en="Watermark Image">علامة مائية للصورة</h3>
-                        <p data-ar="أضف نصاً لحماية حقوق صورتك." data-en="Add text to protect your image rights.">أضف نصاً لحماية حقوق صورتك.</p>
+                        <h3>{% if lang == 'ar' %}علامة مائية للصورة{% else %}Watermark Image{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}أضف نصاً لحماية حقوق صورتك.{% else %}Add text to protect your image rights.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/strip-exif" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/strip-exif" class="tool-card" data-slug="strip-exif">
                     <div class="tool-icon i-img"><i class="fa-solid fa-user-shield"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="إزالة بيانات الخصوصية" data-en="Strip EXIF Data">إزالة بيانات الخصوصية</h3>
-                        <p data-ar="حذف موقع التقاط الصورة وبيانات الكاميرا." data-en="Remove GPS location and camera data from images.">حذف موقع التقاط الصورة وبيانات الكاميرا.</p>
+                        <h3>{% if lang == 'ar' %}إزالة بيانات الخصوصية{% else %}Strip EXIF Data{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}حذف موقع التقاط الصورة وبيانات الكاميرا.{% else %}Remove GPS location and camera data from images.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/image-to-jpg" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/image-to-jpg" class="tool-card" data-slug="image-to-jpg">
                     <div class="tool-icon i-img"><i class="fa-solid fa-image"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="تحويل لـ JPG" data-en="Convert to JPG">تحويل لـ JPG</h3>
-                        <p data-ar="تحويل وتوحيد الصور لصيغة JPG القياسية." data-en="Convert and standardize images to JPG format.">تحويل وتوحيد الصور لصيغة JPG القياسية.</p>
+                        <h3>{% if lang == 'ar' %}تحويل لـ JPG{% else %}Convert to JPG{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}تحويل وتوحيد الصور لصيغة JPG القياسية.{% else %}Convert and standardize images to JPG format.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/image-to-png" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/image-to-png" class="tool-card" data-slug="image-to-png">
                     <div class="tool-icon i-img"><i class="fa-regular fa-image"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="تحويل لـ PNG" data-en="Convert to PNG">تحويل لـ PNG</h3>
-                        <p data-ar="تحويل أي صورة إلى صيغة PNG شفافة." data-en="Convert any image to transparent PNG format.">تحويل أي صورة إلى صيغة PNG شفافة.</p>
+                        <h3>{% if lang == 'ar' %}تحويل لـ PNG{% else %}Convert to PNG{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}تحويل أي صورة إلى صيغة PNG شفافة.{% else %}Convert any image to transparent PNG format.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/heic-to-jpg" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/heic-to-jpg" class="tool-card" data-slug="heic-to-jpg">
                     <div class="tool-icon i-img"><i class="fa-solid fa-mobile-screen"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="HEIC إلى JPG" data-en="HEIC to JPG">HEIC إلى JPG</h3>
-                        <p data-ar="تحويل صور الايفون (HEIC) لتفتح في أي مكان." data-en="Convert iPhone photos (HEIC) to open anywhere.">تحويل صور الايفون (HEIC) لتفتح في أي مكان.</p>
+                        <h3>{% if lang == 'ar' %}HEIC إلى JPG{% else %}HEIC to JPG{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}تحويل صور الايفون (HEIC) لتفتح في أي مكان.{% else %}Convert iPhone photos (HEIC) to open anywhere.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/image-to-base64" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/image-to-base64" class="tool-card" data-slug="image-to-base64">
                     <div class="tool-icon i-dev"><i class="fa-solid fa-code"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="صورة إلى Base64" data-en="Image to Base64">صورة إلى Base64</h3>
-                        <p data-ar="تحويل الصور إلى نصوص Base64 للمطورين." data-en="Convert images to Base64 strings for developers.">تحويل الصور إلى نصوص Base64 للمطورين.</p>
+                        <h3>{% if lang == 'ar' %}صورة إلى Base64{% else %}Image to Base64{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}تحويل الصور إلى نصوص Base64 للمطورين.{% else %}Convert images to Base64 strings for developers.{% endif %}</p>
                     </div>
                 </a>
             </div>
         </div>
 
-        <!-- قسم أدوات النصوص والمطورين -->
         <div class="category-group" data-category="dev">
-            <div class="section-title"><i class="fa-solid fa-code" style="color:var(--c-dev)"></i> <span data-ar="أدوات النصوص والمطورين" data-en="Text & Dev Tools">أدوات النصوص والمطورين</span></div>
+            <div class="section-title"><i class="fa-solid fa-code" style="color:var(--c-dev)"></i> <span>{% if lang == 'ar' %}أدوات النصوص والمطورين{% else %}Text & Dev Tools{% endif %}</span></div>
             <div class="tools-grid">
-                <a href="/text-to-pdf" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/text-to-pdf" class="tool-card" data-slug="text-to-pdf">
                     <div class="tool-icon i-pdf"><i class="fa-solid fa-file-lines"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="نص إلى PDF" data-en="Text to PDF">نص إلى PDF</h3>
-                        <p data-ar="لصق نص وتحويله مباشرة إلى مستند PDF." data-en="Paste text and instantly turn it into a PDF.">لصق نص وتحويله مباشرة إلى مستند PDF.</p>
+                        <h3>{% if lang == 'ar' %}نص إلى PDF{% else %}Text to PDF{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}لصق نص وتحويله مباشرة إلى مستند PDF.{% else %}Paste text and instantly turn it into a PDF.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/markdown-to-html" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/markdown-to-html" class="tool-card" data-slug="markdown-to-html">
                     <div class="tool-icon i-dev"><i class="fa-solid fa-file-code"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="Markdown إلى HTML" data-en="Markdown to HTML">Markdown إلى HTML</h3>
-                        <p data-ar="تحويل نصوص ماركداون إلى كود HTML جاهز." data-en="Convert Markdown text to ready HTML code.">تحويل نصوص ماركداون إلى كود HTML جاهز.</p>
+                        <h3>{% if lang == 'ar' %}Markdown إلى HTML{% else %}Markdown to HTML{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}تحويل نصوص ماركداون إلى كود HTML جاهز.{% else %}Convert Markdown text to ready HTML code.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/clean-text" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/clean-text" class="tool-card" data-slug="clean-text">
                     <div class="tool-icon i-word"><i class="fa-solid fa-broom"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="تنظيف النص من HTML" data-en="Clean HTML Tags">تنظيف النص من HTML</h3>
-                        <p data-ar="إزالة الأكواد واستخراج النص النظيف فقط." data-en="Remove all tags and extract clean text only.">إزالة الأكواد واستخراج النص النظيف فقط.</p>
+                        <h3>{% if lang == 'ar' %}تنظيف النص من HTML{% else %}Clean HTML Tags{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}إزالة الأكواد واستخراج النص النظيف فقط.{% else %}Remove all tags and extract clean text only.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/base64-tool" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/base64-tool" class="tool-card" data-slug="base64-tool">
                     <div class="tool-icon i-dev"><i class="fa-solid fa-shield-halved"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="تشفير Base64" data-en="Base64 Encode">تشفير Base64</h3>
-                        <p data-ar="تشفير وفك تشفير النصوص بصيغة Base64." data-en="Encode and decode text in Base64 format.">تشفير وفك تشفير النصوص بصيغة Base64.</p>
+                        <h3>{% if lang == 'ar' %}تشفير Base64{% else %}Base64 Encode{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}تشفير وفك تشفير النصوص بصيغة Base64.{% else %}Encode and decode text in Base64 format.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/url-encoder" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/url-encoder" class="tool-card" data-slug="url-encoder">
                     <div class="tool-icon i-dev"><i class="fa-solid fa-link"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="تشفير الروابط URL" data-en="URL Encode">تشفير الروابط URL</h3>
-                        <p data-ar="تشفير وفك تشفير الروابط لتعمل في المتصفح." data-en="Encode and decode URLs for browser safety.">تشفير وفك تشفير الروابط لتعمل في المتصفح.</p>
+                        <h3>{% if lang == 'ar' %}تشفير الروابط URL{% else %}URL Encode{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}تشفير وفك تشفير الروابط لتعمل في المتصفح.{% else %}Encode and decode URLs for browser safety.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/json-beautifier" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/json-beautifier" class="tool-card" data-slug="json-beautifier">
                     <div class="tool-icon i-word"><i class="fa-solid fa-brackets-curly"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="تنسيق JSON" data-en="JSON Formatter">تنسيق JSON</h3>
-                        <p data-ar="ترتيب وتنظيف الأكواد البرمجية لسهولة القراءة." data-en="Format and prettify JSON code for readability.">ترتيب وتنظيف الأكواد البرمجية لسهولة القراءة.</p>
+                        <h3>{% if lang == 'ar' %}تنسيق JSON{% else %}JSON Formatter{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}ترتيب وتنظيف الأكواد البرمجية لسهولة القراءة.{% else %}Format and prettify JSON code for readability.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/css-js-minifier" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/css-js-minifier" class="tool-card" data-slug="css-js-minifier">
                     <div class="tool-icon i-excel"><i class="fa-solid fa-minimize"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="ضغط أكواد CSS/JS" data-en="Minify CSS/JS">ضغط أكواد CSS/JS</h3>
-                        <p data-ar="إزالة المسافات لتقليل حجم ملفات البرمجة." data-en="Remove whitespace to reduce code file size.">إزالة المسافات لتقليل حجم ملفات البرمجة.</p>
+                        <h3>{% if lang == 'ar' %}ضغط أكواد CSS/JS{% else %}Minify CSS/JS{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}إزالة المسافات لتقليل حجم ملفات البرمجة.{% else %}Remove whitespace to reduce code file size.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/html-entity" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/html-entity" class="tool-card" data-slug="html-entity">
                     <div class="tool-icon i-dev"><i class="fa-solid fa-code"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="تشفير HTML Entities" data-en="HTML Entity Encode">تشفير HTML Entities</h3>
-                        <p data-ar="تحويل الرموز الخاصة إلى كيانات HTML." data-en="Convert special characters to HTML entities.">تحويل الرموز الخاصة إلى كيانات HTML.</p>
+                        <h3>{% if lang == 'ar' %}تشفير HTML Entities{% else %}HTML Entity Encode{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}تحويل الرموز الخاصة إلى كيانات HTML.{% else %}Convert special characters to HTML entities.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/hash-generator" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/hash-generator" class="tool-card" data-slug="hash-generator">
                     <div class="tool-icon i-dev"><i class="fa-solid fa-hashtag"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="توليد MD5 / SHA" data-en="Hash Generator">توليد MD5 / SHA</h3>
-                        <p data-ar="تشفير النصوص لحماية البيانات كـ Hash." data-en="Encrypt texts to protect data as Hashes.">تشفير النصوص لحماية البيانات كـ Hash.</p>
+                        <h3>{% if lang == 'ar' %}توليد MD5 / SHA{% else %}Hash Generator{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}تشفير النصوص لحماية البيانات كـ Hash.{% else %}Encrypt texts to protect data as Hashes.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/hmac-generator" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/hmac-generator" class="tool-card" data-slug="hmac-generator">
                     <div class="tool-icon i-dev"><i class="fa-solid fa-key"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="توليد HMAC" data-en="HMAC Generator">توليد HMAC</h3>
-                        <p data-ar="تشفير النصوص باستخدام مفتاح سري." data-en="Encrypt text using a secret key (HMAC).">تشفير النصوص باستخدام مفتاح سري.</p>
+                        <h3>{% if lang == 'ar' %}توليد HMAC{% else %}HMAC Generator{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}تشفير النصوص باستخدام مفتاح سري.{% else %}Encrypt text using a secret key (HMAC).{% endif %}</p>
                     </div>
                 </a>
-                <a href="/text-diff" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/text-diff" class="tool-card" data-slug="text-diff">
                     <div class="tool-icon i-word"><i class="fa-solid fa-not-equal"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="مقارنة النصوص (Diff)" data-en="Text Compare">مقارنة النصوص (Diff)</h3>
-                        <p data-ar="إيجاد الفروقات والاختلافات بين نصين." data-en="Find differences and changes between two texts.">إيجاد الفروقات والاختلافات بين نصين.</p>
+                        <h3>{% if lang == 'ar' %}مقارنة النصوص (Diff){% else %}Text Compare{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}إيجاد الفروقات والاختلافات بين نصين.{% else %}Find differences and changes between two texts.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/text-counter" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/text-counter" class="tool-card" data-slug="text-counter">
                     <div class="tool-icon i-word"><i class="fa-solid fa-calculator"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="عداد النصوص" data-en="Text Counter">عداد النصوص</h3>
-                        <p data-ar="حساب عدد الأحرف، الكلمات، والأسطر." data-en="Count characters, words, and lines.">حساب عدد الأحرف، الكلمات، والأسطر.</p>
+                        <h3>{% if lang == 'ar' %}عداد النصوص{% else %}Text Counter{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}حساب عدد الأحرف، الكلمات، والأسطر.{% else %}Count characters, words, and lines.{% endif %}</p>
                     </div>
                 </a>
             </div>
         </div>
 
-        <!-- قسم أدوات متنوعة -->
         <div class="category-group" data-category="utilities">
-            <div class="section-title"><i class="fa-solid fa-toolbox" style="color:var(--c-dev)"></i> <span data-ar="أدوات متنوعة" data-en="Utilities">أدوات متنوعة</span></div>
+            <div class="section-title"><i class="fa-solid fa-toolbox" style="color:var(--c-dev)"></i> <span>{% if lang == 'ar' %}أدوات متنوعة{% else %}Utilities{% endif %}</span></div>
             <div class="tools-grid">
-                <a href="/text-to-qr" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/text-to-qr" class="tool-card" data-slug="text-to-qr">
                     <div class="tool-icon i-excel"><i class="fa-solid fa-qrcode"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="توليد باركود QR" data-en="QR Code Generator">توليد باركود QR</h3>
-                        <p data-ar="تحويل الروابط والنصوص إلى رمز استجابة سريعة." data-en="Turn links and text into a Quick Response code.">تحويل الروابط والنصوص إلى رمز استجابة سريعة.</p>
+                        <h3>{% if lang == 'ar' %}توليد باركود QR{% else %}QR Code Generator{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}تحويل الروابط والنصوص إلى رمز استجابة سريعة.{% else %}Turn links and text into a Quick Response code.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/uuid-generator" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/uuid-generator" class="tool-card" data-slug="uuid-generator">
                     <div class="tool-icon i-dev"><i class="fa-solid fa-fingerprint"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="توليد معرفات UUID" data-en="UUID Generator">توليد معرفات UUID</h3>
-                        <p data-ar="توليد معرفات فريدة وعشوائية للمبرمجين." data-en="Generate random and unique UUIDs.">توليد معرفات فريدة وعشوائية للمبرمجين.</p>
+                        <h3>{% if lang == 'ar' %}توليد معرفات UUID{% else %}UUID Generator{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}توليد معرفات فريدة وعشوائية للمبرمجين.{% else %}Generate random and unique UUIDs.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/password-generator" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/password-generator" class="tool-card" data-slug="password-generator">
                     <div class="tool-icon i-dev"><i class="fa-solid fa-key"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="كلمة سر قوية" data-en="Password Generator">كلمة سر قوية</h3>
-                        <p data-ar="إنشاء كلمات مرور عشوائية وآمنة جداً." data-en="Create highly secure, random passwords.">إنشاء كلمات مرور عشوائية وآمنة جداً.</p>
+                        <h3>{% if lang == 'ar' %}كلمة سر قوية{% else %}Password Generator{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}إنشاء كلمات مرور عشوائية وآمنة جداً.{% else %}Create highly secure, random passwords.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/password-strength" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/password-strength" class="tool-card" data-slug="password-strength">
                     <div class="tool-icon i-dev"><i class="fa-solid fa-shield"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="فحص قوة كلمة السر" data-en="Check Password Strength">فحص قوة كلمة السر</h3>
-                        <p data-ar="التحقق من مدى أمان وصعوبة كلمة مرورك." data-en="Verify the security and strength of your password.">التحقق من مدى أمان وصعوبة كلمة مرورك.</p>
+                        <h3>{% if lang == 'ar' %}فحص قوة كلمة السر{% else %}Check Password Strength{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}التحقق من مدى أمان وصعوبة كلمة مرورك.{% else %}Verify the security and strength of your password.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/percentage-calc" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/percentage-calc" class="tool-card" data-slug="percentage-calc">
                     <div class="tool-icon i-word"><i class="fa-solid fa-percent"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="حاسبة النسب المئوية" data-en="Percentage Calculator">حاسبة النسب المئوية</h3>
-                        <p data-ar="حساب النسب المئوية للأرقام بسهولة." data-en="Calculate percentages of numbers easily.">حساب النسب المئوية للأرقام بسهولة.</p>
+                        <h3>{% if lang == 'ar' %}حاسبة النسب المئوية{% else %}Percentage Calculator{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}حساب النسب المئوية للأرقام بسهولة.{% else %}Calculate percentages of numbers easily.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/timestamp-converter" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/timestamp-converter" class="tool-card" data-slug="timestamp-converter">
                     <div class="tool-icon i-word"><i class="fa-solid fa-clock"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="محول التاريخ Unix" data-en="Timestamp Converter">محول التاريخ Unix</h3>
-                        <p data-ar="تحويل أرقام Timestamp إلى تاريخ مقروء." data-en="Convert Unix Timestamp to readable date.">تحويل أرقام Timestamp إلى تاريخ مقروء.</p>
+                        <h3>{% if lang == 'ar' %}محول التاريخ Unix{% else %}Timestamp Converter{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}تحويل أرقام Timestamp إلى تاريخ مقروء.{% else %}Convert Unix Timestamp to readable date.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/byte-converter" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/byte-converter" class="tool-card" data-slug="byte-converter">
                     <div class="tool-icon i-excel"><i class="fa-solid fa-hard-drive"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="محول الأحجام (KB/MB)" data-en="Byte Converter">محول الأحجام (KB/MB)</h3>
-                        <p data-ar="تحويل البايت إلى كيلوبايت وميجابايت." data-en="Convert Bytes to KB, MB, and GB.">تحويل البايت إلى كيلوبايت وميجابايت.</p>
+                        <h3>{% if lang == 'ar' %}محول الأحجام (KB/MB){% else %}Byte Converter{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}تحويل البايت إلى كيلوبايت وميجابايت.{% else %}Convert Bytes to KB, MB, and GB.{% endif %}</p>
                     </div>
                 </a>
-                <a href="/unit-converter" class="tool-card">
+                <a href="{% if lang == 'en' %}/en{% endif %}/unit-converter" class="tool-card" data-slug="unit-converter">
                     <div class="tool-icon i-ppt"><i class="fa-solid fa-ruler"></i></div>
                     <div class="tool-info">
-                        <h3 data-ar="محول الوحدات" data-en="Unit Converter">محول الوحدات</h3>
-                        <p data-ar="تحويل وحدات القياس (متر، قدم، بوصة)." data-en="Convert measurement units (meters, feet, inches).">تحويل وحدات القياس (متر، قدم، بوصة).</p>
+                        <h3>{% if lang == 'ar' %}محول الوحدات{% else %}Unit Converter{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}تحويل وحدات القياس (متر، قدم، بوصة).{% else %}Convert measurement units (meters, feet, inches).{% endif %}</p>
                     </div>
                 </a>
             </div>
@@ -733,11 +720,11 @@
     <!-- الفوتر -->
     <div class="workspace">
         <div class="footer-disclaimer">
-            <p data-ar="V-Infinity Converter يوفر مجموعة شاملة من الأدوات الآمنة المدعومة بالذكاء الاصطناعي. تتم معالجة الملفات سحابياً ولا يتم تخزينها أبداً لحماية خصوصيتك. نحن نستخدم ملفات تعريف الارتباط وخدمات إعلانات جوجل وفقاً للسياسات." data-en="V-Infinity Converter provides a comprehensive suite for secure, AI-powered file conversion. Files are processed on our servers and are never stored. We use cookies and Google AdSense according to policies.">V-Infinity Converter يوفر مجموعة شاملة من الأدوات الآمنة المدعومة بالذكاء الاصطناعي. تتم معالجة الملفات سحابياً ولا يتم تخزينها أبداً لحماية خصوصيتك. نحن نستخدم ملفات تعريف الارتباط وخدمات إعلانات جوجل وفقاً للسياسات.</p>
+            <p>{% if lang == 'ar' %}V-Infinity Converter يوفر مجموعة شاملة من الأدوات الآمنة المدعومة بالذكاء الاصطناعي. تتم معالجة الملفات سحابياً ولا يتم تخزينها أبداً لحماية خصوصيتك. نحن نستخدم ملفات تعريف الارتباط وخدمات إعلانات جوجل وفقاً للسياسات.{% else %}V-Infinity Converter provides a comprehensive suite for secure, AI-powered file conversion. Files are processed on our servers and are never stored. We use cookies and Google AdSense according to policies.{% endif %}</p>
             <div class="footer-links">
-                <a href="/privacy" data-ar="سياسة الخصوصية" data-en="Privacy Policy">سياسة الخصوصية</a> | 
-                <a href="/terms" data-ar="الشروط والأحكام" data-en="Terms of Service">الشروط والأحكام</a> | 
-                <a href="/contact" data-ar="اتصل بنا" data-en="Contact Us">اتصل بنا</a>
+                <a href="{% if lang == 'en' %}/en{% endif %}/privacy">{% if lang == 'ar' %}سياسة الخصوصية{% else %}Privacy Policy{% endif %}</a> | 
+                <a href="{% if lang == 'en' %}/en{% endif %}/terms">{% if lang == 'ar' %}الشروط والأحكام{% else %}Terms of Service{% endif %}</a> | 
+                <a href="{% if lang == 'en' %}/en{% endif %}/contact">{% if lang == 'ar' %}اتصل بنا{% else %}Contact Us{% endif %}</a>
             </div>
         </div>
     </div>
@@ -748,26 +735,95 @@
         let currentAction = '';
         let fileBase64 = null;
         let filesBase64Array = []; 
-        let isArabic = true; 
+        let isArabic = "{{ lang }}" === "ar"; 
 
-        // قمت بالإبقاء على الدالة في حال أردت استخدامها لاحقاً لأي غرض داخلي، لكنها لم تعد تتحكم في الروابط الرئيسية.
-        function handleToolClick(e, action, nameAr, nameEn, type, iconClass, iconName) {
-            e.preventDefault(); 
-            window.history.pushState({}, '', '/' + action);
-            selectTool(action, nameAr, nameEn, type, iconClass, iconName);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+        // 🚀 إعادة توجيه ذكية للغة للحفاظ على الـ SEO
+        function toggleLanguageSEO() {
+            const currentPath = window.location.pathname;
+            if (currentPath.startsWith('/en')) {
+                window.location.href = currentPath.replace('/en', '') || '/';
+            } else {
+                window.location.href = '/en' + (currentPath === '/' ? '' : currentPath);
+            }
         }
 
-        {% if tool_data %}
+        // 🚀 نظام حفظ "الأدوات المستخدمة مؤخراً"
+        function updateRecentTools(slug) {
+            if(!slug) return;
+            let recent = JSON.parse(localStorage.getItem('v_recent_tools') || '[]');
+            recent = recent.filter(item => item !== slug); // إزالة التكرار
+            recent.unshift(slug); // إضافة في البداية
+            if(recent.length > 4) recent.pop(); // الاحتفاظ بآخر 4 أدوات فقط
+            localStorage.setItem('v_recent_tools', JSON.stringify(recent));
+        }
+
+        function loadRecentTools() {
+            let recent = JSON.parse(localStorage.getItem('v_recent_tools') || '[]');
+            if (recent.length > 0 && !window.location.pathname.includes(recent[0])) { // لا تظهر القائمة إذا كنا داخل الأداة نفسها
+                const grid = document.getElementById('recentToolsGrid');
+                const category = document.getElementById('recentCategory');
+                let foundAny = false;
+                
+                recent.forEach(slug => {
+                    const originalCard = document.querySelector(`.tool-card[data-slug="${slug}"]`);
+                    if(originalCard) {
+                        const clone = originalCard.cloneNode(true);
+                        grid.appendChild(clone);
+                        foundAny = true;
+                    }
+                });
+                
+                if (foundAny) category.style.display = 'block';
+            }
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
-            selectTool("{{ tool_data.slug }}", "{{ tool_data.nameAr }}", "{{ tool_data.nameEn }}", "{{ tool_data.type }}", "{{ tool_data.iconClass }}", "{{ tool_data.iconName }}");
+            loadRecentTools();
+
+            {% if tool_data %}
+            currentAction = "{{ tool_data.slug }}";
+            updateRecentTools(currentAction);
+            setupToolUI("{{ tool_data.type }}");
             setTimeout(() => { document.getElementById('workspace').scrollIntoView({ behavior: 'smooth' }); }, 300);
+            {% endif %}
         });
-        {% endif %}
+
+        function setupToolUI(type) {
+            const warningBox = document.getElementById('toolWarning');
+            if(warningBox) {
+                if (currentAction === 'pdf-to-docx' || currentAction === 'pdf-to-excel' || currentAction === 'image-to-text') {
+                    warningBox.style.display = 'block';
+                    document.getElementById('warningText').innerHTML = isArabic ? 
+                        "هذه الأداة مدعومة بالذكاء الاصطناعي 🧠 لضمان أقصى دقة. قد تستغرق المعالجة بضع ثوانٍ إضافية." : 
+                        "This tool is powered by AI 🧠 for maximum accuracy. Processing may take a few extra seconds.";
+                } else {
+                    warningBox.style.display = 'none';
+                }
+            }
+            
+            const uploadArea = document.getElementById('uploadArea');
+            const textArea = document.getElementById('textInput');
+            const fileInput = document.getElementById('fileInput');
+            const multiFileInput = document.getElementById('multiFileInput');
+            
+            if(type === 'multiFile') {
+                uploadArea.style.display = 'block'; textArea.style.display = 'none';
+                uploadArea.onclick = () => multiFileInput.click();
+                document.getElementById('uploadText').innerText = isArabic ? "حدد عدة ملفات للدمج" : "Select multiple files to merge";
+            } else if(type === 'file') { 
+                uploadArea.style.display = 'block'; textArea.style.display = 'none'; 
+                uploadArea.onclick = () => fileInput.click();
+            } else if(type === 'text') { 
+                uploadArea.style.display = 'none'; textArea.style.display = 'block'; 
+            } else if(type === 'fileText') { 
+                uploadArea.style.display = 'block'; textArea.style.display = 'block'; 
+                uploadArea.onclick = () => fileInput.click();
+            }
+        }
 
         function searchTools() {
             let input = document.getElementById('searchInput').value.toLowerCase();
-            let cards = document.querySelectorAll('.tool-card');
+            let cards = document.querySelectorAll('.tools-section .tool-card');
             let categories = document.querySelectorAll('.category-group');
             let hasResults = false;
 
@@ -782,6 +838,7 @@
             });
 
             categories.forEach(cat => {
+                if (cat.id === 'recentCategory') return; // تجاهل قسم الحديثة في البحث
                 let visibleCards = cat.querySelectorAll('.tool-card:not(.hidden)');
                 if (visibleCards.length === 0) {
                     cat.style.display = 'none';
@@ -789,19 +846,18 @@
                     cat.style.display = 'block';
                 }
             });
-
             document.getElementById('noResultsMsg').style.display = hasResults ? 'none' : 'block';
         }
 
         function filterCategory(category, btnElement) {
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
             btnElement.classList.add('active');
-
             document.getElementById('searchInput').value = '';
             searchTools(); 
 
             let categories = document.querySelectorAll('.category-group');
             categories.forEach(cat => {
+                if (cat.id === 'recentCategory') return; // لا نطبق الفلتر على الحديثة
                 if (category === 'all' || cat.dataset.category === category) {
                     cat.classList.remove('hidden');
                     cat.style.display = 'block';
@@ -822,84 +878,6 @@
             }
         }
 
-        function toggleLanguage() {
-            isArabic = !isArabic;
-            const langBtn = document.getElementById('langBtn');
-            const html = document.documentElement;
-
-            if (isArabic) {
-                langBtn.innerHTML = '🇺🇸 English';
-                html.setAttribute('dir', 'rtl');
-                html.setAttribute('lang', 'ar');
-            } else {
-                langBtn.innerHTML = '🇸🇦 العربية';
-                html.setAttribute('dir', 'ltr');
-                html.setAttribute('lang', 'en');
-            }
-
-            document.querySelectorAll('[data-ar]').forEach(el => {
-                el.innerHTML = isArabic ? el.getAttribute('data-ar') : el.getAttribute('data-en');
-            });
-            document.querySelectorAll('textarea[data-ar-ph], input[data-ar-ph]').forEach(el => {
-                el.placeholder = isArabic ? el.getAttribute('data-ar-ph') : el.getAttribute('data-en-ph');
-            });
-            localStorage.setItem('v_lang', isArabic ? 'ar' : 'en');
-        }
-
-        function selectTool(action, nameAr, nameEn, type, iconClass, iconName) {
-            currentAction = action;
-            const toolName = isArabic ? nameAr : nameEn;
-            
-            document.getElementById('activeToolArea').style.display = 'block';
-            
-            const warningBox = document.getElementById('toolWarning');
-            if(warningBox) {
-                if (action === 'pdf-to-docx' || action === 'pdf-to-excel' || action === 'image-to-text') {
-                    warningBox.style.display = 'block';
-                    document.getElementById('warningText').innerHTML = isArabic ? 
-                        "هذه الأداة مدعومة بالذكاء الاصطناعي 🧠 لضمان أقصى دقة. قد تستغرق المعالجة بضع ثوانٍ إضافية." : 
-                        "This tool is powered by AI 🧠 for maximum accuracy. Processing may take a few extra seconds.";
-                } else {
-                    warningBox.style.display = 'none';
-                }
-            }
-            
-            const badge = document.getElementById('selectedToolBadge');
-            badge.className = `selected-tool-badge ${iconClass}`;
-            badge.innerHTML = `<i class="fa-solid ${iconName}"></i> <span>${toolName}</span>`;
-            
-            const uploadArea = document.getElementById('uploadArea');
-            const textArea = document.getElementById('textInput');
-            const fileInput = document.getElementById('fileInput');
-            const multiFileInput = document.getElementById('multiFileInput');
-            
-            fileBase64 = null;
-            filesBase64Array = [];
-            document.getElementById('fileName').innerText = '';
-            document.getElementById('resultArea').style.display = 'none';
-            
-            if(type === 'multiFile') {
-                uploadArea.style.display = 'block'; textArea.style.display = 'none';
-                uploadArea.onclick = () => multiFileInput.click();
-                document.getElementById('uploadText').innerText = isArabic ? "حدد عدة ملفات PDF للدمج" : "Select multiple PDFs to merge";
-            } else if(type === 'file') { 
-                uploadArea.style.display = 'block'; textArea.style.display = 'none'; 
-                uploadArea.onclick = () => fileInput.click();
-                document.getElementById('uploadText').innerText = isArabic ? "اسحب وأفلت الملف هنا أو اضغط للاختيار" : "Drag & Drop file here or click to select";
-            } else if(type === 'text') { 
-                uploadArea.style.display = 'none'; textArea.style.display = 'block'; 
-            } else if(type === 'fileText') { 
-                uploadArea.style.display = 'block'; textArea.style.display = 'block'; 
-                uploadArea.onclick = () => fileInput.click();
-                document.getElementById('uploadText').innerText = isArabic ? "اسحب وأفلت الملف هنا أو اضغط للاختيار" : "Drag & Drop file here or click to select";
-            } else { 
-                uploadArea.style.display = 'none'; textArea.style.display = 'none'; 
-            }
-
-            document.getElementById('mainTitle').innerText = toolName;
-            document.getElementById('mainDesc').innerText = isArabic ? "قم برفع الملف أو إدخال البيانات للبدء" : "Upload your file or enter data to begin";
-        }
-
         function showToast(msgAr, msgEn, isError = false) {
             const toast = document.getElementById('toast');
             const finalMsg = isArabic ? msgAr : msgEn;
@@ -916,16 +894,18 @@
         }
 
         const dropZone = document.getElementById('uploadArea');
-        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
-        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault(); dropZone.classList.remove('dragover');
-            if(currentAction === 'merge-pdf' && e.dataTransfer.files.length > 1) {
-                handleMultiFiles(e.dataTransfer.files);
-            } else if(e.dataTransfer.files.length) {
-                processFile(e.dataTransfer.files[0]);
-            }
-        });
+        if (dropZone) {
+            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault(); dropZone.classList.remove('dragover');
+                if(currentAction.includes('merge') && e.dataTransfer.files.length > 1) {
+                    handleMultiFiles(e.dataTransfer.files);
+                } else if(e.dataTransfer.files.length) {
+                    processFile(e.dataTransfer.files[0]);
+                }
+            });
+        }
 
         function handleFileSelect(e) { if(e.target.files.length) processFile(e.target.files[0]); }
         function handleMultiFileSelect(e) { if(e.target.files.length > 1) handleMultiFiles(e.target.files); else if (e.target.files.length === 1) processFile(e.target.files[0]); }
@@ -952,24 +932,38 @@
         async function processConversion() {
             if (!currentAction) { showToast('رجاءً اختر أداة أولاً!', 'Please select a tool first!', true); return; }
             
-            const text = document.getElementById('textInput').value;
+            const text = document.getElementById('textInput') ? document.getElementById('textInput').value : '';
             const btn = document.getElementById('executeBtn');
             const spinner = document.getElementById('spinner');
             const btnText = document.getElementById('btnText');
             const resultArea = document.getElementById('resultArea');
+            const progressBar = document.getElementById('progressBar');
+            const progressContainer = document.getElementById('progressContainer');
 
             btn.disabled = true; spinner.style.display = 'block';
             btnText.innerText = isArabic ? 'جاري المعالجة...' : 'Processing...';
             resultArea.style.display = 'none'; resultArea.classList.remove('error');
+            
+            // 🚀 تشغيل شريط التقدم الوهمي الذكي
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+            let width = 0;
+            let progressInterval = setInterval(() => {
+                if (width >= 90) { clearInterval(progressInterval); } 
+                else { width += Math.random() * 5; progressBar.style.width = width + '%'; }
+            }, 500);
 
             try {
                 const payload = { action: currentAction, text: text, lang: isArabic ? 'ar' : 'en' };
-                if (currentAction === 'merge-pdf' && filesBase64Array.length > 0) payload.filesBase64 = filesBase64Array;
+                if (currentAction.includes('merge') && filesBase64Array.length > 0) payload.filesBase64 = filesBase64Array;
                 else payload.fileBase64 = fileBase64;
 
                 const response = await fetch('/convert', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
                 });
+
+                clearInterval(progressInterval);
+                progressBar.style.width = '100%';
 
                 if (!response.ok) {
                     const err = await response.json();
@@ -997,6 +991,7 @@
                 resultArea.innerText = error.message; resultArea.classList.add('error'); resultArea.style.display = 'block';
                 showToast(error.message, error.message, true);
             } finally {
+                setTimeout(() => { progressContainer.style.display = 'none'; progressBar.style.width = '0%'; }, 1000);
                 btn.disabled = false; spinner.style.display = 'none';
                 btnText.innerHTML = isArabic ? 'تحويل الآن' : 'Convert Now';
             }
@@ -1008,11 +1003,6 @@
         } else {
             document.body.classList.add('dark-mode');
             document.getElementById('themeBtn').innerHTML = '<i class="fa-solid fa-sun"></i>';
-        }
-
-        const userLang = navigator.language || navigator.userLanguage;
-        if (!userLang.startsWith('ar')) {
-            toggleLanguage();
         }
     </script>
 </body>
