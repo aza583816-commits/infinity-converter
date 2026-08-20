@@ -149,7 +149,12 @@ def enforce_custom_domain():
         return redirect("https://infinityconverter.com" + request.full_path, code=301)
 
 logging.basicConfig(level=logging.INFO)
-CORS(app, resources={r"/convert": {"origins": ALLOWED_ORIGINS}, r"/convert-async": {"origins": ALLOWED_ORIGINS}, r"/task-status/*": {"origins": ALLOWED_ORIGINS}, r"/pdf-preview": {"origins": ALLOWED_ORIGINS}}, supports_credentials=False)
+CORS(app, resources={
+    r"/convert": {"origins": ALLOWED_ORIGINS},
+    r"/convert-async": {"origins": ALLOWED_ORIGINS},
+    r"/task-status/*": {"origins": ALLOWED_ORIGINS},
+    r"/pdf-preview": {"origins": ALLOWED_ORIGINS}
+}, supports_credentials=False)
 
 limiter = Limiter(
     get_remote_address,
@@ -161,7 +166,8 @@ limiter = Limiter(
 HEAVY_ACTIONS = {
     "word-to-pdf", "excel-to-pdf", "pdf-to-docx", "pdf-to-doc", "pdf-to-ppt", "pdf-to-excel",
     "merge-pdf", "compress-image", "image-to-text", "text-to-audio", "translate-text",
-    "watermark-pdf", "compress-pdf", "protect-pdf",
+    "watermark-pdf", "compress-pdf", "protect-pdf", "clean-study-sheet", "summarize-doc",
+    "pdf-page-number", "ink-saver-pdf"
 }
 
 def dynamic_convert_limit():
@@ -196,7 +202,7 @@ def internal_error_handler(e):
 ARABIC_FONT_NAME = "ArabicFont"
 _arabic_font_registered = False
 
-# ==================== الإضافات الذكية المدعومة (طوابير العمل و الذكاء الاصطناعي المحلي) ====================
+# ==================== الإضافات الذكية المدعومة ====================
 conversion_queue = queue.Queue()
 async_task_results = {}
 
@@ -294,6 +300,12 @@ TOOLS_DEF = [
     ("timestamp-converter", "محول التاريخ Unix", "Timestamp Converter", "text", "i-word", "fa-clock"),
     ("byte-converter", "محول الأحجام Bytes", "Byte Converter", "text", "i-excel", "fa-hard-drive"),
     ("unit-converter", "محول الوحدات", "Unit Converter", "text", "i-ppt", "fa-ruler"),
+    # الأدوات الجديدة الخاصة بالطلاب والباحثين
+    ("clean-study-sheet", "تنقية الملازم والكتب", "Clean Study Sheets", "file", "i-img", "fa-wand-magic-sparkles"),
+    ("pdf-page-number", "ترقيم صفحات PDF", "Number PDF Pages", "fileText", "i-pdf", "fa-list-ol"),
+    ("ink-saver-pdf", "توفير حبر الطباعة (رمادي)", "Ink Saver PDF", "file", "i-pdf", "fa-print"),
+    ("summarize-doc", "تلخيص المستندات", "Summarize Text/Doc", "text", "i-word", "fa-brain"),
+    ("citation-generator", "مولد التوثيق الأكاديمي", "Citation Generator", "text", "i-word", "fa-book-bookmark"),
 ]
 
 TOOLS_SEO = {}
@@ -322,7 +334,6 @@ for action, nameAr, nameEn, type_, iconClass, iconName in TOOLS_DEF:
 # ==================== دوال الحماية والمساعدات ====================
 def sanitize_file_content(file_bytes):
     if not file_bytes: return False
-    # فحص خلو الملفات من البرمجيات أو الأوامر التنفيذية التخريبية الشائعة
     danger_patterns = [b"<?php", b"<script", b"eval(", b"/bin/sh", b"/bin/bash"]
     for p in danger_patterns:
         if p in file_bytes[:1024]: return False
@@ -638,7 +649,6 @@ def handle_pdf_to_excel(p):
         has_data = False
         page_count = 0
         
-        # محاولة Tabula لاستخراج الجداول بدقة فائقة
         if tabula:
             try:
                 with tempfile.NamedTemporaryFile(suffix=".pdf", delete=True) as tf:
@@ -930,7 +940,7 @@ def handle_compress_pdf(p):
                 with open(out_pdf, "rb") as comp_f:
                     return file_response(comp_f.read(), "application/pdf", "Compressed_Document.pdf")
     except Exception as gs_err:
-        app.logger.warning(f"Ghostscript compression fallback to pypdf: {str(gs_err)}")
+        app.logger.warning(f"Ghostscript compression fallback: {str(gs_err)}")
 
     try: reader = PdfReader(io.BytesIO(file_bytes))
     except PdfReadError: return bad_request("الملف تالف أو محمي بكلمة سر")
@@ -1393,7 +1403,7 @@ def handle_resize_image(p):
     if p.get("keepRatio", True):
         orig_w, orig_h = img.size
         if target_w and not target_h: target_h = int(orig_h * (target_w / orig_w))
-        elif target_h and not target_w: target_w = int(orig_w * (target_h / orig_w))
+        elif target_h and not target_w: target_w = int(orig_w * (target_h / orig_h))
         img = img.copy()
         img.thumbnail((target_w, target_h))
     else:
@@ -1453,7 +1463,135 @@ def handle_strip_exif(p):
     clean.save(buf, format=fmt, quality=95, optimize=True)
     return file_response(buf.getvalue(), "image/png" if fmt == "PNG" else "image/jpeg", f"Privacy_Cleaned.{'png' if fmt=='PNG' else 'jpg'}")
 
-# ================= أدوات الطلاب والمعلمين والذكاء الاصطناعي =================
+# ================= أدوات الطلاب والمعلمين والذكاء الاصطناعي والمستندات المطورة =================
+def handle_clean_study_sheet(p):
+    """تنقية صفحات الملازم وتصوير الجوال وتحويلها لمستند ناصع البياض وعالي التباين"""
+    img, err = _load_validated_image(p, p["is_arabic"])
+    if err: return err
+    try:
+        gray = img.convert('L')
+        contrast = ImageEnhance.Contrast(gray).enhance(2.8)
+        brightness = ImageEnhance.Brightness(contrast).enhance(1.15)
+        # فلترة التظليل التلقائي
+        cleaned = brightness.point(lambda x: 0 if x < 120 else (255 if x > 190 else x))
+        buf = io.BytesIO()
+        cleaned.save(buf, format="PDF", resolution=300)
+        return file_response(buf.getvalue(), "application/pdf", "Cleaned_Study_Sheet.pdf")
+    except Exception:
+        return bad_request("تعذرت تنقية وتجهيز صورة الملزمة.")
+
+def handle_pdf_page_number(p):
+    """إضافة ترقيم الصفحات أسفل صفحات ملف الـ PDF"""
+    file_bytes = get_file_bytes(p)
+    is_arabic = p["is_arabic"]
+    if not file_bytes: return bad_request("يرجى رفع ملف PDF")
+    if not validate_signature(file_bytes, "pdf"): return bad_signature_response(is_arabic)
+
+    try:
+        reader = PdfReader(io.BytesIO(file_bytes))
+        total_pages = len(reader.pages)
+        err = enforce_pdf_page_limit(total_pages, is_arabic)
+        if err: return err
+
+        writer = PdfWriter()
+        font = ensure_arabic_font()
+
+        for idx, page in enumerate(reader.pages):
+            page_w = float(page.mediabox.width)
+            page_h = float(page.mediabox.height)
+
+            num_buf = io.BytesIO()
+            c = rl_canvas.Canvas(num_buf, pagesize=(page_w, page_h))
+            c.setFont(font, 10)
+            c.setFillColorRGB(0.3, 0.3, 0.3)
+            
+            num_str = f"صفحة {idx + 1} من {total_pages}" if is_arabic else f"Page {idx + 1} of {total_pages}"
+            c.drawCentredString(page_w / 2, 20, shape_arabic(num_str) if is_arabic else num_str)
+            c.save()
+
+            num_page = PdfReader(io.BytesIO(num_buf.getvalue())).pages[0]
+            page.merge_page(num_page)
+            writer.add_page(page)
+
+        apply_ghost_privacy(writer)
+        final_buf = io.BytesIO()
+        writer.write(final_buf)
+        return file_response(final_buf.getvalue(), "application/pdf", "Numbered_Document.pdf")
+    except Exception:
+        return bad_request("فشل ترقيم صفحات المستند.")
+
+def handle_ink_saver_pdf(p):
+    """تحويل المستند لرمادي عالي التباين لتوفير حبر الطابعة"""
+    file_bytes = get_file_bytes(p)
+    is_arabic = p["is_arabic"]
+    if not file_bytes: return bad_request("يرجى رفع ملف PDF")
+    if not validate_signature(file_bytes, "pdf"): return bad_signature_response(is_arabic)
+
+    if not fitz: return bad_request("PyMuPDF غير متوفر")
+    try:
+        doc = fitz.open(stream=file_bytes, filetype="pdf")
+        out_doc = fitz.open()
+        for page in doc:
+            pix = page.get_pixmap(colorspace=fitz.csGRAY)
+            img = Image.open(io.BytesIO(pix.tobytes("png")))
+            img = ImageEnhance.Contrast(img).enhance(1.4)
+            img_buf = io.BytesIO()
+            img.save(img_buf, format="PDF")
+            temp_pdf = fitz.open(stream=img_buf.getvalue(), filetype="pdf")
+            out_doc.insert_pdf(temp_pdf)
+        
+        final_bytes = out_doc.tobytes(deflate=True)
+        doc.close()
+        out_doc.close()
+        return file_response(final_bytes, "application/pdf", "Ink_Saver_Document.pdf")
+    except Exception:
+        return bad_request("تعذر تطبيق وضع توفير الحبر.")
+
+def handle_summarize_doc(p):
+    """استخراج أهم الأفكار وتلخيص المستندات للطلاب"""
+    text = (p.get("text") or "").strip()
+    file_bytes = get_file_bytes(p)
+    if not text and file_bytes:
+        if fitz:
+            doc = fitz.open(stream=file_bytes, filetype="pdf")
+            text = "\n".join((page.get_text() or "") for page in doc)
+            doc.close()
+
+    if not text: return bad_request("يرجى كتابة نص أو رفع ملف للتلخيص.")
+
+    sentences = [s.strip() for s in re.split(r'[.\n!؟?]', text) if len(s.strip()) > 20]
+    if not sentences: return jsonify({"result": "النص قصير جداً للتلخيص."})
+
+    # استخلاص الجمل المفتاحية بناءً على الأهمية والتكرار
+    words = re.findall(r'\w+', text.lower())
+    freq = {}
+    for w in words:
+        if len(w) > 3: freq[w] = freq.get(w, 0) + 1
+    
+    scored = []
+    for s in sentences:
+        score = sum(freq.get(w, 0) for w in re.findall(r'\w+', s.lower()))
+        scored.append((score, s))
+    
+    scored.sort(key=lambda x: x[0], reverse=True)
+    top_points = [item[1] for item in scored[:min(5, len(scored))]]
+    summary_text = "📌 ملخص النقاط الرئيسية:\n\n• " + "\n• ".join(top_points)
+
+    return jsonify({"result": summary_text})
+
+def handle_citation_generator(p):
+    """توليد توثيق علمي أكاديمي للمراجع (APA, MLA, Chicago)"""
+    title = (p.get("title") or p.get("text") or "عنوان البحث / المستند").strip()
+    author = (p.get("author") or "اسم الكاتب / الباحث").strip()
+    year = str(p.get("year") or datetime.now().year)
+
+    apa = f"{author} ({year}). {title}."
+    mla = f'{author}. "{title}." ({year}).'
+    chicago = f'{author}. "{title}." {year}.'
+
+    res = f"📑 التوثيق الأكاديمي المعتمد:\n\n1. APA:\n{apa}\n\n2. MLA:\n{mla}\n\n3. Chicago:\n{chicago}"
+    return jsonify({"result": res})
+
 def handle_image_to_text(p):
     if pytesseract is None: return bad_request("مكتبة OCR غير مثبتة بالسيرفر")
     img, err = _load_validated_image(p, p["is_arabic"])
@@ -1656,6 +1794,8 @@ REGISTRY = {
     "percentage-calc": handle_percentage_calc, "byte-converter": handle_byte_converter, "unit-converter": handle_unit_converter, 
     "uuid-generator": handle_uuid_generator, "markdown-to-html": handle_markdown_to_html, "html-to-markdown": handle_markdown_to_html, 
     "text-diff": handle_text_diff, "text-to-audio": handle_text_to_audio, "translate-text": handle_translate_text,
+    "clean-study-sheet": handle_clean_study_sheet, "pdf-page-number": handle_pdf_page_number,
+    "ink-saver-pdf": handle_ink_saver_pdf, "summarize-doc": handle_summarize_doc, "citation-generator": handle_citation_generator
 }
 
 NEEDS_MULTIPLE_FILES = {"merge-pdf", "merge-word"}
