@@ -481,7 +481,13 @@ def is_probably_scanned(text, page_count):
 # ================= أدوات الـ PDF (النسخة الخارقة المطورة) =================
 
 def handle_pdf_to_docx(p):
-    """المحرك الهجين الأقوى: CloudConvert كأساسي، و ConvertAPI كاحتياطي طوارئ"""
+    """المحرك الثلاثي (المحلي + السحابي + الاحتياطي) لضمان أقصى دقة للجداول والنصوص"""
+    import cloudconvert
+    import convertapi
+    import requests
+    import tempfile
+    import os
+
     file_bytes = get_file_bytes(p)
     is_arabic = p.get("is_arabic", False)
     
@@ -493,9 +499,6 @@ def handle_pdf_to_docx(p):
     cc_key = os.environ.get("CLOUDCONVERT_API_KEY")
     ca_key = os.environ.get("CONVERT_API_KEY")
 
-    if not ca_key and not cc_key:
-        return bad_request("عذراً، خوادم التحويل غير متصلة حالياً.")
-
     with tempfile.TemporaryDirectory() as tmp_dir:
         pdf_path = os.path.join(tmp_dir, "document.pdf")
         docx_path = os.path.join(tmp_dir, "document.docx")
@@ -504,7 +507,23 @@ def handle_pdf_to_docx(p):
             f.write(file_bytes)
 
         # ==========================================
-        # 1. المحرك الأساسي (CloudConvert)
+        # 1. المحرك الداخلي (pdf2docx) - الأقوى للحفاظ على الجداول محلياً
+        # ==========================================
+        if Converter is not None:
+            try:
+                cv = Converter(pdf_path)
+                cv.convert(docx_path, start=0, end=None)
+                cv.close()
+                
+                # التأكد من نجاح التحويل وإنتاج ملف سليم
+                if os.path.exists(docx_path) and os.path.getsize(docx_path) > 0:
+                    with open(docx_path, "rb") as df: 
+                        return file_response(df.read(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "V-Infinity_Premium.docx")
+            except Exception as e:
+                app.logger.warning(f"Local pdf2docx engine failed: {str(e)}")
+
+        # ==========================================
+        # 2. المحرك السحابي (CloudConvert) - خطة ب
         # ==========================================
         if cc_key:
             try:
@@ -534,36 +553,32 @@ def handle_pdf_to_docx(p):
                             df.write(res.content)
                         
                         with open(docx_path, "rb") as df: 
-                            return file_response(df.read(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "Converted_Document_Pro.docx")
+                            return file_response(df.read(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "V-Infinity_Cloud.docx")
             
             except Exception as e:
                 app.logger.warning(f"CloudConvert failed, falling back to ConvertAPI. Reason: {str(e)}")
 
         # ==========================================
-        # 2. المحرك الاحتياطي (ConvertAPI) بدون OCR
+        # 3. المحرك الاحتياطي (ConvertAPI) - خطة ج
         # ==========================================
         if ca_key:
             try:
                 convertapi.api_credentials = ca_key
-                # تمت إزالة OcrMode و OcrLanguage ليحافظ على التنسيق والجدول الأصلي
                 result = convertapi.convert(
                     'docx',
-                    {
-                        'File': pdf_path
-                    },
+                    {'File': pdf_path},
                     from_format='pdf',
                     timeout=120
                 )
                 result.file.save(docx_path)
                 
                 with open(docx_path, "rb") as df: 
-                    return file_response(df.read(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "Converted_Document.docx")
+                    return file_response(df.read(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "V-Infinity_Fallback.docx")
             
             except Exception as e:
                 app.logger.error(f"ConvertAPI Fallback Error: {str(e)}")
-                return bad_request("حدث ضغط عالي جداً على الخوادم، يرجى المحاولة بعد قليل.")
 
-        return bad_request("فشلت عملية التحويل من جميع الخوادم.")
+        return bad_request("نعتذر، تعذرت معالجة هذا الملف المعقد من جميع الخوادم المتاحة.")
 
 def handle_pdf_to_excel(p):
     file_bytes = get_file_bytes(p)
