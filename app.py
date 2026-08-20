@@ -17,6 +17,7 @@ import uuid
 import zipfile
 import gc
 import cloudconvert
+import convertapi
 import requests
 from datetime import datetime, timezone
 from difflib import unified_diff
