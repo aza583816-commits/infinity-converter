@@ -8,7 +8,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <title>{% if tool_data %}{% if lang == 'en' %}{{ tool_data.seo_title_en }}{% else %}{{ tool_data.seo_title_ar }}{% endif %}{% else %}Infinity Converter - المحول الشامل لملفات PDF والأدوات{% endif %}</title>
+    <title>{% if is_404 %}الصفحة غير موجودة | Infinity Converter{% elif tool_data %}{% if lang == 'en' %}{{ tool_data.seo_title_en }}{% else %}{{ tool_data.seo_title_ar }}{% endif %}{% else %}Infinity Converter - المحول الشامل لملفات PDF والأدوات{% endif %}</title>
     <meta name="description" content="{% if tool_data %}{% if lang == 'en' %}{{ tool_data.seo_desc_en }}{% else %}{{ tool_data.seo_desc_ar }}{% endif %}{% else %}منصة Infinity Converter الشاملة والمجانية لتحويل ملفات PDF، Word، Excel، والصور بضغطة زر. معالجة سحابية آمنة وسريعة بدون تخزين لملفاتك. اكتشف أكثر من 40 أداة الآن!{% endif %}">
 
     <meta property="og:type" content="website">
@@ -112,7 +112,6 @@
         textarea { width: 100%; height: 180px; background: var(--bg-body); border: 1px solid var(--border); border-radius: 12px; padding: 20px; color: var(--text-main); font-family: inherit; font-size: 15px; resize: vertical; margin-bottom: 20px; outline: none; transition: all 0.3s; }
         textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
 
-        /* 🚀 لوحة رسم التوقيع */
         .signature-box { display: none; margin-bottom: 20px; text-align: center; }
         .signature-canvas { border: 2px dashed var(--primary); border-radius: 12px; background: white; cursor: crosshair; touch-action: none; }
         .signature-controls { margin-top: 8px; display: flex; justify-content: center; gap: 10px; }
@@ -121,9 +120,14 @@
         .progress-container { width: 100%; height: 8px; background-color: var(--border); border-radius: 10px; margin-bottom: 20px; display: none; overflow: hidden;}
         .progress-bar { height: 100%; width: 0%; background-color: var(--primary); border-radius: 10px; transition: width 0.4s ease; box-shadow: 0 0 10px var(--primary);}
 
-        .execute-btn { width: 100%; padding: 18px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 18px; font-weight: 700; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px; transition: all 0.2s; font-family: inherit; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3); }
+        .btn-controls-row { display: flex; gap: 10px; width: 100%; }
+        .execute-btn { flex: 1; padding: 18px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 18px; font-weight: 700; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px; transition: all 0.2s; font-family: inherit; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3); }
         .execute-btn:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 6px 15px rgba(99, 102, 241, 0.4); }
         .execute-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+        
+        .cancel-btn { display: none; padding: 18px 24px; background: #ef4444; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+        .cancel-btn:hover { background: #dc2626; }
+
         .spinner { display: none; width: 22px; height: 22px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 1s ease-in-out infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         
@@ -199,14 +203,18 @@
         <div class="workspace-card">
             <div class="workspace-header">
                 <h1 id="mainTitle">
-                    {% if tool_data %}
+                    {% if is_404 %}
+                        {% if lang == 'ar' %}عذراً، الأداة أو الصفحة غير موجودة (404){% else %}Page Not Found (404){% endif %}
+                    {% elif tool_data %}
                         {% if lang == 'ar' %}{{ tool_data.h1_ar }}{% else %}{{ tool_data.h1_en }}{% endif %}
                     {% else %}
                         {% if lang == 'ar' %}مرحباً بك في المحول الشامل{% else %}Welcome to Infinity Converter{% endif %}
                     {% endif %}
                 </h1>
                 <p id="mainDesc">
-                    {% if tool_data %}
+                    {% if is_404 %}
+                        {% if lang == 'ar' %}يبدو أنك فتحت رابطاً خاطئاً أو تم نقل الأداة. اختر إحدى الأدوات من الأسفل للبدء فوراً!{% else %}The requested tool was not found. Please choose from our tools below!{% endif %}
+                    {% elif tool_data %}
                         {% if lang == 'ar' %}{{ tool_data.short_desc_ar }}{% else %}{{ tool_data.short_desc_en }}{% endif %}
                     {% else %}
                         {% if lang == 'ar' %}اختر إحدى الأدوات من الأسفل للبدء في المعالجة.{% else %}Select a tool below to start processing.{% endif %}
@@ -235,7 +243,6 @@
                     <input type="file" id="multiFileInput" multiple style="display:none;" onchange="handleMultiFileSelect(event)">
                 </div>
 
-                <!-- 🚀 Canvas التوقيع الإلكتروني -->
                 <div class="signature-box" id="signatureBox">
                     <p style="margin-bottom:8px; font-weight:600;">{% if lang == 'ar' %}ارسم توقيعك هنا بالماوس أو الإصبع:{% else %}Draw your signature here:{% endif %}</p>
                     <canvas id="sigCanvas" class="signature-canvas" width="400" height="150"></canvas>
@@ -250,10 +257,15 @@
                     <div class="progress-bar" id="progressBar"></div>
                 </div>
 
-                <button class="execute-btn" id="executeBtn" onclick="processConversion()">
-                    <span id="btnText">{% if lang == 'ar' %}تحويل الآن{% else %}Convert Now{% endif %}</span>
-                    <div class="spinner" id="spinner"></div>
-                </button>
+                <div class="btn-controls-row">
+                    <button class="execute-btn" id="executeBtn" onclick="processConversion()">
+                        <span id="btnText">{% if lang == 'ar' %}تحويل الآن{% else %}Convert Now{% endif %}</span>
+                        <div class="spinner" id="spinner"></div>
+                    </button>
+                    <button type="button" class="cancel-btn" id="cancelBtn" onclick="cancelConversion()">
+                        {% if lang == 'ar' %}إلغاء{% else %}Cancel{% endif %}
+                    </button>
+                </div>
 
                 <div class="result-area" id="resultArea"></div>
 
@@ -379,6 +391,27 @@
         <div class="category-group" data-category="pdf">
             <div class="section-title"><i class="fa-solid fa-file-pdf" style="color:var(--c-pdf)"></i> <span>{% if lang == 'ar' %}أدوات PDF والمستندات{% else %}PDF & Document Tools{% endif %}</span></div>
             <div class="tools-grid">
+                <a href="{% if lang == 'en' %}/en{% endif %}/redact-pdf" class="tool-card" data-slug="redact-pdf">
+                    <div class="tool-icon i-pdf"><i class="fa-solid fa-user-secret"></i></div>
+                    <div class="tool-info">
+                        <h3>{% if lang == 'ar' %}طمس البيانات الحساسة{% else %}Redact PDF{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}تظليل وإخفاء الكلمات والبيانات السرية باللون الأسود.{% else %}Blackout and permanently redact confidential PDF data.{% endif %}</p>
+                    </div>
+                </a>
+                <a href="{% if lang == 'en' %}/en{% endif %}/pdf-compare" class="tool-card" data-slug="pdf-compare">
+                    <div class="tool-icon i-pdf"><i class="fa-solid fa-code-compare"></i></div>
+                    <div class="tool-info">
+                        <h3>{% if lang == 'ar' %}مقارنة نسختين من PDF{% else %}Compare Two PDFs{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}كشف الفروقات والتغييرات بين نسختين من نفس المستند.{% else %}Detect differences and modifications between 2 PDF versions.{% endif %}</p>
+                    </div>
+                </a>
+                <a href="{% if lang == 'en' %}/en{% endif %}/reorder-pdf" class="tool-card" data-slug="reorder-pdf">
+                    <div class="tool-icon i-pdf"><i class="fa-solid fa-arrow-down-1-9"></i></div>
+                    <div class="tool-info">
+                        <h3>{% if lang == 'ar' %}إعادة ترتيب صفحات PDF{% else %}Reorder PDF Pages{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}إعادة تنظيم تسلسل صفحات المستند حسب رغبتك.{% else %}Organize and rearrange PDF page sequence easily.{% endif %}</p>
+                    </div>
+                </a>
                 <a href="{% if lang == 'en' %}/en{% endif %}/sign-pdf" class="tool-card" data-slug="sign-pdf">
                     <div class="tool-icon i-pdf"><i class="fa-solid fa-signature"></i></div>
                     <div class="tool-info">
@@ -829,8 +862,9 @@
         let lastDownloadedFilename = '';
         let lastDownloadedBase64 = '';
         let isArabic = "{{ lang }}" === "ar"; 
+        let abortController = null;
+        let progressInterval = null;
 
-        // تهيئة لوحة رسم التوقيع
         let isDrawing = false;
         const canvas = document.getElementById("sigCanvas");
         const ctx = canvas ? canvas.getContext("2d") : null;
@@ -1001,7 +1035,7 @@
             if(type === 'multiFile') {
                 uploadArea.style.display = 'block'; textArea.style.display = 'none';
                 uploadArea.onclick = () => multiFileInput.click();
-                document.getElementById('uploadText').innerText = isArabic ? "حدد عدة ملفات للدمج" : "Select multiple files to merge";
+                document.getElementById('uploadText').innerText = isArabic ? "حدد عدة ملفات للمقارنة أو الدمج" : "Select multiple files";
             } else if(type === 'file') { 
                 uploadArea.style.display = 'block'; textArea.style.display = 'none'; 
                 uploadArea.onclick = () => fileInput.click();
@@ -1011,6 +1045,11 @@
                 uploadArea.style.display = 'block'; 
                 textArea.style.display = currentAction === 'sign-pdf' ? 'none' : 'block'; 
                 uploadArea.onclick = () => fileInput.click();
+                if(currentAction === 'redact-pdf') {
+                    textArea.placeholder = isArabic ? "اكتب الكلمات الحساسة المراد طمسها مفصولة بفاصلة (مثال: الاسم، رقم الهوية، السري)..." : "Type sensitive words to redact separated by commas...";
+                } else if(currentAction === 'reorder-pdf') {
+                    textArea.placeholder = isArabic ? "اكتب ترتيب الصفحات الجديد (مثال: 3, 1, 2)..." : "Type new page order (e.g., 3, 1, 2)...";
+                }
             }
         }
 
@@ -1092,7 +1131,7 @@
             dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
             dropZone.addEventListener('drop', (e) => {
                 e.preventDefault(); dropZone.classList.remove('dragover');
-                if(currentAction.includes('merge') && e.dataTransfer.files.length > 1) {
+                if((currentAction.includes('merge') || currentAction === 'pdf-compare') && e.dataTransfer.files.length > 1) {
                     handleMultiFiles(e.dataTransfer.files);
                 } else if(e.dataTransfer.files.length) {
                     processFile(e.dataTransfer.files[0]);
@@ -1123,11 +1162,25 @@
             });
         }
 
+        function cancelConversion() {
+            if (abortController) {
+                abortController.abort();
+                if (progressInterval) clearInterval(progressInterval);
+                document.getElementById('progressContainer').style.display = 'none';
+                document.getElementById('executeBtn').disabled = false;
+                document.getElementById('spinner').style.display = 'none';
+                document.getElementById('btnText').innerHTML = isArabic ? 'تحويل الآن' : 'Convert Now';
+                document.getElementById('cancelBtn').style.display = 'none';
+                showToast("تم إلغاء المعالجة بنجاح!", "Process cancelled successfully!", true);
+            }
+        }
+
         async function processConversion() {
             if (!currentAction) { showToast('رجاءً اختر أداة أولاً!', 'Please select a tool first!', true); return; }
             
             const text = document.getElementById('textInput') ? document.getElementById('textInput').value : '';
             const btn = document.getElementById('executeBtn');
+            const cancelBtn = document.getElementById('cancelBtn');
             const spinner = document.getElementById('spinner');
             const btnText = document.getElementById('btnText');
             const resultArea = document.getElementById('resultArea');
@@ -1136,6 +1189,7 @@
             const actionButtonsGroup = document.getElementById('actionButtonsGroup');
 
             btn.disabled = true; spinner.style.display = 'block';
+            if (cancelBtn) cancelBtn.style.display = 'block';
             btnText.innerText = isArabic ? 'جاري تحليل ومعالجة البيانات...' : 'Processing data...';
             resultArea.style.display = 'none'; resultArea.classList.remove('error');
             if (actionButtonsGroup) actionButtonsGroup.style.display = 'none';
@@ -1144,7 +1198,7 @@
             progressBar.style.width = '0%';
             let width = 0;
             
-            let progressInterval = setInterval(() => {
+            progressInterval = setInterval(() => {
                 if (width >= 95) { 
                     clearInterval(progressInterval); 
                 } else { 
@@ -1188,6 +1242,7 @@
                     playSuccessSound();
                     showToast('تم التدوير والتحميل محلياً بنجاح!', 'Rotated and downloaded locally!');
                     if (actionButtonsGroup) actionButtonsGroup.style.display = 'flex';
+                    if (cancelBtn) cancelBtn.style.display = 'none';
                     return;
                 } catch(e) {
                     console.log("Client-side rotate fallback to server");
@@ -1195,16 +1250,23 @@
             }
 
             try {
+                abortController = new AbortController();
                 const payload = { action: currentAction, text: text, lang: isArabic ? 'ar' : 'en' };
-                if (currentAction.includes('merge') && filesBase64Array.length > 0) payload.filesBase64 = filesBase64Array;
-                else payload.fileBase64 = fileBase64;
+                if ((currentAction.includes('merge') || currentAction === 'pdf-compare') && filesBase64Array.length > 0) {
+                    payload.filesBase64 = filesBase64Array;
+                } else {
+                    payload.fileBase64 = fileBase64;
+                }
 
                 if (currentAction === 'sign-pdf' && canvas) {
                     payload.signatureBase64 = canvas.toDataURL("image/png");
                 }
 
                 const response = await fetch('/convert', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                    signal: abortController.signal
                 });
 
                 clearInterval(progressInterval);
@@ -1236,6 +1298,8 @@
                     else if(currentAction === 'ink-saver-pdf') filename = 'Ink_Saver_Document.pdf';
                     else if(currentAction === 'sign-pdf') filename = 'Signed_Document.pdf';
                     else if(currentAction === 'remove-blank-pages') filename = 'No_Blanks_Document.pdf';
+                    else if(currentAction === 'redact-pdf') filename = 'Redacted_Document.pdf';
+                    else if(currentAction === 'reorder-pdf') filename = 'Reordered_Document.pdf';
                     
                     lastDownloadedFilename = filename;
                     
@@ -1249,12 +1313,13 @@
                 }
                 if (actionButtonsGroup) actionButtonsGroup.style.display = 'flex';
             } catch (error) {
-                clearInterval(progressInterval);
-                progressBar.style.width = '100%';
-                progressBar.style.backgroundColor = '#ef4444';
-                
-                resultArea.innerText = error.message; resultArea.classList.add('error'); resultArea.style.display = 'block';
-                showToast(error.message, error.message, true);
+                if (error.name !== 'AbortError') {
+                    if (progressInterval) clearInterval(progressInterval);
+                    progressBar.style.width = '100%';
+                    progressBar.style.backgroundColor = '#ef4444';
+                    resultArea.innerText = error.message; resultArea.classList.add('error'); resultArea.style.display = 'block';
+                    showToast(error.message, error.message, true);
+                }
             } finally {
                 setTimeout(() => { 
                     progressContainer.style.display = 'none'; 
@@ -1262,6 +1327,7 @@
                     progressBar.style.backgroundColor = 'var(--primary)'; 
                 }, 2000);
                 btn.disabled = false; spinner.style.display = 'none';
+                if (cancelBtn) cancelBtn.style.display = 'none';
                 btnText.innerHTML = isArabic ? 'تحويل الآن' : 'Convert Now';
             }
         }
