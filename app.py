@@ -132,7 +132,7 @@ MAX_MERGE_FILES = int(os.environ.get("MAX_MERGE_FILES", 30))
 MAX_PDF_PAGES = int(os.environ.get("MAX_PDF_PAGES", 1000))
 MAX_OCR_PAGES = int(os.environ.get("MAX_OCR_PAGES", 25))
 MAX_TEXT_CHARS = int(os.environ.get("MAX_TEXT_CHARS", 5_000_000))
-SUBPROCESS_TIMEOUT = int(os.environ.get("SUBPROCESS_TIMEOUT", 300))
+SUBPROCESS_TIMEOUT = int(os.environ.get("SUBPROCESS_TIMEOUT", 180))
 ALLOWED_ORIGINS = [o.strip() for o in os.environ.get(
     "ALLOWED_ORIGINS", "https://infinityconverter.com,https://www.infinityconverter.com"
 ).split(",") if o.strip()]
@@ -202,9 +202,25 @@ def internal_error_handler(e):
 ARABIC_FONT_NAME = "ArabicFont"
 _arabic_font_registered = False
 
-# ==================== الإضافات الذكية المدعومة ====================
+# ==================== الإضافات الذكية والذاكرة المؤقتة المنظفة ====================
 conversion_queue = queue.Queue()
 async_task_results = {}
+TASK_TTL_SECONDS = 1800  # تنظيف المهام بعد 30 دقيقة تلقائياً
+
+def cache_cleanup_worker():
+    """خيط دوري لحذف المهام القديمة ومنع تسريب الذاكرة"""
+    while True:
+        try:
+            time.sleep(300)
+            now = time.time()
+            expired_keys = [k for k, v in async_task_results.items() if now - v.get("timestamp", now) > TASK_TTL_SECONDS]
+            for k in expired_keys:
+                async_task_results.pop(k, None)
+            gc.collect()
+        except Exception:
+            pass
+
+threading.Thread(target=cache_cleanup_worker, daemon=True).start()
 
 def background_worker():
     while True:
@@ -212,15 +228,15 @@ def background_worker():
             task_id, task_func, args, callback = conversion_queue.get()
             if task_func is None: break
             if task_id:
-                async_task_results[task_id] = {"status": "processing", "progress": 25}
+                async_task_results[task_id] = {"status": "processing", "progress": 25, "timestamp": time.time()}
             try:
                 res = task_func(*args)
                 if task_id:
-                    async_task_results[task_id] = {"status": "completed", "progress": 100, "result": res}
+                    async_task_results[task_id] = {"status": "completed", "progress": 100, "result": res, "timestamp": time.time()}
                 if callback: callback(res, None)
             except Exception as e:
                 if task_id:
-                    async_task_results[task_id] = {"status": "failed", "progress": 100, "error": str(e)}
+                    async_task_results[task_id] = {"status": "failed", "progress": 100, "error": str(e), "timestamp": time.time()}
                 if callback: callback(None, str(e))
             finally:
                 conversion_queue.task_done()
@@ -300,19 +316,18 @@ TOOLS_DEF = [
     ("timestamp-converter", "محول التاريخ Unix", "Timestamp Converter", "text", "i-word", "fa-clock"),
     ("byte-converter", "محول الأحجام Bytes", "Byte Converter", "text", "i-excel", "fa-hard-drive"),
     ("unit-converter", "محول الوحدات", "Unit Converter", "text", "i-ppt", "fa-ruler"),
-    # الأدوات الجديدة الخاصة بالطلاب والباحثين
-    ("clean-study-sheet", "تنقية الملازم والكتب", "Clean Study Sheets", "file", "i-img", "fa-wand-magic-sparkles"),
+    ("clean-study-sheet", "تنقية الملازم والكتب للطباعة", "Clean Study Sheets", "file", "i-img", "fa-wand-magic-sparkles"),
     ("pdf-page-number", "ترقيم صفحات PDF", "Number PDF Pages", "fileText", "i-pdf", "fa-list-ol"),
     ("ink-saver-pdf", "توفير حبر الطباعة (رمادي)", "Ink Saver PDF", "file", "i-pdf", "fa-print"),
-    ("summarize-doc", "تلخيص المستندات", "Summarize Text/Doc", "text", "i-word", "fa-brain"),
-    ("citation-generator", "مولد التوثيق الأكاديمي", "Citation Generator", "text", "i-word", "fa-book-bookmark"),
+    ("summarize-doc", "تلخيص المستندات والنصوص", "Summarize Text/Doc", "text", "i-word", "fa-brain"),
+    ("citation-generator", "مولد التوثيق الأكاديمي (APA/MLA)", "Citation Generator", "text", "i-word", "fa-book-bookmark"),
 ]
 
 TOOLS_SEO = {}
 for action, nameAr, nameEn, type_, iconClass, iconName in TOOLS_DEF:
     TOOLS_SEO[action] = {
         "slug": action, "nameAr": nameAr, "nameEn": nameEn, "type": type_, "iconClass": iconClass, "iconName": iconName,
-        "seo_title_ar": f"أداة {nameAr} مجاناً أونلاين | V-Infinity",
+        "seo_title_ar": f"أداة {nameAr} مجاناً أونلاين وبدقة عالية | V-Infinity",
         "seo_title_en": f"Free {nameEn} Online Tool | V-Infinity",
         "seo_desc_ar": f"أفضل أداة سحابية لتنفيذ {nameAr} بضغطة زر. معالجة سريعة وآمنة 100% ومجانية بالكامل بدون تخزين للملفات.",
         "seo_desc_en": f"Best cloud tool for {nameEn} with one click. Fast, secure, and 100% free with no file storage.",
@@ -919,8 +934,8 @@ def handle_rotate_pdf(p):
     return file_response(buf.getvalue(), "application/pdf", "Rotated_Document.pdf")
 
 def handle_compress_pdf(p):
-    is_arabic = p["is_arabic"]
     file_bytes = get_file_bytes(p)
+    is_arabic = p["is_arabic"]
     if not file_bytes: return bad_request("No file provided")
     if not validate_signature(file_bytes, "pdf"): return bad_signature_response(is_arabic)
 
@@ -1403,7 +1418,7 @@ def handle_resize_image(p):
     if p.get("keepRatio", True):
         orig_w, orig_h = img.size
         if target_w and not target_h: target_h = int(orig_h * (target_w / orig_w))
-        elif target_h and not target_w: target_w = int(orig_w * (target_h / orig_h))
+        elif target_h and not target_w: target_w = int(orig_w * (target_h / orig_w))
         img = img.copy()
         img.thumbnail((target_w, target_h))
     else:
@@ -1465,14 +1480,12 @@ def handle_strip_exif(p):
 
 # ================= أدوات الطلاب والمعلمين والذكاء الاصطناعي والمستندات المطورة =================
 def handle_clean_study_sheet(p):
-    """تنقية صفحات الملازم وتصوير الجوال وتحويلها لمستند ناصع البياض وعالي التباين"""
     img, err = _load_validated_image(p, p["is_arabic"])
     if err: return err
     try:
         gray = img.convert('L')
         contrast = ImageEnhance.Contrast(gray).enhance(2.8)
         brightness = ImageEnhance.Brightness(contrast).enhance(1.15)
-        # فلترة التظليل التلقائي
         cleaned = brightness.point(lambda x: 0 if x < 120 else (255 if x > 190 else x))
         buf = io.BytesIO()
         cleaned.save(buf, format="PDF", resolution=300)
@@ -1481,7 +1494,6 @@ def handle_clean_study_sheet(p):
         return bad_request("تعذرت تنقية وتجهيز صورة الملزمة.")
 
 def handle_pdf_page_number(p):
-    """إضافة ترقيم الصفحات أسفل صفحات ملف الـ PDF"""
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
     if not file_bytes: return bad_request("يرجى رفع ملف PDF")
@@ -1521,7 +1533,6 @@ def handle_pdf_page_number(p):
         return bad_request("فشل ترقيم صفحات المستند.")
 
 def handle_ink_saver_pdf(p):
-    """تحويل المستند لرمادي عالي التباين لتوفير حبر الطابعة"""
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
     if not file_bytes: return bad_request("يرجى رفع ملف PDF")
@@ -1548,7 +1559,6 @@ def handle_ink_saver_pdf(p):
         return bad_request("تعذر تطبيق وضع توفير الحبر.")
 
 def handle_summarize_doc(p):
-    """استخراج أهم الأفكار وتلخيص المستندات للطلاب"""
     text = (p.get("text") or "").strip()
     file_bytes = get_file_bytes(p)
     if not text and file_bytes:
@@ -1562,7 +1572,6 @@ def handle_summarize_doc(p):
     sentences = [s.strip() for s in re.split(r'[.\n!؟?]', text) if len(s.strip()) > 20]
     if not sentences: return jsonify({"result": "النص قصير جداً للتلخيص."})
 
-    # استخلاص الجمل المفتاحية بناءً على الأهمية والتكرار
     words = re.findall(r'\w+', text.lower())
     freq = {}
     for w in words:
@@ -1580,7 +1589,6 @@ def handle_summarize_doc(p):
     return jsonify({"result": summary_text})
 
 def handle_citation_generator(p):
-    """توليد توثيق علمي أكاديمي للمراجع (APA, MLA, Chicago)"""
     title = (p.get("title") or p.get("text") or "عنوان البحث / المستند").strip()
     author = (p.get("author") or "اسم الكاتب / الباحث").strip()
     year = str(p.get("year") or datetime.now().year)
@@ -1888,7 +1896,7 @@ def convert_async():
     is_arabic = payload.get("lang") == "ar" or is_arabic_text(text)
     ctx = dict(payload, text=text, is_arabic=is_arabic)
 
-    async_task_results[task_id] = {"status": "queued", "progress": 5}
+    async_task_results[task_id] = {"status": "queued", "progress": 5, "timestamp": time.time()}
     conversion_queue.put((task_id, handler, [ctx], None))
 
     return jsonify({"task_id": task_id, "status": "queued"})
