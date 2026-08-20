@@ -31,6 +31,11 @@ from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
+try:
+    from flask_compress import Compress
+except Exception:
+    Compress = None
+
 import pandas as pd
 from PIL import Image, ImageOps, ImageFilter, ImageDraw, ImageFont, ImageEnhance, UnidentifiedImageError
 
@@ -126,7 +131,11 @@ try:
 except Exception:
     Presentation = None
 
-# ==================== الإعدادات العامة والحماية ====================
+# ==================== تحسينات الذاكرة الفائقة والسيرفر (RAM Disk / tmpfs) ====================
+# توجيه الملفات المؤقتة للذاكرة العشوائية RAM مباشرة لتسريع العمليات 10 أضعاف
+if os.path.exists("/dev/shm"):
+    tempfile.tempdir = "/dev/shm"
+
 MAX_FILE_MB = int(os.environ.get("MAX_FILE_MB", 25))
 MAX_FILE_BYTES = MAX_FILE_MB * 1024 * 1024
 MAX_MERGE_FILES = int(os.environ.get("MAX_MERGE_FILES", 30))
@@ -143,6 +152,12 @@ Image.MAX_IMAGE_PIXELS = int(os.environ.get("MAX_IMAGE_PIXELS", 100_000_000))
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = app_max_content
+app.config["COMPRESS_MIMETYPES"] = ['text/html', 'text/css', 'text/xml', 'application/json', 'application/javascript']
+app.config["COMPRESS_LEVEL"] = 6
+app.config["COMPRESS_MIN_SIZE"] = 500
+
+if Compress:
+    Compress(app)
 
 @app.before_request
 def enforce_custom_domain():
@@ -189,7 +204,10 @@ def set_secure_headers(response):
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     response.headers['X-Permitted-Cross-Domain-Policies'] = 'none'
 
-    if request.path in ("/convert", "/convert-async", "/pdf-preview", "/create-share-link"):
+    # تخزين الأصول الثابتة عبر Cloudflare لتوفير المعالج
+    if request.path.startswith('/static/'):
+        response.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
+    elif request.path in ("/convert", "/convert-async", "/pdf-preview", "/create-share-link"):
         response.headers['Content-Security-Policy'] = "default-src 'none'; frame-ancestors 'self'"
         response.headers['Cache-Control'] = 'no-store'
     return response
@@ -496,7 +514,9 @@ def open_image_safely(file_bytes):
     return img
 
 def run_libreoffice_convert(src_path, out_dir):
-    subprocess.run(["libreoffice", "--headless", "--nologo", "--nofirststartwizard", "--norestore", "--convert-to", "pdf", src_path, "--outdir", out_dir], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=SUBPROCESS_TIMEOUT)
+    # تشغيل التحويلات الفرعية بأولوية نظام متزنة nice لحماية السيرفر من التعليق
+    cmd = ["nice", "-n", "10", "libreoffice", "--headless", "--nologo", "--nofirststartwizard", "--norestore", "--convert-to", "pdf", src_path, "--outdir", out_dir]
+    subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=SUBPROCESS_TIMEOUT)
 
 def normalize_and_pad_grid(grid):
     if not grid: return []
@@ -1007,7 +1027,7 @@ def handle_compress_pdf(p):
             with open(in_pdf, "wb") as f: f.write(file_bytes)
             
             gs_cmd = [
-                "gs", "-sDEVICE=pdfwrite", "-dCompatibilityLevel=1.4",
+                "nice", "-n", "10", "gs", "-sDEVICE=pdfwrite", "-dCompatibilityLevel=1.4",
                 "-dPDFSETTINGS=/ebook", "-dNOPAUSE", "-dQUIET", "-dBATCH",
                 f"-sOutputFile={out_pdf}", in_pdf
             ]
@@ -1846,7 +1866,6 @@ def handle_reorder_pdf(p):
         return bad_request("تعذر إعادة ترتيب صفحات المستند.")
 
 def handle_compress_pdf_target(p):
-    """ضغط PDF إلى حجم مستهدف محدد بالكيلوبايت"""
     file_bytes = get_file_bytes(p)
     target_kb = int(re.sub(r'[^0-9]', '', p.get("text") or "500") or 500)
     is_arabic = p["is_arabic"]
@@ -1875,7 +1894,6 @@ def handle_compress_pdf_target(p):
         return bad_request("تعذر ضغط المستند للحجم المحدد.")
 
 def handle_pdf_to_images(p):
-    """استخراج كل صفحات الـ PDF كصور منفصلة في ملف ZIP مضغوط"""
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
     if not file_bytes: return bad_request("يرجى رفع ملف PDF")
@@ -1895,7 +1913,6 @@ def handle_pdf_to_images(p):
         return bad_request("تعذر استخراج صفحات المستند كصور.")
 
 def handle_extract_pdf_images(p):
-    """استخراج الصور المضمنة فقط داخل الـ PDF وحفظها في ZIP"""
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
     if not file_bytes: return bad_request("يرجى رفع ملف PDF")
@@ -1923,12 +1940,10 @@ def handle_extract_pdf_images(p):
         return bad_request("تعذر استخراج الصور المضمنة.")
 
 def handle_arabic_proofreader(p):
-    """المصحح والمدقق اللغوي للنصوص العربية"""
     text = (p.get("text") or "").strip()
     if not text: return bad_request("يرجى كتابة أو لصق النص للتدقيق.")
 
     corrected = text
-    # تصحيح الهمزات الشائعة وعلامات الترقيم
     corrected = re.sub(r'\bاذا\b', 'إذا', corrected)
     corrected = re.sub(r'\bان\b', 'أن', corrected)
     corrected = re.sub(r'\bاو\b', 'أو', corrected)
@@ -1940,7 +1955,6 @@ def handle_arabic_proofreader(p):
     return jsonify({"result": corrected})
 
 def handle_ppt_to_images(p):
-    """تصدير شرائح عرض PowerPoint كصور عالية الجودة"""
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
     if not file_bytes: return bad_request("يرجى رفع ملف PowerPoint")
