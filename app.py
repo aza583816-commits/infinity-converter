@@ -118,19 +118,19 @@ except Exception:
     Presentation = None
 
 # ==================== الإعدادات العامة والحماية ====================
-MAX_FILE_MB = int(os.environ.get("MAX_FILE_MB", 25))
+MAX_FILE_MB = int(os.environ.get("MAX_FILE_MB", 100))
 MAX_FILE_BYTES = MAX_FILE_MB * 1024 * 1024
-MAX_MERGE_FILES = int(os.environ.get("MAX_MERGE_FILES", 30))
-MAX_PDF_PAGES = int(os.environ.get("MAX_PDF_PAGES", 1000))
-MAX_OCR_PAGES = int(os.environ.get("MAX_OCR_PAGES", 25))
-MAX_TEXT_CHARS = int(os.environ.get("MAX_TEXT_CHARS", 5_000_000))
+MAX_MERGE_FILES = int(os.environ.get("MAX_MERGE_FILES", 100))
+MAX_PDF_PAGES = int(os.environ.get("MAX_PDF_PAGES", 5000))
+MAX_OCR_PAGES = int(os.environ.get("MAX_OCR_PAGES", 50))
+MAX_TEXT_CHARS = int(os.environ.get("MAX_TEXT_CHARS", 10_000_000))
 SUBPROCESS_TIMEOUT = int(os.environ.get("SUBPROCESS_TIMEOUT", 300))
 ALLOWED_ORIGINS = [o.strip() for o in os.environ.get(
     "ALLOWED_ORIGINS", "https://infinityconverter.com,https://www.infinityconverter.com"
 ).split(",") if o.strip()]
 
 app_max_content = int(MAX_FILE_BYTES * MAX_MERGE_FILES * 1.4) + (5 * 1024 * 1024)
-Image.MAX_IMAGE_PIXELS = int(os.environ.get("MAX_IMAGE_PIXELS", 100_000_000))
+Image.MAX_IMAGE_PIXELS = int(os.environ.get("MAX_IMAGE_PIXELS", 200_000_000))
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = app_max_content
@@ -146,7 +146,7 @@ CORS(app, resources={r"/convert": {"origins": ALLOWED_ORIGINS}}, supports_creden
 limiter = Limiter(
     get_remote_address,
     app=app,
-    default_limits=["1000 per day", "150 per hour"],
+    default_limits=["2000 per day", "300 per hour"],
     storage_uri=os.environ.get("RATE_LIMIT_STORAGE_URI", "memory://"),
 )
 
@@ -158,7 +158,7 @@ HEAVY_ACTIONS = {
 
 def dynamic_convert_limit():
     payload = request.get_json(silent=True) or {}
-    return "10 per minute" if payload.get("action") in HEAVY_ACTIONS else "30 per minute"
+    return "20 per minute" if payload.get("action") in HEAVY_ACTIONS else "60 per minute"
 
 @app.after_request
 def set_secure_headers(response):
@@ -456,7 +456,6 @@ def build_docx_from_text(text, is_arabic, add_page_numbers=False):
     doc.save(buf)
     return buf.getvalue()
 
-# ==================== طبقة الذكاء الاصطناعي لتحسين جودة القراءة ====================
 def enhance_image_for_ocr(img):
     try:
         img = img.convert('L')
@@ -506,24 +505,7 @@ def handle_pdf_to_docx(p):
         with open(pdf_path, "wb") as f: 
             f.write(file_bytes)
 
-        # ==========================================
-        # 1. المحرك الداخلي (pdf2docx) - الأقوى للحفاظ على الجداول محلياً
-        # ==========================================
-        if Converter is not None:
-            try:
-                cv = Converter(pdf_path)
-                cv.convert(docx_path, start=0, end=None)
-                cv.close()
-                
-                if os.path.exists(docx_path) and os.path.getsize(docx_path) > 0:
-                    with open(docx_path, "rb") as df: 
-                        return file_response(df.read(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "V-Infinity_Premium.docx")
-            except Exception as e:
-                app.logger.warning(f"Local pdf2docx engine failed: {str(e)}")
-
-        # ==========================================
-        # 2. المحرك السحابي (CloudConvert) - خطة ب
-        # ==========================================
+        # 1. المحرك السحابي (CloudConvert) - الأفضل عربياً في ترتيب الأرقام والجداول واللوجو
         if cc_key:
             try:
                 cloudconvert.configure(api_key=cc_key, sandbox=False)
@@ -538,46 +520,40 @@ def handle_pdf_to_docx(p):
                         "export-file": { "operation": "export/url", "input": "convert-file" }
                     }
                 })
-                
                 upload_task = cloudconvert.Task.find(id=job['tasks'][0]['id'])
                 cloudconvert.Task.upload(file_name=pdf_path, task=upload_task)
-                
                 job = cloudconvert.Job.wait(id=job['id'])
-                
                 for task in job['tasks']:
                     if task['name'] == 'export-file' and task['status'] == 'finished':
-                        export_url = task['result']['files'][0]['url']
-                        res = requests.get(export_url, timeout=30)
-                        with open(docx_path, 'wb') as df:
-                            df.write(res.content)
-                        
-                        with open(docx_path, "rb") as df: 
-                            return file_response(df.read(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "V-Infinity_Cloud.docx")
-            
+                        res = requests.get(task['result']['files'][0]['url'], timeout=60)
+                        return file_response(res.content, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "V-Infinity_Document.docx")
             except Exception as e:
-                app.logger.warning(f"CloudConvert failed, falling back to ConvertAPI. Reason: {str(e)}")
+                app.logger.warning(f"CloudConvert failed: {str(e)}")
 
-        # ==========================================
-        # 3. المحرك الاحتياطي (ConvertAPI) - خطة ج
-        # ==========================================
+        # 2. المحرك الاحتياطي (ConvertAPI)
         if ca_key:
             try:
                 convertapi.api_credentials = ca_key
-                result = convertapi.convert(
-                    'docx',
-                    {'File': pdf_path},
-                    from_format='pdf',
-                    timeout=120
-                )
+                result = convertapi.convert('docx', {'File': pdf_path}, from_format='pdf', timeout=120)
                 result.file.save(docx_path)
-                
                 with open(docx_path, "rb") as df: 
-                    return file_response(df.read(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "V-Infinity_Fallback.docx")
-            
+                    return file_response(df.read(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "V-Infinity_Document.docx")
             except Exception as e:
-                app.logger.error(f"ConvertAPI Fallback Error: {str(e)}")
+                app.logger.error(f"ConvertAPI Error: {str(e)}")
 
-        return bad_request("نعتذر، تعذرت معالجة هذا الملف المعقد من جميع الخوادم المتاحة.")
+        # 3. المحرك المحلي الاحتياطي الأخير
+        if Converter is not None:
+            try:
+                cv = Converter(pdf_path)
+                cv.convert(docx_path, start=0, end=None)
+                cv.close()
+                if os.path.exists(docx_path) and os.path.getsize(docx_path) > 0:
+                    with open(docx_path, "rb") as df: 
+                        return file_response(df.read(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "V-Infinity_Document.docx")
+            except Exception as e:
+                app.logger.warning(f"Local pdf2docx failed: {str(e)}")
+
+        return bad_request("نعتذر، تعذرت معالجة هذا الملف من جميع الخوادم المتاحة.")
 
 def handle_pdf_to_excel(p):
     file_bytes = get_file_bytes(p)
