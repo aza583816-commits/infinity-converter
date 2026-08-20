@@ -3,22 +3,20 @@
 <head>
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/static/favicon.svg">
+    <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#09090b">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <!-- 🚀 عناوين وأوصاف SEO الديناميكية لكل أداة ولغة -->
     <title>{% if tool_data %}{% if lang == 'en' %}{{ tool_data.seo_title_en }}{% else %}{{ tool_data.seo_title_ar }}{% endif %}{% else %}Infinity Converter - المحول الشامل لملفات PDF والأدوات{% endif %}</title>
     <meta name="description" content="{% if tool_data %}{% if lang == 'en' %}{{ tool_data.seo_desc_en }}{% else %}{{ tool_data.seo_desc_ar }}{% endif %}{% else %}منصة Infinity Converter الشاملة والمجانية لتحويل ملفات PDF، Word، Excel، والصور بضغطة زر. معالجة سحابية آمنة وسريعة بدون تخزين لملفاتك. اكتشف أكثر من 40 أداة الآن!{% endif %}">
 
-    <!-- 🚀 Open Graph / Social Media Cards للانتشار الفيروسي -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="{% if tool_data %}{% if lang == 'en' %}{{ tool_data.seo_title_en }}{% else %}{{ tool_data.seo_title_ar }}{% endif %}{% else %}Infinity Converter - أسرع محول ملفات و PDF مجاني{% endif %}">
     <meta property="og:description" content="{% if tool_data %}{% if lang == 'en' %}{{ tool_data.seo_desc_en }}{% else %}{{ tool_data.seo_desc_ar }}{% endif %}{% else %}تحويل وتحرير ملفات PDF و Word و Excel والصور بضغطة زر وبدون قيود.{% endif %}">
     <meta property="og:image" content="https://infinityconverter.com/static/og-banner.png">
     <meta property="og:url" content="https://infinityconverter.com{% if lang == 'en' %}/en{% endif %}{% if tool_data %}/{{ tool_data.slug }}{% endif %}">
 
-    <!-- 🚀 روابط hreflang لجوجل -->
     {% if tool_data %}
     <link rel="alternate" hreflang="ar" href="https://infinityconverter.com/{{ tool_data.slug }}" />
     <link rel="alternate" hreflang="en" href="https://infinityconverter.com/en/{{ tool_data.slug }}" />
@@ -29,7 +27,6 @@
     <link rel="alternate" hreflang="x-default" href="https://infinityconverter.com/" />
     {% endif %}
 
-    <!-- 🚀 Schema.org Markup (بناء الثقة مع محركات البحث) -->
     {% if tool_data %}
     <script type="application/ld+json">
     {
@@ -49,10 +46,8 @@
     </script>
     {% endif %}
 
-    <!-- كود جوجل أدسنس -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4343857922748618" crossorigin="anonymous"></script>
 
-    <!-- الخطوط والمكتبات الخارجية (WASM Client-Side Processing) -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
@@ -117,7 +112,12 @@
         textarea { width: 100%; height: 180px; background: var(--bg-body); border: 1px solid var(--border); border-radius: 12px; padding: 20px; color: var(--text-main); font-family: inherit; font-size: 15px; resize: vertical; margin-bottom: 20px; outline: none; transition: all 0.3s; }
         textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
 
-        /* 🚀 شريط التقدم */
+        /* 🚀 لوحة رسم التوقيع */
+        .signature-box { display: none; margin-bottom: 20px; text-align: center; }
+        .signature-canvas { border: 2px dashed var(--primary); border-radius: 12px; background: white; cursor: crosshair; touch-action: none; }
+        .signature-controls { margin-top: 8px; display: flex; justify-content: center; gap: 10px; }
+        .signature-controls button { padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-surface); color: var(--text-main); cursor: pointer; font-size: 12px; }
+
         .progress-container { width: 100%; height: 8px; background-color: var(--border); border-radius: 10px; margin-bottom: 20px; display: none; overflow: hidden;}
         .progress-bar { height: 100%; width: 0%; background-color: var(--primary); border-radius: 10px; transition: width 0.4s ease; box-shadow: 0 0 10px var(--primary);}
 
@@ -135,6 +135,8 @@
         .btn-whatsapp:hover { background: #128c7e; transform: translateY(-2px); }
         .btn-drive { background: #4285f4; color: white; border: none; padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-family: inherit; transition: 0.2s; }
         .btn-drive:hover { background: #3367d6; transform: translateY(-2px); }
+        .btn-sharelink { background: #8b5cf6; color: white; border: none; padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-family: inherit; transition: 0.2s; }
+        .btn-sharelink:hover { background: #7c3aed; transform: translateY(-2px); }
 
         .tools-section { width: 100%; max-width: 1200px; margin: 0 auto 60px; padding: 0 20px; }
         .category-group { margin-bottom: 40px; transition: all 0.3s ease;}
@@ -149,14 +151,12 @@
         .tool-info h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; color: var(--text-main); }
         .tool-info p { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
 
-        /* 🚀 قسم السيو والمقالات */
         .seo-content { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 20px; padding: 40px; margin-top: 40px; box-shadow: var(--shadow-sm); text-align: justify; line-height: 1.9;}
         .seo-content h2 { font-size: 24px; font-weight: 800; color: var(--primary); margin-bottom: 20px;}
         .faq-box { background: var(--bg-body); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 15px;}
         .faq-box h4 { margin-bottom: 10px; color: var(--text-main); display: flex; align-items: center; gap: 10px;}
         .faq-box p { color: var(--text-muted); font-size: 15px;}
 
-        /* إعلانات عالية النقرات */
         .ad-placeholder { width: 100%; min-height: 90px; background: var(--bg-body); border: 1px dashed var(--text-muted); border-radius: 12px; display: flex; justify-content: center; align-items: center; color: var(--text-muted); margin: 30px 0; font-size: 14px;}
 
         .i-word { background: var(--bg-word); color: var(--c-word); }
@@ -214,7 +214,6 @@
                 </p>
             </div>
 
-            <!-- مساحة الأداة -->
             <div id="activeToolArea" style="display: {% if tool_data %}block{% else %}none{% endif %};">
                 
                 <div id="toolWarning" style="display: none; background: rgba(99, 102, 241, 0.1); color: #6366f1; padding: 12px; border-radius: 8px; border: 1px solid rgba(99, 102, 241, 0.3); margin-bottom: 20px; font-size: 14px; font-weight: 700;">
@@ -236,9 +235,17 @@
                     <input type="file" id="multiFileInput" multiple style="display:none;" onchange="handleMultiFileSelect(event)">
                 </div>
 
+                <!-- 🚀 Canvas التوقيع الإلكتروني -->
+                <div class="signature-box" id="signatureBox">
+                    <p style="margin-bottom:8px; font-weight:600;">{% if lang == 'ar' %}ارسم توقيعك هنا بالماوس أو الإصبع:{% else %}Draw your signature here:{% endif %}</p>
+                    <canvas id="sigCanvas" class="signature-canvas" width="400" height="150"></canvas>
+                    <div class="signature-controls">
+                        <button type="button" onclick="clearSignature()">{% if lang == 'ar' %}مسح التوقيع{% else %}Clear{% endif %}</button>
+                    </div>
+                </div>
+
                 <textarea id="textInput" style="display: none;" placeholder="{% if lang == 'ar' %}الصق النص أو المحتوى هنا...{% else %}Paste text or content here...{% endif %}"></textarea>
 
-                <!-- 🚀 Progress Bar -->
                 <div class="progress-container" id="progressContainer">
                     <div class="progress-bar" id="progressBar"></div>
                 </div>
@@ -250,22 +257,22 @@
 
                 <div class="result-area" id="resultArea"></div>
 
-                <!-- 🚀 أزرار الحفظ في Drive والمشاركة -->
                 <div class="action-buttons-group" id="actionButtonsGroup" style="display: none;">
                     <button onclick="shareOnWhatsApp()" class="btn-whatsapp">
-                        <i class="fa-brands fa-whatsapp"></i> {% if lang == 'ar' %}مشاركة الأداة عبر واتساب{% else %}Share tool on WhatsApp{% endif %}
+                        <i class="fa-brands fa-whatsapp"></i> {% if lang == 'ar' %}مشاركة عبر واتساب{% else %}Share on WhatsApp{% endif %}
                     </button>
                     <button onclick="saveToGoogleDrive()" class="btn-drive">
                         <i class="fa-brands fa-google-drive"></i> {% if lang == 'ar' %}حفظ في Google Drive{% else %}Save to Google Drive{% endif %}
+                    </button>
+                    <button onclick="generateShareableLink()" class="btn-sharelink">
+                        <i class="fa-solid fa-link"></i> {% if lang == 'ar' %}رابط تحميل مؤقت (24 ساعة){% else %}24h Share Link{% endif %}
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- إعلان بعد التحويل عالي النقرات -->
         <div class="ad-placeholder">AdSense High-CTR Banner Area</div>
 
-        <!-- 🚀 قسم المقالة والسيو (SEO Rich Content) -->
         {% if tool_data %}
         <div class="seo-content">
             <h2><i class="fa-solid fa-book-open"></i> {% if lang == 'ar' %}نبذة عن الأداة{% else %}About This Tool{% endif %}</h2>
@@ -298,11 +305,10 @@
         </div>
     </div>
 
-    <div id="noResultsMsg">{% if lang == 'ar' %}عذراً، لم يتم العثور على أداة مطابقة לבحثك 😕{% else %}Sorry, no tool matches your search 😕{% endif %}</div>
+    <div id="noResultsMsg">{% if lang == 'ar' %}عذراً، لم يتم العثور على أداة مطابقة لبحثك 😕{% else %}Sorry, no tool matches your search 😕{% endif %}</div>
 
     <div class="tools-section">
         
-        <!-- 🚀 قسم الأدوات المستخدمة مؤخراً -->
         <div class="category-group" id="recentCategory" style="display: none;">
             <div class="section-title"><i class="fa-solid fa-clock-rotate-left" style="color:var(--primary)"></i> <span>{% if lang == 'ar' %}استخدمتها مؤخراً{% else %}Recently Used{% endif %}</span></div>
             <div class="tools-grid" id="recentToolsGrid"></div>
@@ -311,6 +317,13 @@
         <div class="category-group" data-category="students">
             <div class="section-title"><i class="fa-solid fa-graduation-cap" style="color:var(--primary)"></i> <span>{% if lang == 'ar' %}أدوات الطلاب والمعلمين{% else %}Students & Teachers Tools{% endif %}</span></div>
             <div class="tools-grid">
+                <a href="{% if lang == 'en' %}/en{% endif %}/generate-quiz" class="tool-card" data-slug="generate-quiz">
+                    <div class="tool-icon i-word"><i class="fa-solid fa-spell-check"></i></div>
+                    <div class="tool-info">
+                        <h3>{% if lang == 'ar' %}توليد اختبار وبطاقات مراجعة{% else %}Quiz & Flashcard Generator{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}توليد أسئلة وبطاقات ذكية للمذاكرة من الـ PDF والمذكرات.{% else %}Generate study quizzes and flashcards directly from PDF & notes.{% endif %}</p>
+                    </div>
+                </a>
                 <a href="{% if lang == 'en' %}/en{% endif %}/clean-study-sheet" class="tool-card" data-slug="clean-study-sheet">
                     <div class="tool-icon i-img"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
                     <div class="tool-info">
@@ -366,6 +379,20 @@
         <div class="category-group" data-category="pdf">
             <div class="section-title"><i class="fa-solid fa-file-pdf" style="color:var(--c-pdf)"></i> <span>{% if lang == 'ar' %}أدوات PDF والمستندات{% else %}PDF & Document Tools{% endif %}</span></div>
             <div class="tools-grid">
+                <a href="{% if lang == 'en' %}/en{% endif %}/sign-pdf" class="tool-card" data-slug="sign-pdf">
+                    <div class="tool-icon i-pdf"><i class="fa-solid fa-signature"></i></div>
+                    <div class="tool-info">
+                        <h3>{% if lang == 'ar' %}توقيع PDF إلكترونياً{% else %}Sign PDF Online{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}ارسم توقيعك بيدك وضعه على مستند الـ PDF مباشرة.{% else %}Draw your handwritten signature onto any PDF instantly.{% endif %}</p>
+                    </div>
+                </a>
+                <a href="{% if lang == 'en' %}/en{% endif %}/remove-blank-pages" class="tool-card" data-slug="remove-blank-pages">
+                    <div class="tool-icon i-pdf"><i class="fa-solid fa-file-circle-xmark"></i></div>
+                    <div class="tool-info">
+                        <h3>{% if lang == 'ar' %}حذف الصفحات البيضاء الفارغة{% else %}Remove Blank Pages{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}كشف واستبعاد الصفحات الفارغة تلقائياً لتوفير الورق.{% else %}Automatically detect and remove blank pages to save paper.{% endif %}</p>
+                    </div>
+                </a>
                 <a href="{% if lang == 'en' %}/en{% endif %}/pdf-page-number" class="tool-card" data-slug="pdf-page-number">
                     <div class="tool-icon i-pdf"><i class="fa-solid fa-list-ol"></i></div>
                     <div class="tool-info">
@@ -780,7 +807,6 @@
 
     </div>
 
-    <!-- الفوتر -->
     <div class="workspace">
         <div class="footer-disclaimer">
             <p>{% if lang == 'ar' %}V-Infinity Converter يوفر مجموعة شاملة من الأدوات الآمنة المدعومة بالذكاء الاصطناعي. تتم معالجة الملفات سحابياً ولا يتم تخزينها أبداً لحماية خصوصيتك. نحن نستخدم ملفات تعريف الارتباط وخدمات إعلانات جوجل وفقاً للسياسات.{% else %}V-Infinity Converter provides a comprehensive suite for secure, AI-powered file conversion. Files are processed on our servers and are never stored. We use cookies and Google AdSense according to policies.{% endif %}</p>
@@ -801,22 +827,66 @@
         let rawFileObject = null;
         let lastDownloadedBlob = null;
         let lastDownloadedFilename = '';
+        let lastDownloadedBase64 = '';
         let isArabic = "{{ lang }}" === "ar"; 
+
+        // تهيئة لوحة رسم التوقيع
+        let isDrawing = false;
+        const canvas = document.getElementById("sigCanvas");
+        const ctx = canvas ? canvas.getContext("2d") : null;
+
+        function initSignatureCanvas() {
+            if (!canvas || !ctx) return;
+            ctx.lineWidth = 3;
+            ctx.lineCap = "round";
+            ctx.strokeStyle = "#000000";
+
+            function startDraw(e) {
+                isDrawing = true;
+                ctx.beginPath();
+                const pos = getPos(e);
+                ctx.moveTo(pos.x, pos.y);
+            }
+            function draw(e) {
+                if (!isDrawing) return;
+                const pos = getPos(e);
+                ctx.lineTo(pos.x, pos.y);
+                ctx.stroke();
+            }
+            function stopDraw() { isDrawing = false; }
+            function getPos(e) {
+                const rect = canvas.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                return { x: clientX - rect.left, y: clientY - rect.top };
+            }
+
+            canvas.addEventListener("mousedown", startDraw);
+            canvas.addEventListener("mousemove", draw);
+            canvas.addEventListener("mouseup", stopDraw);
+            canvas.addEventListener("touchstart", (e) => { e.preventDefault(); startDraw(e); }, { passive: false });
+            canvas.addEventListener("touchmove", (e) => { e.preventDefault(); draw(e); }, { passive: false });
+            canvas.addEventListener("touchend", stopDraw);
+        }
+
+        function clearSignature() {
+            if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
 
         function playSuccessSound() {
             try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
                 osc.type = "sine";
-                osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
-                osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15); // A5
-                gain.gain.setValueAtTime(0.1, ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+                osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
                 osc.connect(gain);
-                gain.connect(ctx.destination);
+                gain.connect(audioCtx.destination);
                 osc.start();
-                osc.stop(ctx.currentTime + 0.2);
+                osc.stop(audioCtx.currentTime + 0.2);
             } catch(e) {}
         }
 
@@ -843,6 +913,27 @@
             }
             showToast("جاري فتح Google Drive لحفظ الملف...", "Opening Google Drive...", false);
             window.open("https://drive.google.com", "_blank");
+        }
+
+        async function generateShareableLink() {
+            if (!lastDownloadedBase64) {
+                showToast("الرجاء تحويل الملف أولاً لتوليد الرابط!", "Convert the file first!", true);
+                return;
+            }
+            try {
+                const res = await fetch("/create-share-link", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ fileBase64: lastDownloadedBase64, filename: lastDownloadedFilename })
+                });
+                const d = await res.json();
+                if (d.share_url) {
+                    navigator.clipboard.writeText(d.share_url);
+                    showToast("تم نسخ رابط التحميل المباشر للحافظة!", "Share link copied to clipboard!");
+                }
+            } catch(e) {
+                showToast("تعذر إنشاء رابط المشاركة", "Failed to generate link", true);
+            }
         }
 
         function updateRecentTools(slug) {
@@ -876,6 +967,7 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             loadRecentTools();
+            initSignatureCanvas();
 
             {% if tool_data %}
             currentAction = "{{ tool_data.slug }}";
@@ -902,7 +994,10 @@
             const textArea = document.getElementById('textInput');
             const fileInput = document.getElementById('fileInput');
             const multiFileInput = document.getElementById('multiFileInput');
+            const sigBox = document.getElementById('signatureBox');
             
+            if (sigBox) sigBox.style.display = currentAction === 'sign-pdf' ? 'block' : 'none';
+
             if(type === 'multiFile') {
                 uploadArea.style.display = 'block'; textArea.style.display = 'none';
                 uploadArea.onclick = () => multiFileInput.click();
@@ -913,7 +1008,8 @@
             } else if(type === 'text') { 
                 uploadArea.style.display = 'none'; textArea.style.display = 'block'; 
             } else if(type === 'fileText') { 
-                uploadArea.style.display = 'block'; textArea.style.display = 'block'; 
+                uploadArea.style.display = 'block'; 
+                textArea.style.display = currentAction === 'sign-pdf' ? 'none' : 'block'; 
                 uploadArea.onclick = () => fileInput.click();
             }
         }
@@ -1063,7 +1159,6 @@
                 }
             }, 700);
 
-            // معالجة فورية من طرف العميل (Client-Side WASM) لأداة تدوير الـ PDF لتوفير استهلاك السيرفر بنسبة 100%
             if (currentAction === 'rotate-pdf' && rawFileObject && window.PDFLib) {
                 try {
                     const arrayBuffer = await rawFileObject.arrayBuffer();
@@ -1082,6 +1177,10 @@
                     lastDownloadedBlob = blob;
                     lastDownloadedFilename = 'Rotated_Document.pdf';
                     
+                    const r = new FileReader();
+                    r.onloadend = () => { lastDownloadedBase64 = r.result.split(',')[1]; };
+                    r.readAsDataURL(blob);
+
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a'); a.href = url; a.download = lastDownloadedFilename;
                     document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url);
@@ -1099,6 +1198,10 @@
                 const payload = { action: currentAction, text: text, lang: isArabic ? 'ar' : 'en' };
                 if (currentAction.includes('merge') && filesBase64Array.length > 0) payload.filesBase64 = filesBase64Array;
                 else payload.fileBase64 = fileBase64;
+
+                if (currentAction === 'sign-pdf' && canvas) {
+                    payload.signatureBase64 = canvas.toDataURL("image/png");
+                }
 
                 const response = await fetch('/convert', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
@@ -1131,8 +1234,15 @@
                     else if(currentAction === 'pdf-to-excel') filename = 'V-Infinity_Data.xlsx';
                     else if(currentAction === 'clean-study-sheet') filename = 'Cleaned_Study_Sheet.pdf';
                     else if(currentAction === 'ink-saver-pdf') filename = 'Ink_Saver_Document.pdf';
+                    else if(currentAction === 'sign-pdf') filename = 'Signed_Document.pdf';
+                    else if(currentAction === 'remove-blank-pages') filename = 'No_Blanks_Document.pdf';
                     
                     lastDownloadedFilename = filename;
+                    
+                    const r = new FileReader();
+                    r.onloadend = () => { lastDownloadedBase64 = r.result.split(',')[1]; };
+                    r.readAsDataURL(blob);
+
                     a.download = filename; document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url);
                     playSuccessSound();
                     showToast('تم تحميل الملف بنجاح!', 'File downloaded successfully!');
