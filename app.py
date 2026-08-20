@@ -102,7 +102,6 @@ except Exception:
     gTTS = None
 
 try:
-    import deep_translator
     from deep_translator import GoogleTranslator
 except Exception:
     GoogleTranslator = None
@@ -189,7 +188,7 @@ def internal_error_handler(e):
 ARABIC_FONT_NAME = "ArabicFont"
 _arabic_font_registered = False
 
-# ==================== طبقات المساندة والتدعيم الذكية (أضيفت للمساندة فقط بدون حذف أي شيء) ====================
+# ==================== طبقات المساندة والتدعيم الذكية (تتعاون معا دون حذف أي شيء) ====================
 def support_arabic_text_normalization(text):
     if not text: return text
     return re.sub(r'[\u200b\u200c\u200d\ufeff]', '', text)
@@ -199,7 +198,7 @@ def support_validate_table_structure(table_data):
     max_cols = max(len(row) for row in table_data) if table_data else 1
     return [[str(c).strip() if c else "" for c in (row + [""] * (max_cols - len(row)))] for row in table_data]
 
-# ==================== القائمة الشاملة لجميع الأدوات (كاملة الـ 50+) ====================
+# ==================== القائمة الشاملة لجميع الأدوات ====================
 TOOLS_DEF = [
     ("pdf-to-docx", "PDF إلى Word", "PDF to Word", "file", "i-word", "fa-file-word"),
     ("word-to-pdf", "Word إلى PDF", "Word to PDF", "file", "i-pdf", "fa-file-pdf"),
@@ -488,10 +487,20 @@ def is_probably_scanned(text, page_count):
     avg_chars = len(text.strip()) / max(page_count, 1)
     return avg_chars < 15
 
-# ================= أدوات الـ PDF (الأصلية مضافاً إليها محركات السحاب المحلية) =================
+# ==================== دوال المساندة والتكامل المتكاتف (تساعد بعضها بدون حذف شيء) ====================
+def support_arabic_text_normalization(text):
+    if not text: return text
+    return re.sub(r'[\u200b\u200c\u200d\ufeff]', '', text)
+
+def support_validate_table_structure(table_data):
+    if not table_data or not isinstance(table_data, list): return [["-"]]
+    max_cols = max(len(row) for row in table_data) if table_data else 1
+    return [[str(c).strip() if c else "" for c in (row + [""] * (max_cols - len(row)))] for row in table_data]
+
+# ================= أدوات الـ PDF (متكاتفة: CloudConvert ثم ConvertAPI ثم pdf2docx) =================
 
 def handle_pdf_to_docx(p):
-    """المحرك الثلاثي (المحلي + السحابي + الاحتياطي) لضمان أقصى دقة للجداول والنصوص"""
+    """المحرك المتكاتف: إذا فشل الأول يتدخل الثاني والثالث لتساندها"""
     import cloudconvert
     import convertapi
     import requests
@@ -516,6 +525,7 @@ def handle_pdf_to_docx(p):
         with open(pdf_path, "wb") as f: 
             f.write(file_bytes)
 
+        # 1. المحرك الأول: CloudConvert (يدعم التخطيط المتقدم)
         if cc_key:
             try:
                 cloudconvert.configure(api_key=cc_key, sandbox=False)
@@ -534,8 +544,9 @@ def handle_pdf_to_docx(p):
                         res = requests.get(task['result']['files'][0]['url'], timeout=60)
                         return file_response(res.content, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "V-Infinity_Document.docx")
             except Exception as e:
-                app.logger.warning(f"CloudConvert failed: {str(e)}")
+                app.logger.warning(f"CloudConvert failed, passing to ConvertAPI: {str(e)}")
 
+        # 2. المحرك الثاني (المساند): ConvertAPI
         if ca_key:
             try:
                 convertapi.api_credentials = ca_key
@@ -544,8 +555,9 @@ def handle_pdf_to_docx(p):
                 with open(docx_path, "rb") as df: 
                     return file_response(df.read(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "V-Infinity_Document.docx")
             except Exception as e:
-                app.logger.error(f"ConvertAPI Error: {str(e)}")
+                app.logger.error(f"ConvertAPI failed, passing to local engine: {str(e)}")
 
+        # 3. المحرك الثالث (المساند المحلي): pdf2docx
         if Converter is not None:
             try:
                 cv = Converter(pdf_path)
@@ -555,9 +567,9 @@ def handle_pdf_to_docx(p):
                     with open(docx_path, "rb") as df: 
                         return file_response(df.read(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "V-Infinity_Document.docx")
             except Exception as e:
-                app.logger.warning(f"Local pdf2docx failed: {str(e)}")
+                app.logger.warning(f"Local pdf2docx engine failed: {str(e)}")
 
-        return bad_request("نعتذر، تعذرت معالجة هذا الملف من جميع الخوادم المتاحة.")
+        return bad_request("نعتذر، تعذرت معالجة هذا الملف من جميع المحركات المتاحة.")
 
 def handle_pdf_to_excel(p):
     file_bytes = get_file_bytes(p)
@@ -1592,11 +1604,11 @@ def convert():
     files_to_check = payload.get("filesBase64") or [] if action in NEEDS_MULTIPLE_FILES else ([payload.get("fileBase64")] if payload.get("fileBase64") else [])
 
     if action in NEEDS_MULTIPLE_FILES and len(files_to_check) > MAX_MERGE_FILES:
-        return jsonify({"error": f"الحد الأقصى {MAX_MERGE_FILES} ملفات"}), 413
+        return jsonify({"error": f"الحد الأقصى {MAX_MERGE_FILES} ملفات"}}, 413
 
     for b64 in files_to_check:
         if b64 and (len(b64) * 3 / 4) > MAX_FILE_BYTES:
-            return jsonify({"error": f"حجم الملف أكبر من الحد المسموح"}), 413
+            return jsonify({"error": f"حجم الملف أكبر من الحد المسموح"}}, 413
 
     handler = REGISTRY.get(action)
     if not handler: return bad_request(f"Unknown action: {action}")
@@ -1609,7 +1621,7 @@ def convert():
     except Exception:
         app.logger.exception(f"convert() error for action={action}")
         gc.collect()
-        return jsonify({"error": "حدث خطأ أثناء المعالجة. يرجى التأكد من الملف والمحاولة لاحقاً."}), 500
+        return jsonify({"error": "حدث خطأ أثناء المعالجة. يرجى التأكد من الملف والمحاولة مجدداً."}), 500
 
 @app.route('/ads.txt')
 def ads_txt(): return "google.com, pub-4343857922748618, DIRECT, f08c47fec0942fa0", 200, {'Content-Type': 'text/plain'}
