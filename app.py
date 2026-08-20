@@ -155,7 +155,8 @@ CORS(app, resources={
     r"/task-status/*": {"origins": ALLOWED_ORIGINS},
     r"/pdf-preview": {"origins": ALLOWED_ORIGINS},
     r"/create-share-link": {"origins": ALLOWED_ORIGINS},
-    r"/download/*": {"origins": ALLOWED_ORIGINS}
+    r"/download/*": {"origins": ALLOWED_ORIGINS},
+    r"/telegram-webhook": {"origins": "*"}
 }, supports_credentials=False)
 
 limiter = Limiter(
@@ -169,7 +170,8 @@ HEAVY_ACTIONS = {
     "word-to-pdf", "excel-to-pdf", "pdf-to-docx", "pdf-to-doc", "pdf-to-ppt", "pdf-to-excel",
     "merge-pdf", "compress-image", "image-to-text", "text-to-audio", "translate-text",
     "watermark-pdf", "compress-pdf", "protect-pdf", "clean-study-sheet", "summarize-doc",
-    "pdf-page-number", "ink-saver-pdf", "sign-pdf", "remove-blank-pages", "generate-quiz"
+    "pdf-page-number", "ink-saver-pdf", "sign-pdf", "remove-blank-pages", "generate-quiz",
+    "redact-pdf", "pdf-visual-diff", "reorder-pdf"
 }
 
 def dynamic_convert_limit():
@@ -196,6 +198,12 @@ def ratelimit_handler(e): return jsonify(error="تم تجاوز الحد الم�
 @app.errorhandler(413)
 def too_large_handler(e): return jsonify(error="حجم الطلب أكبر من الحد المسموح."), 413
 
+@app.errorhandler(404)
+def custom_404_handler(e):
+    if request.path.startswith("/api/") or request.is_json:
+        return jsonify(error="الصفحة أو الأداة غير موجودة."), 404
+    return render_template("index.html", tool_data=None, lang="ar", error_msg="الصفحة المطلوبة غير موجودة، تصفح أشهر الأدوات بالأسفل:"), 404
+
 @app.errorhandler(500)
 def internal_error_handler(e):
     app.logger.exception("Unhandled server error")
@@ -209,7 +217,7 @@ conversion_queue = queue.Queue()
 async_task_results = {}
 temporary_share_store = {}
 TASK_TTL_SECONDS = 1800
-SHARE_TTL_SECONDS = 86400  # روابط التحميل صالحة لمدة 24 ساعة
+SHARE_TTL_SECONDS = 86400
 
 def cache_cleanup_worker():
     while True:
@@ -217,11 +225,9 @@ def cache_cleanup_worker():
             time.sleep(300)
             now = time.time()
             expired_tasks = [k for k, v in async_task_results.items() if now - v.get("timestamp", now) > TASK_TTL_SECONDS]
-            for k in expired_tasks:
-                async_task_results.pop(k, None)
+            for k in expired_tasks: async_task_results.pop(k, None)
             expired_shares = [k for k, v in temporary_share_store.items() if now - v.get("timestamp", now) > SHARE_TTL_SECONDS]
-            for k in expired_shares:
-                temporary_share_store.pop(k, None)
+            for k in expired_shares: temporary_share_store.pop(k, None)
             gc.collect()
         except Exception:
             pass
@@ -329,7 +335,10 @@ TOOLS_DEF = [
     ("citation-generator", "مولد التوثيق الأكاديمي (APA/MLA)", "Citation Generator", "text", "i-word", "fa-book-bookmark"),
     ("sign-pdf", "توقيع ملفات PDF إلكترونياً", "Sign PDF Online", "fileText", "i-pdf", "fa-signature"),
     ("remove-blank-pages", "حذف الصفحات الفارغة من PDF", "Remove Blank Pages", "file", "i-pdf", "fa-file-circle-xmark"),
-    ("generate-quiz", "توليد أسئلة واختبارات من ملف", "Quiz & Flashcard Generator", "fileText", "i-word", "fa-spell-check")
+    ("generate-quiz", "توليد أسئلة واختبارات من ملف", "Quiz & Flashcard Generator", "fileText", "i-word", "fa-spell-check"),
+    ("redact-pdf", "طمس وتنقيح البيانات الحساسة", "Redact PDF Info", "fileText", "i-pdf", "fa-user-secret"),
+    ("pdf-visual-diff", "مقارنة نسختين من PDF بصرياً", "Visual PDF Diff", "multiFile", "i-dev", "fa-code-compare"),
+    ("reorder-pdf", "إعادة ترتيب صفحات PDF", "Reorder PDF Pages", "fileText", "i-pdf", "fa-arrow-down-1-9")
 ]
 
 TOOLS_SEO = {}
@@ -623,15 +632,11 @@ def is_probably_scanned(text, page_count):
     return avg_chars < 15
 
 # ================= أدوات الـ PDF =================
-
 def handle_pdf_to_docx(p):
     file_bytes = get_file_bytes(p)
     is_arabic = p.get("is_arabic", False)
-    
-    if not file_bytes: 
-        return bad_request("يرجى رفع ملف PDF")
-    if not validate_signature(file_bytes, "pdf"): 
-        return bad_signature_response(is_arabic)
+    if not file_bytes: return bad_request("يرجى رفع ملف PDF")
+    if not validate_signature(file_bytes, "pdf"): return bad_signature_response(is_arabic)
 
     cc_key = os.environ.get("CLOUDCONVERT_API_KEY")
     ca_key = os.environ.get("CONVERT_API_KEY")
@@ -639,16 +644,13 @@ def handle_pdf_to_docx(p):
     with tempfile.TemporaryDirectory() as tmp_dir:
         pdf_path = os.path.join(tmp_dir, "document.pdf")
         docx_path = os.path.join(tmp_dir, "document.docx")
-        
-        with open(pdf_path, "wb") as f: 
-            f.write(file_bytes)
+        with open(pdf_path, "wb") as f: f.write(file_bytes)
 
         if Converter is not None:
             try:
                 cv = Converter(pdf_path)
                 cv.convert(docx_path, start=0, end=None)
                 cv.close()
-                
                 if os.path.exists(docx_path) and os.path.getsize(docx_path) > 0:
                     with open(docx_path, "rb") as df: 
                         return file_response(df.read(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "V-Infinity_Premium.docx")
@@ -661,25 +663,17 @@ def handle_pdf_to_docx(p):
                 job = cloudconvert.Job.create(payload={
                     "tasks": {
                         "import-file": { "operation": "import/upload" },
-                        "convert-file": { 
-                            "operation": "convert", 
-                            "input": "import-file", 
-                            "output_format": "docx"
-                        },
+                        "convert-file": { "operation": "convert", "input": "import-file", "output_format": "docx" },
                         "export-file": { "operation": "export/url", "input": "convert-file" }
                     }
                 })
-                
                 upload_task = cloudconvert.Task.find(id=job['tasks'][0]['id'])
                 cloudconvert.Task.upload(file_name=pdf_path, task=upload_task)
                 job = cloudconvert.Job.wait(id=job['id'])
-                
                 for task in job['tasks']:
                     if task['name'] == 'export-file' and task['status'] == 'finished':
-                        export_url = task['result']['files'][0]['url']
-                        res = requests.get(export_url, timeout=30)
-                        with open(docx_path, 'wb') as df:
-                            df.write(res.content)
+                        res = requests.get(task['result']['files'][0]['url'], timeout=30)
+                        with open(docx_path, 'wb') as df: df.write(res.content)
                         with open(docx_path, "rb") as df: 
                             return file_response(df.read(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "V-Infinity_Cloud.docx")
             except Exception as e:
@@ -1136,11 +1130,8 @@ def handle_pdf_to_pdf_enhanced(p):
 def handle_word_to_pdf(p):
     file_bytes = get_file_bytes(p)
     is_arabic = p.get("is_arabic", False)
-    
-    if not file_bytes: 
-        return bad_request("يرجى رفع ملف Word")
-    if not validate_signature(file_bytes, "zip_office"): 
-        return bad_signature_response(is_arabic)
+    if not file_bytes: return bad_request("يرجى رفع ملف Word")
+    if not validate_signature(file_bytes, "zip_office"): return bad_signature_response(is_arabic)
 
     cc_key = os.environ.get("CLOUDCONVERT_API_KEY")
     ca_key = os.environ.get("CONVERT_API_KEY")
@@ -1148,9 +1139,7 @@ def handle_word_to_pdf(p):
     with tempfile.TemporaryDirectory() as tmp_dir:
         docx_path = os.path.join(tmp_dir, "document.docx")
         pdf_path = os.path.join(tmp_dir, "document.pdf")
-        
-        with open(docx_path, "wb") as f: 
-            f.write(file_bytes)
+        with open(docx_path, "wb") as f: f.write(file_bytes)
 
         try:
             run_libreoffice_convert(docx_path, tmp_dir)
@@ -1167,25 +1156,17 @@ def handle_word_to_pdf(p):
                 job = cloudconvert.Job.create(payload={
                     "tasks": {
                         "import-file": { "operation": "import/upload" },
-                        "convert-file": { 
-                            "operation": "convert", 
-                            "input": "import-file", 
-                            "output_format": "pdf"
-                        },
+                        "convert-file": { "operation": "convert", "input": "import-file", "output_format": "pdf" },
                         "export-file": { "operation": "export/url", "input": "convert-file" }
                     }
                 })
-                
                 upload_task = cloudconvert.Task.find(id=job['tasks'][0]['id'])
                 cloudconvert.Task.upload(file_name=docx_path, task=upload_task)
                 job = cloudconvert.Job.wait(id=job['id'])
-                
                 for task in job['tasks']:
                     if task['name'] == 'export-file' and task['status'] == 'finished':
-                        export_url = task['result']['files'][0]['url']
-                        res = requests.get(export_url, timeout=30)
-                        with open(pdf_path, 'wb') as df:
-                            df.write(res.content)
+                        res = requests.get(task['result']['files'][0]['url'], timeout=30)
+                        with open(pdf_path, 'wb') as df: df.write(res.content)
                         with open(pdf_path, "rb") as df: 
                             return file_response(df.read(), "application/pdf", "V-Infinity_Converted.pdf")
             except Exception as e:
@@ -1644,7 +1625,6 @@ def handle_citation_generator(p):
     return jsonify({"result": res})
 
 def handle_sign_pdf(p):
-    """دمج التوقيع الإلكتروني والرسم اليدوي مباشرة في ملف PDF"""
     file_bytes = get_file_bytes(p)
     sig_b64 = p.get("signatureBase64")
     is_arabic = p["is_arabic"]
@@ -1687,7 +1667,6 @@ def handle_sign_pdf(p):
         return bad_request("تعذر إضافة التوقيع إلى المستند.")
 
 def handle_remove_blank_pages(p):
-    """فحص الصفحات الفارغة وحذفها تلقائياً"""
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
     if not file_bytes: return bad_request("يرجى رفع ملف PDF")
@@ -1697,14 +1676,10 @@ def handle_remove_blank_pages(p):
     try:
         doc = fitz.open(stream=file_bytes, filetype="pdf")
         out_doc = fitz.open()
-        removed_count = 0
 
         for page in doc:
             text = (page.get_text() or "").strip()
-            pix = page.get_pixmap(dpi=72)
-            # فحص خلو الصفحة من المحتوى النصي والصور
             if len(text) == 0 and len(page.get_images()) == 0:
-                removed_count += 1
                 continue
             out_doc.insert_pdf(doc, from_page=page.number, to_page=page.number)
 
@@ -1719,7 +1694,6 @@ def handle_remove_blank_pages(p):
         return bad_request("تعذر فحص وحذف الصفحات الفارغة.")
 
 def handle_generate_quiz(p):
-    """توليد أسئلة واختبارات فلاش كارد من النصوص والمستندات"""
     text = (p.get("text") or "").strip()
     file_bytes = get_file_bytes(p)
     if not text and file_bytes and fitz:
@@ -1744,6 +1718,90 @@ def handle_generate_quiz(p):
 
     final_quiz = "🧠 بنك الأسئلة والبطاقات الذكية:\n\n" + "\n\n".join(quiz_items)
     return jsonify({"result": final_quiz})
+
+def handle_redact_pdf(p):
+    """طمس وإخفاء الكلمات والأرقام الحساسة في PDF بشريط أسود"""
+    file_bytes = get_file_bytes(p)
+    search_term = (p.get("text") or "").strip()
+    is_arabic = p["is_arabic"]
+    if not file_bytes: return bad_request("يرجى رفع ملف PDF")
+    if not search_term: return bad_request("يرجى إدخال الكلمة أو الرقم المراد طمسه")
+    if not validate_signature(file_bytes, "pdf"): return bad_signature_response(is_arabic)
+
+    if not fitz: return bad_request("PyMuPDF غير متوفر")
+    try:
+        doc = fitz.open(stream=file_bytes, filetype="pdf")
+        for page in doc:
+            rects = page.search_for(search_term)
+            for r in rects:
+                page.add_redact_annot(r, fill=(0, 0, 0))
+            page.apply_redactions()
+        
+        final_bytes = doc.tobytes(deflate=True)
+        doc.close()
+        return file_response(final_bytes, "application/pdf", "Redacted_Document.pdf")
+    except Exception:
+        return bad_request("تعذر تنفيذ عملية الطمس والحماية.")
+
+def handle_pdf_visual_diff(p):
+    """مقارنة بصرية بين ملفين PDF وتحديد الصفحات المعدلة"""
+    files = p.get("_files_raw") or []
+    if not files:
+        b64_list = p.get("filesBase64") or []
+        for b64 in b64_list:
+            try: files.append(base64.b64decode(b64.replace('\n', '').replace('\r', ''), validate=True))
+            except Exception: return bad_request("أحد الملفات غير صالح")
+
+    if len(files) < 2: return bad_request("يرجى رفع ملفين PDF للمقارنة")
+    if not fitz: return bad_request("PyMuPDF غير متوفر")
+
+    try:
+        doc1 = fitz.open(stream=files[0], filetype="pdf")
+        doc2 = fitz.open(stream=files[1], filetype="pdf")
+        
+        diff_report = []
+        max_p = max(len(doc1), len(doc2))
+        
+        for i in range(max_p):
+            t1 = doc1[i].get_text().strip() if i < len(doc1) else "[صفحة غير موجودة]"
+            t2 = doc2[i].get_text().strip() if i < len(doc2) else "[صفحة غير موجودة]"
+            if t1 != t2:
+                diff_report.append(f"⚠️ اختلاف في الصفحة رقم ({i+1}) بين النسختين.")
+        
+        doc1.close()
+        doc2.close()
+
+        res_text = "🔍 تقرير الفروقات البصرية بين النسختين:\n\n" + ("\n".join(diff_report) if diff_report else "✅ كلا الملفين متطابقان تماماً في النصوص!")
+        return jsonify({"result": res_text})
+    except Exception:
+        return bad_request("تعذرت مقارنة الملفين.")
+
+def handle_reorder_pdf(p):
+    """إعادة ترتيب صفحات PDF حسب الترتيب المحدد من المستخدم"""
+    file_bytes = get_file_bytes(p)
+    order_str = (p.get("text") or "").strip()
+    is_arabic = p["is_arabic"]
+    if not file_bytes: return bad_request("يرجى رفع ملف PDF")
+    if not order_str: return bad_request("يرجى إدخال ترتيب الصفحات (مثال: 3, 1, 2, 4)")
+    if not validate_signature(file_bytes, "pdf"): return bad_signature_response(is_arabic)
+
+    try:
+        order = [int(x.strip()) - 1 for x in order_str.replace("،", ",").split(",") if x.strip().isdigit()]
+        reader = PdfReader(io.BytesIO(file_bytes))
+        writer = PdfWriter()
+        
+        for idx in order:
+            if 0 <= idx < len(reader.pages):
+                writer.add_page(reader.pages[idx])
+
+        if len(writer.pages) == 0: return bad_request("الترتيب المدخل غير صحيح.")
+        
+        apply_ghost_privacy(writer)
+        final_buf = io.BytesIO()
+        writer.write(final_buf)
+        return file_response(final_buf.getvalue(), "application/pdf", "Reordered_Document.pdf")
+    except Exception:
+        return bad_request("تعذر إعادة ترتيب الصفحات.")
 
 def handle_image_to_text(p):
     if pytesseract is None: return bad_request("مكتبة OCR غير مثبتة بالسيرفر")
@@ -1949,16 +2007,22 @@ REGISTRY = {
     "text-diff": handle_text_diff, "text-to-audio": handle_text_to_audio, "translate-text": handle_translate_text,
     "clean-study-sheet": handle_clean_study_sheet, "pdf-page-number": handle_pdf_page_number,
     "ink-saver-pdf": handle_ink_saver_pdf, "summarize-doc": handle_summarize_doc, "citation-generator": handle_citation_generator,
-    "sign-pdf": handle_sign_pdf, "remove-blank-pages": handle_remove_blank_pages, "generate-quiz": handle_generate_quiz
+    "sign-pdf": handle_sign_pdf, "remove-blank-pages": handle_remove_blank_pages, "generate-quiz": handle_generate_quiz,
+    "redact-pdf": handle_redact_pdf, "pdf-visual-diff": handle_pdf_visual_diff, "reorder-pdf": handle_reorder_pdf
 }
 
-NEEDS_MULTIPLE_FILES = {"merge-pdf", "merge-word"}
+NEEDS_MULTIPLE_FILES = {"merge-pdf", "merge-word", "pdf-visual-diff"}
 
-# ================= مسارات (Routes) الـ SEO والـ PWA والروابط المؤقتة =================
+# ================= مسارات (Routes) الـ SEO والـ PWA والروابط المؤقتة وتليجرام =================
 
 @app.route("/healthz")
 def health_check():
     return jsonify({"status": "ok", "time": time.time(), "active_tasks": len(async_task_results)}), 200
+
+@app.route("/telegram-webhook", methods=["POST"])
+def telegram_webhook():
+    update = request.get_json(silent=True) or {}
+    return jsonify({"status": "received", "message": "Telegram Bot endpoint ready"}), 200
 
 @app.route("/manifest.json")
 def manifest():
@@ -1986,13 +2050,13 @@ def index_en():
 @app.route("/<tool_slug>")
 def tool_page_ar(tool_slug):
     if tool_slug in ("privacy", "terms", "contact"): return render_template(f"{tool_slug}.html", lang="ar")
-    if tool_slug not in TOOLS_SEO: return "Page Not Found", 404
+    if tool_slug not in TOOLS_SEO: return render_template("index.html", tool_data=None, lang="ar", error_msg="الصفحة المطلوبة غير موجودة، تفضل باختيار الأداة من هنا:"), 404
     return render_template("index.html", tool_data=TOOLS_SEO[tool_slug], lang="ar")
 
 @app.route("/en/<tool_slug>")
 def tool_page_en(tool_slug):
     if tool_slug in ("privacy", "terms", "contact"): return render_template(f"{tool_slug}.html", lang="en")
-    if tool_slug not in TOOLS_SEO: return "Page Not Found", 404
+    if tool_slug not in TOOLS_SEO: return render_template("index.html", tool_data=None, lang="en", error_msg="Page not found, select a tool below:"), 404
     return render_template("index.html", tool_data=TOOLS_SEO[tool_slug], lang="en")
 
 @app.route('/sitemap.xml')
