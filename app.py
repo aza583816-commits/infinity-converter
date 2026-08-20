@@ -188,16 +188,6 @@ def internal_error_handler(e):
 ARABIC_FONT_NAME = "ArabicFont"
 _arabic_font_registered = False
 
-# ==================== طبقات المساندة والتدعيم الذكية ====================
-def support_arabic_text_normalization(text):
-    if not text: return text
-    return re.sub(r'[\u200b\u200c\u200d\ufeff]', '', text)
-
-def support_validate_table_structure(table_data):
-    if not table_data or not isinstance(table_data, list): return [["-"]]
-    max_cols = max(len(row) for row in table_data) if table_data else 1
-    return [[str(c).strip() if c else "" for c in (row + [""] * (max_cols - len(row)))] for row in table_data]
-
 # ==================== القائمة الشاملة لجميع الأدوات ====================
 TOOLS_DEF = [
     ("pdf-to-docx", "PDF إلى Word", "PDF to Word", "file", "i-word", "fa-file-word"),
@@ -410,7 +400,7 @@ def text_to_pdf_bytes(text, is_arabic, title=None):
     return final_buf.getvalue()
 
 def csv_to_pdf_bytes(text, is_arabic):
-    rows = support_validate_table_structure(parse_csv_text(text))
+    rows = parse_csv_text(text)
     buf = io.BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=A4, topMargin=15 * mm, bottomMargin=15 * mm, leftMargin=15 * mm, rightMargin=15 * mm)
     font = pdf_font_name(is_arabic)
@@ -466,6 +456,7 @@ def build_docx_from_text(text, is_arabic, add_page_numbers=False):
     doc.save(buf)
     return buf.getvalue()
 
+# ==================== طبقة الذكاء الاصطناعي لتحسين جودة القراءة ====================
 def enhance_image_for_ocr(img):
     try:
         img = img.convert('L')
@@ -515,17 +506,24 @@ def handle_pdf_to_docx(p):
         with open(pdf_path, "wb") as f: 
             f.write(file_bytes)
 
+        # ==========================================
+        # 1. المحرك الداخلي (pdf2docx) - الأقوى للحفاظ على الجداول محلياً
+        # ==========================================
         if Converter is not None:
             try:
                 cv = Converter(pdf_path)
                 cv.convert(docx_path, start=0, end=None)
                 cv.close()
+                
                 if os.path.exists(docx_path) and os.path.getsize(docx_path) > 0:
                     with open(docx_path, "rb") as df: 
                         return file_response(df.read(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "V-Infinity_Premium.docx")
             except Exception as e:
                 app.logger.warning(f"Local pdf2docx engine failed: {str(e)}")
 
+        # ==========================================
+        # 2. المحرك السحابي (CloudConvert) - خطة ب
+        # ==========================================
         if cc_key:
             try:
                 cloudconvert.configure(api_key=cc_key, sandbox=False)
@@ -540,20 +538,28 @@ def handle_pdf_to_docx(p):
                         "export-file": { "operation": "export/url", "input": "convert-file" }
                     }
                 })
+                
                 upload_task = cloudconvert.Task.find(id=job['tasks'][0]['id'])
                 cloudconvert.Task.upload(file_name=pdf_path, task=upload_task)
+                
                 job = cloudconvert.Job.wait(id=job['id'])
+                
                 for task in job['tasks']:
                     if task['name'] == 'export-file' and task['status'] == 'finished':
                         export_url = task['result']['files'][0]['url']
                         res = requests.get(export_url, timeout=30)
                         with open(docx_path, 'wb') as df:
                             df.write(res.content)
+                        
                         with open(docx_path, "rb") as df: 
                             return file_response(df.read(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "V-Infinity_Cloud.docx")
+            
             except Exception as e:
                 app.logger.warning(f"CloudConvert failed, falling back to ConvertAPI. Reason: {str(e)}")
 
+        # ==========================================
+        # 3. المحرك الاحتياطي (ConvertAPI) - خطة ج
+        # ==========================================
         if ca_key:
             try:
                 convertapi.api_credentials = ca_key
@@ -564,8 +570,10 @@ def handle_pdf_to_docx(p):
                     timeout=120
                 )
                 result.file.save(docx_path)
+                
                 with open(docx_path, "rb") as df: 
                     return file_response(df.read(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "V-Infinity_Fallback.docx")
+            
             except Exception as e:
                 app.logger.error(f"ConvertAPI Fallback Error: {str(e)}")
 
@@ -590,7 +598,7 @@ def handle_pdf_to_excel(p):
                         tables = page.extract_tables({"intersection_y_tolerance": 15})
                         if tables:
                             for t_idx, table in enumerate(tables):
-                                cleaned = support_validate_table_structure(table)
+                                cleaned = [[str(c).strip() if c else "" for c in row] for row in table]
                                 if not cleaned: continue
                                 df = pd.DataFrame(cleaned[1:], columns=cleaned[0]) if len(cleaned) > 1 else pd.DataFrame(cleaned)
                                 sheet_name = f"Page {idx+1} Tbl {t_idx+1}"[:31]
@@ -655,8 +663,8 @@ def handle_pdf_to_csv(p):
                     tables = page.extract_tables()
                     if tables:
                         for table in tables:
-                            for row in support_validate_table_structure(table):
-                                writer.writerow(row)
+                            for row in table:
+                                writer.writerow([str(cell).strip() if cell else "" for cell in row])
                                 wrote_any = True
                     else:
                         for line in (page.extract_text() or "").split("\n"):
