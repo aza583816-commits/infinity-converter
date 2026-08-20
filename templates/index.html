@@ -505,7 +505,7 @@
                     </div>
                 </a>
                 <a href="{% if lang == 'en' %}/en{% endif %}/resize-image" class="tool-card" data-slug="resize-image">
-                    <div class="tool-icon i-img"><i class="fa-solid fa-expand"></i></div>
+                    <div class="tool-icon i-img"><i class="fa-expand"></i></div>
                     <div class="tool-info">
                         <h3>{% if lang == 'ar' %}تغيير أبعاد الصورة{% else %}Resize Image{% endif %}</h3>
                         <p>{% if lang == 'ar' %}تعديل طول وعرض الصورة بدقة.{% else %}Adjust image width and height precisely.{% endif %}</p>
@@ -602,7 +602,7 @@
                     </div>
                 </a>
                 <a href="{% if lang == 'en' %}/en{% endif %}/json-beautifier" class="tool-card" data-slug="json-beautifier">
-                    <div class="tool-icon i-word"><i class="fa-solid fa-brackets-curly"></i></div>
+                    <div class="tool-icon i-word"><i class="fa-brackets-curly"></i></div>
                     <div class="tool-info">
                         <h3>{% if lang == 'ar' %}تنسيق JSON{% else %}JSON Formatter{% endif %}</h3>
                         <p>{% if lang == 'ar' %}ترتيب وتنظيف الأكواد البرمجية لسهولة القراءة.{% else %}Format and prettify JSON code for readability.{% endif %}</p>
@@ -981,9 +981,10 @@
                     const blob = await response.blob();
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a'); a.href = url;
-                    const cd = response.headers.get('Content-Disposition');
-                    let filename = 'downloaded_file';
-                    if (cd) { const match = cd.match(/filename="?([^"]+)"?/); if (match) filename = match[1]; }
+                    
+                    // 🚀 التعديل المباشر لتفادي خطأ المتصفح
+                    let filename = currentAction.includes('docx') ? 'Converted_Document.docx' : 'downloaded_file';
+                    
                     a.download = filename; document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url);
                     showToast('تم تحميل الملف بنجاح!', 'File downloaded successfully!');
                 }
