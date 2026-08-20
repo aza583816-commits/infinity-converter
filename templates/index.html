@@ -3,15 +3,18 @@
 <head>
     <!-- أيقونة الموقع الأساسية -->
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <!-- دعم متصفحات أبل وجوجل السريع -->
     <link rel="apple-touch-icon" href="/static/favicon.svg">
+    <!-- تلوين شريط المتصفح في الجوال بلون موقعك -->
     <meta name="theme-color" content="#09090b">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <!-- العناوين المتغيرة لـ SEO الذكي -->
+    <!-- 🚀 العناوين المتغيرة لـ SEO الذكي -->
     <title>{% if tool_data %}{{ tool_data.seo_title }}{% else %}Infinity Converter - المحول الشامل لملفات PDF والأدوات{% endif %}</title>
     <meta name="description" content="{% if tool_data %}{{ tool_data.seo_desc }}{% else %}منصة Infinity Converter الشاملة والمجانية لتحويل ملفات PDF، Word، Excel، والصور بضغطة زر. معالجة سحابية آمنة وسريعة بدون تخزين لملفاتك. اكتشف أكثر من 40 أداة الآن!{% endif %}">
 
+    <!-- كود جوجل أدسنس -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4343857922748618" crossorigin="anonymous"></script>
 
     <!-- الخطوط -->
@@ -101,7 +104,7 @@
         .workspace-header h1 { font-size: 32px; font-weight: 800; margin-bottom: 10px; color: var(--text-main); }
         .workspace-header p { font-size: 16px; color: var(--text-muted); }
 
-        /* ====== التحديث الجديد: قسم البحث والتصفية ====== */
+        /* ====== قسم البحث والتصفية ====== */
         .search-filter-container {
             max-width: 1200px; margin: 0 auto 30px; padding: 0 20px;
             display: flex; flex-direction: column; gap: 15px;
@@ -241,6 +244,7 @@
 
             <div id="activeToolArea" style="display: none;">
                 
+                <!-- تنبيه معدل ليتناسب مع الوضع الداكن -->
                 <div id="toolWarning" style="display: none; background: rgba(234, 179, 8, 0.1); color: #ca8a04; padding: 12px; border-radius: 8px; border: 1px solid rgba(234, 179, 8, 0.3); margin-bottom: 20px; font-size: 14px; font-weight: 700;">
                     <i class="fa-solid fa-triangle-exclamation"></i> 
                     <span id="warningText"></span>
@@ -286,7 +290,7 @@
     </div>
     {% endif %}
 
-    <!-- 🚀 التحديث الجديد: قسم البحث والتصفية -->
+    <!-- 🚀 قسم البحث والتصفية -->
     <div class="search-filter-container">
         <div class="search-box">
             <i class="fa-solid fa-search"></i>
@@ -350,7 +354,7 @@
                     <div class="tool-icon i-word"><i class="fa-solid fa-file-word"></i></div>
                     <div class="tool-info">
                         <h3 data-ar="PDF إلى Word" data-en="PDF to Word">PDF إلى Word</h3>
-                        <p data-ar="تحويل ملفات PDF إلى مستندات وورد قابلة للتعديل." data-en="Convert PDF files to editable Word documents.">تحويل ملفات PDF إلى مستندات وورد قابلة للتعديل.</p>
+                        <p data-ar="تحويل ملفات PDF إلى مستندات وورد مع الحفاظ على التنسيق." data-en="Convert PDF files to formatted Word documents.">تحويل ملفات PDF إلى مستندات وورد مع الحفاظ على التنسيق.</p>
                     </div>
                 </a>
                 <a href="/word-to-pdf" class="tool-card" onclick="handleToolClick(event, 'word-to-pdf', 'Word إلى PDF', 'Word to PDF', 'file', 'i-pdf', 'fa-file-pdf')">
@@ -708,7 +712,7 @@
         });
         {% endif %}
 
-        // 🚀 التحديث الجديد: برمجة محرك البحث السريع
+        // 🚀 محرك البحث السريع
         function searchTools() {
             let input = document.getElementById('searchInput').value.toLowerCase();
             let cards = document.querySelectorAll('.tool-card');
@@ -725,7 +729,6 @@
                 }
             });
 
-            // إخفاء الأقسام الفارغة
             categories.forEach(cat => {
                 let visibleCards = cat.querySelectorAll('.tool-card:not(.hidden)');
                 if (visibleCards.length === 0) {
@@ -735,19 +738,16 @@
                 }
             });
 
-            // إظهار رسالة إذا مافيه نتائج
             document.getElementById('noResultsMsg').style.display = hasResults ? 'none' : 'block';
         }
 
-        // 🚀 التحديث الجديد: أزرار التصفية الجانبية
+        // 🚀 أزرار التصفية الجانبية
         function filterCategory(category, btnElement) {
-            // تفعيل الزر المختار
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
             btnElement.classList.add('active');
 
-            // مسح مربع البحث
             document.getElementById('searchInput').value = '';
-            searchTools(); // إعادة تعيين البحث
+            searchTools(); 
 
             let categories = document.querySelectorAll('.category-group');
             categories.forEach(cat => {
@@ -796,9 +796,6 @@
             document.querySelectorAll('textarea[data-ar-ph]').forEach(el => {
                 el.placeholder = isArabic ? el.getAttribute('data-ar-ph') : el.getAttribute('data-en-ph');
             });
-            document.querySelectorAll('input[data-ar-ph]').forEach(el => {
-                el.placeholder = isArabic ? el.getAttribute('data-ar-ph') : el.getAttribute('data-en-ph');
-            });
             localStorage.setItem('v_lang', isArabic ? 'ar' : 'en');
         }
 
@@ -813,8 +810,8 @@
                 if (action === 'pdf-to-docx') {
                     warningBox.style.display = 'block';
                     document.getElementById('warningText').innerText = isArabic ? 
-                        "ملاحظة: هذه الأداة تعمل بكفاءة مع النصوص الإنجليزية. الملفات العربية المعقدة قد تفقد بعض التنسيق." : 
-                        "Note: This tool works best with English text. Arabic files may lose formatting.";
+                        "ملاحظة: لضمان سرعة التحويل والحفاظ على دقة الجداول، تمت ترقية خوارزمية التعريب." : 
+                        "Note: Upgraded AI processing enabled for maximum table structure accuracy.";
                 } else {
                     warningBox.style.display = 'none';
                 }
