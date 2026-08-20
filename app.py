@@ -482,6 +482,13 @@ def is_probably_scanned(text, page_count):
 
 def handle_pdf_to_docx(p):
     """المحرك الهجين الأقوى: CloudConvert كأساسي، و ConvertAPI كاحتياطي طوارئ"""
+    # وضعنا الاستيرادات هنا لضمان عملها 100% وعدم نسيانها
+    import cloudconvert
+    import convertapi
+    import requests
+    import tempfile
+    import os
+
     file_bytes = get_file_bytes(p)
     is_arabic = p.get("is_arabic", False)
     
@@ -490,7 +497,6 @@ def handle_pdf_to_docx(p):
     if not validate_signature(file_bytes, "pdf"): 
         return bad_signature_response(is_arabic)
 
-    # سحب المفاتيح من الخزنة
     cc_key = os.environ.get("CLOUDCONVERT_API_KEY")
     ca_key = os.environ.get("CONVERT_API_KEY")
 
@@ -517,7 +523,6 @@ def handle_pdf_to_docx(p):
                             "operation": "convert", 
                             "input": "import-file", 
                             "output_format": "docx"
-                            # تم حذف سطر المحرك ليستخدم النظام المحرك الافتراضي المتاح
                         },
                         "export-file": { "operation": "export/url", "input": "convert-file" }
                     }
