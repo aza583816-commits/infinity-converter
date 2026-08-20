@@ -66,14 +66,14 @@ except Exception:
 from pypdf import PdfReader, PdfWriter
 from pypdf.errors import PdfReadError
 
-# ================= المكتبات الخارقة للـ PDF والذكاء الاصطناعي =================
+# ================= المكتبات الخارقة =================
 try:
-    import fitz  # PyMuPDF (أقوى محرك لقراءة نصوص PDF)
+    import fitz  # PyMuPDF
 except Exception:
     fitz = None
 
 try:
-    import pdfplumber # (محرك الذكاء الاصطناعي لاستخراج الجداول)
+    import pdfplumber
 except Exception:
     pdfplumber = None
 
@@ -109,7 +109,7 @@ MAX_FILE_BYTES = MAX_FILE_MB * 1024 * 1024
 MAX_MERGE_FILES = int(os.environ.get("MAX_MERGE_FILES", 30))
 MAX_PDF_PAGES = int(os.environ.get("MAX_PDF_PAGES", 1000))
 MAX_TEXT_CHARS = int(os.environ.get("MAX_TEXT_CHARS", 5_000_000))
-SUBPROCESS_TIMEOUT = int(os.environ.get("SUBPROCESS_TIMEOUT", 300)) # 5 دقائق للملفات الثقيلة
+SUBPROCESS_TIMEOUT = int(os.environ.get("SUBPROCESS_TIMEOUT", 300))
 ALLOWED_ORIGINS = [o.strip() for o in os.environ.get(
     "ALLOWED_ORIGINS", "https://infinityconverter.com,https://www.infinityconverter.com"
 ).split(",") if o.strip()]
@@ -310,10 +310,14 @@ def open_image_safely(file_bytes):
 def run_libreoffice_convert(src_path, out_dir): 
     subprocess.run(["libreoffice", "--headless", "--nologo", "--nofirststartwizard", "--norestore", "--convert-to", "pdf", src_path, "--outdir", out_dir], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=SUBPROCESS_TIMEOUT)
 
-# ================= أدوات الـ PDF الأساسية (أقوى جودة ودقة) =================
+# ================= أدوات الـ PDF الأساسية (بعد إصلاح مشكلة تداخل النصوص) =================
 
 def handle_pdf_to_docx(p):
-    """تحويل PDF إلى Word بأعلى دقة للحفاظ على التنسيق واللغة العربية"""
+    """
+    تحويل PDF إلى Word:
+    تم تغيير maintain_layout إلى False لجعل النص متدفق (Flowable)
+    مما يمنع تداخل الكلمات العربية والمربعات النصية.
+    """
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
     if not file_bytes: return bad_request("يرجى رفع ملف PDF" if is_arabic else "Please upload a PDF file")
@@ -322,7 +326,6 @@ def handle_pdf_to_docx(p):
 
     tmp_pdf_path = None
     try:
-        # فحص الصفحات
         if fitz:
             doc_check = fitz.open(stream=file_bytes, filetype="pdf")
             err = enforce_pdf_page_limit(len(doc_check), is_arabic)
@@ -338,17 +341,17 @@ def handle_pdf_to_docx(p):
             docx_path = os.path.join(tmp_dir, f"{os.path.splitext(os.path.basename(tmp_pdf_path))[0]}.docx")
             cv = Converter(tmp_pdf_path)
             
-            # إعدادات فائقة الدقة للحفاظ على شكل الجداول والمسافات والصور
+            # السر هنا: maintain_layout=False يمنع إنشاء مربعات نصية تتداخل مع بعضها في العربي
             cv.convert(docx_path, start=0, end=None, kwargs={
                 "connected_border_tolerance": 2.5, 
                 "line_overlap_threshold": 0.9,
                 "line_margin": 0.1, 
                 "word_margin": 0.1, 
-                "maintain_layout": True # يحافظ على شكل الصفحة الأصلي
+                "maintain_layout": False 
             })
             cv.close()
 
-            # كود تصحيح الاتجاه (RTL) للنصوص العربية داخل الوورد
+            # إجبار التنسيق في الوورد من اليمين لليسار
             if is_arabic:
                 try:
                     doc = Document(docx_path)
@@ -378,7 +381,6 @@ def handle_pdf_to_docx(p):
         if tmp_pdf_path and os.path.exists(tmp_pdf_path): os.remove(tmp_pdf_path)
 
 def handle_pdf_to_excel(p):
-    """استخراج الجداول بدقة ذكية باستخدام pdfplumber أو النصوص بـ PyMuPDF"""
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
     if not file_bytes: return bad_request("No file provided")
@@ -387,8 +389,6 @@ def handle_pdf_to_excel(p):
     buf = io.BytesIO()
     with pd.ExcelWriter(buf, engine="openpyxl") as writer:
         has_data = False
-        
-        # المرحلة 1: استخدام الذكاء الاصطناعي (pdfplumber) للبحث عن جداول حقيقية
         if pdfplumber:
             try:
                 with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
@@ -415,7 +415,6 @@ def handle_pdf_to_excel(p):
                                 has_data = True
             except Exception: pass
             
-        # المرحلة 2: في حال فشل pdfplumber، نستخدم PyMuPDF الأسرع في استخراج النصوص كصفوف
         if not has_data and fitz:
             doc = fitz.open(stream=file_bytes, filetype="pdf")
             err = enforce_pdf_page_limit(len(doc), is_arabic)
@@ -431,7 +430,6 @@ def handle_pdf_to_excel(p):
                 auto_fit_excel_columns(writer, sheet_name, add_autofilter=False)
                 has_data = True
                 
-        # المرحلة 3: الملاذ الأخير باستخدام PyPDF العادي
         if not has_data:
             reader = PdfReader(io.BytesIO(file_bytes))
             err = enforce_pdf_page_limit(len(reader.pages), is_arabic)
@@ -449,7 +447,6 @@ def handle_pdf_to_excel(p):
     return file_response(buf.getvalue(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Converted_Excel.xlsx")
 
 def handle_pdf_to_csv(p):
-    """استخراج الجداول بصيغة CSV بدقة باستخدام نفس قوة الإكسل"""
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
     if not file_bytes: return bad_request("No file provided")
@@ -489,7 +486,6 @@ def handle_pdf_to_csv(p):
     except Exception: return bad_request("تعذر استخراج الجداول")
 
 def handle_pdf_to_text(p):
-    """استخراج نص الـ PDF بنظافة فائقة (مفيد للنسخ واللصق)"""
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
     if not file_bytes: return bad_request("No file provided")
@@ -510,7 +506,6 @@ def handle_pdf_to_text(p):
     except Exception: return bad_request("الملف تالف أو تعذر استخراج النص")
 
 def handle_pdf_to_ppt(p):
-    """تحويل الـ PDF لشرائح نظيفة ومقروءة"""
     if Presentation is None: return bad_request("python-pptx غير مثبّت")
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
@@ -556,7 +551,6 @@ def handle_pdf_to_ppt(p):
     except Exception: return bad_request("فشل تحويل الملف إلى عرض تقديمي.")
 
 def handle_merge_pdf(p):
-    """دمج ذكي للملفات مع تخفيف استهلاك الذاكرة وضغط الحجم"""
     files = p.get("filesBase64") or ([p.get("fileBase64")] if p.get("fileBase64") else [])
     is_arabic = p["is_arabic"]
     if len(files) < 2: return bad_request("يرجى رفع ملفين PDF على الأقل")
@@ -570,7 +564,7 @@ def handle_merge_pdf(p):
         except: continue
         writer.add_outline_item(f"ملف {i + 1}" if is_arabic else f"Document {i + 1}", page_count)
         for page in reader.pages:
-            page.compress_content_streams() # ضغط خيالي للحفاظ على حجم الملف المدمج
+            page.compress_content_streams() 
             writer.add_page(page)
             page_count += 1
     apply_ghost_privacy(writer)
