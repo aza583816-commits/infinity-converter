@@ -3,16 +3,21 @@
 <head>
     <!-- أيقونة الموقع الأساسية -->
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <!-- دعم متصفحات أبل وجوجل السريع -->
     <link rel="apple-touch-icon" href="/static/favicon.svg">
+    <!-- تلوين شريط المتصفح في الجوال بلون موقعك -->
     <meta name="theme-color" content="#09090b">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
+    <!-- 🚀 العناوين المتغيرة لـ SEO الذكي -->
     <title>{% if tool_data %}{{ tool_data.seo_title }}{% else %}Infinity Converter - المحول الشامل لملفات PDF والأدوات{% endif %}</title>
     <meta name="description" content="{% if tool_data %}{{ tool_data.seo_desc }}{% else %}منصة Infinity Converter الشاملة والمجانية لتحويل ملفات PDF، Word، Excel، والصور بضغطة زر. معالجة سحابية آمنة وسريعة بدون تخزين لملفاتك. اكتشف أكثر من 40 أداة الآن!{% endif %}">
 
+    <!-- كود جوجل أدسنس -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4343857922748618" crossorigin="anonymous"></script>
 
+    <!-- الخطوط -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -39,6 +44,7 @@
             --c-dev: #8b5cf6;  --bg-dev: #ede9fe;
         }
 
+        /* ====== الوضع الداكن الملكي وفخم ====== */
         .dark-mode {
             --bg-body: #09090b;       
             --bg-surface: #18181b;    
@@ -98,6 +104,7 @@
         .workspace-header h1 { font-size: 32px; font-weight: 800; margin-bottom: 10px; color: var(--text-main); }
         .workspace-header p { font-size: 16px; color: var(--text-muted); }
 
+        /* ====== قسم البحث والتصفية ====== */
         .search-filter-container {
             max-width: 1200px; margin: 0 auto 30px; padding: 0 20px;
             display: flex; flex-direction: column; gap: 15px;
@@ -830,13 +837,9 @@
             }
 
             document.querySelectorAll('[data-ar]').forEach(el => {
-                if(el.tagName === 'INPUT') {
-                    el.placeholder = isArabic ? el.getAttribute('data-ar-ph') : el.getAttribute('data-en-ph');
-                } else {
-                    el.innerHTML = isArabic ? el.getAttribute('data-ar') : el.getAttribute('data-en');
-                }
+                el.innerHTML = isArabic ? el.getAttribute('data-ar') : el.getAttribute('data-en');
             });
-            document.querySelectorAll('textarea[data-ar-ph]').forEach(el => {
+            document.querySelectorAll('textarea[data-ar-ph], input[data-ar-ph]').forEach(el => {
                 el.placeholder = isArabic ? el.getAttribute('data-ar-ph') : el.getAttribute('data-en-ph');
             });
             localStorage.setItem('v_lang', isArabic ? 'ar' : 'en');
@@ -998,7 +1001,6 @@
             }
         }
         
-        // 1. التعرف التلقائي على مظهر الجهاز (داكن / فاتح)
         if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
             document.body.classList.remove('dark-mode');
             document.getElementById('themeBtn').innerHTML = '<i class="fa-solid fa-moon"></i>';
@@ -1007,7 +1009,6 @@
             document.getElementById('themeBtn').innerHTML = '<i class="fa-solid fa-sun"></i>';
         }
 
-        // 2. التعرف التلقائي على لغة المتصفح/الجهاز
         const userLang = navigator.language || navigator.userLanguage;
         if (!userLang.startsWith('ar')) {
             toggleLanguage();
