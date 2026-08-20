@@ -478,85 +478,35 @@ def is_probably_scanned(text, page_count):
 
 # ================= أدوات الـ PDF (النسخة الخارقة المطورة) =================
 def handle_pdf_to_docx(p):
-    """تحويل PDF إلى Word مع المعالج الذكي للغة العربية"""
+    """تحويل PDF إلى Word بدقة كاملة عبر ConvertAPI مع دعم تام للعربية والجداول"""
     file_bytes = get_file_bytes(p)
     is_arabic = p["is_arabic"]
     if not file_bytes: return bad_request("يرجى رفع ملف PDF")
-    if Converter is None: return bad_request("مكتبة pdf2docx غير مثبتة")
     if not validate_signature(file_bytes, "pdf"): return bad_signature_response(is_arabic)
 
+    # المفتاح الخاص بك
+    convertapi.api_credentials = '1e3XUtacpKV01ZupWlK6L6j325EFXGaO'
+
     try:
-        if fitz:
-            doc_check = fitz.open(stream=file_bytes, filetype="pdf")
-            err = enforce_pdf_page_limit(len(doc_check), is_arabic)
-            doc_check.close()
-        else: err = enforce_pdf_page_limit(len(PdfReader(io.BytesIO(file_bytes)).pages), is_arabic)
-        if err: return err
-
         with tempfile.TemporaryDirectory() as tmp_dir:
-            tmp_pdf_path = os.path.join(tmp_dir, f"{uuid.uuid4().hex}.pdf")
-            with open(tmp_pdf_path, "wb") as f: f.write(file_bytes)
-            docx_path = os.path.join(tmp_dir, f"{os.path.splitext(os.path.basename(tmp_pdf_path))[0]}.docx")
+            pdf_path = os.path.join(tmp_dir, "input.pdf")
+            docx_path = os.path.join(tmp_dir, "output.docx")
             
-            # الخطوة 1: التحويل الأساسي (يحافظ على الجداول والألوان)
-            cv = Converter(tmp_pdf_path)
-            cv.convert(docx_path, start=0, end=None, kwargs={
-                "maintain_layout": True,
-                "connected_border_tolerance": 2.5
-            })
-            cv.close()
-
-            # الخطوة 2: 🧠 المعالج الذكي للنصوص العربية 🧠
-            if is_arabic:
-                try:
-                    doc = Document(docx_path)
-                    
-                    # دالة ذكية لعكس وربط الحروف المقطعة
-                    def smart_fix_arabic(text):
-                        if not text or not text.strip(): return text
-                        if is_arabic_text(text):
-                            try:
-                                # عكس النص لأن المكتبة تقرأه من اليسار لليمين
-                                reversed_text = text[::-1]
-                                # ربط الحروف المقطعة
-                                reshaped = arabic_reshaper.reshape(reversed_text)
-                                # تصحيح الاتجاه
-                                return get_display(reshaped)
-                            except Exception:
-                                return text
-                        return text
-
-                    # معالجة الفقرات العادية
-                    for paragraph in doc.paragraphs:
-                        if is_arabic_text(paragraph.text):
-                            paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-                            pPr = paragraph._element.get_or_add_pPr()
-                            pPr.insert(0, OxmlElement('w:bidi'))
-                            # تصحيح كل جزء من النص للحفاظ على الألوان والخطوط العريضة
-                            for run in paragraph.runs:
-                                run.text = smart_fix_arabic(run.text)
-
-                    # معالجة الجداول (مثل جدول الرسوم في الخطة الزمنية)
-                    for table in doc.tables:
-                        tblPr = table._element.xpath('w:tblPr')
-                        if tblPr: tblPr[0].append(OxmlElement('w:bidiVisual'))
-                        for row in table.rows:
-                            for cell in row.cells:
-                                for par in cell.paragraphs:
-                                    if is_arabic_text(par.text):
-                                        par.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-                                        pPr = par._element.get_or_add_pPr()
-                                        pPr.insert(0, OxmlElement('w:bidi'))
-                                        for run in par.runs:
-                                            run.text = smart_fix_arabic(run.text)
-                    doc.save(docx_path)
-                except Exception as e:
-                    app.logger.error(f"Smart Healer Error: {e}")
-
-            with open(docx_path, "rb") as f: docx_bytes = f.read()
+            with open(pdf_path, "wb") as f: 
+                f.write(file_bytes)
+            
+            # تنفيذ التحويل السحابي المتوافق تماماً مع النصوص والجداول العربية
+            result = convertapi.convert('docx', {'File': pdf_path}, from_format='pdf')
+            result.file.save(docx_path)
+            
+            with open(docx_path, "rb") as f: 
+                docx_bytes = f.read()
+            
             return file_response(docx_bytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "Converted_Document.docx")
-    except Exception: 
-        return bad_request("فشل التحويل، الملف معقد جداً.")
+            
+    except Exception as e:
+        app.logger.error(f"ConvertAPI Error: {str(e)}")
+        return bad_request("فشل تحويل الملف عبر المحرك السحابي.")
 
 def handle_pdf_to_excel(p):
     file_bytes = get_file_bytes(p)
