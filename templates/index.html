@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-        <!-- أيقونة الموقع الأساسية -->
+    <!-- أيقونة الموقع الأساسية -->
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
     <!-- دعم متصفحات أبل وجوجل السريع -->
     <link rel="apple-touch-icon" href="/static/favicon.svg">
@@ -239,7 +239,7 @@
                 <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
                     <i class="fa-solid fa-cloud-arrow-up"></i>
                     <h3 id="uploadText" data-ar="اختر ملفاً أو اسحبه هنا" data-en="Choose a file or drag it here">اختر ملفاً أو اسحبه هنا</h3>
-                    <p data-ar="الحد الأقصى للملف: 4MB" data-en="Max file size: 4MB">الحد الأقصى للملف: 4MB</p>
+                    <p data-ar="الحد الأقصى للملف: 25MB" data-en="Max file size: 25MB">الحد الأقصى للملف: 25MB</p>
                     <p id="fileName" style="margin-top: 10px; color: var(--primary); font-weight: bold;"></p>
                     <input type="file" id="fileInput" onchange="handleFileSelect(event)">
                     <input type="file" id="multiFileInput" multiple style="display:none;" onchange="handleMultiFileSelect(event)">
@@ -743,7 +743,7 @@
         function handleMultiFileSelect(e) { if(e.target.files.length > 1) handleMultiFiles(e.target.files); else if (e.target.files.length === 1) processFile(e.target.files[0]); }
 
         function processFile(file) {
-            if (file.size > 4 * 1024 * 1024) { showToast('حجم الملف يتجاوز 4 ميجابايت!', 'File size exceeds 4MB!', true); return; }
+            if (file.size > 25 * 1024 * 1024) { showToast('حجم الملف يتجاوز 25 ميجابايت!', 'File size exceeds 25MB!', true); return; }
             document.getElementById('fileName').innerText = file.name;
             const reader = new FileReader();
             reader.onload = (e) => { fileBase64 = e.target.result.split(',')[1]; };
@@ -754,7 +754,7 @@
             document.getElementById('fileName').innerText = isArabic ? `تم تحديد ${files.length} ملفات` : `${files.length} files selected`;
             filesBase64Array = [];
             Array.from(files).forEach(file => {
-                if (file.size > 4 * 1024 * 1024) return;
+                if (file.size > 25 * 1024 * 1024) return;
                 const reader = new FileReader();
                 reader.onload = (e) => { filesBase64Array.push(e.target.result.split(',')[1]); };
                 reader.readAsDataURL(file);
