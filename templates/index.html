@@ -134,6 +134,9 @@
         .result-area { margin-top: 20px; padding: 20px; background: #ecfdf5; border: 1px solid #10b981; color: #065f46; border-radius: 12px; display: none; word-wrap: break-word; text-align: start; font-weight: 600;}
         .result-area.error { background: #fef2f2; border-color: #ef4444; color: #991b1b; }
 
+        /* 🚀 بطاقة إحصائية لتوفير الحجم بعد الضغط */
+        .savings-badge { display: none; margin-top: 15px; padding: 12px; background: #dbeafe; color: #1e40af; border-radius: 10px; font-weight: bold; text-align: center; }
+
         .action-buttons-group { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 15px; }
         .btn-whatsapp { background: #25d366; color: white; border: none; padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-family: inherit; transition: 0.2s; }
         .btn-whatsapp:hover { background: #128c7e; transform: translateY(-2px); }
@@ -236,7 +239,7 @@
 
                 <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()" style="display: none;">
                     <i class="fa-solid fa-cloud-arrow-up"></i>
-                    <h3 id="uploadText">{% if lang == 'ar' %}اسحب وأفلت الملف هنا أو اضغط للاختيار{% else %}Drag & Drop file here or click to select{% endif %}</h3>
+                    <h3 id="uploadText">{% if lang == 'ar' %}اسحب وأفلت الملف هنا أو اضغط للاختيار (أو الصق Ctrl+V){% else %}Drag & Drop file here or paste (Ctrl+V){% endif %}</h3>
                     <p>{% if lang == 'ar' %}الحد الأقصى للملف: 25MB{% else %}Max file size: 25MB{% endif %}</p>
                     <p id="fileName" style="margin-top: 10px; color: var(--primary); font-weight: bold;"></p>
                     <input type="file" id="fileInput" onchange="handleFileSelect(event)">
@@ -267,6 +270,7 @@
                     </button>
                 </div>
 
+                <div class="savings-badge" id="savingsBadge"></div>
                 <div class="result-area" id="resultArea"></div>
 
                 <div class="action-buttons-group" id="actionButtonsGroup" style="display: none;">
@@ -329,6 +333,13 @@
         <div class="category-group" data-category="students">
             <div class="section-title"><i class="fa-solid fa-graduation-cap" style="color:var(--primary)"></i> <span>{% if lang == 'ar' %}أدوات الطلاب والمعلمين{% else %}Students & Teachers Tools{% endif %}</span></div>
             <div class="tools-grid">
+                <a href="{% if lang == 'en' %}/en{% endif %}/arabic-proofreader" class="tool-card" data-slug="arabic-proofreader">
+                    <div class="tool-icon i-word"><i class="fa-solid fa-spell-check"></i></div>
+                    <div class="tool-info">
+                        <h3>{% if lang == 'ar' %}المدقق اللغوي وتصحيح الهمزات{% else %}Arabic Proofreader{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}تصحيح الأخطاء الإملائية والهمزات وعلامات الترقيم للأبحاث.{% else %}Correct spelling, punctuation, and Arabic grammar for research.{% endif %}</p>
+                    </div>
+                </a>
                 <a href="{% if lang == 'en' %}/en{% endif %}/generate-quiz" class="tool-card" data-slug="generate-quiz">
                     <div class="tool-icon i-word"><i class="fa-solid fa-spell-check"></i></div>
                     <div class="tool-info">
@@ -391,6 +402,27 @@
         <div class="category-group" data-category="pdf">
             <div class="section-title"><i class="fa-solid fa-file-pdf" style="color:var(--c-pdf)"></i> <span>{% if lang == 'ar' %}أدوات PDF والمستندات{% else %}PDF & Document Tools{% endif %}</span></div>
             <div class="tools-grid">
+                <a href="{% if lang == 'en' %}/en{% endif %}/compress-pdf-target" class="tool-card" data-slug="compress-pdf-target">
+                    <div class="tool-icon i-pdf"><i class="fa-solid fa-gauge-high"></i></div>
+                    <div class="tool-info">
+                        <h3>{% if lang == 'ar' %}ضغط PDF لحجم محدد (KB){% else %}Compress to Target Size{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}حدد الحجم المطلوب بالكيلوبايت للتقديم على المنصات.{% else %}Compress PDF to an exact target size (e.g. 500KB).{% endif %}</p>
+                    </div>
+                </a>
+                <a href="{% if lang == 'en' %}/en{% endif %}/pdf-to-images" class="tool-card" data-slug="pdf-to-images">
+                    <div class="tool-icon i-img"><i class="fa-solid fa-file-zipper"></i></div>
+                    <div class="tool-info">
+                        <h3>{% if lang == 'ar' %}PDF إلى صور (ملف ZIP){% else %}PDF to Images (ZIP){% endif %}</h3>
+                        <p>{% if lang == 'ar' %}استخراج كل صفحات الـ PDF كصور عالية الدقة في ملف مضغوط.{% else %}Extract all PDF pages as separate JPG images in a ZIP.{% endif %}</p>
+                    </div>
+                </a>
+                <a href="{% if lang == 'en' %}/en{% endif %}/extract-pdf-images" class="tool-card" data-slug="extract-pdf-images">
+                    <div class="tool-icon i-img"><i class="fa-solid fa-image"></i></div>
+                    <div class="tool-info">
+                        <h3>{% if lang == 'ar' %}استخراج الصور المضمنة فقط{% else %}Extract Embedded Images{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}استخراج الصور والمخططات داخل ملف PDF بجودتها الأصلية.{% else %}Extract embedded images and diagrams from PDF directly.{% endif %}</p>
+                    </div>
+                </a>
                 <a href="{% if lang == 'en' %}/en{% endif %}/redact-pdf" class="tool-card" data-slug="redact-pdf">
                     <div class="tool-icon i-pdf"><i class="fa-solid fa-user-secret"></i></div>
                     <div class="tool-info">
@@ -530,6 +562,13 @@
         <div class="category-group" data-category="data">
             <div class="section-title"><i class="fa-solid fa-table" style="color:var(--c-excel)"></i> <span>{% if lang == 'ar' %}أدوات البيانات والجداول{% else %}Data & Spreadsheets{% endif %}</span></div>
             <div class="tools-grid">
+                <a href="{% if lang == 'en' %}/en{% endif %}/ppt-to-images" class="tool-card" data-slug="ppt-to-images">
+                    <div class="tool-icon i-ppt"><i class="fa-solid fa-file-powerpoint"></i></div>
+                    <div class="tool-info">
+                        <h3>{% if lang == 'ar' %}PowerPoint إلى صور{% else %}PPT to Images{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}تحويل وتصدير شرائح العروض التقديمية إلى صور JPG.{% else %}Export PowerPoint slides into JPG images in a ZIP.{% endif %}</p>
+                    </div>
+                </a>
                 <a href="{% if lang == 'en' %}/en{% endif %}/pdf-to-csv" class="tool-card" data-slug="pdf-to-csv">
                     <div class="tool-icon i-excel"><i class="fa-solid fa-file-csv"></i></div>
                     <div class="tool-info">
@@ -858,6 +897,7 @@
         let fileBase64 = null;
         let filesBase64Array = []; 
         let rawFileObject = null;
+        let originalFileSizeBytes = 0;
         let lastDownloadedBlob = null;
         let lastDownloadedFilename = '';
         let lastDownloadedBase64 = '';
@@ -999,6 +1039,15 @@
             }
         }
 
+        // 🚀 دعم اللصق المباشر من الحافظة (Ctrl + V)
+        window.addEventListener('paste', (e) => {
+            if (e.clipboardData && e.clipboardData.files.length) {
+                const file = e.clipboardData.files[0];
+                processFile(file);
+                showToast("تم إدراج الملف من الحافظة بنجاح!", "File pasted from clipboard!");
+            }
+        });
+
         window.addEventListener('DOMContentLoaded', () => {
             loadRecentTools();
             initSignatureCanvas();
@@ -1049,6 +1098,8 @@
                     textArea.placeholder = isArabic ? "اكتب الكلمات الحساسة المراد طمسها مفصولة بفاصلة (مثال: الاسم، رقم الهوية، السري)..." : "Type sensitive words to redact separated by commas...";
                 } else if(currentAction === 'reorder-pdf') {
                     textArea.placeholder = isArabic ? "اكتب ترتيب الصفحات الجديد (مثال: 3, 1, 2)..." : "Type new page order (e.g., 3, 1, 2)...";
+                } else if(currentAction === 'compress-pdf-target') {
+                    textArea.placeholder = isArabic ? "اكتب الحجم المستهدف بالكيلوبايت (مثال: 500 أو 1000)..." : "Enter target size in KB (e.g., 500 or 1000)...";
                 }
             }
         }
@@ -1145,6 +1196,7 @@
         function processFile(file) {
             if (file.size > 25 * 1024 * 1024) { showToast('حجم الملف يتجاوز 25 ميجابايت!', 'File size exceeds 25MB!', true); return; }
             rawFileObject = file;
+            originalFileSizeBytes = file.size;
             document.getElementById('fileName').innerText = file.name;
             const reader = new FileReader();
             reader.onload = (e) => { fileBase64 = e.target.result.split(',')[1]; };
@@ -1184,6 +1236,7 @@
             const spinner = document.getElementById('spinner');
             const btnText = document.getElementById('btnText');
             const resultArea = document.getElementById('resultArea');
+            const savingsBadge = document.getElementById('savingsBadge');
             const progressBar = document.getElementById('progressBar');
             const progressContainer = document.getElementById('progressContainer');
             const actionButtonsGroup = document.getElementById('actionButtonsGroup');
@@ -1192,6 +1245,7 @@
             if (cancelBtn) cancelBtn.style.display = 'block';
             btnText.innerText = isArabic ? 'جاري تحليل ومعالجة البيانات...' : 'Processing data...';
             resultArea.style.display = 'none'; resultArea.classList.remove('error');
+            if (savingsBadge) savingsBadge.style.display = 'none';
             if (actionButtonsGroup) actionButtonsGroup.style.display = 'none';
             
             progressContainer.style.display = 'block';
@@ -1300,9 +1354,26 @@
                     else if(currentAction === 'remove-blank-pages') filename = 'No_Blanks_Document.pdf';
                     else if(currentAction === 'redact-pdf') filename = 'Redacted_Document.pdf';
                     else if(currentAction === 'reorder-pdf') filename = 'Reordered_Document.pdf';
+                    else if(currentAction === 'compress-pdf' || currentAction === 'compress-pdf-target') filename = 'Compressed_Document.pdf';
+                    else if(currentAction === 'pdf-to-images') filename = 'PDF_Pages_Images.zip';
+                    else if(currentAction === 'extract-pdf-images') filename = 'PDF_Embedded_Images.zip';
+                    else if(currentAction === 'ppt-to-images') filename = 'PowerPoint_Slides.zip';
                     
                     lastDownloadedFilename = filename;
                     
+                    // 🚀 حساب وعرض نسبة توفير الحجم عند ضغط الـ PDF
+                    if ((currentAction === 'compress-pdf' || currentAction === 'compress-pdf-target') && originalFileSizeBytes > 0 && blob.size < originalFileSizeBytes) {
+                        const savedPct = Math.round((1 - (blob.size / originalFileSizeBytes)) * 100);
+                        const oldMB = (originalFileSizeBytes / (1024 * 1024)).toFixed(2);
+                        const newMB = (blob.size / (1024 * 1024)).toFixed(2);
+                        if (savingsBadge) {
+                            savingsBadge.innerText = isArabic ? 
+                                `🎉 تم توفير ${savedPct}% من حجم الملف! (انخفض من ${oldMB}MB إلى ${newMB}MB)` :
+                                `🎉 Saved ${savedPct}% of file size! (Reduced from ${oldMB}MB to ${newMB}MB)`;
+                            savingsBadge.style.display = 'block';
+                        }
+                    }
+
                     const r = new FileReader();
                     r.onloadend = () => { lastDownloadedBase64 = r.result.split(',')[1]; };
                     r.readAsDataURL(blob);
