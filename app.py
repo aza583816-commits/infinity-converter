@@ -16,6 +16,8 @@ import urllib.request
 import uuid
 import zipfile
 import gc
+import threading
+import queue
 import cloudconvert
 import convertapi
 import requests
@@ -188,6 +190,37 @@ def internal_error_handler(e):
 ARABIC_FONT_NAME = "ArabicFont"
 _arabic_font_registered = False
 
+# ==================== الإضافات الذكية المدعومة (طوابير العمل و الذكاء الاصطناعي المحلي) ====================
+conversion_queue = queue.Queue()
+
+def background_worker():
+    while True:
+        try:
+            task_func, args, callback = conversion_queue.get()
+            if task_func is None: break
+            try:
+                res = task_func(*args)
+                if callback: callback(res, None)
+            except Exception as e:
+                if callback: callback(None, str(e))
+            finally:
+                conversion_queue.task_done()
+        except Exception: pass
+
+worker_thread = threading.Thread(target=background_worker, daemon=True)
+worker_thread.start()
+
+def ai_smart_ocr_extraction(image_bytes, is_arabic=True):
+    if pytesseract is None: return "OCR Library not available."
+    try:
+        img = Image.open(io.BytesIO(image_bytes)).convert('L')
+        img = ImageEnhance.Contrast(img).enhance(2.2)
+        lang = 'ara+eng' if is_arabic else 'eng'
+        text = pytesseract.image_to_string(img, lang=lang)
+        return re.sub(r'[\u200b\u200c\u200d\ufeff]', '', text).strip()
+    except Exception as e:
+        return f"AI OCR Error: {str(e)}"
+
 # ==================== القائمة الشاملة لجميع الأدوات ====================
 TOOLS_DEF = [
     ("pdf-to-docx", "PDF إلى Word", "PDF to Word", "file", "i-word", "fa-file-word"),
@@ -217,7 +250,7 @@ TOOLS_DEF = [
     ("excel-to-json", "Excel إلى JSON", "Excel to JSON", "file", "i-dev", "fa-code"),
     ("csv-to-json", "CSV إلى JSON", "CSV to JSON", "fileText", "i-dev", "fa-code"),
     ("text-to-csv", "نص إلى CSV", "Text to CSV", "text", "i-excel", "fa-file-csv"),
-    ("json-to-csv", "JSON إلى CSV", "JSON to CSV", "fileText", "i-excel", "fa-file-csv"),
+    ("json-to-csv", "JSON إلى CSV", "JSON to CSV", "fileText", "i-dev", "fa-file-csv"),
     ("image-to-pdf", "صورة إلى PDF", "Image to PDF", "file", "i-img", "fa-images"),
     ("compress-image", "ضغط الصور", "Compress Image", "file", "i-excel", "fa-compress"),
     ("image-to-jpg", "تحويل لـ JPG", "Convert to JPG", "file", "i-img", "fa-image"),
@@ -273,6 +306,7 @@ for action, nameAr, nameEn, type_, iconClass, iconName in TOOLS_DEF:
         ]
     }
 
+# ==================== دوال الحماية والمساعدات ====================
 def validate_signature(file_bytes, kind):
     if not file_bytes: return False
     if kind == "pdf": return file_bytes[:5] == b"%PDF-"
