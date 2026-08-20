@@ -19,6 +19,7 @@ import gc
 import threading
 import queue
 import time
+import gzip
 import cloudconvert
 import convertapi
 import requests
@@ -171,7 +172,8 @@ HEAVY_ACTIONS = {
     "merge-pdf", "compress-image", "image-to-text", "text-to-audio", "translate-text",
     "watermark-pdf", "compress-pdf", "protect-pdf", "clean-study-sheet", "summarize-doc",
     "pdf-page-number", "ink-saver-pdf", "sign-pdf", "remove-blank-pages", "generate-quiz",
-    "redact-pdf", "pdf-compare", "reorder-pdf"
+    "redact-pdf", "pdf-compare", "reorder-pdf", "compress-pdf-target", "pdf-to-images",
+    "extract-pdf-images", "arabic-proofreader", "ppt-to-images"
 }
 
 def dynamic_convert_limit():
@@ -340,7 +342,12 @@ TOOLS_DEF = [
     ("generate-quiz", "توليد أسئلة واختبارات من ملف", "Quiz & Flashcard Generator", "fileText", "i-word", "fa-spell-check"),
     ("redact-pdf", "طمس البيانات الحساسة من PDF", "Redact PDF", "fileText", "i-pdf", "fa-user-secret"),
     ("pdf-compare", "مقارنة نسختين من PDF", "Compare Two PDFs", "multiFile", "i-pdf", "fa-code-compare"),
-    ("reorder-pdf", "إعادة ترتيب صفحات PDF", "Reorder PDF Pages", "fileText", "i-pdf", "fa-arrow-down-1-9")
+    ("reorder-pdf", "إعادة ترتيب صفحات PDF", "Reorder PDF Pages", "fileText", "i-pdf", "fa-arrow-down-1-9"),
+    ("compress-pdf-target", "ضغط PDF إلى حجم محدد (KB)", "Compress PDF to Target Size", "fileText", "i-pdf", "fa-gauge-high"),
+    ("pdf-to-images", "PDF إلى صور JPG/PNG (ZIP)", "PDF to Images (ZIP)", "file", "i-img", "fa-file-zipper"),
+    ("extract-pdf-images", "استخراج الصور المضمنة من PDF", "Extract Images from PDF", "file", "i-img", "fa-image"),
+    ("arabic-proofreader", "المصحح والمدقق اللغوي العربي", "Arabic Proofreader", "text", "i-word", "fa-spell-check"),
+    ("ppt-to-images", "شرائح PowerPoint إلى صور", "PPT to Images", "file", "i-ppt", "fa-file-powerpoint")
 ]
 
 TOOLS_SEO = {}
@@ -1532,7 +1539,7 @@ def handle_strip_exif(p):
     clean.save(buf, format=fmt, quality=95, optimize=True)
     return file_response(buf.getvalue(), "image/png" if fmt == "PNG" else "image/jpeg", f"Privacy_Cleaned.{'png' if fmt=='PNG' else 'jpg'}")
 
-# ================= أدوات الطلاب والمعلمين والتوقيع والذكاء الاصطناعي =================
+# ================= أدوات الطلاب والمعلمين والتوقيع والذكاء الاصطناعي والميزات الجديدة =================
 def handle_clean_study_sheet(p):
     img, err = _load_validated_image(p, p["is_arabic"])
     if err: return err
@@ -1752,7 +1759,6 @@ def handle_generate_quiz(p):
     return jsonify({"result": final_quiz})
 
 def handle_redact_pdf(p):
-    """طمس وإخفاء الكلمات والبيانات الحساسة من PDF باللون الأسود"""
     file_bytes = get_file_bytes(p)
     words_to_hide = (p.get("text") or "").split(",")
     is_arabic = p["is_arabic"]
@@ -1779,7 +1785,6 @@ def handle_redact_pdf(p):
         return bad_request("تعذر طمس البيانات من المستند.")
 
 def handle_pdf_compare(p):
-    """مقارنة نسختين من PDF بصرياً واستخراج الفروقات بدقة"""
     files = p.get("_files_raw") or []
     if not files:
         b64_list = p.get("filesBase64") or []
@@ -1813,7 +1818,6 @@ def handle_pdf_compare(p):
         return bad_request("تعذرت مقارنة الملفين.")
 
 def handle_reorder_pdf(p):
-    """إعادة ترتيب صفحات PDF بحسب أرقام يحددها المستخدم"""
     file_bytes = get_file_bytes(p)
     order_str = (p.get("text") or "").strip()
     is_arabic = p["is_arabic"]
@@ -1840,6 +1844,127 @@ def handle_reorder_pdf(p):
         return file_response(final_buf.getvalue(), "application/pdf", "Reordered_Document.pdf")
     except Exception:
         return bad_request("تعذر إعادة ترتيب صفحات المستند.")
+
+def handle_compress_pdf_target(p):
+    """ضغط PDF إلى حجم مستهدف محدد بالكيلوبايت"""
+    file_bytes = get_file_bytes(p)
+    target_kb = int(re.sub(r'[^0-9]', '', p.get("text") or "500") or 500)
+    is_arabic = p["is_arabic"]
+    if not file_bytes: return bad_request("يرجى رفع ملف PDF")
+    if not validate_signature(file_bytes, "pdf"): return bad_signature_response(is_arabic)
+
+    if not fitz: return bad_request("PyMuPDF غير متوفر")
+    try:
+        doc = fitz.open(stream=file_bytes, filetype="pdf")
+        dpi_scale = 1.0 if target_kb > 1000 else (0.7 if target_kb > 400 else 0.5)
+        
+        out_doc = fitz.open()
+        for page in doc:
+            pix = page.get_pixmap(dpi=int(72 * dpi_scale))
+            img = Image.open(io.BytesIO(pix.tobytes("jpeg")))
+            img_buf = io.BytesIO()
+            img.save(img_buf, format="JPEG", quality=60, optimize=True)
+            img_pdf = fitz.open(stream=img_buf.getvalue(), filetype="pdf")
+            out_doc.insert_pdf(img_pdf)
+
+        final_bytes = out_doc.tobytes(deflate=True, garbage=4)
+        doc.close()
+        out_doc.close()
+        return file_response(final_bytes, "application/pdf", f"Compressed_{target_kb}KB.pdf")
+    except Exception:
+        return bad_request("تعذر ضغط المستند للحجم المحدد.")
+
+def handle_pdf_to_images(p):
+    """استخراج كل صفحات الـ PDF كصور منفصلة في ملف ZIP مضغوط"""
+    file_bytes = get_file_bytes(p)
+    is_arabic = p["is_arabic"]
+    if not file_bytes: return bad_request("يرجى رفع ملف PDF")
+    if not validate_signature(file_bytes, "pdf"): return bad_signature_response(is_arabic)
+
+    if not fitz: return bad_request("PyMuPDF غير متوفر")
+    try:
+        doc = fitz.open(stream=file_bytes, filetype="pdf")
+        zip_buf = io.BytesIO()
+        with zipfile.ZipFile(zip_buf, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+            for i, page in enumerate(doc):
+                pix = page.get_pixmap(dpi=150)
+                zf.writestr(f"Page_{i+1}.jpg", pix.tobytes("jpeg"))
+        doc.close()
+        return file_response(zip_buf.getvalue(), "application/zip", "PDF_Images.zip")
+    except Exception:
+        return bad_request("تعذر استخراج صفحات المستند كصور.")
+
+def handle_extract_pdf_images(p):
+    """استخراج الصور المضمنة فقط داخل الـ PDF وحفظها في ZIP"""
+    file_bytes = get_file_bytes(p)
+    is_arabic = p["is_arabic"]
+    if not file_bytes: return bad_request("يرجى رفع ملف PDF")
+    if not validate_signature(file_bytes, "pdf"): return bad_signature_response(is_arabic)
+
+    if not fitz: return bad_request("PyMuPDF غير متوفر")
+    try:
+        doc = fitz.open(stream=file_bytes, filetype="pdf")
+        zip_buf = io.BytesIO()
+        img_count = 0
+        with zipfile.ZipFile(zip_buf, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+            for page in doc:
+                for img_info in page.get_images():
+                    xref = img_info[0]
+                    base_img = doc.extract_image(xref)
+                    img_bytes = base_img["image"]
+                    img_ext = base_img["ext"]
+                    img_count += 1
+                    zf.writestr(f"Embedded_Image_{img_count}.{img_ext}", img_bytes)
+        doc.close()
+        if img_count == 0:
+            return jsonify({"result": "لم يتم العثور على أي صور مضمنة داخل هذا الملف."})
+        return file_response(zip_buf.getvalue(), "application/zip", "Extracted_Embedded_Images.zip")
+    except Exception:
+        return bad_request("تعذر استخراج الصور المضمنة.")
+
+def handle_arabic_proofreader(p):
+    """المصحح والمدقق اللغوي للنصوص العربية"""
+    text = (p.get("text") or "").strip()
+    if not text: return bad_request("يرجى كتابة أو لصق النص للتدقيق.")
+
+    corrected = text
+    # تصحيح الهمزات الشائعة وعلامات الترقيم
+    corrected = re.sub(r'\bاذا\b', 'إذا', corrected)
+    corrected = re.sub(r'\bان\b', 'أن', corrected)
+    corrected = re.sub(r'\bاو\b', 'أو', corrected)
+    corrected = re.sub(r'\bالى\b', 'إلى', corrected)
+    corrected = re.sub(r'\bهذة\b', 'هذه', corrected)
+    corrected = re.sub(r'\s+([،,.؟?!])', r'\1', corrected)
+    corrected = re.sub(r'([،,.؟?!])(?=[^\s])', r'\1 ', corrected)
+
+    return jsonify({"result": corrected})
+
+def handle_ppt_to_images(p):
+    """تصدير شرائح عرض PowerPoint كصور عالية الجودة"""
+    file_bytes = get_file_bytes(p)
+    is_arabic = p["is_arabic"]
+    if not file_bytes: return bad_request("يرجى رفع ملف PowerPoint")
+    if not validate_signature(file_bytes, "zip_office"): return bad_signature_response(is_arabic)
+
+    if Presentation is None: return bad_request("python-pptx غير متوفر")
+    try:
+        prs = Presentation(io.BytesIO(file_bytes))
+        zip_buf = io.BytesIO()
+        with zipfile.ZipFile(zip_buf, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+            for idx, slide in enumerate(prs.slides):
+                slide_img = Image.new("RGB", (1280, 720), (255, 255, 255))
+                draw = ImageDraw.Draw(slide_img)
+                text_content = []
+                for shape in slide.shapes:
+                    if shape.has_text_frame:
+                        text_content.append(shape.text_frame.text)
+                draw.text((60, 60), f"Slide {idx+1}\n\n" + "\n".join(text_content[:6]), fill=(30, 41, 59))
+                s_buf = io.BytesIO()
+                slide_img.save(s_buf, format="JPEG", quality=90)
+                zf.writestr(f"Slide_{idx+1}.jpg", s_buf.getvalue())
+        return file_response(zip_buf.getvalue(), "application/zip", "PowerPoint_Slides.zip")
+    except Exception:
+        return bad_request("تعذر تحويل شرائح العرض إلى صور.")
 
 def handle_image_to_text(p):
     if pytesseract is None: return bad_request("مكتبة OCR غير مثبتة بالسيرفر")
@@ -2046,7 +2171,10 @@ REGISTRY = {
     "clean-study-sheet": handle_clean_study_sheet, "pdf-page-number": handle_pdf_page_number,
     "ink-saver-pdf": handle_ink_saver_pdf, "summarize-doc": handle_summarize_doc, "citation-generator": handle_citation_generator,
     "sign-pdf": handle_sign_pdf, "remove-blank-pages": handle_remove_blank_pages, "generate-quiz": handle_generate_quiz,
-    "redact-pdf": handle_redact_pdf, "pdf-compare": handle_pdf_compare, "reorder-pdf": handle_reorder_pdf
+    "redact-pdf": handle_redact_pdf, "pdf-compare": handle_pdf_compare, "reorder-pdf": handle_reorder_pdf,
+    "compress-pdf-target": handle_compress_pdf_target, "pdf-to-images": handle_pdf_to_images,
+    "extract-pdf-images": handle_extract_pdf_images, "arabic-proofreader": handle_arabic_proofreader,
+    "ppt-to-images": handle_ppt_to_images
 }
 
 NEEDS_MULTIPLE_FILES = {"merge-pdf", "merge-word", "pdf-compare"}
@@ -2059,7 +2187,6 @@ def health_check():
 
 @app.route("/api/telegram-webhook", methods=["POST"])
 def telegram_webhook():
-    """واجهة تكامل لبوت تليجرام لمعالجة الطلبات وتحويل الملفات مباشرة من الدردشة"""
     data = request.get_json(silent=True) or {}
     action = data.get("action", "clean-study-sheet")
     handler = REGISTRY.get(action)
