@@ -929,7 +929,7 @@
             });
         }
 
-        async function processConversion() {
+                async function processConversion() {
             if (!currentAction) { showToast('رجاءً اختر أداة أولاً!', 'Please select a tool first!', true); return; }
             
             const text = document.getElementById('textInput') ? document.getElementById('textInput').value : '';
@@ -941,17 +941,28 @@
             const progressContainer = document.getElementById('progressContainer');
 
             btn.disabled = true; spinner.style.display = 'block';
-            btnText.innerText = isArabic ? 'جاري المعالجة...' : 'Processing...';
+            btnText.innerText = isArabic ? 'جاري تحليل الملف...' : 'Analyzing file...';
             resultArea.style.display = 'none'; resultArea.classList.remove('error');
             
-            // 🚀 تشغيل شريط التقدم الوهمي الذكي
             progressContainer.style.display = 'block';
             progressBar.style.width = '0%';
             let width = 0;
+            
+            // شريط تقدم ذكي يغير النص كلما طال الوقت
             let progressInterval = setInterval(() => {
-                if (width >= 90) { clearInterval(progressInterval); } 
-                else { width += Math.random() * 5; progressBar.style.width = width + '%'; }
-            }, 500);
+                if (width >= 95) { 
+                    clearInterval(progressInterval); 
+                } else { 
+                    width += Math.random() * 3; 
+                    progressBar.style.width = width + '%'; 
+                    
+                    if(width > 40 && width < 70) {
+                        btnText.innerText = isArabic ? 'جاري المعالجة بالذكاء الاصطناعي...' : 'Processing with AI...';
+                    } else if (width >= 70) {
+                        btnText.innerText = isArabic ? 'جاري التنسيق النهائي...' : 'Finalizing format...';
+                    }
+                }
+            }, 800);
 
             try {
                 const payload = { action: currentAction, text: text, lang: isArabic ? 'ar' : 'en' };
@@ -967,7 +978,7 @@
 
                 if (!response.ok) {
                     const err = await response.json();
-                    throw new Error(err.error || (isArabic ? 'حدث خطأ في السيرفر' : 'Server error occurred'));
+                    throw new Error(err.error || (isArabic ? 'عذراً، الخوادم مشغولة حالياً' : 'Servers are currently busy'));
                 }
 
                 const contentType = response.headers.get("content-type");
@@ -982,21 +993,32 @@
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a'); a.href = url;
                     
-                    // 🚀 التعديل المباشر لتفادي خطأ المتصفح
-                    let filename = currentAction.includes('docx') ? 'Converted_Document.docx' : 'downloaded_file';
+                    // تحديد اسم الملف بناءً على الأداة
+                    let filename = 'downloaded_file';
+                    if(currentAction === 'pdf-to-docx') filename = 'V-Infinity_Document.docx';
+                    else if(currentAction === 'pdf-to-excel') filename = 'V-Infinity_Data.xlsx';
                     
                     a.download = filename; document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url);
                     showToast('تم تحميل الملف بنجاح!', 'File downloaded successfully!');
                 }
             } catch (error) {
+                clearInterval(progressInterval);
+                progressBar.style.width = '100%';
+                progressBar.style.backgroundColor = '#ef4444'; // لون أحمر عند الخطأ
+                
                 resultArea.innerText = error.message; resultArea.classList.add('error'); resultArea.style.display = 'block';
                 showToast(error.message, error.message, true);
             } finally {
-                setTimeout(() => { progressContainer.style.display = 'none'; progressBar.style.width = '0%'; }, 1000);
+                setTimeout(() => { 
+                    progressContainer.style.display = 'none'; 
+                    progressBar.style.width = '0%'; 
+                    progressBar.style.backgroundColor = 'var(--primary)'; // إعادة اللون الأصلي
+                }, 2000);
                 btn.disabled = false; spinner.style.display = 'none';
                 btnText.innerHTML = isArabic ? 'تحويل الآن' : 'Convert Now';
             }
         }
+
         
         if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
             document.body.classList.remove('dark-mode');
