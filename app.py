@@ -505,7 +505,7 @@ def handle_pdf_to_docx(p):
             f.write(file_bytes)
 
         # ==========================================
-        # 1. المحرك الأساسي (CloudConvert) - دقة 99%
+        # 1. المحرك الأساسي (CloudConvert)
         # ==========================================
         if cc_key:
             try:
@@ -516,21 +516,18 @@ def handle_pdf_to_docx(p):
                         "convert-file": { 
                             "operation": "convert", 
                             "input": "import-file", 
-                            "output_format": "docx",
-                            "engine": "solid" # أقوى محرك عالمي مدعوم لديهم
+                            "output_format": "docx"
+                            # تم حذف سطر المحرك ليستخدم النظام المحرك الافتراضي المتاح
                         },
                         "export-file": { "operation": "export/url", "input": "convert-file" }
                     }
                 })
                 
-                # رفع الملف
                 upload_task = cloudconvert.Task.find(id=job['tasks'][0]['id'])
                 cloudconvert.Task.upload(file_name=pdf_path, task=upload_task)
                 
-                # انتظار المعالجة
                 job = cloudconvert.Job.wait(id=job['id'])
                 
-                # استخراج النتيجة
                 for task in job['tasks']:
                     if task['name'] == 'export-file' and task['status'] == 'finished':
                         export_url = task['result']['files'][0]['url']
@@ -542,11 +539,10 @@ def handle_pdf_to_docx(p):
                             return file_response(df.read(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "Converted_Document_Pro.docx")
             
             except Exception as e:
-                # إذا فشل الأول (خلص الرصيد مثلاً)، يسجل الخطأ في اللوج وينتقل للثاني فوراً
                 app.logger.warning(f"CloudConvert failed, falling back to ConvertAPI. Reason: {str(e)}")
 
         # ==========================================
-        # 2. المحرك الاحتياطي (ConvertAPI) - خطة الطوارئ
+        # 2. المحرك الاحتياطي (ConvertAPI)
         # ==========================================
         if ca_key:
             try:
