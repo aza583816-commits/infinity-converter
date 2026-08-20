@@ -66,11 +66,22 @@ except Exception:
 from pypdf import PdfReader, PdfWriter
 from pypdf.errors import PdfReadError
 
-# إضافة مكتبة PyMuPDF الخارقة (الاسم الجديد لـ fitz) لزيادة دقة استخراج النصوص
+# ================= المكتبات الخارقة للذكاء الاصطناعي والـ PDF =================
 try:
-    import fitz
+    import fitz  # PyMuPDF
 except Exception:
     fitz = None
+
+try:
+    import pdfplumber
+except Exception:
+    pdfplumber = None
+
+try:
+    import pytesseract
+except Exception:
+    pytesseract = None
+# =========================================================================
 
 import qrcode
 from qrcode.constants import ERROR_CORRECT_H
@@ -97,7 +108,7 @@ MAX_FILE_BYTES = MAX_FILE_MB * 1024 * 1024
 MAX_MERGE_FILES = int(os.environ.get("MAX_MERGE_FILES", 30))
 MAX_PDF_PAGES = int(os.environ.get("MAX_PDF_PAGES", 1000))
 MAX_TEXT_CHARS = int(os.environ.get("MAX_TEXT_CHARS", 5_000_000))
-SUBPROCESS_TIMEOUT = int(os.environ.get("SUBPROCESS_TIMEOUT", 120))
+SUBPROCESS_TIMEOUT = int(os.environ.get("SUBPROCESS_TIMEOUT", 300)) # تم رفع الوقت لـ 5 دقائق للملفات المعقدة
 ALLOWED_ORIGINS = [o.strip() for o in os.environ.get(
     "ALLOWED_ORIGINS", "https://infinityconverter.com,https://www.infinityconverter.com"
 ).split(",") if o.strip()]
@@ -121,7 +132,7 @@ limiter = Limiter(
 
 HEAVY_ACTIONS = {
     "word-to-pdf", "excel-to-pdf", "pdf-to-docx", "pdf-to-doc",
-    "pdf-to-ppt", "pdf-to-excel", "merge-pdf", "compress-image"
+    "pdf-to-ppt", "pdf-to-excel", "merge-pdf", "compress-image", "image-to-text"
 }
 
 def dynamic_convert_limit():
@@ -178,6 +189,7 @@ TOOLS_DEF = [
     ("image-to-png", "تحويل لـ PNG", "Convert to PNG", "file", "i-img", "fa-image"),
     ("heic-to-jpg", "HEIC إلى JPG", "HEIC to JPG", "file", "i-img", "fa-mobile-screen"),
     ("image-to-base64", "صورة إلى Base64", "Image to Base64", "file", "i-dev", "fa-code"),
+    ("image-to-text", "استخراج نص من صورة", "Image to Text (OCR)", "file", "i-dev", "fa-file-signature"), # الأداة الجديدة
     ("markdown-to-html", "Markdown إلى HTML", "Markdown to HTML", "text", "i-dev", "fa-file-code"),
     ("clean-text", "تنظيف النص", "Clean Text", "text", "i-word", "fa-broom"),
     ("base64-tool", "تشفير Base64", "Base64 Encode", "text", "i-dev", "fa-shield-halved"),
@@ -409,7 +421,7 @@ def csv_to_pdf_bytes(text, is_arabic):
 def run_libreoffice_convert(src_path, out_dir):
     subprocess.run(["libreoffice", "--headless", "--nologo", "--nofirststartwizard", "--norestore", "--convert-to", "pdf", src_path, "--outdir", out_dir], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=SUBPROCESS_TIMEOUT)
 
-# ================= الأدوات =================
+# ================= الأدوات الجبارة للـ PDF (AI & High Accuracy) =================
 
 def handle_word_to_pdf(p):
     file_bytes = get_file_bytes(p)
@@ -500,14 +512,14 @@ def handle_pdf_to_text(p):
     if not validate_signature(file_bytes, "pdf"): return bad_signature_response(p["is_arabic"])
     try:
         text = ""
-        # استخدام المكتبة الخارقة PyMuPDF إذا توفرت
+        # استخدام المكتبة الخارقة PyMuPDF إذا توفرت لسرعة ودقة فائقة
         if fitz:
             doc = fitz.open(stream=file_bytes, filetype="pdf")
             if len(doc) > MAX_PDF_PAGES: return bad_request("يتجاوز الحد المسموح" if p["is_arabic"] else "Exceeds max pages")
             for page in doc:
                 text += page.get_text() + "\n"
         else:
-            # الطريقة القديمة في حال فشلت المكتبة الجديدة
+            # الطريقة القديمة
             reader = PdfReader(io.BytesIO(file_bytes))
             err = enforce_pdf_page_limit(reader, p["is_arabic"])
             if err: return err
@@ -523,9 +535,22 @@ def handle_pdf_to_csv(p):
     try:
         buf = io.StringIO()
         writer = csv.writer(buf)
-        if fitz:
+        # الذكاء الاصطناعي (pdfplumber) لاستخراج الجداول الدقيقة
+        if pdfplumber:
+            with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
+                if len(pdf.pages) > MAX_PDF_PAGES: return bad_request("يتجاوز الحد المسموح")
+                for page in pdf.pages:
+                    tables = page.extract_tables()
+                    if tables:
+                        for table in tables:
+                            for row in table:
+                                writer.writerow([str(cell).strip() if cell else "" for cell in row])
+                    else:
+                        for line in (page.extract_text() or "").split("\n"):
+                            if line.strip(): writer.writerow(line.split())
+        elif fitz:
             doc = fitz.open(stream=file_bytes, filetype="pdf")
-            if len(doc) > MAX_PDF_PAGES: return bad_request("يتجاوز الحد المسموح" if p["is_arabic"] else "Exceeds max pages")
+            if len(doc) > MAX_PDF_PAGES: return bad_request("يتجاوز الحد المسموح")
             for page in doc:
                 for line in (page.get_text() or "").split("\n"):
                     if line.strip(): writer.writerow(line.split())
@@ -558,9 +583,10 @@ def handle_pdf_to_docx(p):
 
             docx_path = os.path.join(tmp_dir, f"{os.path.splitext(os.path.basename(tmp_pdf_path))[0]}.docx")
             cv = Converter(tmp_pdf_path)
+            # قوة الدقة القصوى مع maintain_layout
             cv.convert(docx_path, start=0, end=None, kwargs={
-                "connected_border_tolerance": 2.5, "line_overlap_threshold": 0.8,
-                "line_margin": 0.1, "word_margin": 0.1, "maintain_layout": True
+                "connected_border_tolerance": 2.5, "line_overlap_threshold": 0.9,
+                "line_margin": 0.2, "word_margin": 0.2, "maintain_layout": True
             })
             cv.close()
 
@@ -568,18 +594,20 @@ def handle_pdf_to_docx(p):
                 try:
                     doc = Document(docx_path)
                     for paragraph in doc.paragraphs:
-                        paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-                        pPr = paragraph._element.get_or_add_pPr()
-                        pPr.insert(0, OxmlElement('w:bidi'))
+                        if is_arabic_text(paragraph.text):
+                            paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+                            pPr = paragraph._element.get_or_add_pPr()
+                            pPr.insert(0, OxmlElement('w:bidi'))
                     for table in doc.tables:
                         tblPr = table._element.xpath('w:tblPr')
                         if tblPr: tblPr[0].append(OxmlElement('w:bidiVisual'))
                         for row in table.rows:
                             for cell in row.cells:
                                 for par in cell.paragraphs:
-                                    par.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-                                    pPr = par._p.get_or_add_pPr()
-                                    pPr.insert(0, OxmlElement('w:bidi'))
+                                    if is_arabic_text(par.text):
+                                        par.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+                                        pPr = par._p.get_or_add_pPr()
+                                        pPr.insert(0, OxmlElement('w:bidi'))
                     doc.save(docx_path)
                 except Exception: pass
 
@@ -617,11 +645,42 @@ def handle_pdf_to_excel(p):
     file_bytes = get_file_bytes(p)
     if not file_bytes: return bad_request("No file provided")
     if not validate_signature(file_bytes, "pdf"): return bad_signature_response(p["is_arabic"])
+    
     buf = io.BytesIO()
     with pd.ExcelWriter(buf, engine="openpyxl") as writer:
-        if fitz:
+        has_data = False
+        # الذكاء الاصطناعي (pdfplumber) لاستخراج الجداول الدقيقة
+        if pdfplumber:
+            try:
+                with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
+                    err = enforce_pdf_page_limit(len(pdf.pages), p["is_arabic"])
+                    if err: return err
+                    for idx, page in enumerate(pdf.pages):
+                        tables = page.extract_tables()
+                        if tables:
+                            for t_idx, table in enumerate(tables):
+                                cleaned = [[str(c).strip() if c else "" for c in row] for row in table]
+                                if not cleaned: continue
+                                df = pd.DataFrame(cleaned[1:], columns=cleaned[0]) if len(cleaned)>1 else pd.DataFrame(cleaned)
+                                sheet_name = f"Page {idx+1} Tbl {t_idx+1}"[:31]
+                                df.to_excel(writer, sheet_name=sheet_name, index=False)
+                                auto_fit_excel_columns(writer, sheet_name, add_autofilter=False)
+                                has_data = True
+                        else:
+                            text = page.extract_text()
+                            rows = [line.split() for line in (text or "").split("\n") if line.strip()]
+                            if rows:
+                                sheet_name = f"Page {idx+1}"[:31]
+                                pd.DataFrame(rows).to_excel(writer, sheet_name=sheet_name, index=False, header=False)
+                                auto_fit_excel_columns(writer, sheet_name, add_autofilter=False)
+                                has_data = True
+            except Exception: pass
+            
+        # لو ما نجح pdfplumber، نرجع للبديل الذكي PyMuPDF
+        if not has_data and fitz:
             doc = fitz.open(stream=file_bytes, filetype="pdf")
-            if len(doc) > MAX_PDF_PAGES: return bad_request("يتجاوز الحد المسموح" if p["is_arabic"] else "Exceeds max pages")
+            err = enforce_pdf_page_limit(len(doc), p["is_arabic"])
+            if err: return err
             for idx, page in enumerate(doc):
                 rows = [line.split() for line in (page.get_text() or "").split("\n") if line.strip()]
                 if not rows: rows = [[""]]
@@ -631,7 +690,10 @@ def handle_pdf_to_excel(p):
                 sheet_name = f"Page {idx + 1}"[:31]
                 df.to_excel(writer, sheet_name=sheet_name, index=False, header=False)
                 auto_fit_excel_columns(writer, sheet_name, add_autofilter=False)
-        else:
+                has_data = True
+                
+        # لو لا هذا ولا هذا، نستخدم القديم العادي
+        if not has_data:
             reader = PdfReader(io.BytesIO(file_bytes))
             err = enforce_pdf_page_limit(reader, p["is_arabic"])
             if err: return err
@@ -644,6 +706,7 @@ def handle_pdf_to_excel(p):
                 sheet_name = f"Page {idx + 1}"[:31]
                 df.to_excel(writer, sheet_name=sheet_name, index=False, header=False)
                 auto_fit_excel_columns(writer, sheet_name, add_autofilter=False)
+                
     return file_response(buf.getvalue(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Converted_Excel.xlsx")
 
 def handle_pdf_to_ppt(p):
@@ -703,7 +766,7 @@ def handle_merge_pdf(p):
     for i, reader in enumerate(decoded_readers):
         writer.add_outline_item(f"ملف {i + 1}" if p["is_arabic"] else f"Document {i + 1}", page_count)
         for page in reader.pages:
-            page.compress_content_streams()
+            page.compress_content_streams() # ضغط خيالي للصفحات المدمجة
             writer.add_page(page)
             page_count += 1
 
@@ -904,6 +967,20 @@ def handle_heic_to_jpg(p):
     img.save(buf, format="JPEG", quality=92, optimize=True, progressive=True)
     return file_response(buf.getvalue(), "image/jpeg", "Converted_Image.jpg")
 
+# ================= أداة الذكاء الاصطناعي لاستخراج النص من الصور OCR =================
+def handle_image_to_text(p):
+    if pytesseract is None: return bad_request("مكتبة OCR غير مثبتة بالسيرفر (يرجى إضافتها في requirements.txt)")
+    img, err = _load_validated_image(p, p["is_arabic"])
+    if err: return err
+    try:
+        # قراءة النصوص عربي وانجليزي بدقة عالية
+        lang = 'ara+eng' if p["is_arabic"] else 'eng'
+        text = pytesseract.image_to_string(img, lang=lang)
+        if not text.strip(): return jsonify({"result": "لم يتم العثور على أي نص واضح في الصورة." if p["is_arabic"] else "No text found."})
+        return jsonify({"result": text.strip()})
+    except Exception:
+        return bad_request("فشل التعرف على النص. يرجى التأكد من تثبيت حزم Tesseract-OCR في ملف Dockerfile.")
+
 # ================= أدوات النصوص والمطورين =================
 def handle_base64_tool(p):
     text = p.get("text", "")
@@ -1053,7 +1130,7 @@ def handle_text_diff(p):
     out_lines = [("+ " if l.startswith("+") else ("- " if l.startswith("-") else "  ")) + l[1:] for l in unified_diff(lines[:mid], lines[mid:], lineterm="") if not l.startswith(("+++", "---", "@@"))]
     return jsonify({"result": "\n".join(out_lines)})
 
-# ================= السجل (Registry) =================
+# ================= السجل (Registry) الكامل =================
 REGISTRY = {
     "word-to-pdf": handle_word_to_pdf, "text-to-pdf": handle_text_to_pdf, "pdf-to-pdf": handle_pdf_to_pdf_enhanced,
     "csv-to-pdf": handle_csv_to_pdf, "excel-to-pdf": handle_excel_to_pdf, "pdf-to-text": handle_pdf_to_text,
@@ -1064,6 +1141,7 @@ REGISTRY = {
     "json-to-excel": handle_json_to_excel, "excel-to-json": handle_excel_to_json, "csv-to-json": handle_csv_to_json, 
     "json-to-csv": handle_json_to_csv, "text-to-csv": handle_text_to_csv, "compress-image": handle_compress_image, 
     "image-to-png": handle_image_to_png, "image-to-jpg": handle_image_to_jpg, "image-to-base64": handle_image_to_base64, 
+    "image-to-text": handle_image_to_text, # تسجيل الأداة الجديدة
     "image-to-pdf": handle_image_to_pdf, "heic-to-jpg": handle_heic_to_jpg, "base64-tool": handle_base64_tool, 
     "url-encoder": handle_url_encoder, "json-beautifier": handle_json_beautifier, "css-js-minifier": handle_css_js_minifier, 
     "html-entity": handle_html_entity, "hash-generator": handle_hash_generator, "hmac-generator": handle_hmac_generator, 
@@ -1136,7 +1214,7 @@ def convert():
         ctx = dict(payload, text=text, is_arabic=is_arabic)
         response = handler(ctx)
         
-        # 🚀 جامع القمامة لتنظيف الذاكرة بعد كل عملية عشان السيرفر ما يعلق
+        # 🚀 تنظيف إجباري للذاكرة عشان السيرفر ما يعلق!
         gc.collect() 
         return response
     except Exception as e:
