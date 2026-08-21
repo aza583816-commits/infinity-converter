@@ -4,14 +4,21 @@
   "start_url": "/",
   "id": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#090d16",
   "theme_color": "#6366f1",
   "description": "The Infinite SaaS Conversion Suite — Word, PDF, Excel, images, and developer tools.",
   "icons": [
     {
-      "src": "/static/favicon.svg",
-      "sizes": "192x192 512x512",
-      "type": "image/svg+xml",
+      "src": "/static/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ]
