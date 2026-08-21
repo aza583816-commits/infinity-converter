@@ -1,41 +1,35 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <!-- خلفية عميقة فاخرة -->
-    <radialGradient id="deepCanvas" cx="50%" cy="40%" r="75%">
+    <!-- خلفية داكنة فخمة -->
+    <radialGradient id="deepCanvas" cx="50%" cy="35%" r="80%">
       <stop offset="0%" stop-color="#141147"/>
-      <stop offset="45%" stop-color="#080e2b"/>
+      <stop offset="50%" stop-color="#080e2b"/>
       <stop offset="100%" stop-color="#01030d"/>
     </radialGradient>
 
-    <!-- تدرج إنفينيتي الرئيسي المتناسق -->
+    <!-- تدرج إنفينيتي نيون انسيابي -->
     <linearGradient id="neonRibbon" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#d946ef"/>
-      <stop offset="25%" stop-color="#8b5cf6"/>
-      <stop offset="55%" stop-color="#3b82f6"/>
+      <stop offset="30%" stop-color="#8b5cf6"/>
+      <stop offset="70%" stop-color="#3b82f6"/>
       <stop offset="100%" stop-color="#06b6d4"/>
     </linearGradient>
 
-    <!-- حافة زجاجية للإطار الخارجي -->
+    <!-- إطار زجاجي خارجي -->
     <linearGradient id="glassRim" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#ffffff" stop-opacity="0.35"/>
-      <stop offset="40%" stop-color="#a855f7" stop-opacity="0.15"/>
+      <stop offset="50%" stop-color="#8b5cf6" stop-opacity="0.15"/>
       <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.25"/>
     </linearGradient>
 
-    <!-- إضاءات هالة ناعمة -->
-    <radialGradient id="purpleGlow">
-      <stop offset="0%" stop-color="#c026ff" stop-opacity="0.35"/>
-      <stop offset="100%" stop-color="#7c3aed" stop-opacity="0"/>
-    </radialGradient>
+    <!-- توهج وضبابية للألوان الخلفية -->
+    <filter id="softBlur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="35"/>
+    </filter>
 
-    <radialGradient id="cyanGlow">
-      <stop offset="0%" stop-color="#00e5ff" stop-opacity="0.30"/>
-      <stop offset="100%" stop-color="#2563eb" stop-opacity="0"/>
-    </radialGradient>
-
-    <!-- فلتر توهج وظل ناعم ومتناسق -->
-    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#4f46e5" flood-opacity="0.5"/>
+    <!-- ظل وتوهج للشعار -->
+    <filter id="glowEffect" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="15" flood-color="#6366f1" flood-opacity="0.6"/>
     </filter>
   </defs>
 
@@ -43,42 +37,31 @@
   <rect width="512" height="512" rx="128" fill="url(#deepCanvas)"/>
   <rect width="504" height="504" x="4" y="4" rx="124" fill="none" stroke="url(#glassRim)" stroke-width="2.5"/>
 
-  <!-- هالات الإضاءة الخلفية المتناظرة -->
-  <circle cx="160" cy="256" r="130" fill="url(#purpleGlow)" filter="blur(30px)"/>
-  <circle cx="352" cy="256" r="130" fill="url(#cyanGlow)" filter="blur(30px)"/>
+  <!-- هالات الإضاءة الخلفية -->
+  <circle cx="160" cy="256" r="90" fill="#c026ff" opacity="0.35" filter="url(#softBlur)"/>
+  <circle cx="352" cy="256" r="90" fill="#00e5ff" opacity="0.30" filter="url(#softBlur)"/>
 
-  <!-- رمز إنفينيتي المصقول هندسياً (متطابق الأبعاد والانحناءات) -->
-  <g filter="url(#softGlow)">
-    <path d="M 160,180 
-             C 225,180 287,332 352,332 
-             C 410,332 444,295 444,256 
-             C 444,217 410,180 352,180 
-             C 287,180 225,332 160,332 
-             C 102,332 68,295 68,256 
-             C 68,217 102,180 160,180 Z" 
+  <!-- رمز إنفينيتي المصحح هندسياً -->
+  <g filter="url(#glowEffect)">
+    <!-- مسار إنفينيتي الموحد -->
+    <path d="M 160 180 C 230 180 282 332 352 332 C 405 332 444 295 444 256 C 444 217 405 180 352 180 C 282 180 230 332 160 332 C 107 332 68 295 68 256 C 68 217 107 180 160 180 Z" 
           fill="none" 
           stroke="url(#neonRibbon)" 
-          stroke-width="50" 
+          stroke-width="52" 
           stroke-linecap="round" 
           stroke-linejoin="round"/>
 
-    <!-- خط لمعان داخلي يبرز نقاء المنحنى -->
-    <path d="M 160,180 
-             C 225,180 287,332 352,332 
-             C 410,332 444,295 444,256 
-             C 444,217 410,180 352,180 
-             C 287,180 225,332 160,332 
-             C 102,332 68,295 68,256 
-             C 68,217 102,180 160,180 Z" 
+    <!-- خط لمعان داخلي بارز -->
+    <path d="M 160 180 C 230 180 282 332 352 332 C 405 332 444 295 444 256 C 444 217 405 180 352 180 C 282 180 230 332 160 332 C 107 332 68 295 68 256 C 68 217 107 180 160 180 Z" 
           fill="none" 
           stroke="#ffffff" 
           stroke-width="4" 
           stroke-linecap="round" 
           stroke-linejoin="round"
-          opacity="0.35"/>
+          opacity="0.45"/>
   </g>
 
-  <!-- نقطتا بريق موزونتان في أعلى المنحنيات -->
-  <circle cx="160" cy="180" r="4.5" fill="#ffffff" opacity="0.85"/>
-  <circle cx="352" cy="180" r="4.5" fill="#ffffff" opacity="0.85"/>
+  <!-- نقطتا بريق مركزية متوازنة -->
+  <circle cx="160" cy="180" r="5" fill="#ffffff" opacity="0.9"/>
+  <circle cx="352" cy="180" r="5" fill="#ffffff" opacity="0.9"/>
 </svg>
