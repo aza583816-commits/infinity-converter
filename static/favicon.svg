@@ -1,492 +1,84 @@
-<svg xmlns="http://www.w3.org/2000/svg"
-     viewBox="0 0 512 512"
-     width="512"
-     height="512">
-
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-
-    <!-- =========================
-         خلفية عميقة فاخرة
-    ========================== -->
-    <radialGradient id="deepCanvas"
-                    cx="50%"
-                    cy="42%"
-                    r="75%">
-      <stop offset="0%"   stop-color="#17145c"/>
-      <stop offset="38%"  stop-color="#0b1645"/>
-      <stop offset="72%"  stop-color="#050b25"/>
+    <!-- خلفية عميقة فاخرة -->
+    <radialGradient id="deepCanvas" cx="50%" cy="40%" r="75%">
+      <stop offset="0%" stop-color="#141147"/>
+      <stop offset="45%" stop-color="#080e2b"/>
       <stop offset="100%" stop-color="#01030d"/>
     </radialGradient>
 
-
-    <!-- =========================
-         تدرج Infinity الرئيسي
-    ========================== -->
-    <linearGradient id="neonRibbon"
-                    x1="5%"
-                    y1="15%"
-                    x2="95%"
-                    y2="85%">
-
-      <stop offset="0%"
-            stop-color="#d946ef"/>
-
-      <stop offset="24%"
-            stop-color="#a855f7"/>
-
-      <stop offset="48%"
-            stop-color="#6366f1"/>
-
-      <stop offset="70%"
-            stop-color="#2563eb"/>
-
-      <stop offset="100%"
-            stop-color="#06d9ff"/>
-
+    <!-- تدرج إنفينيتي الرئيسي المتناسق -->
+    <linearGradient id="neonRibbon" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#d946ef"/>
+      <stop offset="25%" stop-color="#8b5cf6"/>
+      <stop offset="55%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
     </linearGradient>
 
-
-    <!-- تدرج الإضاءة الداخلية -->
-    <linearGradient id="innerLight"
-                    x1="0%"
-                    y1="0%"
-                    x2="100%"
-                    y2="100%">
-
-      <stop offset="0%"
-            stop-color="#ffffff"
-            stop-opacity="0.55"/>
-
-      <stop offset="25%"
-            stop-color="#e9d5ff"
-            stop-opacity="0.18"/>
-
-      <stop offset="60%"
-            stop-color="#38bdf8"
-            stop-opacity="0.10"/>
-
-      <stop offset="100%"
-            stop-color="#ffffff"
-            stop-opacity="0.30"/>
-
+    <!-- حافة زجاجية للإطار الخارجي -->
+    <linearGradient id="glassRim" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.35"/>
+      <stop offset="40%" stop-color="#a855f7" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.25"/>
     </linearGradient>
 
-
-    <!-- حافة زجاجية -->
-    <linearGradient id="glassRim"
-                    x1="0%"
-                    y1="0%"
-                    x2="100%"
-                    y2="100%">
-
-      <stop offset="0%"
-            stop-color="#ffffff"
-            stop-opacity="0.40"/>
-
-      <stop offset="35%"
-            stop-color="#a855f7"
-            stop-opacity="0.18"/>
-
-      <stop offset="70%"
-            stop-color="#38bdf8"
-            stop-opacity="0.28"/>
-
-      <stop offset="100%"
-            stop-color="#ffffff"
-            stop-opacity="0.08"/>
-
-    </linearGradient>
-
-
-    <!-- إضاءة بنفسجية -->
+    <!-- إضاءات هالة ناعمة -->
     <radialGradient id="purpleGlow">
-      <stop offset="0%"
-            stop-color="#c026ff"
-            stop-opacity="0.48"/>
-
-      <stop offset="45%"
-            stop-color="#7c3aed"
-            stop-opacity="0.20"/>
-
-      <stop offset="100%"
-            stop-color="#7c3aed"
-            stop-opacity="0"/>
+      <stop offset="0%" stop-color="#c026ff" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#7c3aed" stop-opacity="0"/>
     </radialGradient>
 
-
-    <!-- إضاءة سماوية -->
     <radialGradient id="cyanGlow">
-      <stop offset="0%"
-            stop-color="#00e5ff"
-            stop-opacity="0.40"/>
-
-      <stop offset="50%"
-            stop-color="#2563eb"
-            stop-opacity="0.15"/>
-
-      <stop offset="100%"
-            stop-color="#2563eb"
-            stop-opacity="0"/>
+      <stop offset="0%" stop-color="#00e5ff" stop-opacity="0.30"/>
+      <stop offset="100%" stop-color="#2563eb" stop-opacity="0"/>
     </radialGradient>
 
-
-    <!-- ظل ثلاثي الأبعاد -->
-    <filter id="deepShadow"
-            x="-40%"
-            y="-40%"
-            width="180%"
-            height="180%">
-
-      <feDropShadow
-        dx="0"
-        dy="18"
-        stdDeviation="18"
-        flood-color="#020617"
-        flood-opacity="0.90"/>
-
+    <!-- فلتر توهج وظل ناعم ومتناسق -->
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#4f46e5" flood-opacity="0.5"/>
     </filter>
-
-
-    <!-- توهج Infinity -->
-    <filter id="neonGlow"
-            x="-40%"
-            y="-40%"
-            width="180%"
-            height="180%">
-
-      <feGaussianBlur
-        stdDeviation="13"
-        result="blur"/>
-
-      <feColorMatrix
-        in="blur"
-        type="matrix"
-        values="
-          1 0 0 0 0
-          0 0.55 0 0 0
-          0 0 1 0 0
-          0 0 0 1 0"/>
-
-    </filter>
-
-
-    <!-- لمعان حاد -->
-    <filter id="sharpGlow"
-            x="-30%"
-            y="-30%"
-            width="160%"
-            height="160%">
-
-      <feGaussianBlur
-        stdDeviation="3"
-        result="glow"/>
-
-      <feMerge>
-        <feMergeNode in="glow"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-
-    </filter>
-
-
-    <!-- Blur للخلفية -->
-    <filter id="softBlur">
-      <feGaussianBlur stdDeviation="38"/>
-    </filter>
-
-
-    <!-- انعكاس زجاجي -->
-    <linearGradient id="reflection"
-                    x1="0%"
-                    y1="0%"
-                    x2="0%"
-                    y2="100%">
-
-      <stop offset="0%"
-            stop-color="#ffffff"
-            stop-opacity="0.22"/>
-
-      <stop offset="45%"
-            stop-color="#ffffff"
-            stop-opacity="0.04"/>
-
-      <stop offset="100%"
-            stop-color="#ffffff"
-            stop-opacity="0"/>
-
-    </linearGradient>
-
   </defs>
 
+  <!-- جسم الأيقونة الخارجي -->
+  <rect width="512" height="512" rx="128" fill="url(#deepCanvas)"/>
+  <rect width="504" height="504" x="4" y="4" rx="124" fill="none" stroke="url(#glassRim)" stroke-width="2.5"/>
 
-  <!-- =================================
-       الخلفية
-  ================================== -->
+  <!-- هالات الإضاءة الخلفية المتناظرة -->
+  <circle cx="160" cy="256" r="130" fill="url(#purpleGlow)" filter="blur(30px)"/>
+  <circle cx="352" cy="256" r="130" fill="url(#cyanGlow)" filter="blur(30px)"/>
 
-  <rect
-    width="512"
-    height="512"
-    rx="128"
-    fill="url(#deepCanvas)"
-  />
+  <!-- رمز إنفينيتي المصقول هندسياً (متطابق الأبعاد والانحناءات) -->
+  <g filter="url(#softGlow)">
+    <path d="M 160,180 
+             C 225,180 287,332 352,332 
+             C 410,332 444,295 444,256 
+             C 444,217 410,180 352,180 
+             C 287,180 225,332 160,332 
+             C 102,332 68,295 68,256 
+             C 68,217 102,180 160,180 Z" 
+          fill="none" 
+          stroke="url(#neonRibbon)" 
+          stroke-width="50" 
+          stroke-linecap="round" 
+          stroke-linejoin="round"/>
 
-
-  <!-- هالة بنفسجية -->
-  <ellipse
-    cx="185"
-    cy="245"
-    rx="180"
-    ry="150"
-    fill="url(#purpleGlow)"
-    filter="url(#softBlur)"
-  />
-
-
-  <!-- هالة سماوية -->
-  <ellipse
-    cx="350"
-    cy="270"
-    rx="180"
-    ry="150"
-    fill="url(#cyanGlow)"
-    filter="url(#softBlur)"
-  />
-
-
-  <!-- =================================
-       حافة التطبيق الزجاجية
-  ================================== -->
-
-  <rect
-    x="4"
-    y="4"
-    width="504"
-    height="504"
-    rx="124"
-    fill="none"
-    stroke="url(#glassRim)"
-    stroke-width="3"
-  />
-
-
-  <!-- حافة داخلية دقيقة -->
-  <rect
-    x="12"
-    y="12"
-    width="488"
-    height="488"
-    rx="116"
-    fill="none"
-    stroke="#ffffff"
-    stroke-opacity="0.045"
-    stroke-width="1"
-  />
-
-
-  <!-- =================================
-       ظل خلف Infinity
-  ================================== -->
-
-  <path
-    d="
-      M150 178
-      C205 178 232 332 352 332
-      C409 332 448 299 448 256
-      C448 213 409 180 352 180
-      C232 180 205 334 150 334
-      C93 334 64 299 64 256
-      C64 213 93 178 150 178
-    "
-    fill="none"
-    stroke="#000000"
-    stroke-opacity="0.65"
-    stroke-width="62"
-    stroke-linecap="round"
-    filter="url(#deepShadow)"
-  />
-
-
-  <!-- =================================
-       توهج خلف الرمز
-  ================================== -->
-
-  <path
-    d="
-      M150 178
-      C205 178 232 332 352 332
-      C409 332 448 299 448 256
-      C448 213 409 180 352 180
-      C232 180 205 334 150 334
-      C93 334 64 299 64 256
-      C64 213 93 178 150 178
-    "
-    fill="none"
-    stroke="url(#neonRibbon)"
-    stroke-width="66"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    opacity="0.42"
-    filter="url(#neonGlow)"
-  />
-
-
-  <!-- =================================
-       Infinity الأساسي
-  ================================== -->
-
-  <g filter="url(#sharpGlow)">
-
-    <path
-      d="
-        M150 178
-        C205 178 232 332 352 332
-        C409 332 448 299 448 256
-        C448 213 409 180 352 180
-        C232 180 205 334 150 334
-        C93 334 64 299 64 256
-        C64 213 93 178 150 178
-      "
-      fill="none"
-      stroke="url(#neonRibbon)"
-      stroke-width="54"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      filter="url(#deepShadow)"
-    />
-
+    <!-- خط لمعان داخلي يبرز نقاء المنحنى -->
+    <path d="M 160,180 
+             C 225,180 287,332 352,332 
+             C 410,332 444,295 444,256 
+             C 444,217 410,180 352,180 
+             C 287,180 225,332 160,332 
+             C 102,332 68,295 68,256 
+             C 68,217 102,180 160,180 Z" 
+          fill="none" 
+          stroke="#ffffff" 
+          stroke-width="4" 
+          stroke-linecap="round" 
+          stroke-linejoin="round"
+          opacity="0.35"/>
   </g>
 
-
-  <!-- =================================
-       طبقة زجاجية داخل Infinity
-  ================================== -->
-
-  <path
-    d="
-      M150 178
-      C205 178 232 332 352 332
-      C409 332 448 299 448 256
-      C448 213 409 180 352 180
-      C232 180 205 334 150 334
-      C93 334 64 299 64 256
-      C64 213 93 178 150 178
-    "
-    fill="none"
-    stroke="url(#innerLight)"
-    stroke-width="10"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    opacity="0.65"
-  />
-
-
-  <!-- =================================
-       تقاطع Infinity - الطبقة الأمامية
-  ================================== -->
-
-  <path
-    d="
-      M211 219
-      C228 236 245 252 264 268
-    "
-    fill="none"
-    stroke="#d8b4fe"
-    stroke-opacity="0.95"
-    stroke-width="48"
-    stroke-linecap="round"
-    filter="url(#sharpGlow)"
-  />
-
-
-  <!-- لون داخلي للتقاطع -->
-  <path
-    d="
-      M211 219
-      C228 236 245 252 264 268
-    "
-    fill="none"
-    stroke="#ffffff"
-    stroke-opacity="0.17"
-    stroke-width="13"
-    stroke-linecap="round"
-  />
-
-
-  <!-- =================================
-       لمعان علوي على Infinity
-  ================================== -->
-
-  <path
-    d="
-      M104 215
-      C119 194 137 186 160 186
-      C184 186 198 199 208 217
-    "
-    fill="none"
-    stroke="#ffffff"
-    stroke-opacity="0.65"
-    stroke-width="5"
-    stroke-linecap="round"
-    filter="url(#sharpGlow)"
-  />
-
-
-  <!-- =================================
-       انعكاس سفلي
-  ================================== -->
-
-  <ellipse
-    cx="256"
-    cy="367"
-    rx="150"
-    ry="22"
-    fill="#2563eb"
-    opacity="0.16"
-    filter="url(#softBlur)"
-  />
-
-
-  <!-- =================================
-       لمعان نقاط دقيقة
-  ================================== -->
-
-  <circle
-    cx="150"
-    cy="178"
-    r="5"
-    fill="#ffffff"
-    opacity="0.90"
-    filter="url(#sharpGlow)"
-  />
-
-  <circle
-    cx="352"
-    cy="180"
-    r="4"
-    fill="#ffffff"
-    opacity="0.75"
-    filter="url(#sharpGlow)"
-  />
-
-
-  <!-- =================================
-       انعكاس زجاجي على أعلى الأيقونة
-  ================================== -->
-
-  <path
-    d="
-      M128 20
-      H384
-      C447 20 492 65 492 128
-      V150
-      C425 112 350 92 256 92
-      C162 92 87 112 20 150
-      V128
-      C20 65 65 20 128 20
-      Z
-    "
-    fill="url(#reflection)"
-    opacity="0.30"
-  />
-
+  <!-- نقطتا بريق موزونتان في أعلى المنحنيات -->
+  <circle cx="160" cy="180" r="4.5" fill="#ffffff" opacity="0.85"/>
+  <circle cx="352" cy="180" r="4.5" fill="#ffffff" opacity="0.85"/>
 </svg>
