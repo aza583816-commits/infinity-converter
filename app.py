@@ -181,24 +181,15 @@ def enforce_custom_domain():
     global TOTAL_REQUESTS_PROCESSED
     TOTAL_REQUESTS_PROCESSED += 1
     
-    # استثناء مسارات الصحة وملفات الأرشفة والـ API لتفادي أي حلقة توجيه لا نهائية تضر بروبوتات جوجل
     if request.path in ("/healthz", "/metrics", "/manifest.json", "/robots.txt", "/sitemap.xml") or request.path.startswith("/api/") or request.path.startswith("/static/"):
         return
     
     parsed_host = request.host.split(':')[0]
     if parsed_host == "infinity-converter-1.onrender.com":
         return redirect("https://infinityconverter.com" + request.full_path, code=301)
-
-    # قد يمر الطلب عبر أكثر من بروكسي (Cloudflare -> Render) فيصير الهيدر
-    # قائمة مفصولة بفواصل مثل "https,http" بدل قيمة واحدة، فنأخذ أول قيمة فقط.
-    # كذلك نجعل الافتراضي "https" بدل "http" حتى لا نفرض إعادة توجيه في حال
-    # غياب الهيدر أو عدم وثوقيته، وهو ما كان يسبب حلقة لا نهائية مع بعض
-    # إعدادات Cloudflare (وضع Flexible SSL).
-    forwarded_proto = request.headers.get('X-Forwarded-Proto', 'https')
-    proto = forwarded_proto.split(',')[0].strip().lower()
-    is_secure = proto == 'https' or request.is_secure
-
-    if not is_secure and parsed_host == 'infinityconverter.com':
+        
+    proto = request.headers.get('X-Forwarded-Proto', 'http')
+    if proto == 'http' and parsed_host == 'infinityconverter.com':
         return redirect("https://infinityconverter.com" + request.full_path, code=301)
 
 logging.basicConfig(level=logging.INFO)
@@ -274,7 +265,7 @@ def not_found_custom(e):
 ARABIC_FONT_NAME = "ArabicFont"
 _arabic_font_registered = False
 
-# ==================== الذاكرة المؤقتة بالبصمة (Deduplication Cache) وإدارة المهام ====================
+# ==================== الذاكرة المؤقتة بالبصمة وإدارة المهام ====================
 conversion_queue = queue.Queue()
 async_task_results = {}
 temporary_share_store = {}
@@ -555,7 +546,8 @@ def normalize_bidi_text(text):
 
 def is_arabic_text(t): return bool(re.search(r"[\u0600-\u06FF]", str(t or "")))
 def pdf_font_name(is_arabic): return ensure_arabic_font() if is_arabic else "Helvetica"
-def file_response(data_bytes, mimetype, filename): return send_file(io.BytesIO(data_bytes), mimetype=mimetype, as_attachment=True, download_name=filename)
+def file_response(data_bytes, mimetype, filename): 
+    return send_file(io.BytesIO(data_bytes), mimetype=mimetype, as_attachment=True, download_name=filename)
 
 def get_file_bytes(p, key="fileBase64"):
     if "_file_bytes" in p and p["_file_bytes"]:
@@ -709,7 +701,8 @@ def enhance_image_for_ocr(img):
         img = img.convert('L')
         img = ImageEnhance.Contrast(img).enhance(2.0)
         return img
-    except: return img
+    except Exception:
+        return img
 
 def ocr_pdf_page_to_text(fitz_page, lang):
     if pytesseract is None: return ""
@@ -718,7 +711,8 @@ def ocr_pdf_page_to_text(fitz_page, lang):
         img = Image.open(io.BytesIO(pix.tobytes("png")))
         img = enhance_image_for_ocr(img)
         return pytesseract.image_to_string(img, lang=lang)
-    except Exception: return ""
+    except Exception:
+        return ""
 
 def is_probably_scanned(text, page_count):
     if page_count == 0: return False
@@ -1283,7 +1277,7 @@ def handle_word_to_pdf(p):
                 })
                 
                 upload_task = cloudconvert.Task.find(id=job['tasks'][0]['id'])
-                cloudconvert.Task.upload(file_name=pdf_path, task=upload_task)
+                cloudconvert.Task.upload(file_name=docx_path, task=upload_task)
                 job = cloudconvert.Job.wait(id=job['id'])
                 
                 for task in job['tasks']:
@@ -2269,7 +2263,6 @@ def health_check():
         "status": "healthy",
         "uptime_seconds": int(time.time() - SERVER_START_TIME),
         "active_queue_tasks": conversion_queue.qsize(),
-        "cached_items": len(dedup_conversion_cache),
         "total_requests": TOTAL_REQUESTS_PROCESSED
     }), 200
 
@@ -2476,14 +2469,6 @@ def convert():
     handler = REGISTRY.get(action)
     if not handler: return bad_request(f"Unknown action: {action}")
 
-    file_bytes_direct = get_file_bytes(payload)
-    cache_key = None
-    if file_bytes_direct and len(file_bytes_direct) < 15 * 1024 * 1024 and action not in ("sign-pdf", "generate-quiz"):
-        cache_key = hashlib.sha256(f"{action}_{text}_{is_arabic}".encode() + file_bytes_direct).hexdigest()
-        cached = dedup_conversion_cache.get(cache_key)
-        if cached:
-            return file_response(cached["bytes"], cached["mimetype"], cached["filename"])
-
     gc_was_enabled = gc.isenabled()
     if action in HEAVY_ACTIONS and gc_was_enabled:
         gc.disable()
@@ -2491,19 +2476,6 @@ def convert():
     try:
         ctx = dict(payload, text=text, is_arabic=is_arabic)
         response = handler(ctx)
-        
-        if cache_key and hasattr(response, "get_data") and response.status_code == 200:
-            content_type = response.headers.get("Content-Type", "application/octet-stream")
-            if "application" in content_type:
-                disposition = response.headers.get("Content-Disposition", "")
-                filename_match = re.search(r'filename="?([^";]+)"?', disposition)
-                filename = filename_match.group(1) if filename_match else "Converted_Document"
-                dedup_conversion_cache[cache_key] = {
-                    "bytes": response.get_data(),
-                    "mimetype": content_type,
-                    "filename": filename,
-                    "timestamp": time.time()
-                }
         return response
     except Exception:
         app.logger.exception(f"convert() error for action={action}")
