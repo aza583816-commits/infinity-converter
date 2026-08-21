@@ -7,7 +7,7 @@
       <stop offset="100%" stop-color="#01030d"/>
     </radialGradient>
 
-    <!-- تدرج إنفينيتي الأساسي -->
+    <!-- تدرج إنفينيتي الممتلئ فائق الوضوح -->
     <linearGradient id="neonRibbon" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#d946ef"/>
       <stop offset="30%" stop-color="#8b5cf6"/>
@@ -27,37 +27,15 @@
   <rect width="512" height="512" rx="128" fill="url(#deepCanvas)"/>
   <rect width="504" height="504" x="4" y="4" rx="124" fill="none" stroke="url(#glassRim)" stroke-width="2.5"/>
 
-  <!-- هالات ضوئية خلفية ناعمة -->
+  <!-- هالات ضوئية خلفية -->
   <circle cx="160" cy="256" r="90" fill="#c026ff" opacity="0.25"/>
   <circle cx="352" cy="256" r="90" fill="#00e5ff" opacity="0.20"/>
 
-  <!-- ظل مجسم تحت الشعار -->
-  <path d="M 160 185 C 230 185 282 337 352 337 C 405 337 444 300 444 261 C 444 222 405 185 352 185 C 282 185 230 337 160 337 C 107 337 68 300 68 261 C 68 222 107 185 160 185 Z" 
-        fill="none" 
-        stroke="#000000" 
-        stroke-width="56" 
-        stroke-linecap="round" 
-        stroke-linejoin="round"
-        opacity="0.6"/>
+  <!-- رمز إنفينيتي المصمت هندسياً (Filled Path مدعوم 100%) -->
+  <path d="M356 160 C318 160 284 182 256 215 C228 182 194 160 156 160 C92 160 40 203 40 256 C40 309 92 352 156 352 C194 352 228 330 256 297 C284 330 318 352 356 352 C420 352 472 309 472 256 C472 203 420 160 356 160 Z M156 304 C118 304 88 283 88 256 C88 229 118 208 156 208 C182 208 206 220 223 238 L238 256 L223 274 C206 292 182 304 156 304 Z M356 304 C330 304 306 292 289 274 L274 256 L289 238 C306 220 330 208 356 208 C394 208 424 229 424 256 C424 283 394 304 356 304 Z" 
+        fill="url(#neonRibbon)"/>
 
-  <!-- رمز إنفينيتي الرئيسي الثابت -->
-  <path d="M 160 180 C 230 180 282 332 352 332 C 405 332 444 295 444 256 C 444 217 405 180 352 180 C 282 180 230 332 160 332 C 107 332 68 295 68 256 C 68 217 107 180 160 180 Z" 
-        fill="none" 
-        stroke="url(#neonRibbon)" 
-        stroke-width="52" 
-        stroke-linecap="round" 
-        stroke-linejoin="round"/>
-
-  <!-- خط لمعان داخلي بارز -->
-  <path d="M 160 180 C 230 180 282 332 352 332 C 405 332 444 295 444 256 C 444 217 405 180 352 180 C 282 180 230 332 160 332 C 107 332 68 295 68 256 C 68 217 107 180 160 180 Z" 
-        fill="none" 
-        stroke="#ffffff" 
-        stroke-width="4" 
-        stroke-linecap="round" 
-        stroke-linejoin="round"
-        opacity="0.45"/>
-
-  <!-- نقطتا بريق مركزية -->
-  <circle cx="160" cy="180" r="5" fill="#ffffff" opacity="0.9"/>
-  <circle cx="352" cy="180" r="5" fill="#ffffff" opacity="0.9"/>
+  <!-- بريق ولمعان داخلي متناسق -->
+  <circle cx="156" cy="184" r="5" fill="#ffffff" opacity="0.9"/>
+  <circle cx="356" cy="184" r="5" fill="#ffffff" opacity="0.9"/>
 </svg>
