@@ -40,7 +40,7 @@ try:
 except Exception:
     pass
 
-from flask import Flask, request, jsonify, render_template, send_file, Response, redirect
+from flask import Flask, request, jsonify, render_template, send_file, send_from_directory, Response, redirect
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -181,7 +181,7 @@ def enforce_custom_domain():
     global TOTAL_REQUESTS_PROCESSED
     TOTAL_REQUESTS_PROCESSED += 1
     
-    if request.path in ("/healthz", "/metrics", "/manifest.json", "/robots.txt", "/sitemap.xml") or request.path.startswith("/api/") or request.path.startswith("/static/"):
+    if request.path in ("/healthz", "/metrics", "/manifest.json", "/robots.txt", "/sitemap.xml", "/.well-known/assetlinks.json") or request.path.startswith("/api/") or request.path.startswith("/static/"):
         return
     
     parsed_host = request.host.split(':')[0]
@@ -360,7 +360,7 @@ TOOLS_DEF = [
     ("excel-to-json", "Excel إلى JSON", "Excel to JSON", "file", "i-dev", "fa-code"),
     ("csv-to-json", "CSV إلى JSON", "CSV to JSON", "fileText", "i-dev", "fa-code"),
     ("text-to-csv", "نص إلى CSV", "Text to CSV", "text", "i-excel", "fa-file-csv"),
-    ("json-to-csv", "JSON إلى CSV", "JSON to CSV", "fileText", "i-dev", "fa-file-csv"),
+    ("json-to-csv", "JSON إلى CSV", "JSON to CSV", "fileText", "i-dev", "fa-csv"),
     ("image-to-pdf", "صورة إلى PDF", "Image to PDF", "file", "i-img", "fa-images"),
     ("compress-image", "ضغط الصور", "Compress Image", "file", "i-excel", "fa-compress"),
     ("image-to-jpg", "تحويل لـ JPG", "Convert to JPG", "file", "i-img", "fa-image"),
@@ -2292,17 +2292,23 @@ def telegram_webhook():
 @app.route("/manifest.json")
 def manifest():
     manifest_data = {
-        "name": "V-Infinity File Converter",
+        "name": "V-Infinity Converter",
         "short_name": "V-Infinity",
         "start_url": "/",
+        "id": "/",
         "display": "standalone",
-        "background_color": "#09090b",
-        "theme_color": "#09090b",
+        "background_color": "#090d16",
+        "theme_color": "#6366f1",
+        "description": "The Infinite SaaS Conversion Suite — Word, PDF, Excel, images, and developer tools.",
         "icons": [
-            {"src": "/static/favicon.svg", "sizes": "192x192 512x512", "type": "image/svg+xml"}
+            {"src": "/static/favicon.svg", "sizes": "192x192 512x512", "type": "image/svg+xml", "purpose": "any maskable"}
         ]
     }
     return jsonify(manifest_data)
+
+@app.route('/.well-known/assetlinks.json')
+def assetlinks():
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'assetlinks.json', mimetype='application/json')
 
 @app.route("/")
 def index_ar():
