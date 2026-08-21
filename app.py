@@ -181,7 +181,7 @@ def enforce_custom_domain():
     global TOTAL_REQUESTS_PROCESSED
     TOTAL_REQUESTS_PROCESSED += 1
     
-    if request.path in ("/healthz", "/metrics", "/manifest.json", "/robots.txt", "/sitemap.xml", "/.well-known/assetlinks.json") or request.path.startswith("/api/") or request.path.startswith("/static/"):
+    if request.path in ("/healthz", "/metrics", "/manifest.json", "/sw.js", "/robots.txt", "/sitemap.xml", "/.well-known/assetlinks.json") or request.path.startswith("/api/") or request.path.startswith("/static/"):
         return
     
     parsed_host = request.host.split(':')[0]
@@ -2297,6 +2297,7 @@ def manifest():
         "start_url": "/",
         "id": "/",
         "display": "standalone",
+        "orientation": "portrait",
         "background_color": "#090d16",
         "theme_color": "#6366f1",
         "description": "The Infinite SaaS Conversion Suite — Word, PDF, Excel, images, and developer tools.",
@@ -2305,6 +2306,10 @@ def manifest():
         ]
     }
     return jsonify(manifest_data)
+
+@app.route("/sw.js")
+def service_worker():
+    return send_from_directory(app.root_path, 'sw.js', mimetype='application/javascript')
 
 @app.route('/.well-known/assetlinks.json')
 def assetlinks():
