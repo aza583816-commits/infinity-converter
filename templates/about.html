@@ -8,17 +8,30 @@
 <style>
   body { background-color: #0f172a; color: #f8fafc; font-family: 'Cairo', sans-serif; padding: 30px 20px; line-height: 1.8; }
   .container { max-width: 900px; margin: 0 auto; background: #1e293b; padding: 40px; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); }
-  h1 { color: #6366f1; text-align: center; margin-bottom: 20px; font-weight: 800; }
-  p { color: #cbd5e1; font-size: 16px; margin-bottom: 15px; }
+  h1 { color: #6366f1; text-align: center; margin-bottom: 25px; font-weight: 800; }
+  h2 { color: #818cf8; font-size: 20px; margin-top: 20px; font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; }
+  p { color: #cbd5e1; font-size: 15px; margin-bottom: 15px; }
   .back-btn { display: inline-block; background: linear-gradient(135deg, #6366f1, #a855f7); color: #fff; padding: 10px 20px; border-radius: 12px; text-decoration: none; font-weight: 700; margin-bottom: 20px; }
+  .back-btn:hover { transform: translateY(-2px); }
 </style>
 </head>
 <body>
 <div class="container">
-  <a href="/" class="back-btn">العودة للرئيسية</a>
-  <h1>عن منصة Infinity Converter</h1>
-  <p>منصة Infinity Converter هي منظومة سحابية متخصصة ومجانية بالكامل، تم تطويرها لتوفير أدوات إنتاجية متقدمة وسريعة للطلاب، المعلمين، الباحثين، والمطورين لمعالجة ملفات PDF، المستندات، الجداول، والصور بأعلى درجات الأمان والخصوصية.</p>
-  <p>نعمل باستمرار على دمج أحدث تقنيات المعالجة البرمجية والذكاء الاصطناعي لحل المشكلات الشائعة مثل الحفاظ على تنسيق النصوص العربية، وضغط الملفات بكفاءة، وتنقية الوثائق التعليمية للطباعة دون فرض أي رسوم اشتراك أو قيود يومية.</p>
+  <a href="/" class="back-btn" data-ar="العودة للرئيسية" data-en="Back to Home">العودة للرئيسية</a>
+  <h1 data-ar="عن منصة Infinity Converter" data-en="About Infinity Converter">عن منصة Infinity Converter</h1>
+  
+  <h2 data-ar="رؤيتنا ورسالتنا" data-en="Our Mission">رؤيتنا ورسالتنا</h2>
+  <p data-ar="تم إطلاق Infinity Converter بهدف تقديم منصة سحابية شاملة ومجانية تلبي احتياجات الطلاب، الباحثين، المعلمين، والمطورين لمعالجة وتعديل وتحويل المستندات والملفات (PDF، Word، Excel، الصور) دون قيود الاستخدام اليومية المعقدة أو الاشتراكات المدفوعة." data-en="Infinity Converter is an all-in-one free cloud suite designed to empower students, researchers, and developers with seamless file conversions, PDF modifications, and document utilities without paywalls.">تم إطلاق Infinity Converter بهدف تقديم منصة سحابية شاملة ومجانية تلبي احتياجات الطلاب، الباحثين، المعلمين، والمطورين لمعالجة وتعديل وتحويل المستندات والملفات (PDF، Word، Excel، الصور) دون قيود الاستخدام اليومية المعقدة أو الاشتراكات المدفوعة.</p>
+
+  <h2 data-ar="الأمان والخصوصية" data-en="Security First">الأمان والخصوصية</h2>
+  <p data-ar="نعتمد أعلى معايير الحماية الرقمية عبر معالجة الملفات داخل الذاكرة المؤقتة (RAM) وحذفها تلقائياً وبشكل فوري بمجرد تنزيلك للملف لضمان سرية مستنداتك." data-en="We enforce a strict privacy policy where all uploaded files are processed in isolated memory environments and purged immediately after download.">نعتمد أعلى معايير الحماية الرقمية عبر معالجة الملفات داخل الذاكرة المؤقتة (RAM) وحذفها تلقائياً وبشكل فوري بمجرد تنزيلك للملف لضمان سرية مستنداتك.</p>
 </div>
+<script>
+  const savedLang = localStorage.getItem('v_lang');
+  if (savedLang === 'en' || (!savedLang && !navigator.language.startsWith('ar'))) {
+    document.documentElement.lang = 'en'; document.documentElement.dir = 'ltr';
+    document.querySelectorAll('[data-en]').forEach(el => el.innerHTML = el.getAttribute('data-en'));
+  }
+</script>
 </body>
 </html>
