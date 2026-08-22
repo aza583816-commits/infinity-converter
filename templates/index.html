@@ -8,11 +8,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <title>{% if is_404 %}الصفحة غير موجودة | Infinity Converter{% elif tool_data %}{% if lang == 'en' %}{{ tool_data.seo_title_en }}{% else %}{{ tool_data.seo_title_ar }}{% endif %}{% else %}Infinity Converter - المحول الشامل لملفات PDF والأدوات{% endif %}</title>
-    <meta name="description" content="{% if tool_data %}{% if lang == 'en' %}{{ tool_data.seo_desc_en }}{% else %}{{ tool_data.seo_desc_ar }}{% endif %}{% else %}منصة Infinity Converter الشاملة والمجانية لتحويل ملفات PDF، Word، Excel، والصور بضغطة زر. معالجة سحابية آمنة وسريعة بدون تخزين لملفاتك. اكتشف أكثر من 40 أداة الآن!{% endif %}">
+    <title>{% if is_404 %}{% if lang == 'en' %}Page Not Found (404) | Infinity Converter{% else %}الصفحة غير موجودة | Infinity Converter{% endif %}{% elif tool_data %}{% if lang == 'en' %}{{ tool_data.seo_title_en }}{% else %}{{ tool_data.seo_title_ar }}{% endif %}{% else %}{% if lang == 'en' %}Infinity Converter - All-in-One Free PDF & Document Tools{% else %}Infinity Converter - المحول الشامل لملفات PDF والمستندات مجاناً{% endif %}{% endif %}</title>
+    <meta name="description" content="{% if tool_data %}{% if lang == 'en' %}{{ tool_data.seo_desc_en }}{% else %}{{ tool_data.seo_desc_ar }}{% endif %}{% else %}منصة Infinity Converter الشاملة والمجانية لتحويل وتعديل ملفات PDF، Word، Excel، والصور بضغطة زر. معالجة سحابية آمنة وفورية بدون تخزين لملفاتك.{% endif %}">
 
     <meta property="og:type" content="website">
-    <meta property="og:title" content="{% if tool_data %}{% if lang == 'en' %}{{ tool_data.seo_title_en }}{% else %}{{ tool_data.seo_title_ar }}{% endif %}{% else %}Infinity Converter - أسرع محول ملفات و PDF مجاني{% endif %}">
+    <meta property="og:title" content="{% if tool_data %}{% if lang == 'en' %}{{ tool_data.seo_title_en }}{% else %}{{ tool_data.seo_title_ar }}{% endif %}{% else %}Infinity Converter - المحول السحابي الشامل{% endif %}">
     <meta property="og:description" content="{% if tool_data %}{% if lang == 'en' %}{{ tool_data.seo_desc_en }}{% else %}{{ tool_data.seo_desc_ar }}{% endif %}{% else %}تحويل وتحرير ملفات PDF و Word و Excel والصور بضغطة زر وبدون قيود.{% endif %}">
     <meta property="og:image" content="https://infinityconverter.com/static/og-banner.png">
     <meta property="og:url" content="https://infinityconverter.com{% if lang == 'en' %}/en{% endif %}{% if tool_data %}/{{ tool_data.slug }}{% endif %}">
@@ -189,7 +189,7 @@
 
     <header>
         <a href="{% if lang == 'en' %}/en/{% else %}/{% endif %}" class="logo">
-            <i class="fa-solid fa-infinity"></i> <span>V-Infinity</span>
+            <i class="fa-solid fa-infinity"></i> <span>Infinity Converter</span>
         </a>
         <div class="controls">
             <button onclick="toggleLanguageSEO()" id="langBtn">
@@ -201,14 +201,14 @@
 
     <div class="workspace" id="workspace">
         <div class="workspace-card">
-                       <div class="workspace-header">
+            <div class="workspace-header">
                 <h1 id="mainTitle">
                     {% if is_404 == true %}
                         {% if lang == 'en' %}Page Not Found (404){% else %}عذراً، الأداة أو الصفحة غير موجودة (404){% endif %}
                     {% elif tool_data %}
                         {% if lang == 'en' %}{{ tool_data.h1_en }}{% else %}{{ tool_data.h1_ar }}{% endif %}
                     {% else %}
-                        {% if lang == 'en' %}Infinity Converter - All-in-One File Suite{% else %}المحول الشامل لملفات PDF والمستندات{% endif %}
+                        {% if lang == 'en' %}Infinity Converter - All-in-One Cloud Suite{% else %}المحول الشامل لملفات PDF والمستندات السحابية{% endif %}
                     {% endif %}
                 </h1>
                 <p id="mainDesc">
@@ -217,7 +217,7 @@
                     {% elif tool_data %}
                         {% if lang == 'en' %}{{ tool_data.short_desc_en }}{% else %}{{ tool_data.short_desc_ar }}{% endif %}
                     {% else %}
-                        {% if lang == 'en' %}Select any tool below to start fast, secure, and free document processing.{% else %}اختر إحدى الأدوات السحابية من الأسفل للبدء في التحويل والتعديل فوراً وبأعلى أمان.{% endif %}
+                        {% if lang == 'en' %}Select any tool below to start fast, secure, and completely free document conversions.{% else %}اختر إحدى الأدوات من الأسفل للبدء في تحويل وتعديل مستنداتك وملفاتك بأمان وسرعة فائقة.{% endif %}
                     {% endif %}
                 </p>
             </div>
@@ -896,7 +896,7 @@
 
     <div class="workspace">
         <div class="footer-disclaimer">
-            <p>{% if lang == 'ar' %}V-Infinity Converter يوفر مجموعة شاملة من الأدوات السحابية الآمنة لمعالجة المستندات والملفات. تتم المعالجة في الذاكرة العشوائية المؤقتة وتحذف فوراً للحفاظ على الخصوصية.{% else %}V-Infinity Converter provides a comprehensive suite of cloud document tools. Files are processed in temporary RAM and deleted immediately for your security.{% endif %}</p>
+            <p>{% if lang == 'ar' %}Infinity Converter يوفر مجموعة شاملة من الأدوات السحابية الآمنة لمعالجة المستندات والملفات. تتم المعالجة في الذاكرة العشوائية المؤقتة وتحذف فوراً للحفاظ على الخصوصية.{% else %}Infinity Converter provides a comprehensive suite of cloud document tools. Files are processed in temporary RAM and deleted immediately for your security.{% endif %}</p>
             <div class="footer-links">
                 <a href="{% if lang == 'en' %}/en{% endif %}/about">{% if lang == 'ar' %}من نحن{% else %}About Us{% endif %}</a> | 
                 <a href="{% if lang == 'en' %}/en{% endif %}/privacy">{% if lang == 'ar' %}سياسة الخصوصية{% else %}Privacy Policy{% endif %}</a> | 
@@ -1061,7 +1061,6 @@
             }
         }
 
-        // 🚀 دعم اللصق المباشر من الحافظة (Ctrl + V)
         window.addEventListener('paste', (e) => {
             if (e.clipboardData && e.clipboardData.files.length) {
                 const file = e.clipboardData.files[0];
@@ -1368,8 +1367,8 @@
                     const a = document.createElement('a'); a.href = url;
                     
                     let filename = 'downloaded_file';
-                    if(currentAction === 'pdf-to-docx') filename = 'V-Infinity_Document.docx';
-                    else if(currentAction === 'pdf-to-excel') filename = 'V-Infinity_Data.xlsx';
+                    if(currentAction === 'pdf-to-docx') filename = 'Infinity_Document.docx';
+                    else if(currentAction === 'pdf-to-excel') filename = 'Infinity_Data.xlsx';
                     else if(currentAction === 'clean-study-sheet') filename = 'Cleaned_Study_Sheet.pdf';
                     else if(currentAction === 'ink-saver-pdf') filename = 'Ink_Saver_Document.pdf';
                     else if(currentAction === 'sign-pdf') filename = 'Signed_Document.pdf';
