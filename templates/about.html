@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="{% if lang == 'en' %}en{% else %}ar{% endif %}" dir="{% if lang == 'en' %}ltr{% else %}rtl{% endif %}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>من نحن | Infinity Converter</title>
+<title>{% if lang == 'en' %}About Us | Infinity Converter{% else %}من نحن | Infinity Converter{% endif %}</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
   body { background-color: #0f172a; color: #f8fafc; font-family: 'Cairo', sans-serif; padding: 30px 20px; line-height: 1.8; }
@@ -17,21 +17,29 @@
 </head>
 <body>
 <div class="container">
-  <a href="/" class="back-btn" data-ar="العودة للرئيسية" data-en="Back to Home">العودة للرئيسية</a>
-  <h1 data-ar="عن منصة Infinity Converter" data-en="About Infinity Converter">عن منصة Infinity Converter</h1>
-  
-  <h2 data-ar="رؤيتنا ورسالتنا" data-en="Our Mission">رؤيتنا ورسالتنا</h2>
-  <p data-ar="تم إطلاق Infinity Converter بهدف تقديم منصة سحابية شاملة ومجانية تلبي احتياجات الطلاب، الباحثين، المعلمين، والمطورين لمعالجة وتعديل وتحويل المستندات والملفات (PDF، Word، Excel، الصور) دون قيود الاستخدام اليومية المعقدة أو الاشتراكات المدفوعة." data-en="Infinity Converter is an all-in-one free cloud suite designed to empower students, researchers, and developers with seamless file conversions, PDF modifications, and document utilities without paywalls.">تم إطلاق Infinity Converter بهدف تقديم منصة سحابية شاملة ومجانية تلبي احتياجات الطلاب، الباحثين، المعلمين، والمطورين لمعالجة وتعديل وتحويل المستندات والملفات (PDF، Word، Excel، الصور) دون قيود الاستخدام اليومية المعقدة أو الاشتراكات المدفوعة.</p>
+  <a href="{% if lang == 'en' %}/en/{% else %}/{% endif %}" class="back-btn">{% if lang == 'en' %}Back to Home{% else %}العودة للرئيسية{% endif %}</a>
+  <h1>{% if lang == 'en' %}About Infinity Converter{% else %}عن منصة Infinity Converter{% endif %}</h1>
 
-  <h2 data-ar="الأمان والخصوصية" data-en="Security First">الأمان والخصوصية</h2>
-  <p data-ar="نعتمد أعلى معايير الحماية الرقمية عبر معالجة الملفات داخل الذاكرة المؤقتة (RAM) وحذفها تلقائياً وبشكل فوري بمجرد تنزيلك للملف لضمان سرية مستنداتك." data-en="We enforce a strict privacy policy where all uploaded files are processed in isolated memory environments and purged immediately after download.">نعتمد أعلى معايير الحماية الرقمية عبر معالجة الملفات داخل الذاكرة المؤقتة (RAM) وحذفها تلقائياً وبشكل فوري بمجرد تنزيلك للملف لضمان سرية مستنداتك.</p>
+  <h2>{% if lang == 'en' %}Our Mission{% else %}رؤيتنا ورسالتنا{% endif %}</h2>
+  {% if lang == 'en' %}
+  <p>Infinity Converter is an all-in-one free cloud suite designed to empower students, researchers, teachers, and developers with seamless file conversions, PDF modifications, and document utilities without paywalls or complicated daily-use restrictions.</p>
+  {% else %}
+  <p>تم إطلاق Infinity Converter بهدف تقديم منصة سحابية شاملة ومجانية تلبي احتياجات الطلاب، الباحثين، المعلمين، والمطورين لمعالجة وتعديل وتحويل المستندات والملفات (PDF، Word، Excel، الصور) دون قيود الاستخدام اليومية المعقدة أو الاشتراكات المدفوعة.</p>
+  {% endif %}
+
+  <h2>{% if lang == 'en' %}Who It's For{% else %}لمن هذا الموقع{% endif %}</h2>
+  {% if lang == 'en' %}
+  <p>Students preparing assignments, researchers formatting papers, teachers building study material, and developers who need quick data-format utilities — Infinity Converter brings all of these needs into one place.</p>
+  {% else %}
+  <p>الطلاب اللي يجهزون واجباتهم، الباحثون اللي ينسّقون أبحاثهم، المعلمون اللي يجهزون مواد دراسية، والمطورون اللي يحتاجون أدوات تحويل بيانات سريعة — كلهم يلقون احتياجهم بمكان وحد.</p>
+  {% endif %}
+
+  <h2>{% if lang == 'en' %}Security First{% else %}الأمان والخصوصية{% endif %}</h2>
+  {% if lang == 'en' %}
+  <p>We enforce a strict privacy approach: uploaded files are processed in temporary storage and removed after processing completes. See our <a href="{% if lang == 'en' %}/en/privacy{% else %}/privacy{% endif %}" style="color:#818cf8;">Privacy Policy</a> for full details on how files are handled.</p>
+  {% else %}
+  <p>نتبع سياسة خصوصية صارمة: تتم معالجة الملفات المرفوعة في تخزين مؤقت ويتم حذفها بعد اكتمال المعالجة. راجع <a href="/privacy" style="color:#818cf8;">سياسة الخصوصية</a> لتفاصيل كاملة عن طريقة التعامل مع الملفات.</p>
+  {% endif %}
 </div>
-<script>
-  const savedLang = localStorage.getItem('v_lang');
-  if (savedLang === 'en' || (!savedLang && !navigator.language.startsWith('ar'))) {
-    document.documentElement.lang = 'en'; document.documentElement.dir = 'ltr';
-    document.querySelectorAll('[data-en]').forEach(el => el.innerHTML = el.getAttribute('data-en'));
-  }
-</script>
 </body>
 </html>
