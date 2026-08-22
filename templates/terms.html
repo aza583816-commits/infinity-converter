@@ -17,20 +17,27 @@
 </head>
 <body>
 <div class="container">
-  <a href="/" class="back-btn">العودة للرئيسية</a>
-  <h1>اتفاقية وشروط الاستخدام</h1>
+  <a href="/" class="back-btn" data-ar="العودة للرئيسية" data-en="Back to Home">العودة للرئيسية</a>
+  <h1 data-ar="شروط الاستخدام والخدمة" data-en="Terms of Service">شروط الاستخدام والخدمة</h1>
   
-  <h2>1. قبول الشروط</h2>
-  <p>باستخدامك لمنصة Infinity Converter، فإنك تقر وتوافق على الالتزام بكافة الشروط والأحكام الموضحة هنا وجميع القوانين واللوائح المعمول بها محلياً ودولياً.</p>
+  <h2 data-ar="1. قبول الشروط" data-en="1. Acceptance of Terms">1. قبول الشروط</h2>
+  <p data-ar="باستخدامك لمنصة Infinity Converter، فإنك تقر وتوافق على الالتزام بكافة الشروط والأحكام الموضحة هنا وجميع القوانين واللوائح المعمول بها." data-en="By accessing Infinity Converter, you agree to be bound by these terms of service and all applicable laws and regulations.">باستخدامك لمنصة Infinity Converter، فإنك تقر وتوافق على الالتزام بكافة الشروط والأحكام الموضحة هنا وجميع القوانين واللوائح المعمول بها.</p>
 
-  <h2>2. ترخيص الاستخدام وسياسة الاستخدام العادل</h2>
-  <p>يُسمح بالوصول المجاني لكافة الأدوات لمعالجة المستندات والبيانات الشخصية والأكاديمية والمهنية. يُحظر تماماً محاولة إغراق الخوادم بالطلبات الآلية (DDoS) أو استخدام أدوات الكشط الآلي (Scrapers) التي تؤثر على كفاءة الخوادم لبقية المستخدمين.</p>
+  <h2 data-ar="2. ترخيص الاستخدام العادل" data-en="2. Fair Usage Policy">2. ترخيص الاستخدام العادل</h2>
+  <p data-ar="يُسمح بالوصول المجاني لكافة الأدوات لمعالجة المستندات الشخصية والأكاديمية والمهنية. يُحظر تماماً إغراق الخوادم بالطلبات الآلية (Bots/DDoS) أو محاولة تفكيك برمجيات الموقع." data-en="Free access is granted for personal, academic, and business file processing. Automated request flooding or scraping is strictly prohibited.">يُسمح بالوصول المجاني لكافة الأدوات لمعالجة المستندات الشخصية والأكاديمية والمهنية. يُحظر تماماً إغراق الخوادم بالطلبات الآلية (Bots/DDoS) أو محاولة تفكيك برمجيات الموقع.</p>
 
-  <h2>3. الملكية الفكرية للمحتوى المرفوع</h2>
-  <p>أنت تحتفظ بكامل حقوق الملكية الفكرية لجميع المستندات والصور والنصوص التي تقوم برفعها. لا تطالب منصة Infinity Converter بأي حقوق ملكية لأي ملف يتم تمريره عبر الخوادم.</p>
+  <h2 data-ar="3. الملكية الفكرية للمحتوى" data-en="3. Intellectual Property">3. الملكية الفكرية للمحتوى</h2>
+  <p data-ar="أنت تحتفظ بكامل حقوق الملكية الفكرية لجميع المستندات والصور والنصوص التي ترفعها، ولا تطالب المنصة بأي حقوق ملكية لملفاتك مطلقاً." data-en="You retain full copyright and ownership of all files and data processed through our platform.">أنت تحتفظ بكامل حقوق الملكية الفكرية لجميع المستندات والصور والنصوص التي ترفعها، ولا تطالب المنصة بأي حقوق ملكية لملفاتك مطلقاً.</p>
 
-  <h2>4. إخلاء المسؤولية (Disclaimer)</h2>
-  <p>تُقدم الخدمات السحابية والأدوات "كما هي" دون أي ضمانات صريحة أو ضمنية لسلامة مخرجات التحويل في الحالات الخاصة، ونبذل قصارى جهدنا لتقديم أعلى دقة معالجة برمجية ممكنة.</p>
+  <h2 data-ar="4. إخلاء المسؤولية" data-en="4. Disclaimer">4. إخلاء المسؤولية</h2>
+  <p data-ar="تُقدم الخدمات السحابية 'كما هي' دون أي ضمانات صريحة أو ضمنية، ونبذل قصارى جهدنا لضمان أعلى دقة وأمان أثناء المعالجة." data-en="Services are provided 'as is' without warranties of any kind. We strive to maintain maximum uptime and conversion accuracy.">تُقدم الخدمات السحابية 'كما هي' دون أي ضمانات صريحة أو ضمنية، ونبذل قصارى جهدنا لضمان أعلى دقة وأمان أثناء المعالجة.</p>
 </div>
+<script>
+  const savedLang = localStorage.getItem('v_lang');
+  if (savedLang === 'en' || (!savedLang && !navigator.language.startsWith('ar'))) {
+    document.documentElement.lang = 'en'; document.documentElement.dir = 'ltr';
+    document.querySelectorAll('[data-en]').forEach(el => el.innerHTML = el.getAttribute('data-en'));
+  }
+</script>
 </body>
 </html>
