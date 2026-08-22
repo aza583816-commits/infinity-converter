@@ -413,15 +413,15 @@ TOOLS_SEO = {}
 for action, nameAr, nameEn, type_, iconClass, iconName in TOOLS_DEF:
     TOOLS_SEO[action] = {
         "slug": action, "nameAr": nameAr, "nameEn": nameEn, "type": type_, "iconClass": iconClass, "iconName": iconName,
-        "seo_title_ar": f"أداة {nameAr} مجاناً أونلاين وبدقة عالية | V-Infinity",
-        "seo_title_en": f"Free {nameEn} Online Tool | V-Infinity",
+        "seo_title_ar": f"أداة {nameAr} مجاناً أونلاين وبدقة عالية | Infinity Converter",
+        "seo_title_en": f"Free {nameEn} Online Tool | Infinity Converter",
         "seo_desc_ar": f"أفضل أداة سحابية لتنفيذ {nameAr} بضغطة زر. معالجة سريعة وآمنة 100% ومجانية بالكامل بدون تخزين للملفات.",
         "seo_desc_en": f"Best cloud tool for {nameEn} with one click. Fast, secure, and 100% free with no file storage.",
         "h1_ar": nameAr, "h1_en": nameEn,
         "short_desc_ar": f"قم بإنجاز {nameAr} بسهولة وبدون تعقيد عبر تقنياتنا المتطورة.",
         "short_desc_en": f"Easily perform {nameEn} without complexity using our advanced tools.",
-        "long_desc_ar": f"منصة V-Infinity تقدم لك أداة '{nameAr}' المجانية بالكامل. تم تصميم هذه الأداة لتكون سريعة جداً وتعمل بالذكاء الاصطناعي لضمان أعلى جودة ممكنة. أمان ملفاتك هو أولويتنا القصوى، حيث نقوم بمعالجة البيانات سحابياً وحذفها تلقائياً بمجرد انتهاء العملية دون الاحتفاظ بأي نسخ.",
-        "long_desc_en": f"V-Infinity platform offers the completely free '{nameEn}' tool. This tool is designed to be extremely fast and uses advanced AI to ensure the highest quality possible. Your file security is our top priority; we process data in the cloud and automatically delete it once the operation is complete.",
+        "long_desc_ar": f"منصة Infinity Converter تقدم لك أداة '{nameAr}' المجانية بالكامل. تم تصميم هذه الأداة لتكون سريعة جداً وتعمل بالذكاء الاصطناعي لضمان أعلى جودة ممكنة. أمان ملفاتك هو أولويتنا القصوى، حيث نقوم بمعالجة البيانات سحابياً وحذفها تلقائياً بمجرد انتهاء العملية دون الاحتفاظ بأي نسخ.",
+        "long_desc_en": f"Infinity Converter platform offers the completely free '{nameEn}' tool. This tool is designed to be extremely fast and uses advanced AI to ensure the highest quality possible. Your file security is our top priority; we process data in the cloud and automatically delete it once the operation is complete.",
         "faq_ar": [
             {"q": f"هل استخدام أداة {nameAr} مجاني؟", "a": "نعم، الأداة مجانية بالكامل ولا تتطلب أي تسجيل أو رسوم مخفية."},
             {"q": "هل ملفاتي آمنة عند الرفع؟", "a": "بالتأكيد! تتم المعالجة بشكل مشفر، وتُحذف جميع الملفات من خوادمنا تلقائياً فور انتهائك."}
@@ -436,23 +436,23 @@ COMPARISON_PAGES = {
     "ilovepdf-alternative": {
         "slug": "ilovepdf-alternative", "nameAr": "أفضل بديل مجاني لـ iLovePDF", "nameEn": "Best Free iLovePDF Alternative",
         "type": "none", "iconClass": "i-pdf", "iconName": "fa-trophy",
-        "seo_title_ar": "أفضل بديل مجاني لـ iLovePDF بدون حدود للملفات | V-Infinity",
-        "seo_title_en": "Best Free iLovePDF Alternative without limits | V-Infinity",
-        "seo_desc_ar": "هل تبحث عن بديل مجاني وسريع لـ iLovePDF؟ منصة V-Infinity تتيح تحويل وتعديل ملفات PDF بدون اشتراكات أو حدود يومية مع دعم فائق للعربية.",
-        "seo_desc_en": "Looking for a free and fast alternative to iLovePDF? V-Infinity offers unlimited PDF conversion and editing with zero fees.",
-        "h1_ar": "أفضل بديل مجاني لـ iLovePDF لعام 2026", "h1_en": "The #1 Free iLovePDF Alternative in 2026",
+        "seo_title_ar": "أفضل بديل مجاني لـ iLovePDF بدون حدود للملفات | Infinity Converter",
+        "seo_title_en": "Best Free iLovePDF Alternative without limits | Infinity Converter",
+        "seo_desc_ar": "هل تبحث عن بديل مجاني وسريع لـ iLovePDF؟ منصة Infinity Converter تتيح تحويل وتعديل ملفات PDF بدون اشتراكات أو حدود يومية مع دعم فائق للعربية.",
+        "seo_desc_en": "Looking for a free and fast alternative to iLovePDF? Infinity Converter offers unlimited PDF conversion and editing with zero fees.",
+        "h1_ar": "أفضل بديل مجاني لـ iLovePDF", "h1_en": "The #1 Free iLovePDF Alternative",
         "short_desc_ar": "جميع أدوات الـ PDF والمستندات مجانية 100% وبدون قيود أو حدود يومية.",
         "short_desc_en": "All PDF and document tools 100% free with no daily limits.",
-        "long_desc_ar": "تعتبر V-Infinity البديل الأمثل لمنصة iLovePDF، حيث توفر معالجة سحابية فائقة السرعة مدعومة بالذكاء الاصطناعي لحل مشاكل الخطوط العربية المعكوسة وتنسيق الجداول، دون فرض أي رسوم أو قيود على عدد الملفات.",
-        "long_desc_en": "V-Infinity is the ultimate alternative to iLovePDF, offering AI-powered cloud document processing without restrictions or fees.",
-        "faq_ar": [{"q": "ما الفرق بين V-Infinity و iLovePDF؟", "a": "V-Infinity مجانية بالكامل، لا تفرض قيوداً يومية، وتوفر دعماً فائقاً لمعالجة النصوص العربية بدقة 100%."}],
-        "faq_en": [{"q": "Why choose V-Infinity over iLovePDF?", "a": "V-Infinity is completely free with no limits and advanced AI accuracy for complex documents."}]
+        "long_desc_ar": "تعتبر Infinity Converter البديل الأمثل لمنصة iLovePDF، حيث توفر معالجة سحابية فائقة السرعة مدعومة بالذكاء الاصطناعي لحل مشاكل الخطوط العربية المعكوسة وتنسيق الجداول، دون فرض أي رسوم أو قيود على عدد الملفات.",
+        "long_desc_en": "Infinity Converter is the ultimate alternative to iLovePDF, offering AI-powered cloud document processing without restrictions or fees.",
+        "faq_ar": [{"q": "ما الفرق بين Infinity Converter و iLovePDF؟", "a": "Infinity Converter مجانية بالكامل، لا تفرض قيوداً يومية، وتوفر دعماً فائقاً لمعالجة النصوص العربية بدقة 100%."}],
+        "faq_en": [{"q": "Why choose Infinity Converter over iLovePDF?", "a": "Infinity Converter is completely free with no limits and advanced AI accuracy for complex documents."}]
     },
     "smallpdf-alternative": {
         "slug": "smallpdf-alternative", "nameAr": "بديل Smallpdf المجاني", "nameEn": "Free Smallpdf Alternative",
         "type": "none", "iconClass": "i-pdf", "iconName": "fa-bolt",
-        "seo_title_ar": "بديل Smallpdf المجاني بدون تسجيل | V-Infinity",
-        "seo_title_en": "Free Smallpdf Alternative No Sign-up | V-Infinity",
+        "seo_title_ar": "بديل Smallpdf المجاني بدون تسجيل | Infinity Converter",
+        "seo_title_en": "Free Smallpdf Alternative No Sign-up | Infinity Converter",
         "seo_desc_ar": "حول واضغط ملفات PDF مجاناً دون الحاجة لاشتراك Smallpdf. معالجة آمنة وفورية للمستندات والصور.",
         "seo_desc_en": "Convert and compress PDFs for free without a Smallpdf subscription. Instant and secure cloud tools.",
         "h1_ar": "بديل Smallpdf المجاني والآمن بالكامل", "h1_en": "Free & Secure Smallpdf Alternative",
@@ -749,7 +749,7 @@ def handle_pdf_to_docx(p):
                 
                 if os.path.exists(docx_path) and os.path.getsize(docx_path) > 0:
                     with open(docx_path, "rb") as df: 
-                        return file_response(df.read(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "V-Infinity_Premium.docx")
+                        return file_response(df.read(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "Infinity_Converted.docx")
             except Exception as e:
                 app.logger.warning(f"Local pdf2docx engine failed: {str(e)}")
 
@@ -779,7 +779,7 @@ def handle_pdf_to_docx(p):
                         with open(docx_path, 'wb') as df:
                             df.write(res.content)
                         with open(docx_path, "rb") as df: 
-                            return file_response(df.read(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "V-Infinity_Cloud.docx")
+                            return file_response(df.read(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "Infinity_Cloud.docx")
             except Exception as e:
                 app.logger.warning(f"CloudConvert failed: {str(e)}")
 
@@ -789,7 +789,7 @@ def handle_pdf_to_docx(p):
                 result = convertapi.convert('docx', {'File': pdf_path}, from_format='pdf', timeout=120)
                 result.file.save(docx_path)
                 with open(docx_path, "rb") as df: 
-                    return file_response(df.read(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "V-Infinity_Fallback.docx")
+                    return file_response(df.read(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "Infinity_Fallback.docx")
             except Exception as e:
                 app.logger.error(f"ConvertAPI Fallback Error: {str(e)}")
 
