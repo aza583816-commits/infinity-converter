@@ -201,23 +201,23 @@
 
     <div class="workspace" id="workspace">
         <div class="workspace-card">
-            <div class="workspace-header">
+                       <div class="workspace-header">
                 <h1 id="mainTitle">
-                    {% if is_404 %}
-                        {% if lang == 'ar' %}عذراً، الأداة أو الصفحة غير موجودة (404){% else %}Page Not Found (404){% endif %}
+                    {% if is_404 == true %}
+                        {% if lang == 'en' %}Page Not Found (404){% else %}عذراً، الأداة أو الصفحة غير موجودة (404){% endif %}
                     {% elif tool_data %}
-                        {% if lang == 'ar' %}{{ tool_data.h1_ar }}{% else %}{{ tool_data.h1_en }}{% endif %}
+                        {% if lang == 'en' %}{{ tool_data.h1_en }}{% else %}{{ tool_data.h1_ar }}{% endif %}
                     {% else %}
-                        {% if lang == 'ar' %}مرحباً بك في المحول الشامل{% else %}Welcome to Infinity Converter{% endif %}
+                        {% if lang == 'en' %}Infinity Converter - All-in-One File Suite{% else %}المحول الشامل لملفات PDF والمستندات{% endif %}
                     {% endif %}
                 </h1>
                 <p id="mainDesc">
-                    {% if is_404 %}
-                        {% if lang == 'ar' %}يبدو أنك فتحت رابطاً خاطئاً أو تم نقل الأداة. اختر إحدى الأدوات من الأسفل للبدء فوراً!{% else %}The requested tool was not found. Please choose from our tools below!{% endif %}
+                    {% if is_404 == true %}
+                        {% if lang == 'en' %}The requested tool was not found. Please choose from our tools below!{% else %}يبدو أنك فتحت رابطاً خاطئاً أو تم نقل الأداة. اختر إحدى الأدوات من الأسفل للبدء فوراً!{% endif %}
                     {% elif tool_data %}
-                        {% if lang == 'ar' %}{{ tool_data.short_desc_ar }}{% else %}{{ tool_data.short_desc_en }}{% endif %}
+                        {% if lang == 'en' %}{{ tool_data.short_desc_en }}{% else %}{{ tool_data.short_desc_ar }}{% endif %}
                     {% else %}
-                        {% if lang == 'ar' %}اختر إحدى الأدوات من الأسفل للبدء في المعالجة السحابية الفورية.{% else %}Select a tool below to start instant cloud processing.{% endif %}
+                        {% if lang == 'en' %}Select any tool below to start fast, secure, and free document processing.{% else %}اختر إحدى الأدوات السحابية من الأسفل للبدء في التحويل والتعديل فوراً وبأعلى أمان.{% endif %}
                     {% endif %}
                 </p>
             </div>
