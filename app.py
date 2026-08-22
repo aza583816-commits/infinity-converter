@@ -2325,14 +2325,14 @@ def index_en():
 
 @app.route("/<tool_slug>")
 def tool_page_ar(tool_slug):
-    if tool_slug in ("privacy", "terms", "contact"): return render_template(f"{tool_slug}.html", lang="ar")
+    if tool_slug in ("privacy", "terms", "contact", "about"): return render_template(f"{tool_slug}.html", lang="ar")
     if tool_slug not in TOOLS_SEO: 
         return render_template("index.html", tool_data=None, lang="ar", is_404=True), 404
     return render_template("index.html", tool_data=TOOLS_SEO[tool_slug], lang="ar")
 
 @app.route("/en/<tool_slug>")
 def tool_page_en(tool_slug):
-    if tool_slug in ("privacy", "terms", "contact"): return render_template(f"{tool_slug}.html", lang="en")
+    if tool_slug in ("privacy", "terms", "contact", "about"): return render_template(f"{tool_slug}.html", lang="en")
     if tool_slug not in TOOLS_SEO: 
         return render_template("index.html", tool_data=None, lang="en", is_404=True), 404
     return render_template("index.html", tool_data=TOOLS_SEO[tool_slug], lang="en")
@@ -2342,7 +2342,15 @@ def sitemap():
     base_url = "https://infinityconverter.com"
     urls = [
         f"<url><loc>{base_url}/</loc><priority>1.0</priority></url>",
-        f"<url><loc>{base_url}/en/</loc><priority>1.0</priority></url>"
+        f"<url><loc>{base_url}/en/</loc><priority>1.0</priority></url>",
+        f"<url><loc>{base_url}/about</loc><priority>0.8</priority></url>",
+        f"<url><loc>{base_url}/en/about</loc><priority>0.8</priority></url>",
+        f"<url><loc>{base_url}/privacy</loc><priority>0.8</priority></url>",
+        f"<url><loc>{base_url}/en/privacy</loc><priority>0.8</priority></url>",
+        f"<url><loc>{base_url}/terms</loc><priority>0.8</priority></url>",
+        f"<url><loc>{base_url}/en/terms</loc><priority>0.8</priority></url>",
+        f"<url><loc>{base_url}/contact</loc><priority>0.8</priority></url>",
+        f"<url><loc>{base_url}/en/contact</loc><priority>0.8</priority></url>"
     ]
     for slug in TOOLS_SEO.keys(): 
         urls.append(f"<url><loc>{base_url}/{slug}</loc><priority>0.8</priority></url>")
