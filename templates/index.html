@@ -134,7 +134,6 @@
         .result-area { margin-top: 20px; padding: 20px; background: #ecfdf5; border: 1px solid #10b981; color: #065f46; border-radius: 12px; display: none; word-wrap: break-word; text-align: start; font-weight: 600;}
         .result-area.error { background: #fef2f2; border-color: #ef4444; color: #991b1b; }
 
-        /* 🚀 بطاقة إحصائية لتوفير الحجم بعد الضغط */
         .savings-badge { display: none; margin-top: 15px; padding: 12px; background: #dbeafe; color: #1e40af; border-radius: 10px; font-weight: bold; text-align: center; }
 
         .action-buttons-group { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 15px; }
@@ -163,8 +162,6 @@
         .faq-box { background: var(--bg-body); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 15px;}
         .faq-box h4 { margin-bottom: 10px; color: var(--text-main); display: flex; align-items: center; gap: 10px;}
         .faq-box p { color: var(--text-muted); font-size: 15px;}
-
-        .ad-placeholder { width: 100%; min-height: 90px; background: var(--bg-body); border: 1px dashed var(--text-muted); border-radius: 12px; display: flex; justify-content: center; align-items: center; color: var(--text-muted); margin: 30px 0; font-size: 14px;}
 
         .i-word { background: var(--bg-word); color: var(--c-word); }
         .i-pdf { background: var(--bg-pdf); color: var(--c-pdf); }
@@ -220,7 +217,7 @@
                     {% elif tool_data %}
                         {% if lang == 'ar' %}{{ tool_data.short_desc_ar }}{% else %}{{ tool_data.short_desc_en }}{% endif %}
                     {% else %}
-                        {% if lang == 'ar' %}اختر إحدى الأدوات من الأسفل للبدء في المعالجة.{% else %}Select a tool below to start processing.{% endif %}
+                        {% if lang == 'ar' %}اختر إحدى الأدوات من الأسفل للبدء في المعالجة السحابية الفورية.{% else %}Select a tool below to start instant cloud processing.{% endif %}
                     {% endif %}
                 </p>
             </div>
@@ -287,7 +284,25 @@
             </div>
         </div>
 
-        <div class="ad-placeholder">AdSense High-CTR Banner Area</div>
+        <div class="seo-content" style="margin-top: 30px;">
+            <h2><i class="fa-solid fa-circle-info"></i> {% if lang == 'ar' %}دليل الاستخدام السريع والأمان السحابي{% else %}User Guide & Cloud Security{% endif %}</h2>
+            <p>{% if lang == 'ar' %}تعتمد منصة Infinity Converter على خوارزميات معالجة فورية تُنفذ في بيئة معزولة تماماً داخل خوادمنا السحابية. يمكنك تحويل ومعالجة الملفات عبر 3 خطوات بسيطة: رفع الملف، اختيار نوع العملية، ثم تنزيل النتيجة فوراً بجودة فائقة بدون علامات مائية وبحجم محسن تماماً.{% else %}Infinity Converter leverages high-performance in-memory cloud processing in isolated sandbox environments. Convert and optimize any document in 3 easy steps: upload your file, execute the tool, and download the results instantly.{% endif %}</p>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin-top: 20px;">
+                <div class="faq-box">
+                    <h4><i class="fa-solid fa-shield-halved" style="color:var(--primary)"></i> {% if lang == 'ar' %}أمان وتشفير 100%{% else %}100% Secure{% endif %}</h4>
+                    <p>{% if lang == 'ar' %}تشفير كامل للاتصال والحذف التلقائي الفوري لملفاتك بمجرد إتمام التحويل من الذاكرة المؤقتة.{% else %}End-to-end encrypted transfer with instant memory cleanup.{% endif %}</p>
+                </div>
+                <div class="faq-box">
+                    <h4><i class="fa-solid fa-bolt" style="color:var(--primary)"></i> {% if lang == 'ar' %}دقة فائقة للعربية{% else %}Arabic Typography AI{% endif %}</h4>
+                    <p>{% if lang == 'ar' %}دعم متقدم للخطوط والجداول العربية لمنع مشاكل الحروف المتقطعة أو المعكوسة نهائياً.{% else %}Advanced preservation of complex Arabic typography and layout structures.{% endif %}</p>
+                </div>
+                <div class="faq-box">
+                    <h4><i class="fa-solid fa-circle-check" style="color:var(--primary)"></i> {% if lang == 'ar' %}مجاني بدون قيود{% else %}Completely Free{% endif %}</h4>
+                    <p>{% if lang == 'ar' %}لا يتطلب إنشاء حساب أو دفع أي رسوم إضافية لتنفيذ كافة العمليات.{% else %}No subscriptions or account registrations required.{% endif %}</p>
+                </div>
+            </div>
+        </div>
 
         {% if tool_data %}
         <div class="seo-content">
@@ -881,8 +896,9 @@
 
     <div class="workspace">
         <div class="footer-disclaimer">
-            <p>{% if lang == 'ar' %}V-Infinity Converter يوفر مجموعة شاملة من الأدوات الآمنة المدعومة بالذكاء الاصطناعي. تتم معالجة الملفات سحابياً ولا يتم تخزينها أبداً لحماية خصوصيتك. نحن نستخدم ملفات تعريف الارتباط وخدمات إعلانات جوجل وفقاً للسياسات.{% else %}V-Infinity Converter provides a comprehensive suite for secure, AI-powered file conversion. Files are processed on our servers and are never stored. We use cookies and Google AdSense according to policies.{% endif %}</p>
+            <p>{% if lang == 'ar' %}V-Infinity Converter يوفر مجموعة شاملة من الأدوات السحابية الآمنة لمعالجة المستندات والملفات. تتم المعالجة في الذاكرة العشوائية المؤقتة وتحذف فوراً للحفاظ على الخصوصية.{% else %}V-Infinity Converter provides a comprehensive suite of cloud document tools. Files are processed in temporary RAM and deleted immediately for your security.{% endif %}</p>
             <div class="footer-links">
+                <a href="{% if lang == 'en' %}/en{% endif %}/about">{% if lang == 'ar' %}من نحن{% else %}About Us{% endif %}</a> | 
                 <a href="{% if lang == 'en' %}/en{% endif %}/privacy">{% if lang == 'ar' %}سياسة الخصوصية{% else %}Privacy Policy{% endif %}</a> | 
                 <a href="{% if lang == 'en' %}/en{% endif %}/terms">{% if lang == 'ar' %}الشروط والأحكام{% else %}Terms of Service{% endif %}</a> | 
                 <a href="{% if lang == 'en' %}/en{% endif %}/contact">{% if lang == 'ar' %}اتصل بنا{% else %}Contact Us{% endif %}</a>
@@ -1367,7 +1383,6 @@
                     
                     lastDownloadedFilename = filename;
                     
-                    // 🚀 حساب وعرض نسبة توفير الحجم عند ضغط الـ PDF
                     if ((currentAction === 'compress-pdf' || currentAction === 'compress-pdf-target') && originalFileSizeBytes > 0 && blob.size < originalFileSizeBytes) {
                         const savedPct = Math.round((1 - (blob.size / originalFileSizeBytes)) * 100);
                         const oldMB = (originalFileSizeBytes / (1024 * 1024)).toFixed(2);
