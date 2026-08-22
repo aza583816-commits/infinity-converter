@@ -23,8 +23,18 @@ import gzip
 import cloudconvert
 import convertapi
 import requests
+import concurrent.futures
 from datetime import datetime, timezone
 from difflib import unified_diff
+
+CLOUDCONVERT_WAIT_TIMEOUT = int(os.environ.get("CLOUDCONVERT_WAIT_TIMEOUT", 90))
+
+def cloudconvert_wait_with_timeout(job_id, timeout_seconds=CLOUDCONVERT_WAIT_TIMEOUT):
+    # cloudconvert.Job.wait() ما عنده مهلة زمنية داخلية، فلو تعلقت الخدمة السحابية
+    # الطلب يفضل معلّق. هذا الغلاف يجبره يفشل بسرعة وينتقل لخط الدفاع التالي (ConvertAPI)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(cloudconvert.Job.wait, id=job_id)
+        return future.result(timeout=timeout_seconds)
 
 # ================= ضبط متغيرات النوى وحماية المعالج (CPU Throttling) =================
 os.environ["OMP_NUM_THREADS"] = "2"
@@ -175,6 +185,9 @@ if Compress:
 
 SERVER_START_TIME = time.time()
 TOTAL_REQUESTS_PROCESSED = 0
+# قفل عام يمنع تعارض عدة نسخ LibreOffice headless على نفس ملف الـ profile
+# عند وصول طلبات متزامنة (خصوصاً تحت ضغط عالي على Railway Pro)
+LIBREOFFICE_LOCK = threading.Lock()
 
 @app.before_request
 def enforce_custom_domain():
@@ -575,7 +588,8 @@ def open_image_safely(file_bytes):
 
 def run_libreoffice_convert(src_path, out_dir):
     cmd = ["nice", "-n", "10", "libreoffice", "--headless", "--nologo", "--nofirststartwizard", "--norestore", "--convert-to", "pdf", src_path, "--outdir", out_dir]
-    subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=SUBPROCESS_TIMEOUT)
+    with LIBREOFFICE_LOCK:
+        subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=SUBPROCESS_TIMEOUT)
 
 def normalize_and_pad_grid(grid):
     if not grid: return []
@@ -642,6 +656,13 @@ def text_to_pdf_bytes(text, is_arabic, title=None):
 
 def csv_to_pdf_bytes(text, is_arabic):
     rows = parse_csv_text(text)
+    col_count = max((len(r) for r in rows), default=1) or 1
+    max_len_per_col = [1] * col_count
+    for row in rows:
+        for idx in range(col_count):
+            cell_val = row[idx] if idx < len(row) else ""
+            cell_len = len(str(cell_val or "").strip())
+            if cell_len > max_len_per_col[idx]: max_len_per_col[idx] = cell_len
     buf = io.BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=A4, topMargin=15 * mm, bottomMargin=15 * mm, leftMargin=15 * mm, rightMargin=15 * mm)
     font = pdf_font_name(is_arabic)
@@ -658,7 +679,15 @@ def csv_to_pdf_bytes(text, is_arabic):
     if not table_data: table_data = [[RLParagraph("", ParagraphStyle('Empty', fontName=font, fontSize=11))]]
     page_width = A4[0] - (30 * mm)
     num_cols = len(table_data[0]) if table_data else 1
-    col_widths = [page_width / num_cols] * num_cols
+    if num_cols == len(max_len_per_col) and num_cols > 0:
+        weights = max_len_per_col[::-1] if is_arabic else max_len_per_col
+        total_weight = sum(weights) or num_cols
+        min_width = page_width * 0.06
+        raw_widths = [max((w / total_weight) * page_width, min_width) for w in weights]
+        scale = page_width / sum(raw_widths)
+        col_widths = [w * scale for w in raw_widths]
+    else:
+        col_widths = [page_width / num_cols] * num_cols
     table = Table(table_data, colWidths=col_widths, hAlign="CENTER", repeatRows=1)
     style_commands = [
         ("FONTNAME", (0, 0), (-1, -1), font), ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
@@ -772,7 +801,7 @@ def handle_pdf_to_docx(p):
                 
                 upload_task = cloudconvert.Task.find(id=job['tasks'][0]['id'])
                 cloudconvert.Task.upload(file_name=pdf_path, task=upload_task)
-                job = cloudconvert.Job.wait(id=job['id'])
+                job = cloudconvert_wait_with_timeout(job['id'])
                 
                 for task in job['tasks']:
                     if task['name'] == 'export-file' and task['status'] == 'finished':
@@ -1082,21 +1111,41 @@ def handle_compress_pdf(p):
     if not file_bytes: return bad_request("No file provided")
     if not validate_signature(file_bytes, "pdf"): return bad_signature_response(is_arabic)
 
+    original_size = len(file_bytes)
     try:
         with tempfile.TemporaryDirectory() as tmp_dir:
             unique_id = uuid.uuid4().hex
             in_pdf = os.path.join(tmp_dir, f"{unique_id}_in.pdf")
-            out_pdf = os.path.join(tmp_dir, f"{unique_id}_out.pdf")
             with open(in_pdf, "wb") as f: f.write(file_bytes)
-            
-            gs_cmd = [
-                "nice", "-n", "10", "gs", "-sDEVICE=pdfwrite", "-dCompatibilityLevel=1.4",
-                "-dPDFSETTINGS=/ebook", "-dNOPAUSE", "-dQUIET", "-dBATCH",
-                f"-sOutputFile={out_pdf}", in_pdf
-            ]
-            res = subprocess.run(gs_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=SUBPROCESS_TIMEOUT)
-            if res.returncode == 0 and os.path.exists(out_pdf) and os.path.getsize(out_pdf) > 0:
-                with open(out_pdf, "rb") as comp_f:
+
+            def run_gs(preset, out_path):
+                gs_cmd = [
+                    "nice", "-n", "10", "gs", "-sDEVICE=pdfwrite", "-dCompatibilityLevel=1.4",
+                    f"-dPDFSETTINGS={preset}", "-dNOPAUSE", "-dQUIET", "-dBATCH",
+                    "-dDetectDuplicateImages=true", "-dCompressFonts=true",
+                    f"-sOutputFile={out_path}", in_pdf
+                ]
+                res = subprocess.run(gs_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=SUBPROCESS_TIMEOUT)
+                if res.returncode == 0 and os.path.exists(out_path) and os.path.getsize(out_path) > 0:
+                    return os.path.getsize(out_path)
+                return None
+
+            best_path, best_size = None, None
+            ebook_path = os.path.join(tmp_dir, f"{unique_id}_ebook.pdf")
+            size = run_gs("/ebook", ebook_path)
+            if size:
+                best_path, best_size = ebook_path, size
+
+            # ضغط تكيفي: لو الملف غالبًا صور عالية الدقة والتخفيض كان ضعيف (أقل من 15%)
+            # نجرب مستوى ضغط أقوى /screen ونأخذ الأصغر بين النتيجتين
+            if best_size is None or (original_size and best_size / original_size > 0.85):
+                screen_path = os.path.join(tmp_dir, f"{unique_id}_screen.pdf")
+                size2 = run_gs("/screen", screen_path)
+                if size2 and (best_size is None or size2 < best_size):
+                    best_path, best_size = screen_path, size2
+
+            if best_path and (not original_size or best_size < original_size):
+                with open(best_path, "rb") as comp_f:
                     return file_response(comp_f.read(), "application/pdf", "Compressed_Document.pdf")
     except Exception as gs_err:
         app.logger.warning(f"Ghostscript compression fallback: {str(gs_err)}")
@@ -1128,6 +1177,7 @@ def handle_protect_pdf(p):
     if err: return err
     writer = PdfWriter()
     for page in reader.pages: writer.add_page(page)
+    apply_ghost_privacy(writer)
     writer.encrypt(user_password=password, algorithm="AES-256")
     buf = io.BytesIO()
     writer.write(buf)
@@ -1148,6 +1198,7 @@ def handle_unlock_pdf(p):
     if err: return err
     writer = PdfWriter()
     for page in reader.pages: writer.add_page(page)
+    apply_ghost_privacy(writer)
     buf = io.BytesIO()
     writer.write(buf)
     return file_response(buf.getvalue(), "application/pdf", "Unlocked_Document.pdf")
@@ -1159,23 +1210,39 @@ def handle_watermark_pdf(p):
     if not file_bytes: return bad_request("يرجى رفع ملف PDF")
     if not validate_signature(file_bytes, "pdf"): return bad_signature_response(is_arabic)
     try:
-        buf_watermark = io.BytesIO()
-        c = rl_canvas.Canvas(buf_watermark, pagesize=A4)
-        font = ensure_arabic_font()
-        c.setFont(font, 65)
-        c.setFillColorRGB(0.5, 0.5, 0.5, alpha=0.3)
-        c.translate(A4[0] / 2, A4[1] / 2)
-        c.rotate(45)
-        c.drawCentredString(0, 0, shape_arabic(text[:60]))
-        c.save()
-        watermark_page = PdfReader(io.BytesIO(buf_watermark.getvalue())).pages[0]
-
         reader = PdfReader(io.BytesIO(file_bytes))
         err = enforce_pdf_page_limit(len(reader.pages), is_arabic)
         if err: return err
+
+        font = ensure_arabic_font()
+        shaped_text = shape_arabic(text[:60])
+        # نبني علامة مائية لكل مقاس صفحة مختلف نصادفه (A4, Letter, Landscape...)
+        # بدل قياس ثابت، ونخزنها بذاكرة مؤقتة (cache) لتفادي إعادة الرسم لكل صفحة
+        watermark_cache = {}
+
+        def build_watermark_page(width, height):
+            key = (round(width, 1), round(height, 1))
+            if key in watermark_cache:
+                return watermark_cache[key]
+            buf_watermark = io.BytesIO()
+            c = rl_canvas.Canvas(buf_watermark, pagesize=(width, height))
+            font_size = max(24, min(width, height) / 8)
+            c.setFont(font, font_size)
+            c.setFillColorRGB(0.5, 0.5, 0.5, alpha=0.3)
+            c.translate(width / 2, height / 2)
+            c.rotate(45)
+            c.drawCentredString(0, 0, shaped_text)
+            c.save()
+            wm_page = PdfReader(io.BytesIO(buf_watermark.getvalue())).pages[0]
+            watermark_cache[key] = wm_page
+            return wm_page
+
         writer = PdfWriter()
         for page in reader.pages:
-            page.merge_page(watermark_page)
+            page_width = float(page.mediabox.width)
+            page_height = float(page.mediabox.height)
+            wm_page = build_watermark_page(page_width, page_height)
+            page.merge_page(wm_page)
             writer.add_page(page)
         apply_ghost_privacy(writer)
         final_buf = io.BytesIO()
@@ -1192,17 +1259,45 @@ def handle_remove_pdf_pages(p):
     if not text: return bad_request("يرجى كتابة أرقام الصفحات المراد حذفها (مثال: 1, 3, 5-7)")
     try:
         reader = PdfReader(io.BytesIO(file_bytes))
-        err = enforce_pdf_page_limit(len(reader.pages), is_arabic)
+        total_pages = len(reader.pages)
+        err = enforce_pdf_page_limit(total_pages, is_arabic)
         if err: return err
+
         pages_to_remove = set()
+        invalid_tokens = []
         for part in text.replace("،", ",").split(","):
             part = part.strip()
+            if not part: continue
             if "-" in part:
-                try:
-                    start, end = map(int, part.split("-"))
-                    pages_to_remove.update(range(start - 1, end))
-                except Exception: pass
-            elif part.isdigit(): pages_to_remove.add(int(part) - 1)
+                bounds = part.split("-")
+                if len(bounds) == 2 and bounds[0].strip().isdigit() and bounds[1].strip().isdigit():
+                    start, end = int(bounds[0]), int(bounds[1])
+                    if start > end: start, end = end, start
+                    if start < 1 or end > total_pages:
+                        invalid_tokens.append(part)
+                    else:
+                        pages_to_remove.update(range(start - 1, end))
+                else:
+                    invalid_tokens.append(part)
+            elif part.isdigit():
+                n = int(part)
+                if n < 1 or n > total_pages:
+                    invalid_tokens.append(part)
+                else:
+                    pages_to_remove.add(n - 1)
+            else:
+                invalid_tokens.append(part)
+
+        if invalid_tokens:
+            bad_list = ", ".join(invalid_tokens)
+            msg = (f"أرقام صفحات غير صالحة أو خارج نطاق المستند ({total_pages} صفحة): {bad_list}"
+                   if is_arabic else
+                   f"Invalid or out-of-range page numbers (document has {total_pages} pages): {bad_list}")
+            return bad_request(msg)
+
+        if not pages_to_remove:
+            return bad_request("لم يتم تحديد أي صفحة صالحة للحذف." if is_arabic else "No valid pages were specified for removal.")
+
         writer = PdfWriter()
         for i, page in enumerate(reader.pages):
             if i not in pages_to_remove: writer.add_page(page)
@@ -1211,6 +1306,8 @@ def handle_remove_pdf_pages(p):
         final_buf = io.BytesIO()
         writer.write(final_buf)
         return file_response(final_buf.getvalue(), "application/pdf", "Edited_Document.pdf")
+    except PdfReadError:
+        return bad_request("الملف تالف أو محمي بكلمة سر" if is_arabic else "File is corrupted or password protected")
     except Exception: return bad_request("فشل قص الصفحات، يرجى كتابة أرقام الصفحات بشكل صحيح.")
 
 def handle_pdf_to_pdf_enhanced(p):
@@ -1280,7 +1377,7 @@ def handle_word_to_pdf(p):
                 
                 upload_task = cloudconvert.Task.find(id=job['tasks'][0]['id'])
                 cloudconvert.Task.upload(file_name=docx_path, task=upload_task)
-                job = cloudconvert.Job.wait(id=job['id'])
+                job = cloudconvert_wait_with_timeout(job['id'])
                 
                 for task in job['tasks']:
                     if task['name'] == 'export-file' and task['status'] == 'finished':
