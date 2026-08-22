@@ -260,7 +260,6 @@ def internal_error_handler(e):
 def not_found_custom(e):
     if request.path.startswith("/api/"):
         return jsonify({"error": "Resource not found"}), 404
-    # ضمان عدم إظهار 404 عند زيارة الصفحة الرئيسية
     if request.path in ("/", "/en", "/en/"):
         return render_template("index.html", tool_data=None, lang="en" if request.path.startswith("/en") else "ar", is_404=False)
     return render_template("index.html", tool_data=None, lang="ar", is_404=True), 404
@@ -268,7 +267,7 @@ def not_found_custom(e):
 ARABIC_FONT_NAME = "ArabicFont"
 _arabic_font_registered = False
 
-# ==================== الذاكرة المؤقتة بالبصمة وإدارة المهام ====================
+# ==================== إدارة المهام والتنظيف ====================
 conversion_queue = queue.Queue()
 async_task_results = {}
 temporary_share_store = {}
