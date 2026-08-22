@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="{% if lang == 'en' %}en{% else %}ar{% endif %}" dir="{% if lang == 'en' %}ltr{% else %}rtl{% endif %}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>سياسة الخصوصية | Infinity Converter</title>
+<title>{% if lang == 'en' %}Privacy Policy | Infinity Converter{% else %}سياسة الخصوصية | Infinity Converter{% endif %}</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
   body { background-color: #0f172a; color: #f8fafc; font-family: 'Cairo', sans-serif; padding: 30px 20px; line-height: 1.8; }
@@ -18,27 +18,36 @@
 </head>
 <body>
 <div class="container">
-  <a href="/" class="back-btn" data-ar="العودة للرئيسية" data-en="Back to Home">العودة للرئيسية</a>
-  <h1 data-ar="سياسة الخصوصية الشاملة" data-en="Privacy Policy">سياسة الخصوصية الشاملة</h1>
-  
-  <h2 data-ar="1. خصوصية ومعالجة الملفات" data-en="1. File Processing & Security">1. خصوصية ومعالجة الملفات</h2>
-  <p data-ar="في Infinity Converter، نعتبر خصوصية بياناتك ومستنداتك خطاً أحمر. تتم معالجة جميع الملفات المرفوعة سحابياً بشكل مؤقت في الذاكرة العشوائية المشفرة (RAM/tmpfs)، ويتم حذفها فور الانتهاء من التحويل أو بعد انقضاء الجلسة مباشرة دون الاحتفاظ بأي نسخ احتياطية." data-en="At Infinity Converter, your data privacy is paramount. All uploaded documents are processed securely in temporary RAM/tmpfs storage and deleted immediately post-conversion without retaining any backups.">في Infinity Converter، نعتبر خصوصية بياناتك ومستنداتك خطاً أحمر. تتم معالجة جميع الملفات المرفوعة سحابياً بشكل مؤقت في الذاكرة العشوائية المشفرة (RAM/tmpfs)، ويتم حذفها فور الانتهاء من التحويل أو بعد انقضاء الجلسة مباشرة دون الاحتفاظ بأي نسخ احتياطية.</p>
+  <a href="{% if lang == 'en' %}/en/{% else %}/{% endif %}" class="back-btn">{% if lang == 'en' %}Back to Home{% else %}العودة للرئيسية{% endif %}</a>
+  <h1>{% if lang == 'en' %}Privacy Policy{% else %}سياسة الخصوصية الشاملة{% endif %}</h1>
 
-  <h2 data-ar="2. ملفات تعريف الارتباط (Cookies) وشبكة Google AdSense" data-en="2. Cookies & Advertising Partners">2. ملفات تعريف الارتباط (Cookies) وشبكة Google AdSense</h2>
-  <p data-ar="نستخدم شبكة إعلانات Google AdSense كمزود إعلاني خارجي. تستخدم Google ملفات تعريف الارتباط (مثل ملف تعريف الارتباط DoubleClick DART) لعرض الإعلانات للمستخدمين استناداً إلى زيارتهم لهذا الموقع والمواقع الأخرى على شبكة الإنترنت. يمكن للمستخدمين إلغاء الاشتراك في استخدام ملف تعريف الارتباط DART عبر زيارة سياسة الخصوصية الخاصة بشبكة إعلانات Google والمحتوى." data-en="We partner with Google AdSense to serve ads. Google uses cookies, including the DoubleClick DART cookie, to serve tailored ads to users based on their visits across the web. You may opt out of DART cookies by visiting Google's ad and content network privacy policy.">نستخدم شبكة إعلانات Google AdSense كمزود إعلاني خارجي. تستخدم Google ملفات تعريف الارتباط (مثل ملف تعريف الارتباط DoubleClick DART) لعرض الإعلانات للمستخدمين استناداً إلى زيارتهم لهذا الموقع والمواقع الأخرى على شبكة الإنترنت. يمكن للمستخدمين إلغاء الاشتراك في استخدام ملف تعريف الارتباط DART عبر زيارة سياسة الخصوصية الخاصة بشبكة إعلانات Google والمحتوى.</p>
+  <h2>{% if lang == 'en' %}1. File Processing & Security{% else %}1. خصوصية ومعالجة الملفات{% endif %}</h2>
+  {% if lang == 'en' %}
+  <p>At Infinity Converter, your data privacy is paramount. All uploaded documents are processed temporarily in server memory and deleted immediately after conversion completes or the session ends, without retaining any backups.</p>
+  {% else %}
+  <p>في Infinity Converter، نعتبر خصوصية بياناتك ومستنداتك خطاً أحمر. تتم معالجة جميع الملفات المرفوعة سحابياً بشكل مؤقت في ذاكرة السيرفر، ويتم حذفها فور الانتهاء من التحويل أو بعد انقضاء الجلسة مباشرة دون الاحتفاظ بأي نسخ احتياطية.</p>
+  {% endif %}
 
-  <h2 data-ar="3. ملفات السجل (Log Files)" data-en="3. Log Files">3. ملفات السجل (Log Files)</h2>
-  <p data-ar="يتبع موقعنا إجراءات قياسية لتحليل استخدام الخوادم عبر ملفات السجل القياسية، والتي تشمل عناوين بروتوكول الإنترنت (IP)، نوع المتصفح، مزود خدمة الإنترنت (ISP)، والطوابع الزمنية، وذلك فقط لأغراض صيانة البنية التحتية ومكافحة الهجمات السيبرانية دون ربطها بأي هوية شخصية." data-en="Standard server logs (IP, browser type, timestamps) are collected solely for infrastructure maintenance and cybersecurity integrity.">يتبع موقعنا إجراءات قياسية لتحليل استخدام الخوادم عبر ملفات السجل القياسية، والتي تشمل عناوين بروتوكول الإنترنت (IP)، نوع المتصفح، مزود خدمة الإنترنت (ISP)، والطوابع الزمنية، وذلك فقط لأغراض صيانة البنية التحتية ومكافحة الهجمات السيبرانية دون ربطها بأي هوية شخصية.</p>
+  <h2>{% if lang == 'en' %}2. Advertising{% else %}2. الإعلانات{% endif %}</h2>
+  {% if lang == 'en' %}
+  <p>Infinity Converter does not currently display any third-party advertisements. If we enable an advertising network (such as Google AdSense) in the future, this policy will be updated in advance to disclose the provider, the cookies used, and how to opt out — before any ads go live.</p>
+  {% else %}
+  <p>لا يعرض موقع Infinity Converter حاليًا أي إعلانات من طرف ثالث. في حال تفعيل شبكة إعلانية (مثل Google AdSense) مستقبلًا، سيتم تحديث هذه السياسة مسبقًا للإفصاح عن المزوّد، ملفات تعريف الارتباط المستخدمة، وطريقة إلغاء الاشتراك — قبل عرض أي إعلان فعليًا.</p>
+  {% endif %}
 
-  <h2 data-ar="4. حماية بيانات الأطفال" data-en="4. Children's Information">4. حماية بيانات الأطفال</h2>
-  <p data-ar="لا نقوم بجمع أي معلومات تعريفية شخصية من الأطفال دون سن 13 عاماً عمداً وفقاً للوائح COPPA و GDPR." data-en="We do not knowingly collect personal identifiable information from children under the age of 13.">لا نقوم بجمع أي معلومات تعريفية شخصية من الأطفال دون سن 13 عاماً عمداً وفقاً للوائح COPPA و GDPR.</p>
+  <h2>{% if lang == 'en' %}3. Log Files{% else %}3. ملفات السجل (Log Files){% endif %}</h2>
+  {% if lang == 'en' %}
+  <p>Standard server logs (IP address, browser type, timestamps) are collected solely for infrastructure maintenance and cybersecurity purposes, without linking them to any personal identity.</p>
+  {% else %}
+  <p>يتبع موقعنا إجراءات قياسية لتحليل استخدام الخوادم عبر ملفات السجل القياسية، والتي تشمل عناوين بروتوكول الإنترنت (IP)، نوع المتصفح، والطوابع الزمنية، وذلك فقط لأغراض صيانة البنية التحتية ومكافحة الهجمات السيبرانية دون ربطها بأي هوية شخصية.</p>
+  {% endif %}
+
+  <h2>{% if lang == 'en' %}4. Children's Information{% else %}4. حماية بيانات الأطفال{% endif %}</h2>
+  {% if lang == 'en' %}
+  <p>We do not knowingly collect personal identifiable information from children under the age of 13, in line with COPPA and GDPR guidelines.</p>
+  {% else %}
+  <p>لا نقوم بجمع أي معلومات تعريفية شخصية من الأطفال دون سن 13 عاماً عمداً وفقاً للوائح COPPA و GDPR.</p>
+  {% endif %}
 </div>
-<script>
-  const savedLang = localStorage.getItem('v_lang');
-  if (savedLang === 'en' || (!savedLang && !navigator.language.startsWith('ar'))) {
-    document.documentElement.lang = 'en'; document.documentElement.dir = 'ltr';
-    document.querySelectorAll('[data-en]').forEach(el => el.innerHTML = el.getAttribute('data-en'));
-  }
-</script>
 </body>
 </html>
