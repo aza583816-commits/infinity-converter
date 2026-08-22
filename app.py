@@ -200,10 +200,9 @@ def enforce_custom_domain():
     parsed_host = request.host.split(':')[0]
     if parsed_host == "infinity-converter-1.onrender.com":
         return redirect("https://infinityconverter.com" + request.full_path, code=301)
-        
-    proto = request.headers.get('X-Forwarded-Proto', 'http')
-    if proto == 'http' and parsed_host == 'infinityconverter.com':
-        return redirect("https://infinityconverter.com" + request.full_path, code=301)
+
+    # ملاحظة: تم حذف فرض HTTPS يدويًا من هنا لأن Render يفرضه تلقائيًا لأي دومين
+    # مخصص مربوط ومُفعّل عنده. وجود فرض إضافي هنا كان سبب حلقة إعادة التوجيه اللانهائية سابقًا.
 
 logging.basicConfig(level=logging.INFO)
 CORS(app, resources={
@@ -527,17 +526,42 @@ def apply_ghost_privacy(writer):
 def ensure_arabic_font():
     global _arabic_font_registered
     if _arabic_font_registered: return ARABIC_FONT_NAME
-    font_path = "/tmp/Cairo-Regular.ttf"
-    if not os.path.exists(font_path):
-        try: urllib.request.urlretrieve("https://github.com/googlefonts/cairo/raw/main/fonts/ttf/Cairo-Regular.ttf", font_path)
-        except Exception: pass
-    for path in [font_path, "static/fonts/NotoNaskhArabic-Regular.ttf", "static/Cairo-Regular.ttf"]:
-        if os.path.exists(path):
+    import glob
+    # الأولوية لخطوط عربية مثبتة فعليًا على السيرفر (عبر Dockerfile: fonts-noto-core/extra)
+    # بدل الاعتماد على تحميل من الإنترنت وقت الطلب، اللي يفشل بصمت لو تعطّل GitHub
+    candidate_paths = [
+        "static/fonts/NotoNaskhArabic-Regular.ttf",
+        "static/Cairo-Regular.ttf",
+    ]
+    for pattern in ["/usr/share/fonts/**/NotoNaskhArabic*.ttf", "/usr/share/fonts/**/NotoSansArabic*.ttf",
+                     "/usr/share/fonts/**/NotoKufiArabic*.ttf", "/usr/share/fonts/**/Amiri*.ttf"]:
+        candidate_paths.extend(sorted(glob.glob(pattern, recursive=True)))
+
+    for path in candidate_paths:
+        if path and os.path.exists(path):
             try:
                 pdfmetrics.registerFont(TTFont(ARABIC_FONT_NAME, path))
                 _arabic_font_registered = True
                 return ARABIC_FONT_NAME
-            except Exception: continue
+            except Exception:
+                continue
+
+    # شبكة أمان أخيرة فقط: تنزيل خط Cairo من GitHub لو ما لقينا أي خط عربي مثبت بالسيرفر
+    font_path = "/tmp/Cairo-Regular.ttf"
+    if not os.path.exists(font_path):
+        try:
+            urllib.request.urlretrieve("https://github.com/googlefonts/cairo/raw/main/fonts/ttf/Cairo-Regular.ttf", font_path)
+        except Exception:
+            pass
+    if os.path.exists(font_path):
+        try:
+            pdfmetrics.registerFont(TTFont(ARABIC_FONT_NAME, font_path))
+            _arabic_font_registered = True
+            return ARABIC_FONT_NAME
+        except Exception:
+            pass
+
+    app.logger.warning("لا يوجد خط عربي متاح على السيرفر — النصوص العربية ستفشل بخط Helvetica.")
     return "Helvetica"
 
 def shape_arabic(text, wrap_width=None):
@@ -2401,7 +2425,9 @@ def manifest():
         "theme_color": "#6366f1",
         "description": "The Infinite SaaS Conversion Suite — Word, PDF, Excel, images, and developer tools.",
         "icons": [
-            {"src": "/static/favicon.svg", "sizes": "192x192 512x512", "type": "image/svg+xml", "purpose": "any maskable"}
+            {"src": "/static/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+            {"src": "/static/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},
+            {"src": "/static/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any"}
         ]
     }
     return jsonify(manifest_data)
