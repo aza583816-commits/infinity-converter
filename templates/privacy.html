@@ -33,5 +33,12 @@
   <h2 data-ar="4. حماية بيانات الأطفال" data-en="4. Children's Information">4. حماية بيانات الأطفال</h2>
   <p data-ar="لا نقوم بجمع أي معلومات تعريفية شخصية من الأطفال دون سن 13 عاماً عمداً وفقاً للوائح COPPA و GDPR." data-en="We do not knowingly collect personal identifiable information from children under the age of 13.">لا نقوم بجمع أي معلومات تعريفية شخصية من الأطفال دون سن 13 عاماً عمداً وفقاً للوائح COPPA و GDPR.</p>
 </div>
+<script>
+  const savedLang = localStorage.getItem('v_lang');
+  if (savedLang === 'en' || (!savedLang && !navigator.language.startsWith('ar'))) {
+    document.documentElement.lang = 'en'; document.documentElement.dir = 'ltr';
+    document.querySelectorAll('[data-en]').forEach(el => el.innerHTML = el.getAttribute('data-en'));
+  }
+</script>
 </body>
 </html>
