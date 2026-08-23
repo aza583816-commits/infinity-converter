@@ -4,6 +4,7 @@ import hashlib
 import hmac
 import io
 import json
+import fcntl
 import logging
 import os
 import re
@@ -188,6 +189,58 @@ TOTAL_REQUESTS_PROCESSED = 0
 # قفل عام يمنع تعارض عدة نسخ LibreOffice headless على نفس ملف الـ profile
 # عند وصول طلبات متزامنة (خصوصاً تحت ضغط عالي على Railway Pro)
 LIBREOFFICE_LOCK = threading.Lock()
+
+# ==================== عداد حقيقي لعدد الملفات المُعالَجة (يبدأ من صفر، مو رقم وهمي) ====================
+# يُخزَّن بملف على القرص عشان يبقى حقيقياً حتى لو أعيد تشغيل السيرفر (ما دام القرص غير مؤقت).
+# ملاحظة مهمة: لو Railway/Render يستخدم قرص غير دائم (ephemeral)، الرقم يتصفّر مع كل Deploy جديد
+# — وهذا لسه أفضل بكثير من رقم وهمي ثابت، لأنه رقم حقيقي 100% بين كل عملية نشر وأخرى.
+STATS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "site_stats.json")
+STATS_LOCK = threading.Lock()
+
+def _read_stats_file():
+    if not os.path.exists(STATS_FILE):
+        return {"files_processed": 0}
+    try:
+        with open(STATS_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {"files_processed": 0}
+
+def increment_files_processed():
+    # القفل (threading.Lock) يحمي من تعارض الخيوط بنفس العملية،
+    # وقفل fcntl يحمي من تعارض عدة عمليات gunicorn (workers) على نفس الملف
+    with STATS_LOCK:
+        try:
+            with open(STATS_FILE, "a+", encoding="utf-8") as f:
+                try:
+                    fcntl.flock(f, fcntl.LOCK_EX)
+                except Exception:
+                    pass
+                f.seek(0)
+                content = f.read()
+                data = json.loads(content) if content.strip() else {"files_processed": 0}
+                data["files_processed"] = data.get("files_processed", 0) + 1
+                f.seek(0)
+                f.truncate()
+                json.dump(data, f)
+                try:
+                    fcntl.flock(f, fcntl.LOCK_UN)
+                except Exception:
+                    pass
+        except Exception as e:
+            app.logger.warning(f"stats counter update failed: {e}")
+
+def get_site_stats():
+    data = _read_stats_file()
+    return {
+        "files_processed": data.get("files_processed", 0),
+        "tools_count": len(TOOLS_SEO) if 'TOOLS_SEO' in globals() else 0,
+    }
+
+@app.context_processor
+def inject_site_stats():
+    # يخلي {{ site_stats }} متاح تلقائياً بكل القوالب بدون ما نمررها يدوياً بكل render_template
+    return {"site_stats": get_site_stats()}
 
 @app.before_request
 def enforce_custom_domain():
@@ -3002,26 +3055,49 @@ def tool_page_en(tool_slug):
 @app.route('/sitemap.xml')
 def sitemap():
     base_url = "https://infinityconverter.com"
-    urls = [
-        f"<url><loc>{base_url}/</loc><priority>1.0</priority></url>",
-        f"<url><loc>{base_url}/en/</loc><priority>1.0</priority></url>",
-        f"<url><loc>{base_url}/about</loc><priority>0.8</priority></url>",
-        f"<url><loc>{base_url}/en/about</loc><priority>0.8</priority></url>",
-        f"<url><loc>{base_url}/privacy</loc><priority>0.8</priority></url>",
-        f"<url><loc>{base_url}/en/privacy</loc><priority>0.8</priority></url>",
-        f"<url><loc>{base_url}/terms</loc><priority>0.8</priority></url>",
-        f"<url><loc>{base_url}/en/terms</loc><priority>0.8</priority></url>",
-        f"<url><loc>{base_url}/contact</loc><priority>0.8</priority></url>",
-        f"<url><loc>{base_url}/en/contact</loc><priority>0.8</priority></url>"
-    ]
-    for slug in TOOLS_SEO.keys(): 
-        urls.append(f"<url><loc>{base_url}/{slug}</loc><priority>0.8</priority></url>")
-        urls.append(f"<url><loc>{base_url}/en/{slug}</loc><priority>0.8</priority></url>")
-    xml_content = f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{"".join(urls)}</urlset>'
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+    def url_pair(path_ar, path_en, priority):
+        # hreflang يخبر جوجل إن هاتين الصفحتين نفس المحتوى بلغتين مختلفتين
+        # بدل ما تُعتبر صفحتين مكررتين منفصلتين — يحسّن ظهور كل نسخة لجمهورها الصحيح
+        return (
+            f"<url><loc>{base_url}{path_ar}</loc><lastmod>{today}</lastmod><priority>{priority}</priority>"
+            f"<xhtml:link rel=\"alternate\" hreflang=\"ar\" href=\"{base_url}{path_ar}\"/>"
+            f"<xhtml:link rel=\"alternate\" hreflang=\"en\" href=\"{base_url}{path_en}\"/>"
+            f"<xhtml:link rel=\"alternate\" hreflang=\"x-default\" href=\"{base_url}{path_ar}\"/></url>"
+            f"<url><loc>{base_url}{path_en}</loc><lastmod>{today}</lastmod><priority>{priority}</priority>"
+            f"<xhtml:link rel=\"alternate\" hreflang=\"ar\" href=\"{base_url}{path_ar}\"/>"
+            f"<xhtml:link rel=\"alternate\" hreflang=\"en\" href=\"{base_url}{path_en}\"/>"
+            f"<xhtml:link rel=\"alternate\" hreflang=\"x-default\" href=\"{base_url}{path_ar}\"/></url>"
+        )
+
+    urls = [url_pair("/", "/en/", "1.0")]
+    for name in ["about", "privacy", "terms", "contact"]:
+        urls.append(url_pair(f"/{name}", f"/en/{name}", "0.8"))
+    for slug in TOOLS_SEO.keys():
+        urls.append(url_pair(f"/{slug}", f"/en/{slug}", "0.8"))
+
+    xml_content = (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" '
+        'xmlns:xhtml="http://www.w3.org/1999/xhtml">' + "".join(urls) + "</urlset>"
+    )
     return Response(xml_content, mimetype='application/xml')
 
 @app.route('/robots.txt')
-def robots(): return Response("User-agent: *\nAllow: /\n\nSitemap: https://infinityconverter.com/sitemap.xml\n", mimetype='text/plain')
+def robots():
+    # نمنع فهرسة الصفحات الديناميكية/المؤقتة (روابط تحميل، حالة مهام، API)
+    # ونسمح بكل صفحات المحتوى الحقيقية (الأدوات، الأقسام الثابتة)
+    return Response(
+        "User-agent: *\n"
+        "Allow: /\n"
+        "Disallow: /download/\n"
+        "Disallow: /api/\n"
+        "Disallow: /convert-async\n"
+        "Disallow: /task-status/\n\n"
+        "Sitemap: https://infinityconverter.com/sitemap.xml\n",
+        mimetype='text/plain'
+    )
 
 @app.route("/pdf-preview", methods=["POST"])
 @limiter.limit("20 per minute")
@@ -3157,6 +3233,9 @@ def convert():
     try:
         ctx = dict(payload, text=text, is_arabic=is_arabic)
         response = handler(ctx)
+        status_code = response[1] if isinstance(response, tuple) else getattr(response, 'status_code', 200)
+        if status_code == 200:
+            increment_files_processed()
         return response
     except Exception:
         app.logger.exception(f"convert() error for action={action}")
