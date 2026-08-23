@@ -480,6 +480,542 @@ COMPARISON_PAGES = {
 }
 TOOLS_SEO.update(COMPARISON_PAGES)
 
+# ==================== محتوى فريد ومكتوب يدويًا لأهم الأدوات (دفعة 1 من 3) ====================
+# كل أداة عندها وصف، خطوات استخدام، مميزات، وأسئلة شائعة مختلفة فعليًا - مو قالب مكرر
+UNIQUE_TOOL_CONTENT = {
+    "pdf-to-docx": {
+        "long_desc_ar": "تحويل PDF إلى Word ليس مجرد نسخ للنص — التحدي الحقيقي هو الحفاظ على الجداول والخطوط والتنسيق كما هي. تستخدم أداتنا محرك تحويل ثلاثي الطبقات: يبدأ بمحرك محلي فائق السرعة، وإذا كان الملف معقداً (جداول متداخلة، تنسيق عربي RTL، خطوط مدمجة)، ينتقل تلقائياً لمحركات سحابية متقدمة أدق لضمان نتيجة قابلة للتعديل الفوري في Word دون كسر أي عنصر.",
+        "long_desc_en": "Converting PDF to Word isn't just text extraction — the real challenge is preserving tables, fonts, and layout exactly. Our tool uses a three-layer conversion engine: it starts with a fast local engine, and for complex files (nested tables, RTL Arabic formatting, embedded fonts) it automatically escalates to more precise cloud engines so the result opens in Word fully editable without broken formatting.",
+        "how_to_ar": ["ارفع ملف PDF (حتى 25 ميجابايت) بالسحب والإفلات أو باختيار الملف.", "اضغط زر التحويل وانتظر ثوانٍ — الملفات المعقدة تأخذ وقتاً أطول قليلاً لضمان الدقة.", "حمّل ملف Word (.docx) الجاهز للتعديل الفوري."],
+        "how_to_en": ["Upload your PDF file (up to 25MB) via drag-and-drop or file picker.", "Click Convert and wait a few seconds — complex files take slightly longer for accuracy.", "Download the ready-to-edit Word (.docx) file."],
+        "features_ar": ["حفظ الجداول المدمجة والمتداخلة كما هي دون تفكك", "دعم كامل لاتجاه النص العربي (RTL) بدون انعكاس الحروف", "لا حد أقصى لعدد مرات الاستخدام يومياً", "معالجة الملف وحذفه تلقائياً بعد التحويل"],
+        "features_en": ["Preserves merged and nested tables without breaking structure", "Full Arabic RTL text direction support with correct letter shaping", "No daily usage limit", "Files are processed and automatically deleted after conversion"],
+        "faq_ar": [
+            {"q": "هل يحافظ التحويل على الجداول المعقدة؟", "a": "نعم، نستخدم محرك متعدد الطبقات ينتقل تلقائياً لمعالجة أدق لو اكتشف جداول متداخلة أو تنسيقاً معقداً بالملف."},
+            {"q": "ماذا لو كان ملفي بالعربي؟", "a": "الأداة مبنية خصيصاً لدعم اتجاه النص العربي (RTL) ومنع انعكاس أو تقطع الحروف، بعكس أغلب الأدوات المجانية الأخرى."},
+            {"q": "كم يأخذ التحويل من وقت؟", "a": "الملفات البسيطة تتحول خلال ثوانٍ. الملفات المعقدة (جداول متداخلة، خطوط كثيرة) قد تأخذ حتى دقيقة لضمان الدقة."},
+            {"q": "هل يوجد حد لعدد الصفحات؟", "a": "يمكنك تحويل ملفات تصل حتى 1000 صفحة طالما الحجم الإجمالي أقل من 25 ميجابايت."},
+            {"q": "هل ملفاتي تُحفظ عندكم؟", "a": "لا، تتم معالجة الملف مؤقتاً في الذاكرة ويُحذف تلقائياً فور اكتمال التحويل أو انتهاء الجلسة."}
+        ],
+        "faq_en": [
+            {"q": "Does the conversion preserve complex tables?", "a": "Yes — we use a multi-layer engine that automatically escalates to more precise processing when it detects nested tables or complex formatting."},
+            {"q": "What if my file is in Arabic?", "a": "The tool is specifically built to support Arabic RTL text direction and prevent reversed or disconnected letters, unlike most free alternatives."},
+            {"q": "How long does conversion take?", "a": "Simple files convert in seconds. Complex files (nested tables, many fonts) may take up to a minute for accuracy."},
+            {"q": "Is there a page limit?", "a": "You can convert files up to 1000 pages as long as the total size is under 25MB."},
+            {"q": "Are my files stored on your servers?", "a": "No — files are processed temporarily in memory and deleted automatically once conversion completes or the session ends."}
+        ]
+    },
+    "word-to-pdf": {
+        "long_desc_ar": "عكس عملية PDF إلى Word تبدو بسيطة، لكن المشكلة الشائعة هي اختلاف الخطوط بين جهازك والسيرفر مما يكسر التنسيق. نعالج هذا باستخدام محرك LibreOffice الكامل مع خطوط عربية وإنجليزية مثبتة مسبقاً بالسيرفر، فتحصل على PDF مطابق تماماً لما تراه في Word، بما فيه الصور والجداول والترويسات.",
+        "long_desc_en": "Reversing PDF to Word sounds simple, but the common issue is font mismatches between your device and the server breaking the layout. We solve this using a full LibreOffice engine with pre-installed Arabic and English fonts on our servers, so you get a PDF that matches exactly what you see in Word — including images, tables, and headers.",
+        "how_to_ar": ["ارفع ملف Word (.docx أو .doc).", "اضغط تحويل — تتم المعالجة بمحرك LibreOffice الكامل.", "حمّل ملف PDF جاهز للطباعة أو المشاركة فوراً."],
+        "how_to_en": ["Upload your Word file (.docx or .doc).", "Click Convert — processing runs through a full LibreOffice engine.", "Download a print-ready, shareable PDF instantly."],
+        "features_ar": ["يحافظ على الخطوط والترويسات والتذييل كما هي بالضبط", "يدعم ملفات .doc القديمة و.docx الحديثة", "معالجة متزامنة محمية تمنع تعارض الملفات وقت الازدحام", "بدون علامة مائية أو إضافات على الملف الناتج"],
+        "features_en": ["Preserves fonts, headers, and footers exactly", "Supports both legacy .doc and modern .docx", "Concurrency-safe processing prevents file conflicts under load", "No watermark or branding added to the output"],
+        "faq_ar": [
+            {"q": "هل يدعم ملفات .doc القديمة؟", "a": "نعم، يدعم كلا الصيغتين .doc القديمة و.docx الحديثة من Word."},
+            {"q": "هل الصور والجداول تنتقل بنفس مكانها؟", "a": "نعم، نستخدم محرك LibreOffice الكامل الذي يحافظ على التخطيط الأصلي بدقة عالية."},
+            {"q": "هل يضيف الموقع أي علامة مائية على ملفي؟", "a": "لا إطلاقاً، الملف الناتج نظيف تماماً بدون أي إضافات من الموقع."},
+            {"q": "ماذا لو الملف يحتوي خطوطاً غير شائعة؟", "a": "السيرفر مزوّد بمجموعة واسعة من الخطوط العربية والإنجليزية؛ لو خط معين غير متوفر، يُستبدل تلقائياً بأقرب خط مشابه للحفاظ على القراءة."},
+            {"q": "هل يمكن تحويل عدة ملفات Word دفعة واحدة؟", "a": "حالياً الأداة تعالج ملفاً واحداً بكل عملية لضمان أعلى دقة ممكنة في النتيجة."}
+        ],
+        "faq_en": [
+            {"q": "Does it support legacy .doc files?", "a": "Yes, both legacy .doc and modern .docx Word formats are supported."},
+            {"q": "Do images and tables stay in the same position?", "a": "Yes — we use a full LibreOffice engine that preserves the original layout with high fidelity."},
+            {"q": "Does the site add a watermark to my file?", "a": "No, the output file is completely clean with no branding added."},
+            {"q": "What if my file uses uncommon fonts?", "a": "The server includes a wide range of Arabic and English fonts; if a specific font is unavailable, it's automatically substituted with the closest match to preserve readability."},
+            {"q": "Can I convert multiple Word files at once?", "a": "Currently the tool processes one file per operation to guarantee the highest possible accuracy in the result."}
+        ]
+    },
+    "merge-pdf": {
+        "long_desc_ar": "دمج ملفات PDF قد يبدو عملية بسيطة، لكن الفرق الحقيقي بين أداة جيدة وأخرى ضعيفة يظهر عند التعامل مع ملفات كبيرة العدد أو المحمية بكلمة سر. أداتنا تسمح بدمج حتى 30 ملف PDF دفعة واحدة، مع الحفاظ على ترتيبك بالضبط كما رفعته، وبدون ضغط أو فقدان جودة الصفحات الأصلية.",
+        "long_desc_en": "Merging PDF files may sound simple, but the real difference between a good tool and a weak one shows when handling many files at once. Our tool lets you merge up to 30 PDF files in a single batch, preserving your exact upload order, without compressing or degrading the original page quality.",
+        "how_to_ar": ["ارفع كل ملفات PDF اللي تبي تدمجها (حتى 30 ملف).", "رتّب الملفات بالسحب حسب الترتيب النهائي اللي تبيه.", "اضغط دمج وحمّل ملف PDF واحد يجمعهم كلهم."],
+        "how_to_en": ["Upload all the PDF files you want to merge (up to 30 files).", "Drag to reorder files into your final desired sequence.", "Click Merge and download one combined PDF file."],
+        "features_ar": ["دمج حتى 30 ملف PDF بعملية واحدة", "إعادة ترتيب الملفات بالسحب قبل الدمج", "لا فقدان بجودة الصفحات الأصلية", "الحد الأقصى لحجم كل ملف 25 ميجابايت"],
+        "features_en": ["Merge up to 30 PDF files in one operation", "Drag-to-reorder files before merging", "No quality loss on original pages", "25MB maximum size per individual file"],
+        "faq_ar": [
+            {"q": "كم أقصى عدد ملفات أقدر أدمجها؟", "a": "يمكنك دمج حتى 30 ملف PDF بعملية واحدة."},
+            {"q": "هل ترتيب الصفحات يبقى كما رفعته؟", "a": "نعم، تماماً بنفس الترتيب اللي رفعت فيه الملفات (أو رتبته يدوياً قبل الدمج)."},
+            {"q": "هل يقل حجم أو جودة الصفحات بعد الدمج؟", "a": "لا، الدمج لا يضغط أو يغيّر جودة الصفحات الأصلية إطلاقاً."},
+            {"q": "هل يعمل مع ملفات محمية بكلمة سر؟", "a": "لازم تزيل كلمة السر أولاً باستخدام أداة 'إزالة كلمة سر PDF' قبل الدمج."},
+            {"q": "هل يوجد حد أقصى لحجم كل ملف؟", "a": "نعم، الحد الأقصى لكل ملف على حدة هو 25 ميجابايت."}
+        ],
+        "faq_en": [
+            {"q": "What's the maximum number of files I can merge?", "a": "You can merge up to 30 PDF files in a single operation."},
+            {"q": "Does the page order stay as I uploaded it?", "a": "Yes, exactly in the order you uploaded (or manually reordered before merging)."},
+            {"q": "Does merging reduce page quality or size?", "a": "No, merging never compresses or alters the original page quality."},
+            {"q": "Does it work with password-protected files?", "a": "You'll need to remove the password first using the 'Unlock PDF' tool before merging."},
+            {"q": "Is there a size limit per file?", "a": "Yes, the maximum size per individual file is 25MB."}
+        ]
+    },
+    "split-pdf": {
+        "long_desc_ar": "تقسيم PDF يستخدمه الطلاب والمعلمون كثيراً لفصل فصول كتاب أو أوراق امتحان عن بعضها. أداتنا تسمح بتحديد نطاقات صفحات دقيقة (مثل 1-5، 8، 10-12) واستخراجها كملف PDF منفصل جديد، مع تنبيه فوري لو كتبت رقم صفحة غير موجود بدل ما تحصل على نتيجة فارغة أو خاطئة بصمت.",
+        "long_desc_en": "Splitting PDFs is heavily used by students and teachers to separate book chapters or exam sheets. Our tool lets you specify exact page ranges (like 1-5, 8, 10-12) and extract them as a new separate PDF, with an immediate clear warning if you enter a page number that doesn't exist — instead of silently returning an empty or wrong result.",
+        "how_to_ar": ["ارفع ملف PDF اللي تبي تقسمه.", "اكتب أرقام أو نطاقات الصفحات اللي تبي تستخرجها (مثال: 1-5, 8).", "حمّل ملف PDF جديد يحتوي فقط الصفحات المحددة."],
+        "how_to_en": ["Upload the PDF file you want to split.", "Type the page numbers or ranges you want to extract (e.g. 1-5, 8).", "Download a new PDF containing only the selected pages."],
+        "features_ar": ["تحديد نطاقات صفحات متعددة بعملية واحدة (مثل 1-3, 7, 10-12)", "رسالة خطأ واضحة فوراً لو رقم صفحة غير موجود بالملف", "يدعم ملفات تصل حتى 1000 صفحة", "لا حاجة لتثبيت أي برنامج"],
+        "features_en": ["Specify multiple page ranges in one go (e.g. 1-3, 7, 10-12)", "Clear instant error if a page number doesn't exist in the file", "Supports files up to 1000 pages", "No software installation required"],
+        "faq_ar": [
+            {"q": "كيف أكتب نطاق الصفحات؟", "a": "افصل بينها بفاصلة، واستخدم شرطة للنطاقات المتصلة، مثل: 1-5, 8, 10-12."},
+            {"q": "ماذا لو كتبت رقم صفحة غير موجود؟", "a": "الأداة تنبهك فوراً برسالة خطأ واضحة توضح الصفحات غير الصحيحة بدل ما تعطيك نتيجة فارغة."},
+            {"q": "هل أقدر أستخرج أكثر من نطاق بنفس الوقت؟", "a": "نعم، مثال: 1-3, 7, 10-12 يستخرج كل هذي الصفحات بملف واحد."},
+            {"q": "هل يؤثر التقسيم على جودة الصفحات؟", "a": "لا، الصفحات المستخرجة بنفس الجودة الأصلية تماماً بدون أي ضغط."},
+            {"q": "كم أقصى عدد صفحات يدعمه الملف الأصلي؟", "a": "حتى 1000 صفحة، طالما الحجم الإجمالي أقل من 25 ميجابايت."}
+        ],
+        "faq_en": [
+            {"q": "How do I write the page range?", "a": "Separate with commas, and use a dash for continuous ranges, e.g.: 1-5, 8, 10-12."},
+            {"q": "What if I enter a page number that doesn't exist?", "a": "The tool immediately warns you with a clear error message specifying the invalid pages, instead of returning an empty result."},
+            {"q": "Can I extract multiple ranges at once?", "a": "Yes, for example: 1-3, 7, 10-12 extracts all of these pages into one file."},
+            {"q": "Does splitting affect page quality?", "a": "No, extracted pages keep the exact original quality with no compression."},
+            {"q": "What's the maximum page count for the source file?", "a": "Up to 1000 pages, as long as the total size is under 25MB."}
+        ]
+    },
+    "compress-pdf": {
+        "long_desc_ar": "ضغط PDF عندنا تكيفي فعلياً، مو إعداد ثابت واحد للجميع. الأداة تجرب أول مستوى ضغط متوازن (جودة عالية)، وإذا كان الملف مليء بالصور عالية الدقة والتخفيض بالحجم كان ضعيفاً، تنتقل تلقائياً لمستوى ضغط أقوى وتختار لك أصغر نتيجة ممكنة دون كسر جودة النصوص القابلة للقراءة.",
+        "long_desc_en": "Our PDF compression is genuinely adaptive, not a single fixed setting for everyone. The tool first tries a balanced high-quality compression level, and if the file is image-heavy and the size reduction is weak, it automatically escalates to a stronger compression level and picks the smallest possible result without breaking readable text quality.",
+        "how_to_ar": ["ارفع ملف PDF اللي تبي تصغّر حجمه.", "اضغط ضغط — الأداة تجرب أكثر من مستوى تلقائياً وتختار الأفضل.", "حمّل النسخة المضغوطة بحجم أصغر بشكل ملحوظ."],
+        "how_to_en": ["Upload the PDF file you want to shrink.", "Click Compress — the tool automatically tries multiple levels and picks the best.", "Download the compressed version with a noticeably smaller size."],
+        "features_ar": ["ضغط تكيفي حقيقي يتصاعد تلقائياً للملفات الغنية بالصور", "يحافظ على وضوح النصوص القابلة للقراءة", "مناسب لإرسال الملفات عبر البريد الإلكتروني بحدوده المعتادة", "معالجة سريعة حتى للملفات كبيرة الحجم"],
+        "features_en": ["Genuinely adaptive compression that auto-escalates for image-heavy files", "Preserves readable text clarity", "Great for fitting typical email attachment size limits", "Fast processing even for large files"],
+        "faq_ar": [
+            {"q": "هل الضغط يقلل جودة النص؟", "a": "لا، الضغط يستهدف الصور بشكل أساسي، بينما النصوص تبقى واضحة وقابلة للقراءة بالكامل."},
+            {"q": "كم نسبة التخفيض المتوقعة بالحجم؟", "a": "تختلف حسب محتوى الملف؛ الملفات الغنية بالصور عالية الدقة تشوف أكبر تخفيض، بينما الملفات النصية البحتة أصلاً صغيرة الحجم."},
+            {"q": "هل يوجد مستوى ضغط أقوى لو الأول ما كفى؟", "a": "نعم، الأداة تكتشف تلقائياً لو التخفيض كان ضعيفاً وتنتقل لمستوى ضغط أقوى بنفس الطلب."},
+            {"q": "هل يعمل مع ملفات ممسوحة ضوئياً (سكانر)؟", "a": "نعم، ويكون التأثير أوضح لأن ملفات السكانر عادة صور عالية الدقة يستفيد الضغط منها كثيراً."},
+            {"q": "هل أقدر أحدد حجم مستهدف بالضبط؟", "a": "نعم، عندنا أداة منفصلة 'ضغط PDF إلى حجم محدد' لو تبي تتحكم بالحجم النهائي بالكيلوبايت بالضبط."}
+        ],
+        "faq_en": [
+            {"q": "Does compression reduce text quality?", "a": "No, compression primarily targets images while text remains fully clear and readable."},
+            {"q": "What size reduction should I expect?", "a": "It varies by content — image-heavy files see the biggest reduction, while text-only files are already small."},
+            {"q": "Is there a stronger level if the first isn't enough?", "a": "Yes, the tool automatically detects a weak reduction and escalates to a stronger compression level in the same request."},
+            {"q": "Does it work on scanned documents?", "a": "Yes, and the effect is even more noticeable since scanned pages are usually high-resolution images that benefit greatly from compression."},
+            {"q": "Can I target an exact file size?", "a": "Yes, we have a separate 'Compress PDF to Target Size' tool if you need precise control over the final size in KB."}
+        ]
+    },
+    "pdf-to-excel": {
+        "long_desc_ar": "استخراج الجداول من PDF لملف Excel قابل للتعديل هو من أصعب التحويلات تقنياً، لأن الجداول تختلف بين مسطّرة بخطوط واضحة وأخرى بدون حدود مرئية. لهذا ندمج أكثر من محرك استخراج (Tabula للجداول المسطّرة، pdfplumber للجداول بدون حدود)، ونضيف OCR تلقائي للملفات الممسوحة ضوئياً، لضمان أعلى دقة ممكنة بغض النظر عن نوع الجدول.",
+        "long_desc_en": "Extracting tables from PDF into an editable Excel file is one of the most technically difficult conversions, because tables vary between clearly ruled ones and borderless ones. That's why we combine multiple extraction engines (Tabula for ruled tables, pdfplumber for borderless ones), plus automatic OCR for scanned documents, to ensure the highest possible accuracy regardless of table type.",
+        "how_to_ar": ["ارفع ملف PDF يحتوي على جدول أو أكثر.", "اضغط تحويل — الأداة تجرب عدة محركات استخراج تلقائياً.", "حمّل ملف Excel (.xlsx) بكل جدول بورقة منفصلة."],
+        "how_to_en": ["Upload a PDF containing one or more tables.", "Click Convert — the tool automatically tries multiple extraction engines.", "Download an Excel (.xlsx) file with each table on its own sheet."],
+        "features_ar": ["يدعم الجداول المسطّرة (بحدود واضحة) والجداول بدون حدود مرئية", "استخراج تلقائي بالـ OCR للملفات الممسوحة ضوئياً", "كل جدول ينزل بورقة Excel منفصلة لسهولة التعديل", "تعديل عرض الأعمدة تلقائياً حسب المحتوى"],
+        "features_en": ["Supports both ruled (bordered) tables and borderless tables", "Automatic OCR extraction for scanned documents", "Each table lands on its own Excel sheet for easy editing", "Automatic column width adjustment based on content"],
+        "faq_ar": [
+            {"q": "هل يعمل مع جداول بدون حدود واضحة؟", "a": "نعم، نستخدم محرك pdfplumber المتخصص بالجداول اللي ما فيها خطوط فاصلة واضحة، بجانب Tabula للجداول المسطّرة."},
+            {"q": "ماذا لو ملفي عبارة عن صورة ممسوحة ضوئياً؟", "a": "الأداة تكتشف هذا تلقائياً وتستخدم تقنية OCR لاستخراج بيانات الجدول من الصورة."},
+            {"q": "هل كل جدول ينزل بورقة منفصلة؟", "a": "نعم، كل جدول مكتشف بالملف يوضع بورقة Excel مستقلة لسهولة التعديل والتنظيم."},
+            {"q": "هل الأرقام تبقى كأرقام قابلة للحساب في Excel؟", "a": "نعم، البيانات الرقمية تُستخرج كقيم رقمية قابلة لعمل معادلات عليها مباشرة، مو كنص فقط."},
+            {"q": "ماذا لو الملف فيه أكثر من جدول بصفحات مختلفة؟", "a": "الأداة تفحص كل صفحات الملف وتستخرج كل الجداول الموجودة تلقائياً بدون ما تحدد صفحة معينة."}
+        ],
+        "faq_en": [
+            {"q": "Does it work with borderless tables?", "a": "Yes, we use the pdfplumber engine specialized for tables without visible separating lines, alongside Tabula for ruled tables."},
+            {"q": "What if my file is a scanned image?", "a": "The tool automatically detects this and uses OCR technology to extract table data from the image."},
+            {"q": "Does each table land on a separate sheet?", "a": "Yes, every detected table in the file is placed on its own Excel sheet for easy editing and organization."},
+            {"q": "Do numbers stay as calculable numeric values in Excel?", "a": "Yes, numeric data is extracted as actual numeric values you can use directly in formulas, not just as text."},
+            {"q": "What if the file has multiple tables across different pages?", "a": "The tool scans every page in the file and automatically extracts all tables found, without needing you to specify a page."}
+        ]
+    }
+}
+for slug, content in UNIQUE_TOOL_CONTENT.items():
+    if slug in TOOLS_SEO:
+        TOOLS_SEO[slug].update(content)
+
+# ==================== دفعة 2 من 3 ====================
+UNIQUE_TOOL_CONTENT_BATCH2 = {
+    "pdf-to-images": {
+        "long_desc_ar": "أحياناً تحتاج صفحات PDF كصور منفصلة — لعرضها بموقع، أو رفعها بمنصة تعليمية، أو مشاركتها بسرعة عبر واتساب بدون ما يحتاج المستلم يفتح ملف PDF كامل. أداتنا تحوّل كل صفحة لصورة JPG أو PNG عالية الدقة، وتجمعها كلها بملف ZIP واحد جاهز للتحميل بدل ما تنزّل كل صورة لحالها.",
+        "long_desc_en": "Sometimes you need PDF pages as separate images — for a website, an LMS upload, or quick WhatsApp sharing without the recipient opening a full PDF. Our tool converts each page into a high-resolution JPG or PNG and packages them all into a single ZIP file ready to download, instead of downloading each image separately.",
+        "how_to_ar": ["ارفع ملف PDF اللي تبي تحوّله لصور.", "اختر صيغة الصورة (JPG أو PNG).", "حمّل ملف ZIP يحتوي كل صفحة كصورة منفصلة."],
+        "how_to_en": ["Upload the PDF file you want converted to images.", "Choose the image format (JPG or PNG).", "Download a ZIP file with every page as a separate image."],
+        "features_ar": ["تحويل كل صفحات الملف دفعة واحدة داخل ZIP واحد", "دعم صيغتي JPG وPNG حسب حاجتك", "دقة صورة عالية تحافظ على وضوح النص والتفاصيل", "لا حاجة لتحميل كل صورة يدوياً"],
+        "features_en": ["Converts all pages in one batch inside a single ZIP", "Supports both JPG and PNG based on your need", "High image resolution preserving text and detail clarity", "No need to download each image manually"],
+        "faq_ar": [
+            {"q": "هل يحول كل صفحات الملف أم صفحة وحدة؟", "a": "يحول كل الصفحات دفعة واحدة ويجمعها بملف ZIP واحد لتحميلها كلها بضغطة واحدة."},
+            {"q": "وش الفرق بين JPG وPNG هنا؟", "a": "JPG أصغر حجماً ومناسب للمشاركة السريعة، بينما PNG أعلى جودة ومناسب لو الصفحة فيها نص دقيق أو رسومات."},
+            {"q": "هل جودة الصور تكفي للطباعة؟", "a": "نعم، الصور تُصدّر بدقة عالية تكفي للعرض الرقمي والطباعة العادية."},
+            {"q": "هل أقدر أحول صفحة واحدة بس؟", "a": "حالياً الأداة تحول كل صفحات الملف؛ لو تبي صفحة معينة بس، استخدم أداة 'تقسيم PDF' أول لاستخراجها ثم حوّلها."},
+            {"q": "كم يأخذ وقت التحويل لملف كبير؟", "a": "يعتمد على عدد الصفحات، لكن غالباً يأخذ ثوانٍ معدودة حتى لملفات تحتوي عشرات الصفحات."}
+        ],
+        "faq_en": [
+            {"q": "Does it convert all pages or just one?", "a": "It converts all pages at once and bundles them into a single ZIP file for one-click download."},
+            {"q": "What's the difference between JPG and PNG here?", "a": "JPG is smaller and great for quick sharing, while PNG is higher quality and better for pages with fine text or graphics."},
+            {"q": "Is the image quality good enough for printing?", "a": "Yes, images export at high resolution suitable for digital display and regular printing."},
+            {"q": "Can I convert just one page?", "a": "Currently the tool converts all pages; if you need just one, use 'Split PDF' first to extract it, then convert."},
+            {"q": "How long does conversion take for a large file?", "a": "It depends on page count, but it usually takes just a few seconds even for files with dozens of pages."}
+        ]
+    },
+    "protect-pdf": {
+        "long_desc_ar": "حماية ملف PDF بكلمة سر تستخدم تشفير AES-256 (نفس معيار التشفير المستخدم بالبنوك)، مما يمنع أي شخص من فتح الملف دون كلمة السر اللي تحددها. كما تقوم الأداة بمسح أي بيانات وصفية مخفية بالملف (مثل اسم منشئ الملف أو تاريخ التعديل) لحماية خصوصيتك بشكل كامل، مو بس تشفير المحتوى.",
+        "long_desc_en": "Protecting a PDF with a password uses AES-256 encryption (the same standard used by banks), preventing anyone from opening the file without the password you set. The tool also strips any hidden metadata from the file (like the creator's name or last-modified date) for complete privacy, not just content encryption.",
+        "how_to_ar": ["ارفع ملف PDF اللي تبي تحميه.", "اكتب كلمة السر اللي تبيها.", "حمّل الملف المحمي — ما أحد يقدر يفتحه بدون كلمة السر."],
+        "how_to_en": ["Upload the PDF file you want to protect.", "Enter your chosen password.", "Download the protected file — no one can open it without the password."],
+        "features_ar": ["تشفير AES-256 بمعيار بنكي فعلي", "مسح بيانات المؤلف والتاريخ من الملف تلقائياً", "لا يحتاج برنامج خارجي، كله من المتصفح", "الملف الأصلي عندك ما يتأثر إطلاقاً"],
+        "features_en": ["Real bank-grade AES-256 encryption", "Automatically strips author and date metadata from the file", "No external software needed, everything from the browser", "Your original file remains completely unaffected"],
+        "faq_ar": [
+            {"q": "أي نوع تشفير تستخدمون؟", "a": "نستخدم تشفير AES-256، وهو نفس المعيار المستخدم في القطاع المصرفي والحكومي لحماية البيانات الحساسة."},
+            {"q": "لو نسيت كلمة السر، أقدر أستردها؟", "a": "لا، احنا ما نحتفظ بأي نسخة من كلمة السر، فاحفظها بمكان آمن لأنه لا يمكن استعادتها."},
+            {"q": "هل يمسح بيانات المؤلف من الملف؟", "a": "نعم، بالإضافة للتشفير، نمسح أي بيانات وصفية مخفية (اسم المنشئ، تاريخ التعديل) لحماية خصوصيتك بشكل كامل."},
+            {"q": "هل يمكن حماية ملف محمي مسبقاً؟", "a": "لازم تزيل الحماية الحالية أولاً باستخدام أداة 'إزالة كلمة سر PDF' قبل إضافة كلمة سر جديدة."},
+            {"q": "هل الحماية تمنع الطباعة أو النسخ أيضاً؟", "a": "الحماية الحالية تمنع فتح الملف بدون كلمة السر؛ للتحكم بصلاحيات الطباعة والنسخ تحديداً، تواصل معنا لطلب مخصص."}
+        ],
+        "faq_en": [
+            {"q": "What kind of encryption do you use?", "a": "We use AES-256 encryption, the same standard used in banking and government sectors for sensitive data protection."},
+            {"q": "If I forget the password, can I recover it?", "a": "No, we don't keep any copy of your password, so store it somewhere safe as it cannot be recovered."},
+            {"q": "Does it strip author metadata from the file?", "a": "Yes, in addition to encryption, we remove any hidden metadata (creator name, modification date) for complete privacy."},
+            {"q": "Can I protect an already-protected file?", "a": "You'll need to remove the current protection first using 'Unlock PDF' before adding a new password."},
+            {"q": "Does protection also block printing or copying?", "a": "Current protection prevents opening the file without the password; for specific print/copy permission controls, contact us for a custom request."}
+        ]
+    },
+    "unlock-pdf": {
+        "long_desc_ar": "إزالة كلمة سر PDF مخصصة للملفات اللي تعرف كلمة سرها بنفسك وتحتاج تزيلها لتسهيل الوصول لاحقاً (مثل ملف رفعته أنت وحميته، أو ملف مشترك بينك وبين فريقك). الأداة تزيل الحماية وتنظف الملف من البيانات الوصفية المرتبطة بالتشفير السابق، بحيث تحصل على نسخة مفتوحة نظيفة تماماً.",
+        "long_desc_en": "Removing a PDF password is meant for files whose password you already know and need removed for easier future access (like a file you uploaded and protected yourself, or one shared within your team). The tool removes the protection and cleans the file of metadata tied to the previous encryption, giving you a completely clean, open copy.",
+        "how_to_ar": ["ارفع ملف PDF المحمي بكلمة سر.", "اكتب كلمة السر الصحيحة للملف.", "حمّل نسخة مفتوحة بدون أي حماية."],
+        "how_to_en": ["Upload the password-protected PDF file.", "Enter the file's correct password.", "Download an open copy with no protection."],
+        "features_ar": ["يزيل الحماية بشكل كامل ونهائي من الملف", "ينظف الملف من بيانات وصفية مرتبطة بالتشفير القديم", "سريع — النتيجة جاهزة خلال ثوانٍ", "الملف الأصلي المحمي عندك يبقى كما هو"],
+        "features_en": ["Completely and permanently removes protection from the file", "Cleans the file of metadata tied to the old encryption", "Fast — result ready within seconds", "Your original protected file remains unchanged"],
+        "faq_ar": [
+            {"q": "هل أحتاج أعرف كلمة السر الحالية؟", "a": "نعم، الأداة تحتاج كلمة السر الصحيحة لفتح الملف وإزالة الحماية منه؛ لا يمكن كسر حماية ملف بدون معرفة كلمة السر."},
+            {"q": "هل يبقى الملف الأصلي المحمي محفوظ؟", "a": "نعم، الأداة تنشئ نسخة جديدة مفتوحة ولا تلمس ملفك الأصلي المحمي."},
+            {"q": "لماذا أزيل كلمة السر بدل ما أستخدم الملف مباشرة؟", "a": "مفيد لو تبي تشارك الملف بمجموعة ما تبي تكتب لهم كلمة السر كل مرة، أو تدمجه مع ملفات ثانية."},
+            {"q": "هل تُحذف البيانات الوصفية أيضاً بعد إزالة الحماية؟", "a": "نعم، ننظف الملف من أي بيانات وصفية مرتبطة بالتشفير السابق لضمان نسخة نظيفة تماماً."},
+            {"q": "هل تعملون هذا لأي ملف حتى لو مو ملفي؟", "a": "الأداة مخصصة للملفات اللي تملك صلاحية الوصول لها ومعرفة كلمة سرها، ونوصي باستخدامها فقط لملفاتك الخاصة."}
+        ],
+        "faq_en": [
+            {"q": "Do I need to know the current password?", "a": "Yes, the tool needs the correct password to open the file and remove its protection; a file's protection cannot be bypassed without knowing the password."},
+            {"q": "Does the original protected file remain intact?", "a": "Yes, the tool creates a new open copy and doesn't touch your original protected file."},
+            {"q": "Why remove the password instead of just using the file directly?", "a": "Useful if you want to share the file with a group without giving out the password each time, or merge it with other files."},
+            {"q": "Is metadata also cleaned after removing protection?", "a": "Yes, we clean the file of any metadata tied to the previous encryption to ensure a completely clean copy."},
+            {"q": "Will this work on any file even if it's not mine?", "a": "The tool is intended for files you have rightful access to and know the password for; we recommend using it only for your own files."}
+        ]
+    },
+    "image-to-pdf": {
+        "long_desc_ar": "تجميع عدة صور بملف PDF واحد مفيد جداً لأرشفة إيصالات، رفع واجبات مصورة، أو إرسال مجموعة صور بملف منظم واحد بدل عشرات المرفقات. الأداة ترتب الصور بالترتيب اللي تحدده، وتضبط كل صورة تلقائياً لتملأ صفحة PDF بشكل متناسق دون تشويه أو قص غير مرغوب.",
+        "long_desc_en": "Combining several images into one PDF is great for archiving receipts, submitting photographed assignments, or sending a group of images as one organized file instead of dozens of attachments. The tool arranges images in your chosen order and automatically fits each one to a PDF page cleanly, without distortion or unwanted cropping.",
+        "how_to_ar": ["ارفع الصور اللي تبي تجمعها (JPG أو PNG).", "رتّبها بالسحب حسب الترتيب اللي تبيه بالملف النهائي.", "حمّل ملف PDF واحد يحتوي كل الصور مرتبة."],
+        "how_to_en": ["Upload the images you want to combine (JPG or PNG).", "Drag to arrange them in your desired final order.", "Download one PDF file containing all images in order."],
+        "features_ar": ["يدعم رفع عدة صور دفعة واحدة", "إعادة ترتيب الصور بالسحب قبل الإنشاء", "كل صورة تُضبط تلقائياً لتناسب صفحة PDF كاملة", "يدعم صيغ JPG وPNG وHEIC"],
+        "features_en": ["Supports uploading multiple images at once", "Drag-to-reorder images before generating", "Each image auto-fits a full PDF page", "Supports JPG, PNG, and HEIC formats"],
+        "faq_ar": [
+            {"q": "كم صورة أقدر أضيف بملف واحد؟", "a": "تقدر تضيف عدد كبير من الصور بعملية واحدة طالما الحجم الإجمالي ضمن الحد المسموح."},
+            {"q": "هل الصور تنقص جودتها بعد التحويل؟", "a": "لا، الصور تُدرج بدقتها الأصلية داخل صفحات PDF بدون ضغط يؤثر على الوضوح."},
+            {"q": "هل يدعم صور HEIC من الآيفون؟", "a": "نعم، يمكنك رفع صور HEIC مباشرة وتُحوّل تلقائياً ضمن عملية الدمج."},
+            {"q": "هل أقدر أغيّر ترتيب الصور قبل الإنشاء؟", "a": "نعم، تقدر تسحب الصور وترتبها بالترتيب اللي تبيه قبل ما تضغط إنشاء الملف."},
+            {"q": "هل كل صورة تاخذ صفحة منفصلة؟", "a": "نعم، كل صورة تُوضع بصفحة PDF خاصة بها للحفاظ على وضوحها الكامل."}
+        ],
+        "faq_en": [
+            {"q": "How many images can I add to one file?", "a": "You can add a large number of images in one operation as long as the total size stays within the allowed limit."},
+            {"q": "Does image quality drop after conversion?", "a": "No, images are inserted at their original resolution into PDF pages without quality-degrading compression."},
+            {"q": "Does it support HEIC images from iPhone?", "a": "Yes, you can upload HEIC images directly and they're automatically converted as part of the merge process."},
+            {"q": "Can I change the image order before generating?", "a": "Yes, you can drag and arrange images in your preferred order before clicking generate."},
+            {"q": "Does each image get its own page?", "a": "Yes, each image is placed on its own PDF page to preserve its full clarity."}
+        ]
+    },
+    "heic-to-jpg": {
+        "long_desc_ar": "صيغة HEIC هي الصيغة الافتراضية لصور آيفون، لكنها غير مدعومة بشكل واسع خارج منظومة أبل — تفتح بمشاكل على أجهزة أندرويد أو ويندوز أو عند رفعها لمواقع كثيرة. أداتنا تحول صور HEIC إلى JPG المدعوم عالمياً بضغطة واحدة، مع الحفاظ على الجودة الأصلية للصورة بدون أي فقدان ملحوظ.",
+        "long_desc_en": "HEIC is the default format for iPhone photos, but it's not widely supported outside Apple's ecosystem — causing issues opening it on Android, Windows, or when uploading to many websites. Our tool converts HEIC images to universally supported JPG in one click, preserving the original image quality with no noticeable loss.",
+        "how_to_ar": ["ارفع صورة أو أكثر بصيغة HEIC.", "اضغط تحويل — العملية فورية.", "حمّل صور JPG تفتح على أي جهاز أو موقع."],
+        "how_to_en": ["Upload one or more HEIC images.", "Click Convert — it's instant.", "Download JPG images that open on any device or website."],
+        "features_ar": ["تحويل فوري بدون فقدان ملحوظ بالجودة", "يدعم تحويل عدة صور HEIC دفعة واحدة", "النتيجة JPG متوافقة مع كل الأجهزة والمواقع", "لا حاجة لتطبيق آيفون أو برنامج إضافي"],
+        "features_en": ["Instant conversion with no noticeable quality loss", "Supports converting multiple HEIC images at once", "The resulting JPG is compatible with all devices and websites", "No iPhone app or extra software needed"],
+        "faq_ar": [
+            {"q": "لماذا صور آيفون تنحفظ بصيغة HEIC أصلاً؟", "a": "أبل تستخدم HEIC لأنها تحفظ نفس الجودة بحجم ملف أصغر من JPG، لكنها أقل توافقاً خارج أجهزة أبل."},
+            {"q": "هل تنقص جودة الصورة بعد التحويل لـJPG؟", "a": "الفرق غير ملحوظ عملياً؛ نحافظ على أعلى جودة ممكنة أثناء التحويل."},
+            {"q": "هل أقدر أحول أكثر من صورة بنفس الوقت؟", "a": "نعم، يمكنك رفع عدة صور HEIC وتحويلها كلها دفعة واحدة."},
+            {"q": "هل يعمل مع فيديوهات Live Photos أيضاً؟", "a": "لا، الأداة مخصصة لتحويل الصور الثابتة HEIC فقط، وليس مقاطع Live Photos المتحركة."},
+            {"q": "هل الصورة الناتجة تحتفظ ببيانات الموقع (GPS)؟", "a": "لأسباب خصوصية، نقوم بمسح البيانات الوصفية الحساسة مثل الموقع الجغرافي من الصورة الناتجة."}
+        ],
+        "faq_en": [
+            {"q": "Why do iPhone photos save as HEIC in the first place?", "a": "Apple uses HEIC because it preserves the same quality at a smaller file size than JPG, but it's less compatible outside Apple devices."},
+            {"q": "Does quality drop after converting to JPG?", "a": "The difference is practically unnoticeable; we preserve the highest possible quality during conversion."},
+            {"q": "Can I convert multiple images at once?", "a": "Yes, you can upload several HEIC images and convert them all in a single batch."},
+            {"q": "Does it work with Live Photos videos too?", "a": "No, the tool is designed for converting still HEIC images only, not the moving Live Photos clips."},
+            {"q": "Does the resulting image keep location (GPS) data?", "a": "For privacy reasons, we strip sensitive metadata such as geolocation from the resulting image."}
+        ]
+    }
+}
+for slug, content in UNIQUE_TOOL_CONTENT_BATCH2.items():
+    if slug in TOOLS_SEO:
+        TOOLS_SEO[slug].update(content)
+
+# ==================== محتوى أصلي وفريد لأهم 15 أداة (لا يعتمد على قالب مكرر) ====================
+# هذا القسم يستبدل المحتوى العام المولّد تلقائياً بمحتوى مكتوب خصيصاً لكل أداة،
+# لمعالجة ملاحظة جوجل بخصوص "المحتوى القليل أو المتكرر آلياً" قبل إعادة التقديم لـ AdSense
+RICH_TOOL_CONTENT = {
+    "pdf-to-docx": {
+        "long_desc_ar": "يعتمد محول PDF إلى Word في V-Infinity على نظام دفاع ثلاثي: أولاً محرك محلي سريع (pdf2docx) للملفات البسيطة، ثم في حال احتوى الملف على جداول متداخلة أو رموز مرفوعة (superscript) ينتقل تلقائياً لمحركات سحابية أدق (CloudConvert وConvertAPI) لضمان الحفاظ على التنسيق الأصلي، الجداول، والخطوط العربية دون تشوه.",
+        "long_desc_en": "Our PDF to Word converter uses a triple-layer engine: a fast local pdf2docx pass for simple files, and automatic escalation to cloud-grade engines (CloudConvert, ConvertAPI) whenever the PDF contains nested tables or superscript/subscript text — ensuring formatting, tables, and Arabic typography stay intact.",
+        "faq_ar": [
+            {"q": "هل يحافظ التحويل على الجداول المعقدة؟", "a": "نعم، نستخدم محركات متعددة، ولو كان الجدول متداخلاً ننتقل تلقائياً لمحرك أدق لضمان عدم كسر الهيكل."},
+            {"q": "هل يدعم النصوص العربية والاتجاه من اليمين لليسار؟", "a": "نعم، الأداة مصممة خصيصاً لدعم تشكيل الحروف العربية واتجاه RTL دون تقطيع."},
+            {"q": "هل يوجد حد لحجم ملف PDF؟", "a": "الحد الأقصى 25 ميجابايت لكل ملف لضمان سرعة المعالجة لجميع المستخدمين."},
+            {"q": "ماذا يحدث لو كان الملف PDF ممسوحاً ضوئياً (صورة)؟", "a": "يتم اكتشاف ذلك تلقائياً وتفعيل تقنية التعرف الضوئي (OCR) لاستخراج النص قبل التحويل."},
+            {"q": "هل الملف الناتج قابل للتعديل الكامل في Word؟", "a": "نعم، الناتج ملف .docx قياسي قابل للتعديل الكامل فور فتحه."}
+        ],
+        "faq_en": [
+            {"q": "Does the conversion preserve complex tables?", "a": "Yes — if a table is nested, we automatically escalate to a more precise cloud engine to avoid breaking the structure."},
+            {"q": "Does it support Arabic and RTL text?", "a": "Yes, the tool is specifically built to preserve Arabic letter shaping and right-to-left direction."},
+            {"q": "Is there a file size limit?", "a": "Yes, 25MB per file to keep processing fast for everyone."},
+            {"q": "What if my PDF is a scanned image?", "a": "It's automatically detected and OCR is triggered to extract the text before conversion."},
+            {"q": "Is the resulting Word file fully editable?", "a": "Yes, you get a standard .docx file, fully editable the moment you open it."}
+        ]
+    },
+    "word-to-pdf": {
+        "long_desc_ar": "يحوّل مستندات Word (.docx) إلى PDF عبر محرك LibreOffice المدمج بالسيرفر، مع الحفاظ على الخطوط، الصور، وتنسيق الفقرات كما هي بالضبط. في حال فشل التحويل المحلي لأي سبب، يوجد خط دفاع سحابي احتياطي يضمن نجاح العملية تقريباً في كل الحالات.",
+        "long_desc_en": "Converts Word documents (.docx) to PDF using a server-side LibreOffice engine, preserving fonts, images, and paragraph formatting exactly as they appear in the original. A cloud fallback engine kicks in automatically if local conversion fails for any reason.",
+        "faq_ar": [
+            {"q": "هل تتغير الخطوط عند التحويل؟", "a": "لا، يتم الحفاظ على الخطوط المستخدمة أو استبدالها بأقرب خط متوافق بصرياً لو غير متوفر بالسيرفر."},
+            {"q": "هل يدعم الملفات القديمة .doc؟", "a": "الدعم الرئيسي لملفات .docx؛ لملفات .doc القديمة استخدم أداة \"Doc to Docx\" أولاً."},
+            {"q": "هل الصور داخل المستند تنتقل بنفس الجودة؟", "a": "نعم، تنتقل الصور بدقتها الأصلية دون ضغط إضافي."},
+            {"q": "كم يستغرق التحويل؟", "a": "عادة ثوانٍ معدودة لمعظم المستندات، ويعتمد على عدد الصفحات وحجم الصور."},
+            {"q": "هل يمكن تحويل عدة ملفات Word دفعة واحدة؟", "a": "كل عملية تحويل واحدة لملف واحد؛ لدمج عدة ملفات استخدم أداة \"دمج Word\" أولاً."}
+        ],
+        "faq_en": [
+            {"q": "Do fonts change during conversion?", "a": "No, original fonts are preserved, or substituted with the closest visual match if unavailable on the server."},
+            {"q": "Does it support old .doc files?", "a": ".docx is the primary format; for old .doc files, use the \"Doc to Docx\" tool first."},
+            {"q": "Do embedded images keep their quality?", "a": "Yes, images are carried over at their original resolution without extra compression."},
+            {"q": "How long does conversion take?", "a": "Usually a few seconds for most documents, depending on page count and image size."},
+            {"q": "Can I convert multiple Word files at once?", "a": "Each conversion handles one file; use \"Merge Word\" first if you need to combine files."}
+        ]
+    },
+    "merge-pdf": {
+        "long_desc_ar": "يدمج حتى 30 ملف PDF في ملف واحد مرتب بنفس ترتيب رفعك للملفات، دون أي فقدان بالجودة أو التنسيق. مثالي للطلاب لدمج فصول كتاب، أو للموظفين لتجميع عدة تقارير في مستند واحد جاهز للأرشفة أو الإرسال.",
+        "long_desc_en": "Merge up to 30 PDF files into a single document, preserving your upload order with zero quality or formatting loss. Perfect for students combining book chapters or professionals compiling multiple reports into one archive-ready file.",
+        "faq_ar": [
+            {"q": "ما أقصى عدد ملفات يمكن دمجها؟", "a": "يمكنك دمج حتى 30 ملف PDF في عملية واحدة."},
+            {"q": "هل يحافظ الدمج على ترتيب الصفحات الأصلي لكل ملف؟", "a": "نعم، كل ملف يحتفظ بترتيب صفحاته الداخلي، والدمج يكون حسب ترتيب رفعك للملفات."},
+            {"q": "هل تقل جودة الملفات بعد الدمج؟", "a": "لا، الدمج لا يعيد ضغط المحتوى، فتبقى الجودة الأصلية كما هي."},
+            {"q": "هل يمكنني إعادة ترتيب الملفات قبل الدمج؟", "a": "نعم، رتب الملفات بالترتيب المطلوب قبل الرفع أو أثناء الاختيار."},
+            {"q": "هل الملفات المحمية بكلمة سر تدعم الدمج؟", "a": "يفضل إزالة الحماية أولاً عبر أداة \"إزالة كلمة سر PDF\" قبل الدمج."}
+        ],
+        "faq_en": [
+            {"q": "What's the maximum number of files I can merge?", "a": "Up to 30 PDF files in a single operation."},
+            {"q": "Does merging preserve each file's internal page order?", "a": "Yes, each file keeps its internal page order, and files are merged in the order you upload them."},
+            {"q": "Does quality drop after merging?", "a": "No, merging doesn't recompress content, so original quality is preserved."},
+            {"q": "Can I reorder files before merging?", "a": "Yes, arrange them in your desired order before or during upload."},
+            {"q": "Do password-protected files work?", "a": "Remove protection first using the \"Unlock PDF\" tool, then merge."}
+        ]
+    },
+    "split-pdf": {
+        "long_desc_ar": "يقسّم ملف PDF واحد إلى ملفات منفصلة، صفحة بصفحة أو حسب نطاق تحدده أنت. مفيد جداً لفصل فاتورة عن أخرى داخل ملف مجمّع، أو استخراج فصل واحد فقط من كتاب طويل دون التعامل مع الملف كاملاً.",
+        "long_desc_en": "Split a single PDF into separate files — page by page, or by a custom range you define. Ideal for separating individual invoices from a batch file, or extracting just one chapter from a long book without handling the whole document.",
+        "faq_ar": [
+            {"q": "هل أقدر أحدد صفحات معينة للتقسيم؟", "a": "نعم، تقدر تكتب أرقام أو نطاقات محددة (مثل 1، 3، 5-7)."},
+            {"q": "ماذا يحدث لو كتبت رقم صفحة غير موجود؟", "a": "الأداة تنبهك فوراً برسالة خطأ واضحة توضح عدد صفحات الملف الفعلي بدل تجاهل الخطأ."},
+            {"q": "هل يمكن تقسيم الملف لكل صفحة على حدة تلقائياً؟", "a": "نعم، اختر خيار التقسيم الكامل ليصير كل صفحة ملف PDF منفصل."},
+            {"q": "هل الناتج ملف واحد أم عدة ملفات؟", "a": "يعتمد على اختيارك؛ يمكن استلام عدة ملفات مضغوطة في ZIP."},
+            {"q": "هل يدعم ملفات PDF الكبيرة؟", "a": "نعم حتى الحد الأقصى المسموح به (25 ميجابايت وحتى 1000 صفحة)."}
+        ],
+        "faq_en": [
+            {"q": "Can I choose specific pages to split?", "a": "Yes, enter specific numbers or ranges (e.g. 1, 3, 5-7)."},
+            {"q": "What happens if I enter a page number that doesn't exist?", "a": "You'll get a clear error message stating the actual page count instead of a silent failure."},
+            {"q": "Can it split every page automatically into its own file?", "a": "Yes, choose the full-split option to get one PDF per page."},
+            {"q": "Is the output one file or several?", "a": "Depends on your choice; you can receive multiple files bundled in a ZIP."},
+            {"q": "Does it support large PDFs?", "a": "Yes, up to the platform limit (25MB and up to 1000 pages)."}
+        ]
+    },
+    "compress-pdf": {
+        "long_desc_ar": "يقلل حجم ملف PDF بذكاء دون التضحية بوضوح النص. يبدأ بمستوى ضغط متوازن، وإذا كان الملف يحتوي على صور عالية الدقة ولم يتحسن الحجم كثيراً، يصعّد تلقائياً لمستوى ضغط أقوى ويختار أفضل نتيجة، مثالي لإرسال الملفات عبر البريد الإلكتروني بحد أقصى للحجم.",
+        "long_desc_en": "Intelligently shrinks PDF file size without sacrificing text clarity. It starts with a balanced compression level, and if the file is image-heavy and doesn't shrink much, it automatically escalates to a stronger setting and keeps whichever result is smallest — ideal for emailing files under size limits.",
+        "faq_ar": [
+            {"q": "كم نسبة التخفيض المتوقعة بالحجم؟", "a": "تختلف حسب المحتوى، لكن الملفات المليئة بالصور عادة تنخفض بنسبة أكبر بكثير من الملفات النصية فقط."},
+            {"q": "هل يؤثر الضغط على وضوح النص؟", "a": "لا، الضغط يستهدف الصور والبيانات الزائدة أساساً، والنص يبقى حاداً وواضحاً."},
+            {"q": "هل يمكنني اختيار مستوى ضغط معين؟", "a": "الأداة تختار تلقائياً أفضل توازن بين الحجم والجودة؛ لو تحتاج حجم دقيق استخدم أداة \"ضغط PDF لحجم محدد\"."},
+            {"q": "هل يعمل مع الملفات الممسوحة ضوئياً؟", "a": "نعم، وغالباً هذي الملفات تستفيد أكثر من الضغط لأنها تحتوي صور عالية الدقة."},
+            {"q": "هل تُحذف بيانات التعريف (Metadata) أثناء الضغط؟", "a": "نعم، تُمسح بيانات المؤلف والتاريخ تلقائياً حفاظاً على خصوصيتك."}
+        ],
+        "faq_en": [
+            {"q": "How much size reduction can I expect?", "a": "It varies by content, but image-heavy files typically shrink far more than text-only files."},
+            {"q": "Does compression affect text clarity?", "a": "No, compression mainly targets images and redundant data — text stays sharp and readable."},
+            {"q": "Can I pick a specific compression level?", "a": "The tool automatically picks the best size/quality balance; for an exact target size, use \"Compress PDF to Target Size.\""},
+            {"q": "Does it work on scanned documents?", "a": "Yes, and they often benefit the most since they contain high-resolution images."},
+            {"q": "Is metadata removed during compression?", "a": "Yes, author and date metadata is automatically stripped for your privacy."}
+        ]
+    },
+    "protect-pdf": {
+        "long_desc_ar": "يضيف كلمة سر قوية بمعيار تشفير AES-256 لملف PDF، فلا يقدر أي شخص يفتحه إلا بمعرفة كلمة السر. يُستخدم بكثرة لحماية العقود، الفواتير، والمستندات الرسمية قبل إرسالها عبر البريد الإلكتروني.",
+        "long_desc_en": "Adds a strong AES-256 encrypted password to your PDF, so only someone who knows the password can open it. Widely used to protect contracts, invoices, and official documents before emailing them.",
+        "faq_ar": [
+            {"q": "ما نوع التشفير المستخدم؟", "a": "تشفير AES-256، أحد أقوى معايير التشفير المعتمدة عالمياً."},
+            {"q": "هل تُحذف بياناتي الشخصية من الملف أيضاً؟", "a": "نعم، بالإضافة للحماية بكلمة سر، يتم مسح بيانات المؤلف والتعريف تلقائياً."},
+            {"q": "ماذا لو نسيت كلمة السر بعد الحماية؟", "a": "للأسف لا يمكننا استرجاعها، فالتشفير حقيقي وليس شكلياً؛ احتفظ بنسخة من كلمة السر بمكان آمن."},
+            {"q": "هل يمكنني إزالة الحماية لاحقاً؟", "a": "نعم، عبر أداة \"إزالة كلمة سر PDF\" إذا كنت تعرف كلمة السر الحالية."},
+            {"q": "هل يعمل مع الملفات الكبيرة؟", "a": "نعم، حتى الحد الأقصى المسموح لحجم الملفات."}
+        ],
+        "faq_en": [
+            {"q": "What encryption is used?", "a": "AES-256 encryption, one of the strongest globally recognized standards."},
+            {"q": "Is my personal metadata also removed?", "a": "Yes, in addition to password protection, author/creation metadata is automatically stripped."},
+            {"q": "What if I forget the password afterward?", "a": "Unfortunately it can't be recovered — the encryption is real, not cosmetic. Keep your password somewhere safe."},
+            {"q": "Can I remove protection later?", "a": "Yes, using the \"Unlock PDF\" tool if you know the current password."},
+            {"q": "Does it work with large files?", "a": "Yes, up to the platform's maximum file size limit."}
+        ]
+    },
+    "unlock-pdf": {
+        "long_desc_ar": "يزيل كلمة السر من ملف PDF محمي بشرط معرفتك للكلمة الحالية، ليصير الملف قابلاً للفتح والتعديل بحرية دون طلب كلمة سر في كل مرة. لا يُستخدم لكسر حماية ملفات لا تملكها.",
+        "long_desc_en": "Removes the password from a protected PDF, provided you know the current password, so the file opens freely without prompting each time. Not intended for bypassing protection on files you don't own.",
+        "faq_ar": [
+            {"q": "هل يمكن إزالة الحماية بدون معرفة كلمة السر؟", "a": "لا، الأداة مصممة لإزالة الحماية من ملفاتك الخاصة فقط بمعرفة كلمة السر الصحيحة."},
+            {"q": "هل تُمسح بيانات التعريف بعد الإزالة؟", "a": "نعم، تُمسح بيانات المؤلف والتاريخ تلقائياً حفاظاً على خصوصيتك."},
+            {"q": "هل يتغير محتوى الملف بعد الإزالة؟", "a": "لا، فقط طبقة الحماية تُزال، والمحتوى يبقى كما هو تماماً."},
+            {"q": "هل يدعم كل أنواع حماية PDF؟", "a": "يدعم الحماية القياسية بكلمة مرور المستخدم (User Password)."},
+            {"q": "هل الملف الناتج آمن للمشاركة؟", "a": "بما أنه بدون حماية، تأكد من مشاركته فقط مع من تثق به."}
+        ],
+        "faq_en": [
+            {"q": "Can protection be removed without knowing the password?", "a": "No, the tool only removes protection from your own files when you provide the correct password."},
+            {"q": "Is metadata cleared after removal?", "a": "Yes, author and date metadata is automatically stripped for your privacy."},
+            {"q": "Does the content change after unlocking?", "a": "No, only the protection layer is removed — content stays exactly the same."},
+            {"q": "Does it support all PDF protection types?", "a": "It supports standard user-password encryption."},
+            {"q": "Is the unlocked file safe to share?", "a": "Since it's no longer protected, only share it with people you trust."}
+        ]
+    },
+    "sign-pdf": {
+        "long_desc_ar": "يتيح لك رسم توقيعك بالماوس أو بإصبعك على الجوال وإضافته مباشرة على أي صفحة من ملف PDF، دون طباعة أو مسح ضوئي. مثالي للتوقيع السريع على العقود والموافقات دون الحاجة لأدوات خارجية.",
+        "long_desc_en": "Draw your signature with a mouse or your finger on mobile and place it directly on any page of a PDF — no printing or scanning required. Perfect for quickly signing contracts and approvals without external tools.",
+        "faq_ar": [
+            {"q": "هل التوقيع الإلكتروني له نفس القيمة القانونية للتوقيع اليدوي؟", "a": "يعتمد على قوانين بلدك ونوع المستند؛ للمستندات الرسمية الحساسة يُنصح بمراجعة الجهة المعنية."},
+            {"q": "هل يمكن تحديد مكان التوقيع بدقة على الصفحة؟", "a": "نعم، يمكنك وضع التوقيع بالمكان اللي تختاره بالضبط."},
+            {"q": "هل يدعم التوقيع على الجوال؟", "a": "نعم، يمكنك الرسم بإصبعك مباشرة على شاشة الجوال."},
+            {"q": "هل يمكن التوقيع في أكثر من مكان بنفس الملف؟", "a": "كل عملية تضيف توقيعاً واحداً؛ كرر العملية لإضافة توقيعات متعددة."},
+            {"q": "هل التوقيع قابل للحذف أو التعديل لاحقاً؟", "a": "يصبح جزءاً من محتوى الصفحة بعد الحفظ، فلا يمكن فصله تلقائياً."}
+        ],
+        "faq_en": [
+            {"q": "Does an e-signature carry the same legal weight as a handwritten one?", "a": "It depends on your country's laws and document type; consult a relevant authority for sensitive official documents."},
+            {"q": "Can I position the signature precisely on the page?", "a": "Yes, you can place it exactly where you want."},
+            {"q": "Does it work on mobile?", "a": "Yes, you can draw directly with your finger on your phone screen."},
+            {"q": "Can I sign in multiple places in the same file?", "a": "Each run adds one signature; repeat the process to add multiple signatures."},
+            {"q": "Can the signature be removed or edited later?", "a": "It becomes part of the page content once saved, so it can't be automatically separated."}
+        ]
+    },
+    "pdf-to-excel": {
+        "long_desc_ar": "يستخرج الجداول من ملفات PDF ويحوّلها لملف Excel منظم بأعمدة وصفوف صحيحة. يستخدم عدة محركات استخراج (Tabula للجداول المسطرة، pdfplumber للجداول غير المخططة) بالتتابع لضمان أعلى دقة ممكنة حتى مع الجداول المعقدة.",
+        "long_desc_en": "Extracts tables from PDF files into a properly structured Excel spreadsheet with correct rows and columns. It runs multiple extraction engines (Tabula for ruled tables, pdfplumber for borderless tables) in sequence to ensure the highest possible accuracy, even with complex tables.",
+        "faq_ar": [
+            {"q": "هل يستخرج كل الجداول في ملف متعدد الصفحات؟", "a": "نعم، يمسح كل الصفحات ويضع كل جدول بورقة عمل (Sheet) منفصلة."},
+            {"q": "ماذا لو كان الملف صورة ممسوحة ضوئياً؟", "a": "يتم تفعيل تقنية OCR تلقائياً لاستخراج البيانات من الجداول الممسوحة."},
+            {"q": "هل يحافظ على تنسيق الأرقام والعملات؟", "a": "نعم، تُستخرج القيم كما هي بالنص الأصلي للحفاظ على دقتها."},
+            {"q": "هل يدعم الجداول بدون خطوط فاصلة واضحة؟", "a": "نعم، هذا بالضبط سبب استخدامنا لعدة محركات استخراج مختلفة."},
+            {"q": "ماذا لو فشل استخراج جدول معين؟", "a": "النظام ينتقل تلقائياً لمحرك استخراج آخر أدق قبل التسليم."}
+        ],
+        "faq_en": [
+            {"q": "Does it extract every table across a multi-page file?", "a": "Yes, it scans all pages and places each table in a separate worksheet."},
+            {"q": "What if the file is a scanned image?", "a": "OCR is automatically triggered to extract data from scanned tables."},
+            {"q": "Does it preserve number and currency formatting?", "a": "Yes, values are extracted as-is from the original text to preserve accuracy."},
+            {"q": "Does it support borderless tables?", "a": "Yes, that's exactly why we chain multiple extraction engines."},
+            {"q": "What happens if one extraction attempt fails on a table?", "a": "The system automatically falls back to a more precise engine before delivering results."}
+        ]
+    },
+    "image-to-pdf": {
+        "long_desc_ar": "يحوّل صورة أو عدة صور (JPG، PNG) إلى ملف PDF واحد مرتب، بصفحة لكل صورة. مثالي لتجميع صور مستندات ملتقطة بالجوال (فواتير، إيصالات، واجبات) في ملف PDF واحد منظم وجاهز للإرسال أو الأرشفة.",
+        "long_desc_en": "Converts one or more images (JPG, PNG) into a single organized PDF, with one page per image. Perfect for bundling document photos taken with your phone (receipts, invoices, homework) into one clean, shareable, archive-ready PDF.",
+        "faq_ar": [
+            {"q": "هل يمكن تحويل عدة صور لملف PDF واحد؟", "a": "نعم، كل صورة تصير صفحة منفصلة بنفس ترتيب رفعك لها."},
+            {"q": "هل تحافظ الصورة على جودتها الأصلية؟", "a": "نعم، تُدرج الصورة بدقتها الأصلية دون ضغط إضافي."},
+            {"q": "هل يدعم صيغة HEIC من آيفون؟", "a": "استخدم أداة \"HEIC إلى JPG\" أولاً ثم حوّل الناتج إلى PDF."},
+            {"q": "هل حجم صفحة PDF يتماشى تلقائياً مع أبعاد الصورة؟", "a": "نعم، يتم ضبط مقاس الصفحة تلقائياً بما يتناسب مع أبعاد كل صورة."},
+            {"q": "كم أقصى عدد صور يمكن دمجها بملف واحد؟", "a": "حتى 30 صورة بالعملية الواحدة."}
+        ],
+        "faq_en": [
+            {"q": "Can I convert multiple images into one PDF?", "a": "Yes, each image becomes a separate page in your upload order."},
+            {"q": "Does the image keep its original quality?", "a": "Yes, images are embedded at their original resolution without extra compression."},
+            {"q": "Does it support iPhone's HEIC format?", "a": "Use the \"HEIC to JPG\" tool first, then convert the result to PDF."},
+            {"q": "Does the PDF page size automatically match the image dimensions?", "a": "Yes, page size is automatically adjusted to fit each image's dimensions."},
+            {"q": "What's the maximum number of images I can combine?", "a": "Up to 30 images in a single operation."}
+        ]
+    },
+    "compress-image": {
+        "long_desc_ar": "يقلل حجم ملف الصورة (JPG/PNG) بشكل كبير مع الحفاظ على جودة بصرية عالية، مثالي لتسريع رفع الصور على المواقع أو تقليل حجمها قبل الإرسال عبر تطبيقات المراسلة اللي تضغط الصور تلقائياً بجودة أقل.",
+        "long_desc_en": "Significantly reduces image file size (JPG/PNG) while maintaining high visual quality — ideal for faster website uploads or shrinking images before sending them through messaging apps that auto-compress at lower quality.",
+        "faq_ar": [
+            {"q": "كم نسبة التخفيض بالحجم المتوقعة؟", "a": "تختلف حسب محتوى الصورة، لكن غالباً بين 40% إلى 80% دون فرق ملحوظ بالعين المجردة."},
+            {"q": "هل تتأثر أبعاد الصورة (الطول والعرض)؟", "a": "لا، الضغط يقلل حجم الملف بالبايت فقط دون تغيير أبعاد الصورة."},
+            {"q": "هل يدعم صيغة PNG الشفافة؟", "a": "نعم، وتبقى الشفافية محفوظة بعد الضغط."},
+            {"q": "هل يمكن ضغط عدة صور دفعة واحدة؟", "a": "كل عملية تعالج صورة واحدة لأفضل تحكم بالجودة."},
+            {"q": "هل الضغط يحذف بيانات EXIF (الموقع، الجهاز)؟", "a": "استخدم أداة \"إزالة بيانات EXIF\" بشكل منفصل لضمان حذفها بالكامل."}
+        ],
+        "faq_en": [
+            {"q": "What size reduction can I expect?", "a": "It varies by image content, but typically 40-80% with no noticeable visual difference."},
+            {"q": "Does it affect image dimensions (width/height)?", "a": "No, compression only reduces file size in bytes without changing dimensions."},
+            {"q": "Does it support transparent PNGs?", "a": "Yes, and transparency is preserved after compression."},
+            {"q": "Can I compress multiple images at once?", "a": "Each run processes one image for the best quality control."},
+            {"q": "Does compression remove EXIF data (location, device)?", "a": "Use the separate \"Strip EXIF\" tool to ensure it's fully removed."}
+        ]
+    },
+    "heic-to-jpg": {
+        "long_desc_ar": "يحوّل صور iPhone بصيغة HEIC (غير مدعومة بمعظم المواقع وأجهزة ويندوز) إلى صيغة JPG المتوافقة عالمياً مع كل الأجهزة والمواقع، مباشرة من متصفحك دون تطبيقات إضافية.",
+        "long_desc_en": "Converts iPhone HEIC photos (unsupported by most websites and Windows devices) into universally compatible JPG format, directly from your browser with no extra apps needed.",
+        "faq_ar": [
+            {"q": "لماذا صور آيفون بصيغة HEIC ولا تفتح على بعض الأجهزة؟", "a": "HEIC صيغة حديثة موفرة للمساحة، لكنها غير مدعومة افتراضياً على ويندوز والمواقع القديمة."},
+            {"q": "هل تقل جودة الصورة بعد التحويل لـ JPG؟", "a": "الفرق ضئيل جداً وغير ملحوظ بصرياً في أغلب الحالات."},
+            {"q": "هل يمكن تحويل عدة صور HEIC دفعة واحدة؟", "a": "كل عملية تعالج صورة واحدة."},
+            {"q": "هل تُحفظ بيانات الموقع والتاريخ بعد التحويل؟", "a": "نعم إلا إذا استخدمت أداة \"إزالة بيانات EXIF\" بعدها."},
+            {"q": "هل الأداة تعمل على أجهزة أندرويد وويندوز أيضاً؟", "a": "نعم، تعمل من أي متصفح بغض النظر عن نظام التشغيل."}
+        ],
+        "faq_en": [
+            {"q": "Why don't iPhone HEIC photos open on some devices?", "a": "HEIC is a modern space-saving format, but it's not natively supported by default on Windows and many older websites."},
+            {"q": "Does image quality drop after converting to JPG?", "a": "The difference is minimal and rarely noticeable visually."},
+            {"q": "Can I convert multiple HEIC images at once?", "a": "Each run processes one image."},
+            {"q": "Is location/date metadata preserved after conversion?", "a": "Yes, unless you also run it through the \"Strip EXIF\" tool afterward."},
+            {"q": "Does it work on Android and Windows too?", "a": "Yes, it works from any browser regardless of your operating system."}
+        ]
+    },
+    "json-to-excel": {
+        "long_desc_ar": "يحوّل بيانات JSON المنظمة (Objects أو Arrays) إلى جدول Excel بأعمدة وصفوف واضحة تلقائياً، بدون كتابة أي كود. مفيد جداً للمطورين والمحللين اللي يحتاجون يفحصوا استجابة API بشكل جدولي سريع.",
+        "long_desc_en": "Converts structured JSON data (objects or arrays) into a clean Excel table with automatically detected columns and rows — no code required. Great for developers and analysts who need to quickly inspect an API response in tabular form.",
+        "faq_ar": [
+            {"q": "هل يدعم JSON المتداخل (Nested Objects)؟", "a": "يدعم التسطيح الأساسي للبيانات؛ الهياكل شديدة التعقيد قد تحتاج تبسيط يدوي أولاً."},
+            {"q": "ماذا لو كان الـ JSON غير صالح (Invalid)؟", "a": "تظهر رسالة خطأ واضحة تحدد مكان المشكلة بدل فشل صامت."},
+            {"q": "هل يدعم المصفوفات (Arrays) المباشرة؟", "a": "نعم، أي مصفوفة من الكائنات تتحول تلقائياً لصفوف بجدول واحد."},
+            {"q": "هل يحافظ على ترتيب الحقول الأصلي؟", "a": "نعم، ترتيب الأعمدة يطابق ترتيب الحقول بالكائن الأول."},
+            {"q": "هل يوجد حد لحجم بيانات JSON؟", "a": "نعم، حسب الحد الأقصى المسموح لحجم النص المدخل بالمنصة."}
+        ],
+        "faq_en": [
+            {"q": "Does it support nested JSON objects?", "a": "Basic flattening is supported; deeply nested structures may need manual simplification first."},
+            {"q": "What if my JSON is invalid?", "a": "You'll get a clear error pointing to the issue instead of a silent failure."},
+            {"q": "Does it support direct arrays?", "a": "Yes, any array of objects automatically becomes rows in a single table."},
+            {"q": "Does it preserve the original field order?", "a": "Yes, column order matches the field order in the first object."},
+            {"q": "Is there a size limit for JSON input?", "a": "Yes, based on the platform's maximum input text size."}
+        ]
+    },
+    "excel-to-json": {
+        "long_desc_ar": "يحوّل ورقة عمل Excel إلى مصفوفة JSON منظمة، بحيث يصير كل صف كائن (Object) بمفاتيح تطابق أسماء الأعمدة في الصف الأول. أداة أساسية للمطورين اللي يحتاجون يغذّوا بيانات جدولية لتطبيق أو API.",
+        "long_desc_en": "Converts an Excel worksheet into a clean JSON array, where each row becomes an object with keys matching the first row's column headers. An essential tool for developers who need to feed tabular data into an app or API.",
+        "faq_ar": [
+            {"q": "هل يدعم أكثر من ورقة عمل (Sheet) بنفس الملف؟", "a": "يعالج ورقة العمل الأولى (النشطة) حالياً؛ افصل الأوراق لملفات منفصلة عند الحاجة."},
+            {"q": "هل الصف الأول يجب أن يكون عناوين الأعمدة؟", "a": "نعم، الصف الأول يُستخدم كأسماء المفاتيح (keys) في كل كائن JSON."},
+            {"q": "ماذا يحدث للخلايا الفارغة؟", "a": "تُدرج كقيمة فارغة أو null بدل حذف الحقل بالكامل."},
+            {"q": "هل يدعم ملفات .xlsx و .xls معاً؟", "a": "نعم، الصيغتين مدعومتين."},
+            {"q": "هل الناتج JSON منسّق (Formatted) وسهل القراءة؟", "a": "نعم، يخرج بتنسيق واضح ومسافات بادئة (indentation) لسهولة المراجعة."}
+        ],
+        "faq_en": [
+            {"q": "Does it support multiple sheets in one file?", "a": "It currently processes the first (active) sheet; split sheets into separate files if needed."},
+            {"q": "Must the first row be column headers?", "a": "Yes, the first row is used as the key names in each JSON object."},
+            {"q": "What happens to empty cells?", "a": "They're included as an empty value or null instead of dropping the field entirely."},
+            {"q": "Does it support both .xlsx and .xls?", "a": "Yes, both formats are supported."},
+            {"q": "Is the output JSON nicely formatted?", "a": "Yes, it's output with clear indentation for easy review."}
+        ]
+    },
+    "csv-to-json": {
+        "long_desc_ar": "يحوّل ملف CSV (بيانات مفصولة بفواصل) إلى مصفوفة JSON بسرعة، بحيث يصير كل سطر كائن منفصل. أداة سريعة لمن يحتاج يجهّز بيانات جدولية بسيطة (من Excel أو Google Sheets مُصدّرة كـ CSV) للاستخدام مباشرة بكود برمجي.",
+        "long_desc_en": "Quickly converts a CSV file (comma-separated data) into a JSON array, with each row becoming a separate object. A fast tool for anyone who needs simple tabular data (exported from Excel or Google Sheets as CSV) ready to use directly in code.",
+        "faq_ar": [
+            {"q": "هل يكتشف الفاصل المستخدم تلقائياً (فاصلة أو فاصلة منقوطة)؟", "a": "نعم، يتعرف على الفواصل الشائعة تلقائياً عند القراءة."},
+            {"q": "ماذا لو كان أول سطر بيانات وليس عناوين؟", "a": "يُفترض إن السطر الأول عناوين الأعمدة؛ تأكد من ترتيب ملفك قبل الرفع."},
+            {"q": "هل يدعم النصوص العربية داخل CSV؟", "a": "نعم، بشرط أن يكون الملف مرمّز بـ UTF-8 لتفادي ظهور رموز غريبة."},
+            {"q": "هل يدعم القيم اللي فيها فواصل داخل نص محاط بعلامات اقتباس؟", "a": "نعم، يتبع معيار CSV القياسي في التعامل مع النصوص المقتبسة."},
+            {"q": "هل يوجد حد لعدد الصفوف؟", "a": "نعم، حسب الحد الأقصى المسموح لحجم النص المدخل."}
+        ],
+        "faq_en": [
+            {"q": "Does it auto-detect the delimiter (comma or semicolon)?", "a": "Yes, common delimiters are automatically recognized when reading the file."},
+            {"q": "What if my first row is data, not headers?", "a": "The first row is assumed to be column headers — make sure your file is arranged correctly before uploading."},
+            {"q": "Does it support Arabic text inside CSV?", "a": "Yes, provided the file is UTF-8 encoded to avoid garbled characters."},
+            {"q": "Does it handle quoted values containing commas?", "a": "Yes, it follows the standard CSV convention for quoted text."},
+            {"q": "Is there a row limit?", "a": "Yes, based on the platform's maximum input text size."}
+        ]
+    },
+}
+for slug, content in RICH_TOOL_CONTENT.items():
+    if slug in TOOLS_SEO:
+        TOOLS_SEO[slug].update(content)
+
 # ==================== دوال الحماية والمساعدات المتقدمة ====================
 def sanitize_file_content(file_bytes):
     if not file_bytes: return False
