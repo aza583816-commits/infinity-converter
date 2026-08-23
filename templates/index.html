@@ -66,9 +66,12 @@
 
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4343857922748618" crossorigin="anonymous"></script>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script defer src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     
     <style>
         :root {
@@ -123,7 +126,7 @@
         .upload-area { border: 2px dashed var(--upload-border); background: var(--upload-bg); padding: 50px 20px; border-radius: 16px; cursor: pointer; transition: all 0.2s ease; margin-bottom: 20px; }
         .upload-area:hover, .upload-area.dragover { background: rgba(99, 102, 241, 0.1); border-color: var(--primary); transform: scale(1.01); }
         .upload-area i { font-size: 48px; color: var(--primary); margin-bottom: 15px; }
-        .upload-area h3 { font-size: 20px; margin-bottom: 5px; color: var(--text-main); }
+        .upload-area .upload-text-heading { font-size: 20px; margin-bottom: 5px; color: var(--text-main); font-weight: 700; }
         .upload-area p { color: var(--text-muted); font-size: 14px; }
         #fileInput, #multiFileInput { display: none; }
 
@@ -165,7 +168,7 @@
         .tools-section { width: 100%; max-width: 1200px; margin: 0 auto 60px; padding: 0 20px; }
         .category-group { margin-bottom: 40px; transition: all 0.3s ease;}
         .category-group.hidden { display: none; }
-        .section-title { font-size: 22px; font-weight: 800; margin-bottom: 20px; color: var(--text-main); display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); padding-bottom: 10px;}
+        .section-title { font-size: 22px; font-weight: 800; margin: 0 0 20px 0; color: var(--text-main); display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); padding-bottom: 10px;}
         .tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
 
         .tool-card { background: var(--bg-surface); border: 1px solid var(--border); text-decoration: none; color: inherit; padding: 20px; border-radius: 16px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: flex-start; gap: 16px; }
@@ -213,10 +216,11 @@
             <button onclick="toggleLanguageSEO()" id="langBtn">
                 {% if lang == 'en' %}🇸🇦 العربية{% else %}🇺🇸 English{% endif %}
             </button>
-            <button onclick="toggleTheme()" id="themeBtn"><i class="fa-solid fa-sun"></i></button>
+            <button onclick="toggleTheme()" id="themeBtn" aria-label="{% if lang == 'ar' %}تبديل المظهر{% else %}Toggle theme{% endif %}"><i class="fa-solid fa-sun"></i></button>
         </div>
     </header>
 
+    <main>
     <div class="workspace" id="workspace">
         <div class="workspace-card">
             <div class="workspace-header">
@@ -254,7 +258,7 @@
 
                 <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()" style="display: none;">
                     <i class="fa-solid fa-cloud-arrow-up"></i>
-                    <h3 id="uploadText">{% if lang == 'ar' %}اسحب وأفلت الملف هنا أو اضغط للاختيار (أو الصق Ctrl+V){% else %}Drag & Drop file here or paste (Ctrl+V){% endif %}</h3>
+                    <p class="upload-text-heading" id="uploadText">{% if lang == 'ar' %}اسحب وأفلت الملف هنا أو اضغط للاختيار (أو الصق Ctrl+V){% else %}Drag & Drop file here or paste (Ctrl+V){% endif %}</p>
                     <p>{% if lang == 'ar' %}الحد الأقصى للملف: 25MB{% else %}Max file size: 25MB{% endif %}</p>
                     <p id="fileName" style="margin-top: 10px; color: var(--primary); font-weight: bold;"></p>
                     <input type="file" id="fileInput" onchange="handleFileSelect(event)">
@@ -308,15 +312,15 @@
             
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin-top: 20px;">
                 <div class="faq-box">
-                    <h4><i class="fa-solid fa-shield-halved" style="color:var(--primary)"></i> {% if lang == 'ar' %}أمان وتشفير 100%{% else %}100% Secure{% endif %}</h4>
+                    <h3><i class="fa-solid fa-shield-halved" style="color:var(--primary)"></i> {% if lang == 'ar' %}أمان وتشفير 100%{% else %}100% Secure{% endif %}</h3>
                     <p>{% if lang == 'ar' %}تشفير كامل للاتصال والحذف التلقائي الفوري لملفاتك بمجرد إتمام التحويل من الذاكرة المؤقتة.{% else %}End-to-end encrypted transfer with instant memory cleanup.{% endif %}</p>
                 </div>
                 <div class="faq-box">
-                    <h4><i class="fa-solid fa-bolt" style="color:var(--primary)"></i> {% if lang == 'ar' %}دقة فائقة للعربية{% else %}Arabic Typography AI{% endif %}</h4>
+                    <h3><i class="fa-solid fa-bolt" style="color:var(--primary)"></i> {% if lang == 'ar' %}دقة فائقة للعربية{% else %}Arabic Typography AI{% endif %}</h3>
                     <p>{% if lang == 'ar' %}دعم متقدم للخطوط والجداول العربية لمنع مشاكل الحروف المتقطعة أو المعكوسة نهائياً.{% else %}Advanced preservation of complex Arabic typography and layout structures.{% endif %}</p>
                 </div>
                 <div class="faq-box">
-                    <h4><i class="fa-solid fa-circle-check" style="color:var(--primary)"></i> {% if lang == 'ar' %}مجاني بدون قيود{% else %}Completely Free{% endif %}</h4>
+                    <h3><i class="fa-solid fa-circle-check" style="color:var(--primary)"></i> {% if lang == 'ar' %}مجاني بدون قيود{% else %}Completely Free{% endif %}</h3>
                     <p>{% if lang == 'ar' %}لا يتطلب إنشاء حساب أو دفع أي رسوم إضافية لتنفيذ كافة العمليات.{% else %}No subscriptions or account registrations required.{% endif %}</p>
                 </div>
             </div>
@@ -350,7 +354,7 @@
             {% set faqs = tool_data.faq_ar if lang == 'ar' else tool_data.faq_en %}
             {% for faq in faqs %}
                 <div class="faq-box">
-                    <h4><i class="fa-solid fa-circle-question"></i> {{ faq.q }}</h4>
+                    <h3><i class="fa-solid fa-circle-question"></i> {{ faq.q }}</h3>
                     <p>{{ faq.a }}</p>
                 </div>
             {% endfor %}
@@ -360,14 +364,14 @@
 
     {% if not tool_data and not is_404 %}
     <div class="stats-bar" style="max-width:1200px; margin:30px auto; padding:25px 20px; background:var(--bg-surface); border:1px solid var(--border); border-radius:20px; box-shadow:var(--shadow-sm); display:flex; flex-wrap:wrap; justify-content:space-around; gap:20px; text-align:center;">
-        <div><div style="font-size:26px; font-weight:800; color:var(--primary);">100+</div><div style="color:var(--text-muted); font-size:13px;">{% if lang == 'ar' %}أداة قوية{% else %}Powerful Tools{% endif %}</div></div>
-        <div><div style="font-size:26px; font-weight:800; color:var(--primary);">1M+</div><div style="color:var(--text-muted); font-size:13px;">{% if lang == 'ar' %}ملف تمت معالجته{% else %}Files Processed{% endif %}</div></div>
-        <div><div style="font-size:26px; font-weight:800; color:var(--primary);">99.9%</div><div style="color:var(--text-muted); font-size:13px;">{% if lang == 'ar' %}نسبة التشغيل{% else %}Uptime{% endif %}</div></div>
+        <div><div style="font-size:26px; font-weight:800; color:var(--primary);">{{ site_stats.tools_count }}+</div><div style="color:var(--text-muted); font-size:13px;">{% if lang == 'ar' %}أداة قوية{% else %}Powerful Tools{% endif %}</div></div>
+        <div><div style="font-size:26px; font-weight:800; color:var(--primary);">{{ "{:,}".format(site_stats.files_processed) }}</div><div style="color:var(--text-muted); font-size:13px;">{% if lang == 'ar' %}ملف تمت معالجته فعلياً{% else %}Files Actually Processed{% endif %}</div></div>
         <div><div style="font-size:26px; font-weight:800; color:var(--primary);">100%</div><div style="color:var(--text-muted); font-size:13px;">{% if lang == 'ar' %}مجاني للأبد{% else %}Free Forever{% endif %}</div></div>
+        <div><div style="font-size:26px; font-weight:800; color:var(--primary);">0</div><div style="color:var(--text-muted); font-size:13px;">{% if lang == 'ar' %}تسجيل مطلوب{% else %}Sign-ups Required{% endif %}</div></div>
     </div>
 
     <div class="popular-tools-section" style="max-width:1200px; margin:30px auto; padding:0 20px;">
-        <div class="section-title" style="margin-bottom:15px;"><i class="fa-solid fa-fire" style="color:var(--primary)"></i> <span>{% if lang == 'ar' %}الأدوات الأكثر استخدامًا{% else %}Popular Tools{% endif %}</span></div>
+        <h2 class="section-title" style="margin-bottom:15px;"><i class="fa-solid fa-fire" style="color:var(--primary)"></i> <span>{% if lang == 'ar' %}الأدوات الأكثر استخدامًا{% else %}Popular Tools{% endif %}</span></h2>
         <div class="tools-grid">
             <a href="{% if lang == 'en' %}/en{% endif %}/pdf-to-docx" class="tool-card">
                 <div class="tool-icon i-word"><i class="fa-solid fa-file-word"></i></div>
@@ -397,17 +401,17 @@
     </div>
 
     <div class="why-us-section" style="max-width:1200px; margin:30px auto; padding:30px 20px; background:var(--bg-surface); border:1px solid var(--border); border-radius:20px; box-shadow:var(--shadow-sm);">
-        <div class="section-title" style="margin-bottom:20px;"><i class="fa-solid fa-award" style="color:var(--primary)"></i> <span>{% if lang == 'ar' %}لماذا Infinity Converter؟{% else %}Why Choose Infinity Converter?{% endif %}</span></div>
+        <h2 class="section-title" style="margin-bottom:20px;"><i class="fa-solid fa-award" style="color:var(--primary)"></i> <span>{% if lang == 'ar' %}لماذا Infinity Converter؟{% else %}Why Choose Infinity Converter?{% endif %}</span></h2>
         <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:18px;">
-            <div class="faq-box"><h4><i class="fa-solid fa-user-shield" style="color:var(--primary)"></i> {% if lang == 'ar' %}بدون تسجيل{% else %}No Sign-up Required{% endif %}</h4><p>{% if lang == 'ar' %}استخدم كل الأدوات فوراً بدون إنشاء حساب.{% else %}Use every tool instantly, no account needed.{% endif %}</p></div>
-            <div class="faq-box"><h4><i class="fa-solid fa-lock" style="color:var(--primary)"></i> {% if lang == 'ar' %}خصوصية تامة{% else %}Your Privacy Matters{% endif %}</h4><p>{% if lang == 'ar' %}تُحذف ملفاتك تلقائياً بعد المعالجة مباشرة.{% else %}Files are auto-deleted right after processing.{% endif %}</p></div>
-            <div class="faq-box"><h4><i class="fa-solid fa-bolt" style="color:var(--primary)"></i> {% if lang == 'ar' %}سرعة فائقة{% else %}Blazing Fast{% endif %}</h4><p>{% if lang == 'ar' %}معالجة الملفات خلال ثوانٍ على سيرفراتنا.{% else %}Our servers process files in seconds.{% endif %}</p></div>
-            <div class="faq-box"><h4><i class="fa-solid fa-gift" style="color:var(--primary)"></i> {% if lang == 'ar' %}مجاني دائمًا{% else %}Always Free{% endif %}</h4><p>{% if lang == 'ar' %}كل الأدوات مجانية 100% وللأبد.{% else %}All tools are 100% free, forever.{% endif %}</p></div>
+            <div class="faq-box"><h3><i class="fa-solid fa-user-shield" style="color:var(--primary)"></i> {% if lang == 'ar' %}بدون تسجيل{% else %}No Sign-up Required{% endif %}</h3><p>{% if lang == 'ar' %}استخدم كل الأدوات فوراً بدون إنشاء حساب.{% else %}Use every tool instantly, no account needed.{% endif %}</p></div>
+            <div class="faq-box"><h3><i class="fa-solid fa-lock" style="color:var(--primary)"></i> {% if lang == 'ar' %}خصوصية تامة{% else %}Your Privacy Matters{% endif %}</h3><p>{% if lang == 'ar' %}تُحذف ملفاتك تلقائياً بعد المعالجة مباشرة.{% else %}Files are auto-deleted right after processing.{% endif %}</p></div>
+            <div class="faq-box"><h3><i class="fa-solid fa-bolt" style="color:var(--primary)"></i> {% if lang == 'ar' %}سرعة فائقة{% else %}Blazing Fast{% endif %}</h3><p>{% if lang == 'ar' %}معالجة الملفات خلال ثوانٍ على سيرفراتنا.{% else %}Our servers process files in seconds.{% endif %}</p></div>
+            <div class="faq-box"><h3><i class="fa-solid fa-gift" style="color:var(--primary)"></i> {% if lang == 'ar' %}مجاني دائمًا{% else %}Always Free{% endif %}</h3><p>{% if lang == 'ar' %}كل الأدوات مجانية 100% وللأبد.{% else %}All tools are 100% free, forever.{% endif %}</p></div>
         </div>
     </div>
 
     <div class="homepage-faq-section" style="max-width:1200px; margin:30px auto 40px; padding:0 20px;">
-        <div class="section-title" style="margin-bottom:15px;"><i class="fa-solid fa-clipboard-question" style="color:var(--primary)"></i> <span>{% if lang == 'ar' %}الأسئلة الشائعة{% else %}Frequently Asked Questions{% endif %}</span></div>
+        <h2 class="section-title" style="margin-bottom:15px;"><i class="fa-solid fa-clipboard-question" style="color:var(--primary)"></i> <span>{% if lang == 'ar' %}الأسئلة الشائعة{% else %}Frequently Asked Questions{% endif %}</span></h2>
         <div style="display:flex; flex-direction:column; gap:10px;">
             <details class="faq-box" style="cursor:pointer;"><summary style="font-weight:700; color:var(--text-main);">{% if lang == 'ar' %}هل الموقع مجاني بالكامل؟{% else %}Is Infinity Converter free?{% endif %}</summary><p style="margin-top:8px;">{% if lang == 'ar' %}نعم، جميع الأدوات مجانية 100% بدون أي رسوم مخفية أو اشتراكات.{% else %}Yes, all tools are 100% free with no hidden fees or subscriptions.{% endif %}</p></details>
             <details class="faq-box" style="cursor:pointer;"><summary style="font-weight:700; color:var(--text-main);">{% if lang == 'ar' %}هل تُخزَّن ملفاتي على سيرفراتكم؟{% else %}Are my files stored on your servers?{% endif %}</summary><p style="margin-top:8px;">{% if lang == 'ar' %}لا، تتم معالجة الملفات مؤقتاً وتُحذف تلقائياً فور اكتمال العملية أو انتهاء الجلسة.{% else %}No, files are processed temporarily and automatically deleted once the operation completes or the session ends.{% endif %}</p></details>
@@ -437,12 +441,12 @@
     <div class="tools-section">
         
         <div class="category-group" id="recentCategory" style="display: none;">
-            <div class="section-title"><i class="fa-solid fa-clock-rotate-left" style="color:var(--primary)"></i> <span>{% if lang == 'ar' %}استخدمتها مؤخراً{% else %}Recently Used{% endif %}</span></div>
+            <h2 class="section-title"><i class="fa-solid fa-clock-rotate-left" style="color:var(--primary)"></i> <span>{% if lang == 'ar' %}استخدمتها مؤخراً{% else %}Recently Used{% endif %}</span></h2>
             <div class="tools-grid" id="recentToolsGrid"></div>
         </div>
 
         <div class="category-group" data-category="students">
-            <div class="section-title"><i class="fa-solid fa-graduation-cap" style="color:var(--primary)"></i> <span>{% if lang == 'ar' %}أدوات الطلاب والمعلمين{% else %}Students & Teachers Tools{% endif %}</span></div>
+            <h2 class="section-title"><i class="fa-solid fa-graduation-cap" style="color:var(--primary)"></i> <span>{% if lang == 'ar' %}أدوات الطلاب والمعلمين{% else %}Students & Teachers Tools{% endif %}</span></h2>
             <div class="tools-grid">
                 <a href="{% if lang == 'en' %}/en{% endif %}/arabic-proofreader" class="tool-card" data-slug="arabic-proofreader">
                     <div class="tool-icon i-word"><i class="fa-solid fa-spell-check"></i></div>
@@ -511,7 +515,7 @@
         </div>
 
         <div class="category-group" data-category="pdf">
-            <div class="section-title"><i class="fa-solid fa-file-pdf" style="color:var(--c-pdf)"></i> <span>{% if lang == 'ar' %}أدوات PDF والمستندات{% else %}PDF & Document Tools{% endif %}</span></div>
+            <h2 class="section-title"><i class="fa-solid fa-file-pdf" style="color:var(--c-pdf)"></i> <span>{% if lang == 'ar' %}أدوات PDF والمستندات{% else %}PDF & Document Tools{% endif %}</span></h2>
             <div class="tools-grid">
                 <a href="{% if lang == 'en' %}/en{% endif %}/compress-pdf-target" class="tool-card" data-slug="compress-pdf-target">
                     <div class="tool-icon i-pdf"><i class="fa-solid fa-gauge-high"></i></div>
@@ -671,7 +675,7 @@
         </div>
 
         <div class="category-group" data-category="data">
-            <div class="section-title"><i class="fa-solid fa-table" style="color:var(--c-excel)"></i> <span>{% if lang == 'ar' %}أدوات البيانات والجداول{% else %}Data & Spreadsheets{% endif %}</span></div>
+            <h2 class="section-title"><i class="fa-solid fa-table" style="color:var(--c-excel)"></i> <span>{% if lang == 'ar' %}أدوات البيانات والجداول{% else %}Data & Spreadsheets{% endif %}</span></h2>
             <div class="tools-grid">
                 <a href="{% if lang == 'en' %}/en{% endif %}/ppt-to-images" class="tool-card" data-slug="ppt-to-images">
                     <div class="tool-icon i-ppt"><i class="fa-solid fa-file-powerpoint"></i></div>
@@ -754,7 +758,7 @@
         </div>
 
         <div class="category-group" data-category="image">
-            <div class="section-title"><i class="fa-solid fa-image" style="color:var(--c-img)"></i> <span>{% if lang == 'ar' %}أدوات الصور{% else %}Image Tools{% endif %}</span></div>
+            <h2 class="section-title"><i class="fa-solid fa-image" style="color:var(--c-img)"></i> <span>{% if lang == 'ar' %}أدوات الصور{% else %}Image Tools{% endif %}</span></h2>
             <div class="tools-grid">
                 <a href="{% if lang == 'en' %}/en{% endif %}/image-to-text" class="tool-card" data-slug="image-to-text">
                     <div class="tool-icon i-dev"><i class="fa-solid fa-file-signature"></i></div>
@@ -837,7 +841,7 @@
         </div>
 
         <div class="category-group" data-category="dev">
-            <div class="section-title"><i class="fa-solid fa-code" style="color:var(--c-dev)"></i> <span>{% if lang == 'ar' %}أدوات النصوص والمطورين{% else %}Text & Dev Tools{% endif %}</span></div>
+            <h2 class="section-title"><i class="fa-solid fa-code" style="color:var(--c-dev)"></i> <span>{% if lang == 'ar' %}أدوات النصوص والمطورين{% else %}Text & Dev Tools{% endif %}</span></h2>
             <div class="tools-grid">
                 <a href="{% if lang == 'en' %}/en{% endif %}/text-to-pdf" class="tool-card" data-slug="text-to-pdf">
                     <div class="tool-icon i-pdf"><i class="fa-solid fa-file-lines"></i></div>
@@ -927,7 +931,7 @@
         </div>
 
         <div class="category-group" data-category="utilities">
-            <div class="section-title"><i class="fa-solid fa-toolbox" style="color:var(--c-dev)"></i> <span>{% if lang == 'ar' %}أدوات متنوعة{% else %}Utilities{% endif %}</span></div>
+            <h2 class="section-title"><i class="fa-solid fa-toolbox" style="color:var(--c-dev)"></i> <span>{% if lang == 'ar' %}أدوات متنوعة{% else %}Utilities{% endif %}</span></h2>
             <div class="tools-grid">
                 <a href="{% if lang == 'en' %}/en{% endif %}/text-to-qr" class="tool-card" data-slug="text-to-qr">
                     <div class="tool-icon i-excel"><i class="fa-solid fa-qrcode"></i></div>
@@ -990,7 +994,9 @@
 
     </div>
 
-    <div class="workspace">
+    </main>
+
+    <footer class="workspace">
         <div class="footer-disclaimer">
             <p>{% if lang == 'ar' %}Infinity Converter يوفر مجموعة شاملة من الأدوات السحابية الآمنة لمعالجة المستندات والملفات. تتم المعالجة في الذاكرة العشوائية المؤقتة وتحذف فوراً للحفاظ على الخصوصية.{% else %}Infinity Converter provides a comprehensive suite of cloud document tools. Files are processed in temporary RAM and deleted immediately for your security.{% endif %}</p>
             <div class="footer-links">
@@ -1000,7 +1006,7 @@
                 <a href="{% if lang == 'en' %}/en{% endif %}/contact">{% if lang == 'ar' %}اتصل بنا{% else %}Contact Us{% endif %}</a>
             </div>
         </div>
-    </div>
+    </footer>
 
     <div class="toast" id="toast"><i class="fa-solid fa-circle-check"></i> <span id="toastMsg"></span></div>
 
