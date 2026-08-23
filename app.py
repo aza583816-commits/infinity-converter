@@ -194,7 +194,11 @@ LIBREOFFICE_LOCK = threading.Lock()
 # يُخزَّن بملف على القرص عشان يبقى حقيقياً حتى لو أعيد تشغيل السيرفر (ما دام القرص غير مؤقت).
 # ملاحظة مهمة: لو Railway/Render يستخدم قرص غير دائم (ephemeral)، الرقم يتصفّر مع كل Deploy جديد
 # — وهذا لسه أفضل بكثير من رقم وهمي ثابت، لأنه رقم حقيقي 100% بين كل عملية نشر وأخرى.
-STATS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "site_stats.json")
+# Railway يضيف تلقائياً متغير البيئة RAILWAY_VOLUME_MOUNT_PATH لو ربطت Volume دائم بالخدمة.
+# لو موجود، نخزّن العداد فيه عشان يبقى حقيقياً حتى بعد كل عملية نشر (Deploy) جديدة.
+# لو ما ربطت Volume بعد، يرجع لمجلد التطبيق العادي (ويتصفّر مع كل Deploy، لكن يبقى رقماً حقيقياً بينهم).
+_stats_dir = os.environ.get("RAILWAY_VOLUME_MOUNT_PATH") or os.path.dirname(os.path.abspath(__file__))
+STATS_FILE = os.path.join(_stats_dir, "site_stats.json")
 STATS_LOCK = threading.Lock()
 
 def _read_stats_file():
@@ -302,11 +306,16 @@ def set_secure_headers(response):
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     response.headers['X-Permitted-Cross-Domain-Policies'] = 'none'
+    # Cross-Origin-Opener-Policy يعزل نافذة موقعك عن نوافذ أخرى مفتوحة (حماية إضافية ضد
+    # هجمات Spectre-class)، ولا يؤثر على إعلانات AdSense لأنها تعمل داخل iframe منفصل أصلاً
+    response.headers['Cross-Origin-Opener-Policy'] = 'same-origin'
+    # كان الـ CSP يُطبّق فقط على مسارات API معينة، فصفحات الموقع العادية (اللي تفحصها أدوات
+    # مثل PageSpeed فعليًا) ما كانت تستلم هذا الهيدر إطلاقًا. الآن يُطبّق على كل الاستجابات.
+    response.headers['Content-Security-Policy'] = "default-src 'self' 'unsafe-inline' https: data: blob:; frame-ancestors 'self'"
 
     if request.path.startswith('/static/'):
         response.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
     elif request.path in ("/convert", "/convert-async", "/pdf-preview", "/create-share-link"):
-        response.headers['Content-Security-Policy'] = "default-src 'self' 'unsafe-inline' https:; frame-ancestors 'self'"
         response.headers['Cache-Control'] = 'no-store'
     return response
 
