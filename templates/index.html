@@ -44,6 +44,24 @@
       "url": "https://infinityconverter.com{% if lang == 'en' %}/en{% endif %}/{{ tool_data.slug }}"
     }
     </script>
+    {% set schema_faqs = tool_data.faq_ar if lang == 'ar' else tool_data.faq_en %}
+    {% if schema_faqs %}
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {% for faq in schema_faqs %}
+        {
+          "@type": "Question",
+          "name": {{ faq.q|tojson }},
+          "acceptedAnswer": { "@type": "Answer", "text": {{ faq.a|tojson }} }
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+      ]
+    }
+    </script>
+    {% endif %}
     {% endif %}
 
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4343857922748618" crossorigin="anonymous"></script>
@@ -308,6 +326,25 @@
         <div class="seo-content">
             <h2><i class="fa-solid fa-book-open"></i> {% if lang == 'ar' %}نبذة عن الأداة{% else %}About This Tool{% endif %}</h2>
             <p>{% if lang == 'ar' %}{{ tool_data.long_desc_ar }}{% else %}{{ tool_data.long_desc_en }}{% endif %}</p>
+
+            {% set steps = tool_data.how_to_ar if lang == 'ar' else tool_data.how_to_en %}
+            {% if steps %}
+            <br>
+            <h2><i class="fa-solid fa-list-ol"></i> {% if lang == 'ar' %}طريقة الاستخدام{% else %}How to Use{% endif %}</h2>
+            <ol style="padding-{% if lang == 'ar' %}right{% else %}left{% endif %}: 20px; color: var(--text-secondary, #cbd5e1);">
+                {% for step in steps %}<li style="margin-bottom:8px;">{{ step }}</li>{% endfor %}
+            </ol>
+            {% endif %}
+
+            {% set feats = tool_data.features_ar if lang == 'ar' else tool_data.features_en %}
+            {% if feats %}
+            <br>
+            <h2><i class="fa-solid fa-star"></i> {% if lang == 'ar' %}المميزات الرئيسية{% else %}Key Features{% endif %}</h2>
+            <ul style="padding-{% if lang == 'ar' %}right{% else %}left{% endif %}: 20px; color: var(--text-secondary, #cbd5e1);">
+                {% for feat in feats %}<li style="margin-bottom:8px;">{{ feat }}</li>{% endfor %}
+            </ul>
+            {% endif %}
+
             <br>
             <h2><i class="fa-solid fa-clipboard-question"></i> {% if lang == 'ar' %}الأسئلة الشائعة{% else %}FAQs{% endif %}</h2>
             {% set faqs = tool_data.faq_ar if lang == 'ar' else tool_data.faq_en %}
@@ -320,6 +357,65 @@
         </div>
         {% endif %}
     </div>
+
+    {% if not tool_data and not is_404 %}
+    <div class="stats-bar" style="max-width:1200px; margin:30px auto; padding:25px 20px; background:var(--bg-surface); border:1px solid var(--border); border-radius:20px; box-shadow:var(--shadow-sm); display:flex; flex-wrap:wrap; justify-content:space-around; gap:20px; text-align:center;">
+        <div><div style="font-size:26px; font-weight:800; color:var(--primary);">100+</div><div style="color:var(--text-muted); font-size:13px;">{% if lang == 'ar' %}أداة قوية{% else %}Powerful Tools{% endif %}</div></div>
+        <div><div style="font-size:26px; font-weight:800; color:var(--primary);">1M+</div><div style="color:var(--text-muted); font-size:13px;">{% if lang == 'ar' %}ملف تمت معالجته{% else %}Files Processed{% endif %}</div></div>
+        <div><div style="font-size:26px; font-weight:800; color:var(--primary);">99.9%</div><div style="color:var(--text-muted); font-size:13px;">{% if lang == 'ar' %}نسبة التشغيل{% else %}Uptime{% endif %}</div></div>
+        <div><div style="font-size:26px; font-weight:800; color:var(--primary);">100%</div><div style="color:var(--text-muted); font-size:13px;">{% if lang == 'ar' %}مجاني للأبد{% else %}Free Forever{% endif %}</div></div>
+    </div>
+
+    <div class="popular-tools-section" style="max-width:1200px; margin:30px auto; padding:0 20px;">
+        <div class="section-title" style="margin-bottom:15px;"><i class="fa-solid fa-fire" style="color:var(--primary)"></i> <span>{% if lang == 'ar' %}الأدوات الأكثر استخدامًا{% else %}Popular Tools{% endif %}</span></div>
+        <div class="tools-grid">
+            <a href="{% if lang == 'en' %}/en{% endif %}/pdf-to-docx" class="tool-card">
+                <div class="tool-icon i-word"><i class="fa-solid fa-file-word"></i></div>
+                <div class="tool-info"><h3>{% if lang == 'ar' %}PDF إلى Word{% else %}PDF to Word{% endif %}</h3></div>
+            </a>
+            <a href="{% if lang == 'en' %}/en{% endif %}/merge-pdf" class="tool-card">
+                <div class="tool-icon i-dev"><i class="fa-solid fa-object-group"></i></div>
+                <div class="tool-info"><h3>{% if lang == 'ar' %}دمج PDF{% else %}Merge PDF{% endif %}</h3></div>
+            </a>
+            <a href="{% if lang == 'en' %}/en{% endif %}/compress-pdf" class="tool-card">
+                <div class="tool-icon i-pdf"><i class="fa-solid fa-compress"></i></div>
+                <div class="tool-info"><h3>{% if lang == 'ar' %}ضغط PDF{% else %}Compress PDF{% endif %}</h3></div>
+            </a>
+            <a href="{% if lang == 'en' %}/en{% endif %}/image-to-pdf" class="tool-card">
+                <div class="tool-icon i-img"><i class="fa-solid fa-images"></i></div>
+                <div class="tool-info"><h3>{% if lang == 'ar' %}صورة إلى PDF{% else %}Image to PDF{% endif %}</h3></div>
+            </a>
+            <a href="{% if lang == 'en' %}/en{% endif %}/heic-to-jpg" class="tool-card">
+                <div class="tool-icon i-img"><i class="fa-solid fa-mobile-screen"></i></div>
+                <div class="tool-info"><h3>{% if lang == 'ar' %}HEIC إلى JPG{% else %}HEIC to JPG{% endif %}</h3></div>
+            </a>
+            <a href="{% if lang == 'en' %}/en{% endif %}/image-to-text" class="tool-card">
+                <div class="tool-icon i-dev"><i class="fa-solid fa-file-signature"></i></div>
+                <div class="tool-info"><h3>{% if lang == 'ar' %}استخراج نص (OCR){% else %}OCR Text Extract{% endif %}</h3></div>
+            </a>
+        </div>
+    </div>
+
+    <div class="why-us-section" style="max-width:1200px; margin:30px auto; padding:30px 20px; background:var(--bg-surface); border:1px solid var(--border); border-radius:20px; box-shadow:var(--shadow-sm);">
+        <div class="section-title" style="margin-bottom:20px;"><i class="fa-solid fa-award" style="color:var(--primary)"></i> <span>{% if lang == 'ar' %}لماذا Infinity Converter؟{% else %}Why Choose Infinity Converter?{% endif %}</span></div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:18px;">
+            <div class="faq-box"><h4><i class="fa-solid fa-user-shield" style="color:var(--primary)"></i> {% if lang == 'ar' %}بدون تسجيل{% else %}No Sign-up Required{% endif %}</h4><p>{% if lang == 'ar' %}استخدم كل الأدوات فوراً بدون إنشاء حساب.{% else %}Use every tool instantly, no account needed.{% endif %}</p></div>
+            <div class="faq-box"><h4><i class="fa-solid fa-lock" style="color:var(--primary)"></i> {% if lang == 'ar' %}خصوصية تامة{% else %}Your Privacy Matters{% endif %}</h4><p>{% if lang == 'ar' %}تُحذف ملفاتك تلقائياً بعد المعالجة مباشرة.{% else %}Files are auto-deleted right after processing.{% endif %}</p></div>
+            <div class="faq-box"><h4><i class="fa-solid fa-bolt" style="color:var(--primary)"></i> {% if lang == 'ar' %}سرعة فائقة{% else %}Blazing Fast{% endif %}</h4><p>{% if lang == 'ar' %}معالجة الملفات خلال ثوانٍ على سيرفراتنا.{% else %}Our servers process files in seconds.{% endif %}</p></div>
+            <div class="faq-box"><h4><i class="fa-solid fa-gift" style="color:var(--primary)"></i> {% if lang == 'ar' %}مجاني دائمًا{% else %}Always Free{% endif %}</h4><p>{% if lang == 'ar' %}كل الأدوات مجانية 100% وللأبد.{% else %}All tools are 100% free, forever.{% endif %}</p></div>
+        </div>
+    </div>
+
+    <div class="homepage-faq-section" style="max-width:1200px; margin:30px auto 40px; padding:0 20px;">
+        <div class="section-title" style="margin-bottom:15px;"><i class="fa-solid fa-clipboard-question" style="color:var(--primary)"></i> <span>{% if lang == 'ar' %}الأسئلة الشائعة{% else %}Frequently Asked Questions{% endif %}</span></div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+            <details class="faq-box" style="cursor:pointer;"><summary style="font-weight:700; color:var(--text-main);">{% if lang == 'ar' %}هل الموقع مجاني بالكامل؟{% else %}Is Infinity Converter free?{% endif %}</summary><p style="margin-top:8px;">{% if lang == 'ar' %}نعم، جميع الأدوات مجانية 100% بدون أي رسوم مخفية أو اشتراكات.{% else %}Yes, all tools are 100% free with no hidden fees or subscriptions.{% endif %}</p></details>
+            <details class="faq-box" style="cursor:pointer;"><summary style="font-weight:700; color:var(--text-main);">{% if lang == 'ar' %}هل تُخزَّن ملفاتي على سيرفراتكم؟{% else %}Are my files stored on your servers?{% endif %}</summary><p style="margin-top:8px;">{% if lang == 'ar' %}لا، تتم معالجة الملفات مؤقتاً وتُحذف تلقائياً فور اكتمال العملية أو انتهاء الجلسة.{% else %}No, files are processed temporarily and automatically deleted once the operation completes or the session ends.{% endif %}</p></details>
+            <details class="faq-box" style="cursor:pointer;"><summary style="font-weight:700; color:var(--text-main);">{% if lang == 'ar' %}هل أحتاج إنشاء حساب لاستخدام الأدوات؟{% else %}Do I need an account to use the tools?{% endif %}</summary><p style="margin-top:8px;">{% if lang == 'ar' %}لا، جميع الأدوات متاحة للاستخدام الفوري بدون تسجيل.{% else %}No, all tools are instantly usable without any registration.{% endif %}</p></details>
+            <details class="faq-box" style="cursor:pointer;"><summary style="font-weight:700; color:var(--text-main);">{% if lang == 'ar' %}ما الحد الأقصى لحجم الملف؟{% else %}What is the maximum file size?{% endif %}</summary><p style="margin-top:8px;">{% if lang == 'ar' %}الحد الأقصى المعتاد هو 25 ميجابايت لكل ملف حسب الأداة المستخدمة.{% else %}The typical limit is 25MB per file, depending on the specific tool.{% endif %}</p></details>
+        </div>
+    </div>
+    {% endif %}
 
     <div class="search-filter-container">
         <div class="search-box">
