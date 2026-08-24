@@ -3128,16 +3128,15 @@ def get_pdf_preview():
         doc = fitz.open(stream=file_bytes, filetype="pdf")
         thumbnails = []
         max_preview_pages = min(len(doc), 15)
-for i in range(max_preview_pages):
-    page = doc[i]
-    pix = page.get_pixmap(matrix=fitz.Matrix(0.5, 0.5))
-    b64_thumb = base64.b64encode(pix.tobytes("png")).decode("ascii")
-    thumbnails.append({"page": i + 1, "image": f"data:image/png;base64,{b64_thumb}"})
+        for i in range(max_preview_pages):
+            page = doc[i]
+            pix = page.get_pixmap(matrix=fitz.Matrix(0.5, 0.5))
+            b64_thumb = base64.b64encode(pix.tobytes("png")).decode("ascii")
+            thumbnails.append({"page": i + 1, "image": f"data:image/png;base64,{b64_thumb}"})
 
-total_pages = len(doc)
-doc.close()
-return jsonify({"totalPages": total_pages, "previews": thumbnails})
-return jsonify({"totalPages": total_pages, "previews": thumbnails})
+        total_pages = len(doc)
+        doc.close()
+        return jsonify({"totalPages": total_pages, "previews": thumbnails})
     except Exception as e:
         return bad_request(f"Error generating preview: {str(e)}")
 
