@@ -405,7 +405,7 @@ def ai_smart_ocr_extraction(image_bytes, is_arabic=True, lang_code=None):
         text = pytesseract.image_to_string(img, lang=lang)
         return re.sub(r'[\u200b\u200c\u200d\ufeff]', '', text).strip()
     except Exception as e:
-        return f"AI OCR Error: {str(e)}"
+        return f"OCR Error: {str(e)}"
 
 # ==================== القائمة الشاملة لجميع الأدوات ====================
 TOOLS_DEF = [
@@ -450,12 +450,12 @@ TOOLS_DEF = [
     ("strip-exif", "إزالة بيانات EXIF (خصوصية)", "Strip EXIF Privacy", "file", "i-img", "fa-user-shield"),
     ("markdown-to-html", "Markdown إلى HTML", "Markdown to HTML", "text", "i-dev", "fa-file-code"),
     ("clean-text", "تنظيف النص", "Clean Text", "text", "i-word", "fa-broom"),
-    ("base64-tool", "تشفير Base64", "Base64 Encode", "text", "i-dev", "fa-shield-halved"),
-    ("url-encoder", "تشفير الروابط URL", "URL Encode", "text", "i-dev", "fa-link"),
+    ("base64-tool", "ترميز Base64", "Base64 Encode", "text", "i-dev", "fa-shield-halved"),
+    ("url-encoder", "ترميز الروابط URL", "URL Encode", "text", "i-dev", "fa-link"),
     ("json-beautifier", "تنسيق JSON", "JSON Formatter", "text", "i-word", "fa-brackets-curly"),
     ("css-js-minifier", "ضغط CSS/JS", "Minify CSS/JS", "text", "i-excel", "fa-minimize"),
-    ("html-entity", "تشفير HTML", "HTML Entity Encode", "text", "i-dev", "fa-code"),
-    ("hash-generator", "توليد التشفير Hash", "Hash Generator", "text", "i-dev", "fa-hashtag"),
+    ("html-entity", "ترميز HTML", "HTML Entity Encode", "text", "i-dev", "fa-code"),
+    ("hash-generator", "توليد تجزئة Hash", "Hash Generator", "text", "i-dev", "fa-hashtag"),
     ("hmac-generator", "توليد HMAC", "HMAC Generator", "text", "i-dev", "fa-key"),
     ("text-diff", "مقارنة النصوص", "Text Compare", "text", "i-word", "fa-not-equal"),
     ("text-counter", "عداد النصوص", "Text Counter", "text", "i-word", "fa-calculator"),
@@ -489,53 +489,53 @@ TOOLS_SEO = {}
 for action, nameAr, nameEn, type_, iconClass, iconName in TOOLS_DEF:
     TOOLS_SEO[action] = {
         "slug": action, "nameAr": nameAr, "nameEn": nameEn, "type": type_, "iconClass": iconClass, "iconName": iconName,
-        "seo_title_ar": f"أداة {nameAr} مجاناً أونلاين وبدقة عالية | V-Infinity",
-        "seo_title_en": f"Free {nameEn} Online Tool | V-Infinity",
-        "seo_desc_ar": f"أفضل أداة سحابية لتنفيذ {nameAr} بضغطة زر. معالجة سريعة وآمنة 100% ومجانية بالكامل بدون تخزين للملفات.",
-        "seo_desc_en": f"Best cloud tool for {nameEn} with one click. Fast, secure, and 100% free with no file storage.",
+        "seo_title_ar": f"أداة {nameAr} مجاناً أونلاين | Infinity Converter",
+        "seo_title_en": f"Free {nameEn} Online Tool | Infinity Converter",
+        "seo_desc_ar": f"أداة Infinity Converter لـ{nameAr} عبر الإنترنت. نفّذ العملية بخطوات واضحة، مع حد أقصى 25MB للملف الواحد في الأدوات التي تستقبل ملفات.",
+        "seo_desc_en": f"Use Infinity Converter for {nameEn} online with a simple workflow. File tools support up to 25MB per file where applicable.",
         "h1_ar": nameAr, "h1_en": nameEn,
-        "short_desc_ar": f"قم بإنجاز {nameAr} بسهولة وبدون تعقيد عبر تقنياتنا المتطورة.",
-        "short_desc_en": f"Easily perform {nameEn} without complexity using our advanced tools.",
-        "long_desc_ar": f"منصة V-Infinity تقدم لك أداة '{nameAr}' المجانية بالكامل. تم تصميم هذه الأداة لتكون سريعة جداً وتعمل بالذكاء الاصطناعي لضمان أعلى جودة ممكنة. أمان ملفاتك هو أولويتنا القصوى، حيث نقوم بمعالجة البيانات سحابياً وحذفها تلقائياً بمجرد انتهاء العملية دون الاحتفاظ بأي نسخ.",
-        "long_desc_en": f"V-Infinity platform offers the completely free '{nameEn}' tool. This tool is designed to be extremely fast and uses advanced AI to ensure the highest quality possible. Your file security is our top priority; we process data in the cloud and automatically delete it once the operation is complete.",
+        "short_desc_ar": f"أنجز {nameAr} بخطوات واضحة وبواجهة سهلة الاستخدام.",
+        "short_desc_en": f"Perform {nameEn} with a clear workflow and an easy-to-use interface.",
+        "long_desc_ar": f"تقدم Infinity Converter أداة '{nameAr}' ضمن مجموعة من أدوات تحويل ومعالجة الملفات والنصوص. تختلف طريقة المعالجة حسب الأداة؛ بعض العمليات تتم محلياً وبعض التحويلات قد تستخدم مزودي معالجة خارجيين عند الحاجة. راجع سياسة الخصوصية لمعرفة تفاصيل التعامل مع الملفات.",
+        "long_desc_en": f"Infinity Converter provides the '{nameEn}' tool as part of its file, document, and text utilities. Processing depends on the specific tool; some operations run locally while certain conversions may use external processing providers. See the Privacy Policy for details about file handling.",
         "faq_ar": [
             {"q": f"هل استخدام أداة {nameAr} مجاني؟", "a": "نعم، الأداة مجانية بالكامل ولا تتطلب أي تسجيل أو رسوم مخفية."},
-            {"q": "هل ملفاتي آمنة عند الرفع؟", "a": "بالتأكيد! تتم المعالجة بشكل مشفر، وتُحذف جميع الملفات من خوادمنا تلقائياً فور انتهائك."}
+            {"q": "هل ملفاتي آمنة عند الرفع؟", "a": "تُعالج الملفات مؤقتاً بحسب الأداة المستخدمة. بعض التحويلات قد تعتمد على مزود معالجة خارجي، لذلك راجع سياسة الخصوصية قبل رفع ملفات حساسة."}
         ],
         "faq_en": [
             {"q": f"Is the {nameEn} tool free to use?", "a": "Yes, the tool is completely free with no hidden fees or registration required."},
-            {"q": "Are my uploaded files secure?", "a": "Absolutely! Processing is encrypted, and all files are automatically deleted from our servers immediately after you finish."}
+            {"q": "Are my uploaded files secure?", "a": "Files are processed temporarily according to the tool used. Some conversions may use an external processing provider, so review the Privacy Policy before uploading sensitive files."}
         ]
     }
 
 COMPARISON_PAGES = {
     "ilovepdf-alternative": {
-        "slug": "ilovepdf-alternative", "nameAr": "أفضل بديل مجاني لـ iLovePDF", "nameEn": "Best Free iLovePDF Alternative",
+        "slug": "ilovepdf-alternative", "nameAr": "مقارنة Infinity Converter مع iLovePDF", "nameEn": "Infinity Converter vs iLovePDF",
         "type": "none", "iconClass": "i-pdf", "iconName": "fa-trophy",
-        "seo_title_ar": "أفضل بديل مجاني لـ iLovePDF بدون حدود للملفات | V-Infinity",
-        "seo_title_en": "Best Free iLovePDF Alternative without limits | V-Infinity",
-        "seo_desc_ar": "هل تبحث عن بديل مجاني وسريع لـ iLovePDF؟ منصة V-Infinity تتيح تحويل وتعديل ملفات PDF بدون اشتراكات أو حدود يومية مع دعم فائق للعربية.",
-        "seo_desc_en": "Looking for a free and fast alternative to iLovePDF? V-Infinity offers unlimited PDF conversion and editing with zero fees.",
-        "h1_ar": "أفضل بديل مجاني لـ iLovePDF لعام 2026", "h1_en": "The #1 Free iLovePDF Alternative in 2026",
+        "seo_title_ar": "Infinity Converter مقابل iLovePDF: مقارنة أدوات PDF | Infinity Converter",
+        "seo_title_en": "Infinity Converter vs iLovePDF: PDF Tool Comparison | Infinity Converter",
+        "seo_desc_ar": "هل تبحث عن بديل مجاني وسريع لـ iLovePDF؟ منصة Infinity Converter تتيح تحويل وتعديل ملفات PDF بدون اشتراكات أو حدود يومية مع دعم فائق للعربية.",
+        "seo_desc_en": "Looking for a free and fast alternative to iLovePDF? Infinity Converter offers unlimited PDF conversion and editing with zero fees.",
+        "h1_ar": "مقارنة Infinity Converter مع iLovePDF", "h1_en": "Infinity Converter vs iLovePDF",
         "short_desc_ar": "جميع أدوات الـ PDF والمستندات مجانية 100% وبدون قيود أو حدود يومية.",
         "short_desc_en": "All PDF and document tools 100% free with no daily limits.",
-        "long_desc_ar": "تعتبر V-Infinity البديل الأمثل لمنصة iLovePDF، حيث توفر معالجة سحابية فائقة السرعة مدعومة بالذكاء الاصطناعي لحل مشاكل الخطوط العربية المعكوسة وتنسيق الجداول، دون فرض أي رسوم أو قيود على عدد الملفات.",
-        "long_desc_en": "V-Infinity is the ultimate alternative to iLovePDF, offering AI-powered cloud document processing without restrictions or fees.",
-        "faq_ar": [{"q": "ما الفرق بين V-Infinity و iLovePDF؟", "a": "V-Infinity مجانية بالكامل، لا تفرض قيوداً يومية، وتوفر دعماً فائقاً لمعالجة النصوص العربية بدقة 100%."}],
-        "faq_en": [{"q": "Why choose V-Infinity over iLovePDF?", "a": "V-Infinity is completely free with no limits and advanced AI accuracy for complex documents."}]
+        "long_desc_ar": "هذه الصفحة تقارن بين Infinity Converter وiLovePDF من حيث نوع الأدوات، طريقة الاستخدام، حدود الملفات، ودعم سير العمل. الهدف هو مساعدة المستخدم على اختيار الأداة المناسبة لحاجته بدلاً من تقديم ترتيب مطلق.",
+        "long_desc_en": "This page compares Infinity Converter and iLovePDF across tool coverage, workflow, file limits, and document processing so readers can choose the service that fits their needs.",
+        "faq_ar": [{"q": "ما الفرق بين Infinity Converter و iLovePDF؟", "a": "تختلف الأدوات والحدود بحسب العملية والملف؛ راجع صفحات الأدوات لمعرفة تفاصيل الاستخدام ودعم النصوص العربية."}],
+        "faq_en": [{"q": "Why choose Infinity Converter over iLovePDF?", "a": "Infinity Converter provides a set of PDF and document tools; compare the workflows and limits for your specific use case."}]
     },
     "smallpdf-alternative": {
-        "slug": "smallpdf-alternative", "nameAr": "بديل Smallpdf المجاني", "nameEn": "Free Smallpdf Alternative",
+        "slug": "smallpdf-alternative", "nameAr": "مقارنة Infinity Converter مع Smallpdf", "nameEn": "Infinity Converter vs Smallpdf",
         "type": "none", "iconClass": "i-pdf", "iconName": "fa-bolt",
-        "seo_title_ar": "بديل Smallpdf المجاني بدون تسجيل | V-Infinity",
-        "seo_title_en": "Free Smallpdf Alternative No Sign-up | V-Infinity",
+        "seo_title_ar": "Infinity Converter مقابل Smallpdf: مقارنة أدوات PDF | Infinity Converter",
+        "seo_title_en": "Infinity Converter vs Smallpdf: PDF Tool Comparison | Infinity Converter",
         "seo_desc_ar": "حول واضغط ملفات PDF مجاناً دون الحاجة لاشتراك Smallpdf. معالجة آمنة وفورية للمستندات والصور.",
         "seo_desc_en": "Convert and compress PDFs for free without a Smallpdf subscription. Instant and secure cloud tools.",
-        "h1_ar": "بديل Smallpdf المجاني والآمن بالكامل", "h1_en": "Free & Secure Smallpdf Alternative",
+        "h1_ar": "مقارنة Infinity Converter مع Smallpdf", "h1_en": "Infinity Converter vs Smallpdf",
         "short_desc_ar": "معالجة سحابية مشفرة وفورية لجميع ملفاتك دون الحاجة لتسجيل حساب.",
         "short_desc_en": "Encrypted cloud processing for all your files without registration.",
-        "long_desc_ar": "استمتع بكافة أدوات تحويل وضغط الـ PDF والصور مجاناً دون الانتظار أو الحاجة لدفع اشتراك شهري مثل Smallpdf.",
-        "long_desc_en": "Enjoy all PDF conversion and compression features for free without monthly fees.",
+        "long_desc_ar": "توضح هذه الصفحة الفروق العملية بين Infinity Converter وSmallpdf في أدوات PDF والصور وطريقة الوصول إلى الأدوات، مع ترك القرار للمستخدم حسب احتياجه.",
+        "long_desc_en": "This page explains practical differences between Infinity Converter and Smallpdf across PDF and image workflows so users can choose based on their needs.",
         "faq_ar": [{"q": "هل يتطلب الموقع إنشاء حساب؟", "a": "لا، يمكنك استخدام كافة الأدوات مباشرة بدون تسجيل."}],
         "faq_en": [{"q": "Is account registration required?", "a": "No, all tools are instantly accessible without signing up."}]
     }
@@ -804,7 +804,7 @@ for slug, content in UNIQUE_TOOL_CONTENT_BATCH2.items():
 # لمعالجة ملاحظة جوجل بخصوص "المحتوى القليل أو المتكرر آلياً" قبل إعادة التقديم لـ AdSense
 RICH_TOOL_CONTENT = {
     "pdf-to-docx": {
-        "long_desc_ar": "يعتمد محول PDF إلى Word في V-Infinity على نظام دفاع ثلاثي: أولاً محرك محلي سريع (pdf2docx) للملفات البسيطة، ثم في حال احتوى الملف على جداول متداخلة أو رموز مرفوعة (superscript) ينتقل تلقائياً لمحركات سحابية أدق (CloudConvert وConvertAPI) لضمان الحفاظ على التنسيق الأصلي، الجداول، والخطوط العربية دون تشوه.",
+        "long_desc_ar": "يعتمد محول PDF إلى Word في Infinity Converter على نظام دفاع ثلاثي: أولاً محرك محلي سريع (pdf2docx) للملفات البسيطة، ثم في حال احتوى الملف على جداول متداخلة أو رموز مرفوعة (superscript) ينتقل تلقائياً لمحركات سحابية أدق (CloudConvert وConvertAPI) لضمان الحفاظ على التنسيق الأصلي، الجداول، والخطوط العربية دون تشوه.",
         "long_desc_en": "Our PDF to Word converter uses a triple-layer engine: a fast local pdf2docx pass for simple files, and automatic escalation to cloud-grade engines (CloudConvert, ConvertAPI) whenever the PDF contains nested tables or superscript/subscript text — ensuring formatting, tables, and Arabic typography stay intact.",
         "faq_ar": [
             {"q": "هل يحافظ التحويل على الجداول المعقدة؟", "a": "نعم، نستخدم محركات متعددة، ولو كان الجدول متداخلاً ننتقل تلقائياً لمحرك أدق لضمان عدم كسر الهيكل."},
@@ -1827,7 +1827,7 @@ def handle_unlock_pdf(p):
 
 def handle_watermark_pdf(p):
     file_bytes = get_file_bytes(p)
-    text = (p.get("text") or "V-Infinity").strip()
+    text = (p.get("text") or "Infinity Converter").strip()
     is_arabic = p["is_arabic"]
     if not file_bytes: return bad_request("يرجى رفع ملف PDF")
     if not validate_signature(file_bytes, "pdf"): return bad_signature_response(is_arabic)
@@ -1978,7 +1978,7 @@ def handle_word_to_pdf(p):
             auto_pdf = os.path.join(tmp_dir, f"{unique_id}.pdf")
             if os.path.exists(auto_pdf) and os.path.getsize(auto_pdf) > 0:
                 with open(auto_pdf, "rb") as df:
-                    return file_response(df.read(), "application/pdf", "V-Infinity_Converted.pdf")
+                    return file_response(df.read(), "application/pdf", "Infinity Converter_Converted.pdf")
         except Exception as local_err:
             app.logger.warning(f"Local LibreOffice Word-to-PDF failed: {str(local_err)}")
 
@@ -2008,7 +2008,7 @@ def handle_word_to_pdf(p):
                         with open(pdf_path, 'wb') as df:
                             df.write(res.content)
                         with open(pdf_path, "rb") as df: 
-                            return file_response(df.read(), "application/pdf", "V-Infinity_Converted.pdf")
+                            return file_response(df.read(), "application/pdf", "Infinity Converter_Converted.pdf")
             except Exception as e:
                 app.logger.warning(f"CloudConvert failed: {str(e)}")
 
@@ -2018,7 +2018,7 @@ def handle_word_to_pdf(p):
                 result = convertapi.convert('pdf', {'File': docx_path}, from_format='docx', timeout=120)
                 result.file.save(pdf_path)
                 with open(pdf_path, "rb") as df: 
-                    return file_response(df.read(), "application/pdf", "V-Infinity_Converted.pdf")
+                    return file_response(df.read(), "application/pdf", "Infinity Converter_Converted.pdf")
             except Exception as e:
                 app.logger.error(f"ConvertAPI Error: {str(e)}")
 
@@ -2990,7 +2990,7 @@ def health_check():
 @app.route("/metrics")
 def metrics():
     return jsonify({
-        "server": "V-Infinity Cloud Engine",
+        "server": "Infinity Converter Cloud Engine",
         "status": "running",
         "cached_dedup_count": len(dedup_conversion_cache),
         "active_shares": len(temporary_share_store),
@@ -3013,8 +3013,8 @@ def telegram_webhook():
 @app.route("/manifest.json")
 def manifest():
     manifest_data = {
-        "name": "V-Infinity Converter",
-        "short_name": "V-Infinity",
+        "name": "Infinity Converter Converter",
+        "short_name": "Infinity Converter",
         "start_url": "/",
         "id": "/",
         "display": "standalone",
