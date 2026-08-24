@@ -20,8 +20,8 @@ function validateFileSize(file, lang) {
   const sizeMB = file.size / (1024 * 1024);
   if (sizeMB > MAX_FILE_MB) {
     return lang === 'ar'
-      ? `⚠️ الملف "${file.name}" حجمه ${sizeMB.toFixed(1)}MB — يتجاوز الحد المسموح (${MAX_FILE_MB}MB).`
-      : `⚠️ File "${file.name}" is ${sizeMB.toFixed(1)}MB — exceeds the allowed limit (${MAX_FILE_MB}MB).`;
+      ? `â ï¸ Ø§ÙÙÙÙ "${file.name}" Ø­Ø¬ÙÙ ${sizeMB.toFixed(1)}MB â ÙØªØ¬Ø§ÙØ² Ø§ÙØ­Ø¯ Ø§ÙÙØ³ÙÙØ­ (${MAX_FILE_MB}MB).`
+      : `â ï¸ File "${file.name}" is ${sizeMB.toFixed(1)}MB â exceeds the allowed limit (${MAX_FILE_MB}MB).`;
   }
   return null;
 }
@@ -68,7 +68,7 @@ async function runConversion() {
   }
 
   if (window.isDocxProcessing) {
-    output.value = lang === 'ar' ? '⏳ الملف قيد التجهيز...' : '⏳ Processing...';
+    output.value = lang === 'ar' ? 'â³ Ø§ÙÙÙÙ ÙÙØ¯ Ø§ÙØªØ¬ÙÙØ²...' : 'â³ Processing...';
     return;
   }
 
@@ -130,7 +130,7 @@ async function runConversion() {
     }
   } catch (e) {
     console.error('Conversion error:', e);
-    output.value = (lang === 'ar' ? '❌ حدث خطأ: ' : '❌ Error: ') + e.message;
+    output.value = (lang === 'ar' ? 'â Ø­Ø¯Ø« Ø®Ø·Ø£: ' : 'â Error: ') + e.message;
     showToast(output.value, { duration: 5000 });
   } finally {
     stopLoadingAnimation();
@@ -175,7 +175,7 @@ function initApp() {
     const lang = window.currentLang;
     window.VInfinityToast.showToast(
       lang === 'ar'
-        ? 'لإضافة التطبيق لشاشتك الرئيسية: اضغط على زر المشاركة في المتصفح، ثم اختر "إضافة إلى الشاشة الرئيسية".'
+        ? 'ÙØ¥Ø¶Ø§ÙØ© Ø§ÙØªØ·Ø¨ÙÙ ÙØ´Ø§Ø´ØªÙ Ø§ÙØ±Ø¦ÙØ³ÙØ©: Ø§Ø¶ØºØ· Ø¹ÙÙ Ø²Ø± Ø§ÙÙØ´Ø§Ø±ÙØ© ÙÙ Ø§ÙÙØªØµÙØ­Ø Ø«Ù Ø§Ø®ØªØ± "Ø¥Ø¶Ø§ÙØ© Ø¥ÙÙ Ø§ÙØ´Ø§Ø´Ø© Ø§ÙØ±Ø¦ÙØ³ÙØ©".'
         : 'To add to your home screen: tap the Share button in your browser, then choose "Add to Home Screen".',
       { duration: 6000 }
     );
