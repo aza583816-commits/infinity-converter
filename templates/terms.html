@@ -41,7 +41,14 @@
   <p>أنت تحتفظ بكامل حقوق الملكية الفكرية لجميع المستندات والصور والنصوص التي ترفعها، ولا تطالب المنصة بأي حقوق ملكية لملفاتك مطلقاً.</p>
   {% endif %}
 
-  <h2>{% if lang == 'en' %}4. Disclaimer{% else %}4. إخلاء المسؤولية{% endif %}</h2>
+  <h2>{% if lang == 'en' %}4. File Processing & Third Parties{% else %}4. معالجة الملفات والخدمات الخارجية{% endif %}</h2>
+  {% if lang == 'en' %}
+  <p>Some tools may use third-party processing services when required by the selected conversion. You are responsible for ensuring that you have the right to upload and process the file and that the chosen workflow is appropriate for the sensitivity of its contents.</p>
+  {% else %}
+  <p>قد تستخدم بعض الأدوات خدمات معالجة خارجية عند الحاجة لتنفيذ التحويل المحدد. أنت مسؤول عن امتلاك الحق في رفع الملف ومعالجته، وعن التأكد من أن طريقة المعالجة المختارة مناسبة لحساسية محتواه.</p>
+  {% endif %}
+
+  <h2>{% if lang == 'en' %}5. Disclaimer{% else %}5. إخلاء المسؤولية{% endif %}</h2>
   {% if lang == 'en' %}
   <p>Services are provided "as is" without warranties of any kind, express or implied. We strive to maintain maximum uptime and conversion accuracy.</p>
   {% else %}
