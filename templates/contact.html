@@ -41,6 +41,8 @@
     <li>🤝 استفسار أعمال</li>
   </ul>
   {% endif %}
+
+  <p style="font-size:14px;">{% if lang == 'en' %}When reporting a problem, please include the tool name, the file type, the steps that caused the issue, and a screenshot or error message when possible. Do not send confidential documents unless they are necessary for troubleshooting.{% else %}عند الإبلاغ عن مشكلة، اذكر اسم الأداة ونوع الملف والخطوات التي سببت المشكلة، وأرفق لقطة شاشة أو رسالة الخطأ إن أمكن. لا ترسل مستندات سرية إلا إذا كانت ضرورية لتشخيص المشكلة.{% endif %}</p>
   <a href="mailto:2saree3.tech@gmail.com" class="email-box">2saree3.tech@gmail.com</a>
   <a href="{% if lang == 'en' %}/en/{% else %}/{% endif %}" class="back-btn">{% if lang == 'en' %}Back to Home{% else %}العودة للرئيسية{% endif %}</a>
 </div>
