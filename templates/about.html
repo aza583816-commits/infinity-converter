@@ -34,11 +34,25 @@
   <p>الطلاب اللي يجهزون واجباتهم، الباحثون اللي ينسّقون أبحاثهم، المعلمون اللي يجهزون مواد دراسية، والمطورون اللي يحتاجون أدوات تحويل بيانات سريعة — كلهم يلقون احتياجهم بمكان وحد.</p>
   {% endif %}
 
+  <h2>{% if lang == 'en' %}What We Build{% else %}ماذا نقدم{% endif %}</h2>
+  {% if lang == 'en' %}
+  <p>Infinity Converter is organized around focused utilities rather than one generic converter. The platform includes PDF and document workflows, image conversion, spreadsheet and data utilities, text tools, and developer helpers. Each tool is maintained as part of the same service so users can move between related tasks without creating multiple accounts.</p>
+  {% else %}
+  <p>صُممت Infinity Converter كمجموعة أدوات متخصصة بدلاً من نموذج تحويل عام واحد. تشمل المنصة أدوات PDF والمستندات، تحويل الصور، أدوات الجداول والبيانات، أدوات النصوص، وأدوات مفيدة للمطورين، مع إمكانية الانتقال بين المهام المرتبطة من مكان واحد.</p>
+  {% endif %}
+
+  <h2>{% if lang == 'en' %}Accuracy & Limitations{% else %}الدقة وحدود الأدوات{% endif %}</h2>
+  {% if lang == 'en' %}
+  <p>File conversion is not identical for every document. Scanned PDFs, unusual fonts, complex tables, and damaged files can produce different results. We therefore provide tool-specific guidance and do not promise perfect conversion for every possible input.</p>
+  {% else %}
+  <p>تحويل الملفات لا يعطي النتيجة نفسها مع كل مستند. قد تختلف النتائج مع ملفات PDF الممسوحة ضوئياً، الخطوط غير المعتادة، الجداول المعقدة، أو الملفات التالفة. لذلك نوضح حدود كل أداة ولا ندّعي أن التحويل سيكون مثالياً لكل ملف ممكن.</p>
+  {% endif %}
+
   <h2>{% if lang == 'en' %}Security First{% else %}الأمان والخصوصية{% endif %}</h2>
   {% if lang == 'en' %}
-  <p>We enforce a strict privacy approach: uploaded files are processed in temporary storage and removed after processing completes. See our <a href="{% if lang == 'en' %}/en/privacy{% else %}/privacy{% endif %}" style="color:#818cf8;">Privacy Policy</a> for full details on how files are handled.</p>
+  <p>We aim to minimize retention. Processing depends on the selected tool and may involve a third-party provider for certain conversions; see the Privacy Policy for the current handling details. See our <a href="{% if lang == 'en' %}/en/privacy{% else %}/privacy{% endif %}" style="color:#818cf8;">Privacy Policy</a> for full details on how files are handled.</p>
   {% else %}
-  <p>نتبع سياسة خصوصية صارمة: تتم معالجة الملفات المرفوعة في تخزين مؤقت ويتم حذفها بعد اكتمال المعالجة. راجع <a href="/privacy" style="color:#818cf8;">سياسة الخصوصية</a> لتفاصيل كاملة عن طريقة التعامل مع الملفات.</p>
+  <p>نهدف إلى تقليل الاحتفاظ بالملفات. تختلف المعالجة حسب الأداة وقد تتضمن بعض التحويلات مزوداً خارجياً؛ راجع سياسة الخصوصية لمعرفة التفاصيل الحالية. راجع <a href="/privacy" style="color:#818cf8;">سياسة الخصوصية</a> لتفاصيل كاملة عن طريقة التعامل مع الملفات.</p>
   {% endif %}
 </div>
 </body>
