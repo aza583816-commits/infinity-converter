@@ -3133,8 +3133,9 @@ def get_pdf_preview():
             pix = page.get_pixmap(matrix=fitz.Matrix(0.5, 0.5))
             b64_thumb = base64.b64encode(pix.tobytes("png")).decode("ascii")
             thumbnails.append({"page": i + 1, "image": f"data:image/png;base64,{b64_thumb}"})
-        doc.close()
-        return jsonify({"totalPages": len(doc), "previews": thumbnails})
+        total_pages = len(doc)
+doc.close()
+return jsonify({"totalPages": total_pages, "previews": thumbnails})
     except Exception as e:
         return bad_request(f"Error generating preview: {str(e)}")
 
