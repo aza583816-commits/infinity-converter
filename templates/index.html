@@ -7,16 +7,13 @@
     <meta name="theme-color" content="#09090b">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="robots" content="{% if is_404 %}noindex,follow{% else %}index,follow,max-image-preview:large{% endif %}">
-    <meta name="author" content="Infinity Converter">
-    <link rel="canonical" href="https://infinityconverter.com{% if lang == 'en' %}/en{% endif %}{% if tool_data %}/{{ tool_data.slug }}{% endif %}">
     
     <title>{% if is_404 %}{% if lang == 'en' %}Page Not Found (404) | Infinity Converter{% else %}الصفحة غير موجودة | Infinity Converter{% endif %}{% elif tool_data %}{% if lang == 'en' %}{{ tool_data.seo_title_en }}{% else %}{{ tool_data.seo_title_ar }}{% endif %}{% else %}{% if lang == 'en' %}Infinity Converter - All-in-One Free PDF & Document Tools{% else %}Infinity Converter - المحول الشامل لملفات PDF والمستندات مجاناً{% endif %}{% endif %}</title>
-    <meta name="description" content="{% if tool_data %}{% if lang == 'en' %}{{ tool_data.seo_desc_en }}{% else %}{{ tool_data.seo_desc_ar }}{% endif %}{% else %}أدوات مجانية لتحويل ومعالجة PDF وWord وExcel والصور والبيانات والنصوص، مع شرح واضح لكل أداة ودعم للغة العربية.{% endif %}">
+    <meta name="description" content="{% if tool_data %}{% if lang == 'en' %}{{ tool_data.seo_desc_en }}{% else %}{{ tool_data.seo_desc_ar }}{% endif %}{% else %}منصة Infinity Converter الشاملة والمجانية لتحويل وتعديل ملفات PDF، Word، Excel، والصور بضغطة زر. معالجة سحابية آمنة وفورية بدون تخزين لملفاتك.{% endif %}">
 
     <meta property="og:type" content="website">
     <meta property="og:title" content="{% if tool_data %}{% if lang == 'en' %}{{ tool_data.seo_title_en }}{% else %}{{ tool_data.seo_title_ar }}{% endif %}{% else %}Infinity Converter - المحول السحابي الشامل{% endif %}">
-    <meta property="og:description" content="{% if tool_data %}{% if lang == 'en' %}{{ tool_data.seo_desc_en }}{% else %}{{ tool_data.seo_desc_ar }}{% endif %}{% else %}أدوات PDF والمستندات والصور والبيانات والنصوص في مكان واحد.{% endif %}">
+    <meta property="og:description" content="{% if tool_data %}{% if lang == 'en' %}{{ tool_data.seo_desc_en }}{% else %}{{ tool_data.seo_desc_ar }}{% endif %}{% else %}تحويل وتحرير ملفات PDF و Word و Excel والصور بضغطة زر وبدون قيود.{% endif %}">
     <meta property="og:image" content="https://infinityconverter.com/static/og-banner.png">
     <meta property="og:url" content="https://infinityconverter.com{% if lang == 'en' %}/en{% endif %}{% if tool_data %}/{{ tool_data.slug }}{% endif %}">
 
@@ -66,22 +63,6 @@
     </script>
     {% endif %}
     {% endif %}
-
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebSite",
-      "name": "Infinity Converter",
-      "url": "https://infinityconverter.com/",
-      "description": "Free online tools for PDF, documents, images, data, and text.",
-      "inLanguage": ["ar", "en"],
-      "potentialAction": {
-        "@type": "SearchAction",
-        "target": "https://infinityconverter.com/?q={search_term_string}",
-        "query-input": "required name=search_term_string"
-      }
-    }
-    </script>
 
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4343857922748618" crossorigin="anonymous"></script>
 
@@ -262,7 +243,7 @@
                     {% elif tool_data %}
                         {% if lang == 'en' %}{{ tool_data.short_desc_en }}{% else %}{{ tool_data.short_desc_ar }}{% endif %}
                     {% else %}
-                        {% if lang == 'en' %}Select any tool below to start fast, secure, and completely free document conversions.{% else %}اختر إحدى الأدوات من الأسفل للبدء في تحويل وتعديل مستنداتك وملفاتك بأمان وتجربة سريعة.{% endif %}
+                        {% if lang == 'en' %}Select any tool below to start fast, secure, and completely free document conversions.{% else %}اختر إحدى الأدوات من الأسفل للبدء في تحويل وتعديل مستنداتك وملفاتك بأمان وسرعة فائقة.{% endif %}
                     {% endif %}
                 </p>
             </div>
@@ -330,16 +311,16 @@
         </div>
 
         <div class="seo-content" style="margin-top: 30px;">
-            <h2><i class="fa-solid fa-circle-info"></i> {% if lang == 'ar' %}دليل الاستخدام والخصوصية{% else %}User Guide & Privacy{% endif %}</h2>
-            <p>{% if lang == 'ar' %}توضح Infinity Converter طريقة استخدام الأدوات في ثلاث خطوات: ارفع الملف أو أدخل النص، اختر العملية المناسبة، ثم راجع النتيجة وحمّلها. تختلف طريقة المعالجة حسب الأداة؛ بعض العمليات تتم محلياً وبعض التحويلات قد تستخدم مزودي معالجة خارجيين عند الحاجة. راجع سياسة الخصوصية قبل رفع ملفات حساسة.{% else %}Infinity Converter uses a simple three-step workflow: upload a file or enter text, choose the operation, then review and download the result. Processing depends on the selected tool and may use local or external services.{% endif %}</p>
+            <h2><i class="fa-solid fa-circle-info"></i> {% if lang == 'ar' %}دليل الاستخدام السريع والأمان السحابي{% else %}User Guide & Cloud Security{% endif %}</h2>
+            <p>{% if lang == 'ar' %}تعتمد منصة Infinity Converter على خوارزميات معالجة فورية تُنفذ في بيئة معزولة تماماً داخل خوادمنا السحابية. يمكنك تحويل ومعالجة الملفات عبر 3 خطوات بسيطة: رفع الملف، اختيار نوع العملية، ثم تنزيل النتيجة فوراً بجودة فائقة بدون علامات مائية وبحجم محسن تماماً.{% else %}Infinity Converter leverages high-performance in-memory cloud processing in isolated sandbox environments. Convert and optimize any document in 3 easy steps: upload your file, execute the tool, and download the results instantly.{% endif %}</p>
             
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin-top: 20px;">
                 <div class="faq-box">
-                    <h3><i class="fa-solid fa-shield-halved" style="color:var(--primary)"></i> {% if lang == 'ar' %}معالجة وخصوصية واضحة{% else %}Clear Processing & Privacy{% endif %}</h3>
+                    <h3><i class="fa-solid fa-shield-halved" style="color:var(--primary)"></i> {% if lang == 'ar' %}أمان وتشفير 100%{% else %}100% Secure{% endif %}</h3>
                     <p>{% if lang == 'ar' %}تشفير كامل للاتصال والحذف التلقائي الفوري لملفاتك بمجرد إتمام التحويل من الذاكرة المؤقتة.{% else %}End-to-end encrypted transfer with instant memory cleanup.{% endif %}</p>
                 </div>
                 <div class="faq-box">
-                    <h3><i class="fa-solid fa-bolt" style="color:var(--primary)"></i> {% if lang == 'ar' %}دعم أفضل للنصوص العربية{% else %}Arabic Text Support{% endif %}</h3>
+                    <h3><i class="fa-solid fa-bolt" style="color:var(--primary)"></i> {% if lang == 'ar' %}دقة فائقة للعربية{% else %}Arabic Typography AI{% endif %}</h3>
                     <p>{% if lang == 'ar' %}دعم متقدم للخطوط والجداول العربية لمنع مشاكل الحروف المتقطعة أو المعكوسة نهائياً.{% else %}Advanced preservation of complex Arabic typography and layout structures.{% endif %}</p>
                 </div>
                 <div class="faq-box">
@@ -388,9 +369,9 @@
     {% if not tool_data and not is_404 %}
     <div class="stats-bar" style="max-width:1200px; margin:30px auto; padding:25px 20px; background:var(--bg-surface); border:1px solid var(--border); border-radius:20px; box-shadow:var(--shadow-sm); display:flex; flex-wrap:wrap; justify-content:space-around; gap:20px; text-align:center;">
         <div><div style="font-size:26px; font-weight:800; color:var(--primary);">{{ site_stats.tools_count }}+</div><div style="color:var(--text-muted); font-size:13px;">{% if lang == 'ar' %}أداة قوية{% else %}Powerful Tools{% endif %}</div></div>
-        <div><div style="font-size:26px; font-weight:800; color:var(--primary);">{{ "{:,}".format(site_stats.files_processed) }}</div><div style="color:var(--text-muted); font-size:13px;">{% if lang == 'ar' %}ملف تمت معالجته فعلياً{% else %}Files Actually Processed{% endif %}</div></div>
-        <div><div style="font-size:26px; font-weight:800; color:var(--primary);">100%</div><div style="color:var(--text-muted); font-size:13px;">{% if lang == 'ar' %}مجاني للاستخدام الحالي{% else %}Free to Use{% endif %}</div></div>
-        <div><div style="font-size:26px; font-weight:800; color:var(--primary);">0</div><div style="color:var(--text-muted); font-size:13px;">{% if lang == 'ar' %}تسجيل مطلوب{% else %}Sign-ups Required{% endif %}</div></div>
+        <div><div style="font-size:26px; font-weight:800; color:var(--primary);">25 MB</div><div style="color:var(--text-muted); font-size:13px;">{% if lang == 'ar' %}حد حجم الملف المعتاد{% else %}Typical File Size Limit{% endif %}</div></div>
+        <div><div style="font-size:26px; font-weight:800; color:var(--primary);">100%</div><div style="color:var(--text-muted); font-size:13px;">{% if lang == 'ar' %}مجاني حاليًا{% else %}Currently Free{% endif %}</div></div>
+        <div><div style="font-size:26px; font-weight:800; color:var(--primary);">بدون تسجيل</div><div style="color:var(--text-muted); font-size:13px;">{% if lang == 'ar' %}ابدأ مباشرة{% else %}Start Without an Account{% endif %}</div></div>
     </div>
 
     <div class="popular-tools-section" style="max-width:1200px; margin:30px auto; padding:0 20px;">
@@ -427,45 +408,22 @@
         <h2 class="section-title" style="margin-bottom:20px;"><i class="fa-solid fa-award" style="color:var(--primary)"></i> <span>{% if lang == 'ar' %}لماذا Infinity Converter؟{% else %}Why Choose Infinity Converter?{% endif %}</span></h2>
         <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:18px;">
             <div class="faq-box"><h3><i class="fa-solid fa-user-shield" style="color:var(--primary)"></i> {% if lang == 'ar' %}بدون تسجيل{% else %}No Sign-up Required{% endif %}</h3><p>{% if lang == 'ar' %}استخدم كل الأدوات فوراً بدون إنشاء حساب.{% else %}Use every tool instantly, no account needed.{% endif %}</p></div>
-            <div class="faq-box"><h3><i class="fa-solid fa-lock" style="color:var(--primary)"></i> {% if lang == 'ar' %}خصوصية تامة{% else %}Your Privacy Matters{% endif %}</h3><p>{% if lang == 'ar' %}تُحذف ملفاتك تلقائياً بعد المعالجة مباشرة.{% else %}Files are handled temporarily according to the tool used; see the Privacy Policy for details.{% endif %}</p></div>
-            <div class="faq-box"><h3><i class="fa-solid fa-bolt" style="color:var(--primary)"></i> {% if lang == 'ar' %}تجربة سريعة{% else %}Fast Workflow{% endif %}</h3><p>{% if lang == 'ar' %}نصمم الأدوات لتقليل الخطوات والانتظار قدر الإمكان.{% else %}The tools are designed to reduce unnecessary steps and waiting time.{% endif %}</p></div>
-            <div class="faq-box"><h3><i class="fa-solid fa-gift" style="color:var(--primary)"></i> {% if lang == 'ar' %}مجاني للاستخدام الحالي{% else %}Free to Use{% endif %}</h3><p>{% if lang == 'ar' %}الأدوات متاحة مجاناً حاليًا، وقد تختلف الحدود حسب الأداة.{% else %}The tools are currently available for free; limits may vary by tool.{% endif %}</p></div>
+            <div class="faq-box"><h3><i class="fa-solid fa-lock" style="color:var(--primary)"></i> {% if lang == 'ar' %}خصوصية تامة{% else %}Your Privacy Matters{% endif %}</h3><p>{% if lang == 'ar' %}تُحذف ملفاتك تلقائياً بعد المعالجة مباشرة.{% else %}Files are auto-deleted right after processing.{% endif %}</p></div>
+            <div class="faq-box"><h3><i class="fa-solid fa-bolt" style="color:var(--primary)"></i> {% if lang == 'ar' %}سرعة فائقة{% else %}Blazing Fast{% endif %}</h3><p>{% if lang == 'ar' %}معالجة الملفات خلال ثوانٍ على سيرفراتنا.{% else %}Our servers process files in seconds.{% endif %}</p></div>
+            <div class="faq-box"><h3><i class="fa-solid fa-gift" style="color:var(--primary)"></i> {% if lang == 'ar' %}مجاني دائمًا{% else %}Always Free{% endif %}</h3><p>{% if lang == 'ar' %}كل الأدوات مجانية 100% وللأبد.{% else %}All tools are 100% free, forever.{% endif %}</p></div>
         </div>
     </div>
 
     <div class="homepage-faq-section" style="max-width:1200px; margin:30px auto 40px; padding:0 20px;">
         <h2 class="section-title" style="margin-bottom:15px;"><i class="fa-solid fa-clipboard-question" style="color:var(--primary)"></i> <span>{% if lang == 'ar' %}الأسئلة الشائعة{% else %}Frequently Asked Questions{% endif %}</span></h2>
         <div style="display:flex; flex-direction:column; gap:10px;">
-            <details class="faq-box" style="cursor:pointer;"><summary style="font-weight:700; color:var(--text-main);">{% if lang == 'ar' %}هل الموقع مجاني بالكامل؟{% else %}Is Infinity Converter free?{% endif %}</summary><p style="margin-top:8px;">{% if lang == 'ar' %}نعم، الأدوات متاحة مجاناً حاليًا، وقد تختلف الحدود حسب الأداة المستخدمة.{% else %}The tools are currently available for free; limits may vary by tool.{% endif %}</p></details>
-            <details class="faq-box" style="cursor:pointer;"><summary style="font-weight:700; color:var(--text-main);">{% if lang == 'ar' %}هل تُخزَّن ملفاتي على سيرفراتكم؟{% else %}Are my files stored on your servers?{% endif %}</summary><p style="margin-top:8px;">{% if lang == 'ar' %}تتم معالجة الملفات مؤقتاً وفق الأداة المستخدمة. بعض التحويلات قد تستخدم مزود معالجة خارجي، وتوضح سياسة الخصوصية تفاصيل التعامل مع الملفات.{% else %}Files are processed temporarily according to the tool used. Some conversions may use an external processing provider; see the Privacy Policy for details.{% endif %}</p></details>
+            <details class="faq-box" style="cursor:pointer;"><summary style="font-weight:700; color:var(--text-main);">{% if lang == 'ar' %}هل الموقع مجاني بالكامل؟{% else %}Is Infinity Converter free?{% endif %}</summary><p style="margin-top:8px;">{% if lang == 'ar' %}نعم، جميع الأدوات مجانية 100% بدون أي رسوم مخفية أو اشتراكات.{% else %}Yes, all tools are 100% free with no hidden fees or subscriptions.{% endif %}</p></details>
+            <details class="faq-box" style="cursor:pointer;"><summary style="font-weight:700; color:var(--text-main);">{% if lang == 'ar' %}هل تُخزَّن ملفاتي على سيرفراتكم؟{% else %}Are my files stored on your servers?{% endif %}</summary><p style="margin-top:8px;">{% if lang == 'ar' %}لا، تتم معالجة الملفات مؤقتاً وتُحذف تلقائياً فور اكتمال العملية أو انتهاء الجلسة.{% else %}No, files are processed temporarily and automatically deleted once the operation completes or the session ends.{% endif %}</p></details>
             <details class="faq-box" style="cursor:pointer;"><summary style="font-weight:700; color:var(--text-main);">{% if lang == 'ar' %}هل أحتاج إنشاء حساب لاستخدام الأدوات؟{% else %}Do I need an account to use the tools?{% endif %}</summary><p style="margin-top:8px;">{% if lang == 'ar' %}لا، جميع الأدوات متاحة للاستخدام الفوري بدون تسجيل.{% else %}No, all tools are instantly usable without any registration.{% endif %}</p></details>
             <details class="faq-box" style="cursor:pointer;"><summary style="font-weight:700; color:var(--text-main);">{% if lang == 'ar' %}ما الحد الأقصى لحجم الملف؟{% else %}What is the maximum file size?{% endif %}</summary><p style="margin-top:8px;">{% if lang == 'ar' %}الحد الأقصى المعتاد هو 25 ميجابايت لكل ملف حسب الأداة المستخدمة.{% else %}The typical limit is 25MB per file, depending on the specific tool.{% endif %}</p></details>
         </div>
     </div>
     {% endif %}
-
-    <section class="homepage-guide-section" style="max-width:1200px; margin:20px auto 35px; padding:0 20px;">
-        <div class="seo-content" style="background:var(--bg-surface); border:1px solid var(--border); border-radius:20px; padding:28px; box-shadow:var(--shadow-sm);">
-            <h2 class="section-title" style="margin-bottom:14px;"><i class="fa-solid fa-compass" style="color:var(--primary)"></i> {% if lang == 'ar' %}دليل Infinity Converter للأدوات والتحويلات{% else %}Infinity Converter Guide to File Tools{% endif %}</h2>
-            {% if lang == 'ar' %}
-            <p style="color:var(--text-muted); line-height:1.9; margin-bottom:14px;">Infinity Converter يجمع أدوات عملية للملفات والمستندات والصور والبيانات والنصوص في واجهة واحدة. الهدف هو تقليل الوقت الذي تقضيه في البحث عن أداة مختلفة لكل مهمة، مع إبقاء خطوات الاستخدام واضحة ومباشرة.</p>
-            <h3 style="margin:18px 0 8px;">متى تستخدم أدوات PDF؟</h3>
-            <p style="color:var(--text-muted); line-height:1.9;">يمكنك استخدام أدوات PDF لتحويل المستندات إلى Word أو Excel، دمج الصفحات أو تقسيمها، ضغط الملفات للمشاركة، استخراج النص أو الصور، وتجهيز المستندات للاستخدام الدراسي أو المهني. تختلف النتيجة حسب بنية الملف، خصوصاً إذا كان الملف ممسوحاً ضوئياً أو يحتوي على جداول معقدة.</p>
-            <h3 style="margin:18px 0 8px;">أدوات الصور والملفات</h3>
-            <p style="color:var(--text-muted); line-height:1.9;">يمكنك تحويل الصور بين الصيغ الشائعة، إنشاء PDF من مجموعة صور، وتقليل حجم الصور قبل رفعها إلى المواقع أو مشاركتها. كما تتوفر أدوات للبيانات مثل JSON وCSV وExcel، وأدوات نصية ومفيدة للمطورين.</p>
-            <h3 style="margin:18px 0 8px;">كيف نحافظ على وضوح النتيجة؟</h3>
-            <p style="color:var(--text-muted); line-height:1.9;">كل أداة لها طريقة معالجة مختلفة، لذلك نعرض شرحاً وخطوات وأسئلة شائعة عندما تكون المعلومات مهمة لفهم النتيجة. إذا كان الملف حساساً، راجع سياسة الخصوصية لمعرفة ما إذا كانت العملية تستخدم معالجة محلية أو مزوداً خارجياً.</p>
-            {% else %}
-            <p style="color:var(--text-muted); line-height:1.9; margin-bottom:14px;">Infinity Converter brings practical tools for documents, PDFs, images, data, and text into one interface. The goal is to reduce the need to search for a separate service for every small task while keeping each workflow clear.</p>
-            <h3 style="margin:18px 0 8px;">When should you use PDF tools?</h3>
-            <p style="color:var(--text-muted); line-height:1.9;">PDF tools are useful for converting documents to Word or Excel, merging and splitting pages, compressing files for sharing, extracting text or images, and preparing documents for study or work. Results can vary with the structure of the source file, especially scanned PDFs and complex tables.</p>
-            <h3 style="margin:18px 0 8px;">Image, data, and developer utilities</h3>
-            <p style="color:var(--text-muted); line-height:1.9;">You can convert common image formats, create PDFs from images, reduce image file size, and work with JSON, CSV, Excel, text, and developer-focused utilities. Each tool is designed around a specific task rather than a generic upload form.</p>
-            <h3 style="margin:18px 0 8px;">How do we keep results understandable?</h3>
-            <p style="color:var(--text-muted); line-height:1.9;">Each tool can have its own instructions and frequently asked questions because processing differs by file type. If your file is sensitive, review the Privacy Policy to understand whether a workflow uses local processing or an external provider.</p>
-            {% endif %}
-        </div>
-    </section>
 
     <div class="search-filter-container">
         <div class="search-box">
@@ -810,7 +768,7 @@
                     <div class="tool-icon i-dev"><i class="fa-solid fa-file-signature"></i></div>
                     <div class="tool-info">
                         <h3>{% if lang == 'ar' %}استخراج نص من صورة{% else %}Image to Text (OCR){% endif %}</h3>
-                        <p>{% if lang == 'ar' %}استخراج النص من الصور والمستندات الممسوحة ضوئياً.{% else %}Extract text from images and scanned documents.{% endif %}</p>
+                        <p>{% if lang == 'ar' %}قراءة النصوص من الصور بدقة عالية بالذكاء الاصطناعي.{% else %}Extract and read text from images accurately using AI.{% endif %}</p>
                     </div>
                 </a>
                 <a href="{% if lang == 'en' %}/en{% endif %}/image-to-pdf" class="tool-card" data-slug="image-to-pdf">
@@ -913,15 +871,15 @@
                 <a href="{% if lang == 'en' %}/en{% endif %}/base64-tool" class="tool-card" data-slug="base64-tool">
                     <div class="tool-icon i-dev"><i class="fa-solid fa-shield-halved"></i></div>
                     <div class="tool-info">
-                        <h3>{% if lang == 'ar' %}ترميز Base64{% else %}Base64 Encode{% endif %}</h3>
+                        <h3>{% if lang == 'ar' %}تشفير Base64{% else %}Base64 Encode{% endif %}</h3>
                         <p>{% if lang == 'ar' %}تشفير وفك تشفير النصوص بصيغة Base64.{% else %}Encode and decode text in Base64 format.{% endif %}</p>
                     </div>
                 </a>
                 <a href="{% if lang == 'en' %}/en{% endif %}/url-encoder" class="tool-card" data-slug="url-encoder">
                     <div class="tool-icon i-dev"><i class="fa-solid fa-link"></i></div>
                     <div class="tool-info">
-                        <h3>{% if lang == 'ar' %}ترميز الروابط URL{% else %}URL Encode{% endif %}</h3>
-                        <p>{% if lang == 'ar' %}ترميز وفك ترميز الروابط وفق قواعد URL.{% else %}Encode and decode URLs using standard URL encoding rules.{% endif %}</p>
+                        <h3>{% if lang == 'ar' %}تشفير الروابط URL{% else %}URL Encode{% endif %}</h3>
+                        <p>{% if lang == 'ar' %}تشفير وفك تشفير الروابط لتعمل في المتصفح.{% else %}Encode and decode URLs for browser safety.{% endif %}</p>
                     </div>
                 </a>
                 <a href="{% if lang == 'en' %}/en{% endif %}/json-beautifier" class="tool-card" data-slug="json-beautifier">
@@ -941,7 +899,7 @@
                 <a href="{% if lang == 'en' %}/en{% endif %}/html-entity" class="tool-card" data-slug="html-entity">
                     <div class="tool-icon i-dev"><i class="fa-solid fa-code"></i></div>
                     <div class="tool-info">
-                        <h3>{% if lang == 'ar' %}ترميز HTML Entities{% else %}HTML Entity Encode{% endif %}</h3>
+                        <h3>{% if lang == 'ar' %}تشفير HTML Entities{% else %}HTML Entity Encode{% endif %}</h3>
                         <p>{% if lang == 'ar' %}تحويل الرموز الخاصة إلى كيانات HTML.{% else %}Convert special characters to HTML entities.{% endif %}</p>
                     </div>
                 </a>
@@ -1235,8 +1193,8 @@
                 if (['pdf-to-docx', 'pdf-to-excel', 'image-to-text', 'clean-study-sheet', 'summarize-doc'].includes(currentAction)) {
                     warningBox.style.display = 'block';
                     document.getElementById('warningText').innerHTML = isArabic ? 
-                        "تعتمد النتيجة على نوع الملف وطريقة المعالجة الخاصة بالأداة، وقد تستغرق الملفات الكبيرة وقتاً أطول." : 
-                        "Results depend on the file type and the processing method used by the tool; larger files may take longer.";
+                        "هذه الأداة مدعومة بالذكاء الاصطناعي 🧠 لضمان أقصى دقة. قد تستغرق المعالجة بضع ثوانٍ إضافية." : 
+                        "This tool is powered by AI 🧠 for maximum accuracy. Processing may take a few extra seconds.";
                 } else {
                     warningBox.style.display = 'none';
                 }
@@ -1429,7 +1387,7 @@
                     progressBar.style.width = width + '%'; 
                     
                     if(width > 40 && width < 70) {
-                        btnText.innerText = isArabic ? 'جاري المعالجة...' : 'Processing...';
+                        btnText.innerText = isArabic ? 'جاري المعالجة بالذكاء الاصطناعي...' : 'Processing with AI...';
                     } else if (width >= 70) {
                         btnText.innerText = isArabic ? 'جاري التنسيق النهائي...' : 'Finalizing format...';
                     }
