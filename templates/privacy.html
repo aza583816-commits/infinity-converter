@@ -23,16 +23,16 @@
 
   <h2>{% if lang == 'en' %}1. File Processing & Security{% else %}1. خصوصية ومعالجة الملفات{% endif %}</h2>
   {% if lang == 'en' %}
-  <p>At Infinity Converter, your data privacy is paramount. All uploaded documents are processed temporarily in server memory and deleted immediately after conversion completes or the session ends, without retaining any backups.</p>
+  <p>At Infinity Converter, your data privacy is paramount. Files are handled temporarily according to the specific tool. Some operations can use external processing providers (for example, document-conversion services) when local processing is not suitable. We do not intend to keep user files as a permanent document library.</p>
   {% else %}
-  <p>في Infinity Converter، نعتبر خصوصية بياناتك ومستنداتك خطاً أحمر. تتم معالجة جميع الملفات المرفوعة سحابياً بشكل مؤقت في ذاكرة السيرفر، ويتم حذفها فور الانتهاء من التحويل أو بعد انقضاء الجلسة مباشرة دون الاحتفاظ بأي نسخ احتياطية.</p>
+  <p>في Infinity Converter، نعتبر خصوصية بياناتك ومستنداتك خطاً أحمر. تتم معالجة الملفات بشكل مؤقت وفق الأداة المستخدمة. بعض العمليات قد تعتمد على مزودي معالجة خارجيين عندما لا تكون المعالجة المحلية مناسبة. لا يهدف الموقع إلى الاحتفاظ بملفات المستخدمين كمكتبة دائمة، ويجب مراجعة تفاصيل الأداة وسياسة الخصوصية قبل رفع ملفات حساسة.</p>
   {% endif %}
 
   <h2>{% if lang == 'en' %}2. Advertising{% else %}2. الإعلانات{% endif %}</h2>
   {% if lang == 'en' %}
-  <p>Infinity Converter does not currently display any third-party advertisements. If we enable an advertising network (such as Google AdSense) in the future, this policy will be updated in advance to disclose the provider, the cookies used, and how to opt out — before any ads go live.</p>
+  <p>The site may use Google AdSense and related Google advertising technologies. Advertising providers may use cookies or similar technologies to deliver, measure, and personalize ads where permitted. Users can review Google's advertising and privacy controls and any consent options shown on the site.</p>
   {% else %}
-  <p>لا يعرض موقع Infinity Converter حاليًا أي إعلانات من طرف ثالث. في حال تفعيل شبكة إعلانية (مثل Google AdSense) مستقبلًا، سيتم تحديث هذه السياسة مسبقًا للإفصاح عن المزوّد، ملفات تعريف الارتباط المستخدمة، وطريقة إلغاء الاشتراك — قبل عرض أي إعلان فعليًا.</p>
+  <p>قد يستخدم موقع Infinity Converter خدمة Google AdSense وتقنيات إعلانية مرتبطة بها. قد تستخدم مزودات الإعلانات ملفات تعريف الارتباط أو تقنيات مشابهة لعرض الإعلانات وقياسها وتخصيصها وفق الإعدادات والخيارات المتاحة للمستخدم.</p>
   {% endif %}
 
   <h2>{% if lang == 'en' %}3. Log Files{% else %}3. ملفات السجل (Log Files){% endif %}</h2>
@@ -42,7 +42,14 @@
   <p>يتبع موقعنا إجراءات قياسية لتحليل استخدام الخوادم عبر ملفات السجل القياسية، والتي تشمل عناوين بروتوكول الإنترنت (IP)، نوع المتصفح، والطوابع الزمنية، وذلك فقط لأغراض صيانة البنية التحتية ومكافحة الهجمات السيبرانية دون ربطها بأي هوية شخصية.</p>
   {% endif %}
 
-  <h2>{% if lang == 'en' %}4. Children's Information{% else %}4. حماية بيانات الأطفال{% endif %}</h2>
+  <h2>{% if lang == 'en' %}4. Cookies, Analytics & Third Parties{% else %}4. ملفات تعريف الارتباط والخدمات الخارجية{% endif %}</h2>
+  {% if lang == 'en' %}
+  <p>The site may use essential cookies, analytics, security services, and advertising technologies depending on the features enabled. Third-party conversion providers may receive the file or conversion data required for the selected operation. We recommend not uploading confidential files unless you understand the processing path for that tool.</p>
+  {% else %}
+  <p>قد يستخدم الموقع ملفات تعريف ارتباط أساسية وتقنيات للتحليلات والحماية والإعلانات بحسب الميزات المفعلة. وقد تستقبل خدمات معالجة خارجية الملف أو بيانات التحويل اللازمة لتنفيذ العملية التي اخترتها. ننصح بعدم رفع ملفات سرية ما لم تكن تعرف مسار المعالجة الخاص بالأداة.</p>
+  {% endif %}
+
+  <h2>{% if lang == 'en' %}5. Children's Information{% else %}5. حماية بيانات الأطفال{% endif %}</h2>
   {% if lang == 'en' %}
   <p>We do not knowingly collect personal identifiable information from children under the age of 13, in line with COPPA and GDPR guidelines.</p>
   {% else %}
