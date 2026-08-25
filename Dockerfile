@@ -24,4 +24,4 @@ RUN python -m pip install --upgrade pip setuptools wheel && \
 
 COPY . .
 
-CMD ["sh", "-c", "exec gunicorn --bind 0.0.0.0:${PORT:-5000} --workers 1 --threads 4 --timeout 300 --graceful-timeout 30 --keep-alive 5 --access-logfile - --error-logfile - app:app"]
+CMD ["sh","-c","exec gunicorn --bind 0.0.0.0:${PORT:-5000} --workers 1 --threads 4 --timeout 300 --graceful-timeout 30 --access-logfile - --error-logfile - app:app"]
