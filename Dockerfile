@@ -1,22 +1,40 @@
-FROM python:3.10-slim
+FROM python:3.12-slim-bookworm
 
-# تثبيت البرامج الأساسية: تحويل المستندات + OCR (عربي وإنجليزي) + خطوط Noto العربية
-# ملاحظة: هذي الخطوط كانت موجودة فقط بملف render-build.sh غير المستخدم فعليًا
-# (السيرفر يبني بـ Docker)، فما كانت تتثبت على السيرفر الحي إطلاقًا
-RUN apt-get update && apt-get install -y \
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    OMP_NUM_THREADS=2 \
+    OPENBLAS_NUM_THREADS=2 \
+    MKL_NUM_THREADS=2 \
+    NUMEXPR_NUM_THREADS=2
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libreoffice \
+    ghostscript \
     tesseract-ocr \
     tesseract-ocr-ara \
-    libreoffice \
     fonts-noto-core \
     fonts-noto-extra \
+    fontconfig \
+    ca-certificates \
+    && fc-cache -f -v \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+COPY requirements.v2.txt ./requirements.txt
+RUN pip install -r requirements.txt
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY app.py ./app.py
+COPY templates ./templates
+COPY static ./static
+COPY manifest.json ./manifest.json
 
-COPY . .
+RUN useradd --create-home --uid 10001 appuser \
+    && mkdir -p /tmp/infinity-converter \
+    && chown -R appuser:appuser /app /tmp/infinity-converter
+USER appuser
 
-# رفعنا وقت الانتظار لـ 300 ثانية (5 دقائق) عشان الملفات الثقيلة
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--timeout", "300", "app:app"]
+ENV TMPDIR=/tmp/infinity-converter
+EXPOSE 5000
+
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "1", "--threads", "4", "--timeout", "300", "--keep-alive", "5", "app:app"]
