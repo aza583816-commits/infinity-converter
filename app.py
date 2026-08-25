@@ -21,6 +21,8 @@ import threading
 import queue
 import time
 import gzip
+from pathlib import Path
+from werkzeug.utils import secure_filename
 import cloudconvert
 import convertapi
 import requests
@@ -162,7 +164,9 @@ if os.path.exists("/dev/shm"):
 
 MAX_FILE_MB = int(os.environ.get("MAX_FILE_MB", 25))
 MAX_FILE_BYTES = MAX_FILE_MB * 1024 * 1024
-MAX_MERGE_FILES = int(os.environ.get("MAX_MERGE_FILES", 30))
+MAX_MERGE_FILES = int(os.environ.get("MAX_MERGE_FILES", 15))
+MAX_TOTAL_UPLOAD_MB = int(os.environ.get("MAX_TOTAL_UPLOAD_MB", 150))
+MAX_TOTAL_UPLOAD_BYTES = MAX_TOTAL_UPLOAD_MB * 1024 * 1024
 MAX_PDF_PAGES = int(os.environ.get("MAX_PDF_PAGES", 1000))
 MAX_OCR_PAGES = int(os.environ.get("MAX_OCR_PAGES", 25))
 MAX_TEXT_CHARS = int(os.environ.get("MAX_TEXT_CHARS", 5_000_000))
@@ -170,8 +174,9 @@ SUBPROCESS_TIMEOUT = int(os.environ.get("SUBPROCESS_TIMEOUT", 180))
 ALLOWED_ORIGINS = [o.strip() for o in os.environ.get(
     "ALLOWED_ORIGINS", "https://infinityconverter.com,https://www.infinityconverter.com"
 ).split(",") if o.strip()]
+PUBLIC_BASE_URL = os.environ.get("PUBLIC_BASE_URL", "https://infinityconverter.com").rstrip("/")
 
-app_max_content = int(MAX_FILE_BYTES * MAX_MERGE_FILES * 1.4) + (5 * 1024 * 1024)
+app_max_content = min(MAX_TOTAL_UPLOAD_BYTES + (10 * 1024 * 1024), 220 * 1024 * 1024)
 Image.MAX_IMAGE_PIXELS = int(os.environ.get("MAX_IMAGE_PIXELS", 100_000_000))
 
 app = Flask(__name__)
@@ -278,11 +283,13 @@ def advanced_fingerprint_key():
     ua_hash = hashlib.md5(user_agent.encode()).hexdigest()[:8]
     return f"{remote_ip}_{ua_hash}"
 
+RATE_LIMIT_STORAGE_URI = os.environ.get("RATE_LIMIT_STORAGE_URI") or os.environ.get("REDIS_URL") or "memory://"
 limiter = Limiter(
     advanced_fingerprint_key,
     app=app,
     default_limits=["1000 per day", "150 per hour"],
-    storage_uri=os.environ.get("RATE_LIMIT_STORAGE_URI", "memory://"),
+    storage_uri=RATE_LIMIT_STORAGE_URI,
+    strategy="fixed-window",
 )
 
 HEAVY_ACTIONS = {
@@ -311,7 +318,12 @@ def set_secure_headers(response):
     response.headers['Cross-Origin-Opener-Policy'] = 'same-origin'
     # كان الـ CSP يُطبّق فقط على مسارات API معينة، فصفحات الموقع العادية (اللي تفحصها أدوات
     # مثل PageSpeed فعليًا) ما كانت تستلم هذا الهيدر إطلاقًا. الآن يُطبّق على كل الاستجابات.
-    response.headers['Content-Security-Policy'] = "default-src 'self' 'unsafe-inline' https: data: blob:; frame-ancestors 'self'"
+    response.headers['Content-Security-Policy'] = ("default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; "
+                                            "frame-ancestors 'self'; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; "
+                                            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; "
+                                            "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com https://pagead2.googlesyndication.com; "
+                                            "connect-src 'self' https:; frame-src 'self' https://googleads.g.doubleclick.net https://tpc.googlesyndication.com; "
+                                            "media-src 'self' blob: data:; upgrade-insecure-requests")
 
     if request.path.startswith('/static/'):
         response.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
@@ -1079,65 +1091,147 @@ for slug, content in RICH_TOOL_CONTENT.items():
         TOOLS_SEO[slug].update(content)
 
 # ==================== دوال الحماية والمساعدات المتقدمة ====================
-def sanitize_file_content(file_bytes):
-    if not file_bytes: return False
-    danger_patterns = [b"<?php", b"<script", b"eval(", b"/bin/sh", b"/bin/bash", b"powershell", b"WScript.Shell"]
-    for p in danger_patterns:
-        if p in file_bytes[:2048]: return False
-    return True
+# ==================== Zero-Trust File Validation ====================
+ALLOWED_UPLOAD_EXTENSIONS = {
+    "pdf", "docx", "doc", "xlsx", "xls", "pptx", "ppt", "csv", "txt", "json", "xml", "html", "htm",
+    "png", "jpg", "jpeg", "gif", "bmp", "tiff", "tif", "webp", "heic", "heif"
+}
 
-def validate_zip_bomb(file_bytes):
-    # Defensive validation for Office/ZIP containers.
+OFFICE_EXTENSIONS = {"docx", "doc", "xlsx", "xls", "pptx", "ppt"}
+IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "bmp", "tiff", "tif", "webp", "heic", "heif"}
+
+DANGEROUS_ARCHIVE_SUFFIXES = {
+    ".exe", ".dll", ".com", ".scr", ".msi", ".bat", ".cmd", ".ps1", ".vbs", ".vbe", ".js", ".jse", ".hta",
+    ".sh", ".bash", ".php", ".asp", ".aspx", ".jsp", ".jar"
+}
+
+
+def sanitize_upload_filename(filename):
+    name = os.path.basename(str(filename or "upload"))
+    name = secure_filename(name) or "upload"
+    return name[:120]
+
+
+def _zip_is_safe(file_bytes, max_entries=5000, max_uncompressed=150 * 1024 * 1024, max_ratio=80):
     try:
         with zipfile.ZipFile(io.BytesIO(file_bytes)) as zf:
             infos = zf.infolist()
-
-            if len(infos) > 5000:
+            if len(infos) > max_entries:
                 return False
-
-            total_uncompressed = 0
-            for file_info in infos:
-                name = file_info.filename.replace("\\", "/")
-                if name.startswith("/") or name.startswith("../") or "/../" in name:
+            total = 0
+            compressed_total = 0
+            for info in infos:
+                name = info.filename.replace("\\", "/")
+                if name.startswith("/") or name.startswith("../") or "/../" in name or "\\x00" in name:
                     return False
-
-                # ZIP encryption flag
-                if file_info.flag_bits & 0x1:
+                if info.flag_bits & 0x1:
                     return False
-
-                total_uncompressed += file_info.file_size
-
-                if file_info.file_size > 50 * 1024 * 1024:
+                # Reject symlink-like entries and executable/script payloads.
+                mode = (info.external_attr >> 16) & 0xFFFF
+                if mode and (mode & 0o170000) == 0o120000:
                     return False
-                if total_uncompressed > 100 * 1024 * 1024:
+                suffix = Path(name.lower()).suffix
+                if suffix in DANGEROUS_ARCHIVE_SUFFIXES:
                     return False
-
-            # Allow normal Office compression while still blocking extreme ZIP bombs.
-            if len(file_bytes) > 0 and (total_uncompressed / len(file_bytes)) > 100:
+                total += max(0, int(info.file_size))
+                compressed_total += max(0, int(info.compress_size))
+                if total > max_uncompressed:
+                    return False
+            if compressed_total and total / compressed_total > max_ratio:
                 return False
-
-        return True
-    except Exception:
-        # Fail closed: malformed ZIPs are not trusted.
+            return True
+    except (zipfile.BadZipFile, OSError, ValueError):
         return False
 
+
+def sanitize_file_content(file_bytes):
+    # Do not scan arbitrary binary files for strings such as <script> — doing so creates
+    # false positives in perfectly valid Office/XML/PDF files. Security is based on
+    # actual container/signature validation plus archive policy instead.
+    return bool(file_bytes)
+
+
+def validate_zip_bomb(file_bytes):
+    return _zip_is_safe(file_bytes)
+
+
 def validate_signature(file_bytes, kind):
-    if not file_bytes: return False
-    if not sanitize_file_content(file_bytes): return False
-    if kind == "pdf": return file_bytes[:5] == b"%PDF-"
+    if not file_bytes or not sanitize_file_content(file_bytes):
+        return False
+    if kind == "pdf":
+        return file_bytes.startswith(b"%PDF-")
     if kind == "zip_office":
-        is_zip = file_bytes[:4] in (b"PK\\x03\\x04", b"PK\\x05\\x06", b"PK\\x07\\x08")
+        is_zip = file_bytes[:4] in (b"PK\x03\x04", b"PK\x05\x06", b"PK\x07\x08")
         if not is_zip or not validate_zip_bomb(file_bytes):
             return False
         try:
             with zipfile.ZipFile(io.BytesIO(file_bytes)) as zf:
-                names = set(zf.namelist())
+                names = {n.replace("\\", "/") for n in zf.namelist()}
                 return "[Content_Types].xml" in names
         except Exception:
             return False
-    if kind == "heic": return b"ftyp" in file_bytes[:32]
-    if kind == "image_any": return any(file_bytes.startswith(s) for s in [b"\x89PNG\r\n\x1a\n", b"\xff\xd8\xff", b"GIF87a", b"GIF89a", b"BM", b"RIFF"]) or b"ftyp" in file_bytes[:32]
+    if kind == "ole_office":
+        return file_bytes.startswith(b"\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1")
+    if kind == "heic":
+        return b"ftyp" in file_bytes[:64] and any(x in file_bytes[:64] for x in (b"heic", b"heix", b"hevc", b"hevx", b"mif1"))
+    if kind == "image_any":
+        return (
+            file_bytes.startswith(b"\x89PNG\r\n\x1a\n")
+            or file_bytes.startswith(b"\xff\xd8\xff")
+            or file_bytes.startswith((b"GIF87a", b"GIF89a"))
+            or file_bytes.startswith(b"BM")
+            or (file_bytes.startswith(b"RIFF") and file_bytes[8:12] == b"WEBP")
+            or (b"ftyp" in file_bytes[:64] and b"heic" in file_bytes[:64])
+        )
     return True
+
+
+def expected_file_kind(action, filename=""):
+    action = str(action or "")
+    ext = Path(str(filename or "")).suffix.lower().lstrip(".")
+    pdf_actions = {
+        "pdf-to-docx", "pdf-to-doc", "pdf-to-excel", "pdf-to-ppt", "pdf-to-csv", "pdf-to-text", "pdf-to-pdf",
+        "split-pdf", "rotate-pdf", "compress-pdf", "protect-pdf", "unlock-pdf", "watermark-pdf", "remove-pdf-pages",
+        "clean-study-sheet", "pdf-page-number", "ink-saver-pdf", "sign-pdf", "remove-blank-pages", "generate-quiz",
+        "redact-pdf", "pdf-compare", "reorder-pdf", "compress-pdf-target", "pdf-to-images", "extract-pdf-images"
+    }
+    office_zip_actions = {"word-to-pdf", "doc-to-docx", "merge-word", "word-to-csv", "excel-to-json", "ppt-to-images"}
+    image_actions = {"compress-image", "image-to-png", "image-to-jpg", "image-to-base64", "image-to-pdf", "image-to-text", "resize-image", "rotate-image", "watermark-image", "strip-exif"}
+    if action in pdf_actions:
+        return "pdf"
+    if action in office_zip_actions:
+        # Legacy .doc/.xls/.ppt use the OLE container; modern Office uses ZIP/OOXML.
+        if ext in {"doc", "xls", "ppt"}:
+            return "ole_office"
+        return "zip_office"
+    if action == "heic-to-jpg":
+        return "heic"
+    if action in image_actions:
+        return "image_any"
+    return None
+
+
+def validate_uploaded_file(raw, filename, action):
+    if not raw:
+        return False, "الملف فارغ"
+    if len(raw) > MAX_FILE_BYTES:
+        return False, f"حجم الملف يتجاوز {MAX_FILE_MB}MB"
+    safe_name = sanitize_upload_filename(filename)
+    ext = Path(safe_name).suffix.lower().lstrip(".")
+    if ext and ext not in ALLOWED_UPLOAD_EXTENSIONS:
+        return False, "امتداد الملف غير مسموح"
+    kind = expected_file_kind(action, safe_name)
+    if kind and not validate_signature(raw, kind):
+        return False, "نوع الملف غير مطابق للعملية أو أن بنية الملف غير آمنة"
+    if ext in OFFICE_EXTENSIONS and raw[:4] == b"PK\x03\x04" and not validate_zip_bomb(raw):
+        return False, "بنية Office المضغوطة غير آمنة أو تالفة"
+    if ext in IMAGE_EXTENSIONS:
+        try:
+            with Image.open(io.BytesIO(raw)) as img:
+                img.verify()
+        except Exception:
+            return False, "ملف الصورة غير صالح"
+    return True, safe_name
 
 def bad_request(message): return jsonify({"error": message}), 400
 def bad_signature_response(is_arabic): return bad_request("نوع الملف غير مطابق للعملية أو يحتوي على بنية غير آمنة." if is_arabic else "File type mismatch or unsafe content.")
@@ -1172,21 +1266,6 @@ def ensure_arabic_font():
             except Exception:
                 continue
 
-    # شبكة أمان أخيرة فقط: تنزيل خط Cairo من GitHub لو ما لقينا أي خط عربي مثبت بالسيرفر
-    font_path = "/tmp/Cairo-Regular.ttf"
-    if not os.path.exists(font_path):
-        try:
-            urllib.request.urlretrieve("https://github.com/googlefonts/cairo/raw/main/fonts/ttf/Cairo-Regular.ttf", font_path)
-        except Exception:
-            pass
-    if os.path.exists(font_path):
-        try:
-            pdfmetrics.registerFont(TTFont(ARABIC_FONT_NAME, font_path))
-            _arabic_font_registered = True
-            return ARABIC_FONT_NAME
-        except Exception:
-            pass
-
     app.logger.warning("لا يوجد خط عربي متاح على السيرفر — النصوص العربية ستفشل بخط Helvetica.")
     return "Helvetica"
 
@@ -1212,7 +1291,7 @@ def normalize_bidi_text(text):
 def is_arabic_text(t): return bool(re.search(r"[\u0600-\u06FF]", str(t or "")))
 def pdf_font_name(is_arabic): return ensure_arabic_font() if is_arabic else "Helvetica"
 def file_response(data_bytes, mimetype, filename): 
-    return send_file(io.BytesIO(data_bytes), mimetype=mimetype, as_attachment=True, download_name=filename)
+    return send_file(io.BytesIO(data_bytes), mimetype=mimetype, as_attachment=True, download_name=sanitize_upload_filename(filename), max_age=0)
 
 def get_file_bytes(p, key="fileBase64"):
     if "_file_bytes" in p and p["_file_bytes"]:
@@ -1987,7 +2066,7 @@ def handle_word_to_pdf(p):
     
     if not file_bytes: 
         return bad_request("يرجى رفع ملف Word")
-    if not validate_signature(file_bytes, "zip_office"):
+    if not validate_signature(file_bytes, "zip_office"): 
         return bad_signature_response(is_arabic)
 
     cc_key = os.environ.get("CLOUDCONVERT_API_KEY")
@@ -2983,8 +3062,7 @@ REGISTRY = {
     "csv-to-word": handle_csv_to_word, "word-to-csv": handle_word_to_csv, "text-to-excel": handle_text_to_excel,
     "json-to-excel": handle_json_to_excel, "excel-to-json": handle_excel_to_json, "csv-to-json": handle_csv_to_json,
     "json-to-csv": handle_json_to_csv, "text-to-csv": handle_text_to_csv, "compress-image": handle_compress_image,
-    "image-to-png": handle_image_to_png, "image-to-jpg": handle_image_to_jpg, "image-to-pdf": handle_image_to_pdf,
-    "heic-to-jpg": handle_heic_to_jpg, "image-to-base64": handle_image_to_base64,
+    "image-to-png": handle_image_to_png, "image-to-jpg": handle_image_to_jpg, "image-to-base64": handle_image_to_base64,
     "image-to-text": handle_image_to_text, "resize-image": handle_resize_image, "rotate-image": handle_rotate_image, 
     "watermark-image": handle_watermark_image, "strip-exif": handle_strip_exif, "base64-tool": handle_base64_tool, 
     "url-encoder": handle_url_encoder, "json-beautifier": handle_json_beautifier, "css-js-minifier": handle_css_js_minifier, 
@@ -3161,7 +3239,6 @@ def get_pdf_preview():
             pix = page.get_pixmap(matrix=fitz.Matrix(0.5, 0.5))
             b64_thumb = base64.b64encode(pix.tobytes("png")).decode("ascii")
             thumbnails.append({"page": i + 1, "image": f"data:image/png;base64,{b64_thumb}"})
-
         total_pages = len(doc)
         doc.close()
         return jsonify({"totalPages": total_pages, "previews": thumbnails})
@@ -3175,14 +3252,20 @@ def create_share_link():
     b64 = data.get("fileBase64")
     filename = data.get("filename", "Converted_Document.pdf")
     if not b64: return bad_request("No file data provided")
-    
-    share_id = secrets.token_urlsafe(16)
+    try:
+        share_bytes = base64.b64decode(str(b64).replace("\n", "").replace("\r", ""), validate=True)
+    except Exception:
+        return bad_request("Invalid file data")
+    if len(share_bytes) > MAX_FILE_BYTES:
+        return bad_request("Share file exceeds the allowed size")
+    filename = sanitize_upload_filename(filename)
+    share_id = secrets.token_urlsafe(24)
     temporary_share_store[share_id] = {
-        "file_bytes": base64.b64decode(b64),
+        "file_bytes": share_bytes,
         "filename": filename,
         "timestamp": time.time()
     }
-    share_url = request.host_url.rstrip("/") + f"/download/{share_id}"
+    share_url = f"{PUBLIC_BASE_URL}/download/{share_id}"
     return jsonify({"share_url": share_url, "expires_in_hours": 24})
 
 @app.route("/download/<share_id>")
@@ -3192,30 +3275,97 @@ def download_shared_file(share_id):
         return "الرابط منتهي الصلاحية أو غير موجود.", 404
     return file_response(item["file_bytes"], "application/octet-stream", item["filename"])
 
+def build_conversion_payload():
+    """Normalize multipart uploads and legacy JSON requests into one internal payload."""
+    is_form = bool(request.content_type and "multipart/form-data" in request.content_type)
+    if is_form:
+        payload = request.form.to_dict(flat=True)
+        incoming = request.files.getlist("files")
+        if not incoming and request.files.get("file"):
+            incoming = [request.files.get("file")]
+        raw_files = []
+        names = []
+        for storage in incoming:
+            if not storage or not storage.filename:
+                continue
+            raw = storage.read(MAX_FILE_BYTES + 1)
+            raw_files.append(raw)
+            names.append(storage.filename)
+        payload["_files_raw"] = raw_files
+        payload["_file_names"] = names
+        payload["_file_bytes"] = raw_files[0] if raw_files else None
+        return payload
+
+    payload = request.get_json(silent=True) or {}
+    if not isinstance(payload, dict):
+        return payload
+    # Backward compatibility for older clients. New clients should use multipart/form-data.
+    raw_files = []
+    names = []
+    if payload.get("filesBase64"):
+        for i, encoded in enumerate(payload.get("filesBase64") or []):
+            try:
+                raw = base64.b64decode(str(encoded).replace("\\n", "").replace("\\r", ""), validate=True)
+            except Exception:
+                raw = b""
+            raw_files.append(raw)
+            names.append((payload.get("fileNames") or ["upload"] * len(raw_files))[i] if i < len(payload.get("fileNames") or []) else "upload")
+    elif payload.get("fileBase64"):
+        try:
+            raw_files = [base64.b64decode(str(payload.get("fileBase64")).replace("\\n", "").replace("\\r", ""), validate=True)]
+        except Exception:
+            raw_files = [b""]
+        names = [payload.get("fileName") or "upload"]
+    payload["_files_raw"] = raw_files
+    payload["_file_names"] = names
+    payload["_file_bytes"] = raw_files[0] if raw_files else None
+    return payload
+
+
+def validate_conversion_payload(payload):
+    if not isinstance(payload, dict):
+        return None, (jsonify({"error": "Invalid request body"}), 400)
+    action = payload.get("action")
+    if not isinstance(action, str) or action not in REGISTRY:
+        return None, (jsonify({"error": "Unknown action"}), 400)
+    text = payload.get("text", "") or ""
+    if not isinstance(text, str):
+        return None, (jsonify({"error": "Invalid text field"}), 400)
+    if len(text) > MAX_TEXT_CHARS:
+        return None, (jsonify({"error": "النص يتجاوز الحد المسموح"}), 413)
+    raw_files = payload.get("_files_raw") or []
+    names = payload.get("_file_names") or []
+    if action in NEEDS_MULTIPLE_FILES:
+        if not raw_files:
+            return None, (jsonify({"error": "يرجى رفع الملفات المطلوبة"}), 400)
+        if len(raw_files) > MAX_MERGE_FILES:
+            return None, (jsonify({"error": f"الحد الأقصى {MAX_MERGE_FILES} ملفات"}), 413)
+    total = sum(len(x) for x in raw_files)
+    if total > MAX_TOTAL_UPLOAD_BYTES:
+        return None, (jsonify({"error": f"إجمالي الرفع يتجاوز {MAX_TOTAL_UPLOAD_MB}MB"}), 413)
+    for i, raw in enumerate(raw_files):
+        name = names[i] if i < len(names) else "upload"
+        ok, safe_name = validate_uploaded_file(raw, name, action)
+        if not ok:
+            return None, (jsonify({"error": safe_name}), 400)
+        names[i] = safe_name
+    payload["_file_names"] = names
+    payload["text"] = text
+    payload["is_arabic"] = payload.get("lang") == "ar" or is_arabic_text(text)
+    return payload, None
+
 @app.route("/convert-async", methods=["POST"])
 @limiter.limit(dynamic_convert_limit)
 def convert_async():
-    is_form = request.content_type and "multipart/form-data" in request.content_type
-    if is_form:
-        payload = request.form.to_dict()
-        files = request.files.getlist("files") or ([request.files.get("file")] if request.files.get("file") else [])
-        payload["_files_raw"] = [f.read() for f in files if f and f.filename]
-        payload["_file_bytes"] = payload["_files_raw"][0] if payload["_files_raw"] else None
-    else:
-        payload = request.get_json(silent=True) or {}
-
-    action = payload.get("action")
-    handler = REGISTRY.get(action)
-    if not handler: return bad_request(f"Unknown action: {action}")
-
+    payload = build_conversion_payload()
+    payload, error = validate_conversion_payload(payload)
+    if error:
+        return error
+    action = payload["action"]
+    handler = REGISTRY[action]
     task_id = str(uuid.uuid4())
-    text = payload.get("text", "") or ""
-    is_arabic = payload.get("lang") == "ar" or is_arabic_text(text)
-    ctx = dict(payload, text=text, is_arabic=is_arabic)
-
     async_task_results[task_id] = {"status": "queued", "progress": 5, "timestamp": time.time()}
-    conversion_queue.put((task_id, handler, [ctx], None))
-
+    conversion_queue.put((task_id, handler, [dict(payload)], None))
     return jsonify({"task_id": task_id, "status": "queued"})
 
 @app.route("/task-status/<task_id>", methods=["GET"])
@@ -3230,55 +3380,25 @@ def get_task_status(task_id):
 def convert():
     if request.headers.get("Sec-Fetch-Mode") and request.headers.get("Sec-Fetch-Mode") not in ("cors", "same-origin", "navigate"):
         return jsonify({"error": "Forbidden request origin"}), 403
-
-    is_form = request.content_type and "multipart/form-data" in request.content_type
-    if is_form:
-        payload = request.form.to_dict()
-        files = request.files.getlist("files") or ([request.files.get("file")] if request.files.get("file") else [])
-        payload["_files_raw"] = [f.read() for f in files if f and f.filename]
-        payload["_file_bytes"] = payload["_files_raw"][0] if payload["_files_raw"] else None
-    else:
-        payload = request.get_json(silent=True) or {}
-
-    if not isinstance(payload, dict): return bad_request("Invalid request body")
-    action = payload.get("action")
-    if not isinstance(action, str): return bad_request("Unknown action")
-    text = payload.get("text", "") or ""
-    if not isinstance(text, str): return bad_request("Invalid text field")
-    if len(text) > MAX_TEXT_CHARS: return bad_request(f"النص يتجاوز الحد المسموح")
-
-    is_arabic = payload.get("lang") == "ar" or is_arabic_text(text)
-    
-    if payload.get("_files_raw"):
-        if action in NEEDS_MULTIPLE_FILES and len(payload["_files_raw"]) > MAX_MERGE_FILES:
-            return jsonify({"error": f"الحد الأقصى {MAX_MERGE_FILES} ملفات"}), 413
-        for raw in payload["_files_raw"]:
-            if len(raw) > MAX_FILE_BYTES:
-                return jsonify({"error": f"حجم الملف أكبر من الحد المسموح"}), 413
-    else:
-        files_to_check = payload.get("filesBase64") or [] if action in NEEDS_MULTIPLE_FILES else ([payload.get("fileBase64")] if payload.get("fileBase64") else [])
-        if action in NEEDS_MULTIPLE_FILES and len(files_to_check) > MAX_MERGE_FILES:
-            return jsonify({"error": f"الحد الأقصى {MAX_MERGE_FILES} ملفات"}), 413
-        for b64 in files_to_check:
-            if b64 and (len(b64) * 3 / 4) > MAX_FILE_BYTES:
-                return jsonify({"error": f"حجم الملف أكبر من الحد المسموح"}), 413
-
-    handler = REGISTRY.get(action)
-    if not handler: return bad_request(f"Unknown action: {action}")
-
+    payload = build_conversion_payload()
+    payload, error = validate_conversion_payload(payload)
+    if error:
+        return error
+    action = payload["action"]
+    handler = REGISTRY[action]
     gc_was_enabled = gc.isenabled()
     if action in HEAVY_ACTIONS and gc_was_enabled:
         gc.disable()
-
+    started = time.time()
     try:
-        ctx = dict(payload, text=text, is_arabic=is_arabic)
-        response = handler(ctx)
-        status_code = response[1] if isinstance(response, tuple) else getattr(response, 'status_code', 200)
+        response = handler(payload)
+        status_code = response[1] if isinstance(response, tuple) else getattr(response, "status_code", 200)
+        app.logger.info("conversion action=%s status=%s duration_ms=%d files=%d", action, status_code, int((time.time()-started)*1000), len(payload.get("_files_raw") or []))
         if status_code == 200:
             increment_files_processed()
         return response
     except Exception:
-        app.logger.exception(f"convert() error for action={action}")
+        app.logger.exception("convert() error for action=%s", action)
         return jsonify({"error": "حدث خطأ أثناء المعالجة. يرجى التأكد من الملف والمحاولة مجدداً."}), 500
     finally:
         if gc_was_enabled:
