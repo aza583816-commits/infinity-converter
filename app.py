@@ -1087,87 +1087,56 @@ def sanitize_file_content(file_bytes):
     return True
 
 def validate_zip_bomb(file_bytes):
-    """Safely inspect ZIP/Office containers without extracting them."""
+    # Defensive validation for Office/ZIP containers.
     try:
-        if not file_bytes or len(file_bytes) > MAX_FILE_BYTES:
-            return False
-
         with zipfile.ZipFile(io.BytesIO(file_bytes)) as zf:
             infos = zf.infolist()
 
-            # Prevent ZIPs containing an extreme number of entries.
             if len(infos) > 5000:
                 return False
 
             total_uncompressed = 0
-            for info in infos:
-                name = info.filename.replace("\\\\", "/")
-
-                # Block path traversal / absolute paths.
+            for file_info in infos:
+                name = file_info.filename.replace("\\", "/")
                 if name.startswith("/") or name.startswith("../") or "/../" in name:
                     return False
 
-                # Encrypted ZIP members should never be sent to conversion tools.
-                if info.flag_bits & 0x1:
+                # ZIP encryption flag
+                if file_info.flag_bits & 0x1:
                     return False
 
-                # Reject absurd individual members.
-                if info.file_size > 100 * 1024 * 1024:
-                    return False
+                total_uncompressed += file_info.file_size
 
-                total_uncompressed += info.file_size
+                if file_info.file_size > 50 * 1024 * 1024:
+                    return False
                 if total_uncompressed > 100 * 1024 * 1024:
                     return False
 
-            # A small legitimate DOCX/XLSX/PPTX can compress heavily, so 15x
-            # was too strict. Keep a much higher ceiling while retaining the
-            # 100 MB total-uncompressed safety cap above.
+            # Allow normal Office compression while still blocking extreme ZIP bombs.
             if len(file_bytes) > 0 and (total_uncompressed / len(file_bytes)) > 100:
                 return False
 
         return True
-    except (zipfile.BadZipFile, OSError, ValueError):
-        return False
     except Exception:
+        # Fail closed: malformed ZIPs are not trusted.
         return False
-
 
 def validate_signature(file_bytes, kind):
-    if not file_bytes:
-        return False
-    if not sanitize_file_content(file_bytes):
-        return False
-
-    if kind == "pdf":
-        return file_bytes[:5] == b"%PDF-"
-
+    if not file_bytes: return False
+    if not sanitize_file_content(file_bytes): return False
+    if kind == "pdf": return file_bytes[:5] == b"%PDF-"
     if kind == "zip_office":
-        is_zip = file_bytes[:4] in (
-            b"PK\\x03\\x04",
-            b"PK\\x05\\x06",
-            b"PK\\x07\\x08",
-        )
-        return is_zip and validate_zip_bomb(file_bytes)
-
-    if kind == "heic":
-        return b"ftyp" in file_bytes[:32]
-
-    if kind == "image_any":
-        return (
-            any(
-                file_bytes.startswith(s)
-                for s in [
-                    b"\\x89PNG\\r\\n\\x1a\\n",
-                    b"\\xff\\xd8\\xff",
-                    b"GIF87a",
-                    b"GIF89a",
-                    b"BM",
-                    b"RIFF",
-                ]
-            )
-            or b"ftyp" in file_bytes[:32]
-        )
-
+        is_zip = file_bytes[:4] in (b"PK\\x03\\x04", b"PK\\x05\\x06", b"PK\\x07\\x08")
+        if not is_zip or not validate_zip_bomb(file_bytes):
+            return False
+        try:
+            with zipfile.ZipFile(io.BytesIO(file_bytes)) as zf:
+                names = set(zf.namelist())
+                return "[Content_Types].xml" in names
+        except Exception:
+            return False
+    if kind == "heic": return b"ftyp" in file_bytes[:32]
+    if kind == "image_any": return any(file_bytes.startswith(s) for s in [b"\x89PNG\r\n\x1a\n", b"\xff\xd8\xff", b"GIF87a", b"GIF89a", b"BM", b"RIFF"]) or b"ftyp" in file_bytes[:32]
     return True
 
 def bad_request(message): return jsonify({"error": message}), 400
