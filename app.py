@@ -1959,11 +1959,7 @@ def handle_word_to_pdf(p):
     
     if not file_bytes: 
         return bad_request("يرجى رفع ملف Word")
-if not validate_signature(file_bytes, "zip_office"):
-    try:
-        if not (file_bytes.startswith(b"PK\x03\x04") or file_bytes.startswith(b"PK\x05\x06") or file_bytes.startswith(b"PK\x07\x08")):
-            return bad_signature_response(is_arabic)
-    except Exception:
+    if not validate_signature(file_bytes, "zip_office"):
         return bad_signature_response(is_arabic)
 
     cc_key = os.environ.get("CLOUDCONVERT_API_KEY")
