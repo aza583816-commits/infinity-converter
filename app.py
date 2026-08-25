@@ -1126,7 +1126,7 @@ def validate_signature(file_bytes, kind):
     if not sanitize_file_content(file_bytes): return False
     if kind == "pdf": return file_bytes[:5] == b"%PDF-"
     if kind == "zip_office":
-        is_zip = file_bytes[:4] in (b"PK\\x03\\x04", b"PK\\x05\\x06", b"PK\\x07\\x08")
+        is_zip = file_bytes[:4] in (b"PK\x03\x04", b"PK\x05\x06", b"PK\x07\x08")
         if not is_zip or not validate_zip_bomb(file_bytes):
             return False
         try:
