@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="{{ 'en' if lang == 'en' else 'ar' }}" dir="{{ 'ltr' if lang == 'en' else 'rtl' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Infinity Converter | أدوات ملفات عملية{% endblock %}</title>
+  <meta name="description" content="{% block description %}أدوات بسيطة وآمنة لتحويل ملفات PDF والمستندات والصور بسرعة.{% endblock %}">
+  <link rel="canonical" href="https://infinityconverter.com{{ request.path }}">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Infinity Converter">
+  <meta property="og:title" content="{% block og_title %}Infinity Converter{% endblock %}">
+  <meta property="og:description" content="أدوات ملفات واضحة لمعالجة ملفاتك اليومية.">
+  <meta property="og:url" content="https://infinityconverter.com{{ request.path }}">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="stylesheet" href="/static/css/app.css">
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="/" aria-label="Infinity Converter - الصفحة الرئيسية">
+        <span class="brand-mark" aria-hidden="true">∞</span>
+        <span><strong>Infinity</strong> Converter</span>
+      </a>
+      <nav class="main-nav" aria-label="التنقل الرئيسي">
+        <a href="/#tools">الأدوات</a>
+        <a href="/#categories">التصنيفات</a>
+        <a href="/about">من نحن</a>
+        <a href="/contact">تواصل معنا</a>
+      </nav>
+      <a class="header-action" href="/#tools">ابدأ الآن <span aria-hidden="true">←</span></a>
+    </div>
+  </header>
+
+  <main>{% block content %}{% endblock %}</main>
+
+  <footer class="site-footer">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a class="brand" href="/"><span class="brand-mark" aria-hidden="true">∞</span><span><strong>Infinity</strong> Converter</span></a>
+        <p>أدوات ملفات عملية، واضحة، ومصممة لإنجاز المهمة دون خطوات زائدة.</p>
+      </div>
+      <div><h2>الأدوات</h2><a href="/#tools">كل الأدوات</a><a href="/#categories">التصنيفات</a></div>
+      <div><h2>عن المنصة</h2><a href="/about">من نحن</a><a href="/contact">تواصل معنا</a></div>
+      <div><h2>معلومات قانونية</h2><a href="/privacy">الخصوصية</a><a href="/terms">الشروط والأحكام</a><a href="/cookies">ملفات تعريف الارتباط</a></div>
+    </div>
+    <div class="footer-bottom"><span>© 2026 Infinity Converter</span><span>تُعالج الملفات وفق الأداة المختارة ولا تُحفظ كمكتبة دائمة.</span></div>
+  </footer>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

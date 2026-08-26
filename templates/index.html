@@ -1,4 +1,41 @@
-<!doctype html>
+{% extends "base.html" %}
+{% block title %}Infinity Converter | أدوات ملفات سريعة وواضحة{% endblock %}
+{% block description %}حوّل ملفات PDF وWord وExcel وPowerPoint والصور باستخدام أدوات مجانية واضحة وسريعة من Infinity Converter.{% endblock %}
+{% block content %}
+<section class="hero-shell">
+  <div class="hero-copy">
+    <span class="kicker">INFINITY CONVERTER <b>2.0</b></span>
+    <h1>كل أدوات ملفاتك،<br><em>في مكان واحد.</em></h1>
+    <p>حوّل ملفاتك اليومية بسرعة، مع خطوات قليلة وواجهة تفهمها من أول مرة.</p>
+    <div class="hero-meta"><span><i aria-hidden="true">✓</i> معالجة محلية للأدوات المتاحة</span><span><i aria-hidden="true">✓</i> حذف الملفات المؤقتة بعد المعالجة</span></div>
+  </div>
+  <div class="hero-search">
+    <label for="tool-search">ما الأداة التي تبحث عنها؟</label>
+    <div class="search-wrap"><span aria-hidden="true">⌕</span><input id="tool-search" type="search" placeholder="ابحث مثل: PDF أو Word" autocomplete="off"></div>
+    <p>اختر أداة للبدء مباشرة.</p>
+  </div>
+</section>
+
+<section class="section-block" id="tools" aria-labelledby="tools-title">
+  <div class="section-heading"><div><span class="kicker">الأدوات المتاحة</span><h2 id="tools-title">أنجزها بخطوات أقل</h2></div><span class="tool-count">{{ tools|length }} أدوات</span></div>
+  <div class="tool-grid" id="tool-list">
+    {% for tool in tools %}<a class="tool-card" href="/tool/{{ tool.id }}" data-search="{{ tool.name_ar }} {{ tool.name_en }} {{ tool.category }}">
+      <span class="tool-icon" aria-hidden="true">{{ tool.icon }}</span><span class="tool-card-copy"><span class="tool-category">{{ tool.category_ar }}</span><h3>{{ tool.name_ar }}</h3><p>{{ tool.description_ar }}</p><span class="tool-link">فتح الأداة <span aria-hidden="true">←</span></span></span>
+    </a>{% endfor %}
+  </div>
+  <p class="empty-state" id="empty-state" hidden>لم نعثر على أداة بهذا الاسم.</p>
+</section>
+
+<section class="category-strip" id="categories" aria-labelledby="category-title">
+  <div><span class="kicker">تصفح حسب المهمة</span><h2 id="category-title">ابدأ من نوع الملف</h2></div>
+  <div class="category-list">{% for category in ['PDF', 'الصور', 'المستندات', 'Excel', 'PowerPoint'] %}<a href="#tools" data-category="{{ category }}">{{ category }} <span aria-hidden="true">↗</span></a>{% endfor %}</div>
+</section>
+
+<section class="trust-section" aria-labelledby="why-title"><div><span class="kicker">مصمم للاستخدام اليومي</span><h2 id="why-title">لماذا Infinity Converter؟</h2></div><div class="trust-points"><article><span>01</span><h3>واضح من البداية</h3><p>اسم الأداة، نوع الملف، والخطوة التالية ظاهرة دون تشتيت.</p></article><article><span>02</span><h3>حماية قبل المعالجة</h3><p>نتحقق من الامتداد والتوقيع وبنية الملف قبل تشغيل المحرك.</p></article><article><span>03</span><h3>قابل للتوسع</h3><p>كل أداة لها صفحة ومسار واضحان، لتصل إلى ما تحتاجه بسرعة.</p></article></div></section>
+
+<section class="faq-section" aria-labelledby="faq-title"><span class="kicker">أسئلة شائعة</span><h2 id="faq-title">قبل أن تبدأ</h2><details><summary>هل أحتاج إلى إنشاء حساب؟</summary><p>لا. يمكنك استخدام الأدوات الحالية مباشرة من المتصفح دون إنشاء حساب.</p></details><details><summary>ما أنواع الملفات المدعومة؟</summary><p>تظهر الامتدادات المدعومة داخل صفحة كل أداة. الأدوات الحالية تدعم PDF وDOCX وXLSX وPPTX وعدة صيغ للصور.</p></details><details><summary>هل يتم الاحتفاظ بالملفات؟</summary><p>تُحفظ الملفات مؤقتًا أثناء المعالجة فقط، ثم تُزال مساحة العمل المؤقتة بعد انتهاء الطلب.</p></details></section>
+{% endblock %}
+{% block scripts %}<script src="/static/js/app.js" defer></script>{% endblock %}<!doctype html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8">

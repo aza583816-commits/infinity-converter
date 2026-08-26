@@ -1,38 +1,26 @@
-const state = { tool: null, tools: [] };
+const $ = (selector) => document.querySelector(selector);
+const form = $("#converter-form");
 
-const $ = (sel) => document.querySelector(sel);
-const statusEl = $("#status");
-const resultEl = $("#result");
-
-async function loadTools() {
-  const response = await fetch("/api/v2/tools", { headers: { Accept: "application/json" } });
-  const data = await response.json();
-  state.tools = data.tools || [];
+const search = $("#tool-search");
+if (search) {
+  const cards = [...document.querySelectorAll(".tool-card")];
+  const emptyState = $("#empty-state");
+  search.addEventListener("input", () => {
+    const query = search.value.trim().toLowerCase();
+    let visible = 0;
+    cards.forEach((card) => {
+      const matches = card.dataset.search.toLowerCase().includes(query);
+      card.hidden = !matches;
+      if (matches) visible += 1;
+    });
+    emptyState.hidden = visible > 0;
+  });
 }
 
-function chooseTool(id) {
-  const tool = state.tools.find((item) => item.id === id);
-  if (!tool) return;
-  state.tool = tool;
-  $("#tool-id").value = id;
-  $("#selected-name").textContent = `${tool.name_ar} — ${tool.name_en}`;
-  statusEl.textContent = `✓ ${tool.category}`;
-  resultEl.textContent = "";
-}
-
-document.addEventListener("click", (event) => {
-  const button = event.target.closest("[data-tool]");
-  if (button) chooseTool(button.dataset.tool);
-});
-
-$("#converter-form").addEventListener("submit", async (event) => {
+if (form) form.addEventListener("submit", async (event) => {
   event.preventDefault();
-
-  if (!state.tool) {
-    resultEl.textContent = "اختر أداة أولاً.";
-    return;
-  }
-
+  const statusEl = $("#status");
+  const resultEl = $("#result");
   const input = $("#files");
   if (!input.files.length) {
     resultEl.textContent = "اختر ملفًا واحدًا على الأقل.";
@@ -40,10 +28,10 @@ $("#converter-form").addEventListener("submit", async (event) => {
   }
 
   const form = new FormData();
-  form.append("tool", state.tool.id);
+  form.append("tool", $("#tool-id").value);
   for (const file of input.files) form.append("files", file);
 
-  statusEl.textContent = "⏳ جارٍ التحقق والمعالجة...";
+  statusEl.textContent = "جارٍ المعالجة...";
   resultEl.textContent = "";
 
   try {
@@ -69,14 +57,10 @@ $("#converter-form").addEventListener("submit", async (event) => {
     anchor.click();
     URL.revokeObjectURL(url);
 
-    statusEl.textContent = "✓ اكتمل";
+    statusEl.textContent = "اكتمل";
     resultEl.textContent = `تم إنشاء الملف: ${filename}`;
   } catch (error) {
-    statusEl.textContent = "✕ فشل";
+    statusEl.textContent = "تعذر الإكمال";
     resultEl.textContent = error.message;
   }
-});
-
-loadTools().catch(() => {
-  resultEl.textContent = "تعذر تحميل قائمة الأدوات.";
 });

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}{{ tool.name_ar }} | Infinity Converter{% endblock %}
+{% block description %}{{ tool.description_ar }} ابدأ باستخدام أداة {{ tool.name_ar }} من Infinity Converter.{% endblock %}
+{% block head %}<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"{{ tool.name_ar }} - Infinity Converter","applicationCategory":"UtilitiesApplication","operatingSystem":"Web browser","url":"https://infinityconverter.com/tool/{{ tool.id }}"}</script>{% endblock %}
+{% block content %}
+<div class="page-wrap"><nav class="breadcrumbs" aria-label="مسار التنقل"><a href="/">الرئيسية</a><span aria-hidden="true">/</span><a href="/#tools">الأدوات</a><span aria-hidden="true">/</span><strong>{{ tool.name_ar }}</strong></nav>
+  <section class="tool-hero"><div><span class="tool-icon large" aria-hidden="true">{{ tool.icon }}</span><span class="kicker">{{ tool.category_ar }}</span><h1>{{ tool.name_ar }}</h1><p>{{ tool.description_ar }}</p></div><div class="tool-facts"><span>المدخلات <b>{{ tool.input_ext|join(', ') }}</b></span><span>الناتج <b>{{ tool.output_ext }}</b></span><span>الحد الأقصى <b>{{ tool.max_files }} ملف</b></span></div></section>
+  <section class="converter-panel" aria-labelledby="workspace-title"><div class="panel-heading"><div><span class="kicker">مساحة العمل</span><h2 id="workspace-title">ارفع ملفك للبدء</h2></div><span id="status" class="status" role="status">جاهز</span></div><form id="converter-form"><input id="tool-id" name="tool" type="hidden" value="{{ tool.id }}"><label class="dropzone" for="files"><span class="upload-symbol" aria-hidden="true">↑</span><strong>اختر ملفًا أو اسحبه هنا</strong><span>الامتدادات المدعومة: {{ tool.input_ext|join(', ') }} · حتى 25MB للملف</span><input id="files" name="files" type="file" accept="{{ tool.input_ext|join(',') }}"{% if tool.max_files > 1 %} multiple{% endif %}></label><button class="primary" type="submit">بدء المعالجة <span aria-hidden="true">←</span></button></form><p id="result" class="result" aria-live="polite"></p></section>
+  <section class="tool-note"><h2>ملاحظات مهمة</h2><p>يتحقق النظام من سلامة الملف قبل المعالجة. احتفظ بنسخة من ملفاتك الأصلية، ولا ترفع مستندات حساسة إلا بعد مراجعة <a href="/privacy">سياسة الخصوصية</a>.</p></section>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/js/app.js" defer></script>{% endblock %}
