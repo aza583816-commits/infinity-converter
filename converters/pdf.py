@@ -3,10 +3,21 @@ from pypdf import PdfReader, PdfWriter
 
 def merge_pdfs(paths: list[Path], output: Path):
     writer = PdfWriter()
+    first_reader = None
     for path in paths:
         reader = PdfReader(str(path))
+        if first_reader is None:
+            first_reader = reader
         for page in reader.pages:
             writer.add_page(page)
+    if first_reader and first_reader.metadata:
+        metadata = {
+            key: value
+            for key, value in first_reader.metadata.items()
+            if key.startswith("/") and value is not None
+        }
+        if metadata:
+            writer.add_metadata(metadata)
     with output.open("wb") as fh:
         writer.write(fh)
 

@@ -81,12 +81,12 @@ def validate_upload(uploaded, *, max_bytes: int, inspect_only: bool, workspace=N
     if len(raw) > max_bytes:
         raise ValueError(f"الحد الأقصى للملف هو {max_bytes // (1024 * 1024)}MB.")
 
-    if not any(raw.startswith(sig) for sig in ALLOWED_SIGNATURES[suffix]):
-        # WebP is RIFF + WEBP.
-        if suffix == ".webp" and not (raw.startswith(b"RIFF") and raw[8:12] == b"WEBP"):
-            raise ValueError("توقيع الملف لا يطابق امتداده.")
-        else:
-            raise ValueError("توقيع الملف لا يطابق امتداده.")
+    if suffix == ".webp":
+        valid_signature = len(raw) >= 12 and raw.startswith(b"RIFF") and raw[8:12] == b"WEBP"
+    else:
+        valid_signature = any(raw.startswith(sig) for sig in ALLOWED_SIGNATURES[suffix])
+    if not valid_signature:
+        raise ValueError("توقيع الملف لا يطابق امتداده.")
 
     details = {"filename": name, "extension": suffix, "size_bytes": len(raw)}
 

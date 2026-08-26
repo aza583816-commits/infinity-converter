@@ -1,94 +1,33 @@
-# V-Infinity Converter — إعادة الهيكلة (v2.0)
+# Infinity Converter
 
-## 🐞 المشكلتان الأساسيتان: التشخيص والحل
+Infinity Converter is a Flask 3 file-conversion service deployed on Railway. The Arabic-first frontend uses Jinja templates and lightweight browser JavaScript; conversion remains behind the existing `/api/v2` API.
 
-### 1) الشاشة السوداء/البيضاء عند التنزيل (خصوصاً على آيباد)
-**السبب الحقيقي:** الكود القديم كان يحوّل ملف الـ `Blob` القادم من السيرفر إلى
-`base64` عبر `FileReader`، ثم يضعه كـ `data:` URI ضخم داخل `<a href="...">`.
-متصفح Safari يفرض حدّاً على طول الـ data-URI، وأي ملف حقيقي (PDF/Word/ZIP) يتجاوزه
-بسهولة → فشل صامت في التنقل → شاشة سوداء/بيضاء فارغة.
+## Conversion architecture
 
-**الحل (`public/assets/js/download.js`):** استخدام `URL.createObjectURL(blob)`
-مباشرة بدل التحويل المزدوج إلى base64 — وهو المسار القياسي المدعوم في كل
-المتصفحات الحديثة، بدون أي حد على الحجم، وأخف على الذاكرة. أضفنا أيضاً كشف
-iOS لعرض رسالة صحيحة عندما يفتح Safari ملف PDF للمعاينة داخل التبويب (سلوك
-نظام طبيعي وليس عطلاً) بدل رسالة "بدأ التنزيل" المضلّلة.
+`ConversionEngine` selects a specialized local engine for each registered tool and validates the output before it is returned:
 
-### 2) الرموز المخربطة عند تحويل Word عربي إلى PDF
-**السبب الحقيقي (وهو الأهم):** الواجهة القديمة كانت تتجاوز السيرفر بالكامل
-لعملية Word→PDF وتنفّذها محلياً بمكتبة **jsPDF** باستخدام خط **Helvetica**
-القياسي — وهذا الخط **لا يدعم أي حروف عربية إطلاقاً** (Unicode خارج نطاقه)،
-فتظهر مربعات/رموز مشوّهة بدل النص العربي. هذا "الحل" كان في الأصل محاولة
-لتفادي مشكلة الشاشة السوداء (المذكورة أعلاه)، لكنه كسر دعم العربية تماماً.
+| Operation | Engine | Validation |
+| --- | --- | --- |
+| PDF merge/split | pypdf | PDF opens and contains at least one page |
+| PNG/JPEG/WebP conversion | Pillow | Image opens, verifies, and has valid dimensions |
+| DOCX/XLSX/PPTX to PDF | LibreOffice headless | PDF opens and contains at least one page |
 
-بالإضافة لذلك، حتى في المسار القديم عبر السيرفر (Puppeteer/Chromium)، بيئات
-السيرفرات السحابية (Vercel/AWS Lambda) **لا تأتي بخطوط عربية مثبّتة على نظام
-التشغيل**، فيرسم Chromium الحروف العربية كمربعات فارغة (tofu) حتى لو وصل
-النص سليماً.
+The engine logs tool, engine, duration, input bytes, output bytes, and failure type without logging file contents or server paths. A bounded semaphore limits concurrent heavy conversions per application process. Temporary workspaces are isolated per request and cleaned by the context manager on success or failure.
 
-**الحل:**
-- حذفنا مسار jsPDF المحلي بالكامل. بعد إصلاح مشكلة التنزيل (البند 1)، لم تعد
-  هناك حاجة لتجاوز السيرفر — كل عمليات Word→PDF تمر الآن عبر مسار واحد موثوق.
-- في `api/_lib/browser.js`: نحمّل خط **Noto Naskh Arabic** من Google Fonts
-  داخل صفحة الطباعة نفسها، وننتظر تحميله فعلياً عبر `document.fonts.ready`
-  قبل أخذ نسخة PDF — بدل `setTimeout(500ms)` ثابت لم يكن كافياً دائماً.
+## Local development
 
----
-
-## 🏗️ البنية الجديدة (Modular Architecture)
-
-```
-v-infinity/
-├── package.json
-├── api/
-│   ├── convert.js              ← Router خفيف فقط (بدون منطق أعمال)
-│   └── _lib/
-│       ├── config.js           ← إعدادات مشتركة (CORS, حجم الملفات, الخطوط)
-│       ├── cors.js             ← التحكم بمصادر الطلبات
-│       ├── validation.js       ← تحقق وتنظيف نصوص مشترك
-│       ├── browser.js          ← Puppeteer/Chromium + إصلاح الخط العربي
-│       ├── documents.js        ← Word / PDF / Excel / PowerPoint
-│       ├── spreadsheets.js     ← Excel / CSV / JSON
-│       ├── images.js           ← ضغط وتحويل الصور / HEIC
-│       ├── devtools.js         ← Base64 / URL / Hash / Minify
-│       └── utilities.js        ← QR / كلمات المرور / الحاسبات
-└── public/
-    ├── index.html               ← هيكل الصفحة فقط
-    ├── manifest.json            ← PWA
-    └── assets/
-        ├── css/styles.css
-        └── js/
-            ├── i18n.js           ← كل النصوص AR/EN وقوائم الأدوات
-            ├── theme.js          ← تبديل المظهر واللغة
-            ├── download.js       ← 🔧 إصلاح التنزيل (البند 1)
-            ├── toast.js          ← إشعارات بديلة عن alert()
-            ├── api.js            ← طبقة اتصال واحدة بالـ backend
-            ├── file-handling.js  ← رفع + Drag & Drop حقيقي + معاينة
-            └── app.js            ← تجميع كل الوحدات وتشغيلها
+```bash
+python -m pip install -r requirements.txt
+PYTHONPATH=. flask --app app run
+PYTHONPATH=. pytest -q
 ```
 
-كل action (مثل `word-to-pdf`) أصبح دالة واحدة داخل ملف خدمتها، ويُسجَّل تلقائياً
-في `registry` بملف `api/convert.js`. إضافة أداة جديدة تعني فقط: إضافة دالة في
-الملف المناسب (أو ملف جديد) — بدون لمس أي كود آخر.
+Office integration tests run when `libreoffice` is installed. The Railway Docker image installs LibreOffice, Arabic and English Tesseract packages, and Noto fonts. No external conversion service or second deployment platform is required.
 
----
+## Limits and security
 
-## 🆕 إضافات استفدنا من الفرصة لإضافتها
-- **Drag & Drop حقيقي**: الواجهة كانت تعرض نص "اسحب وأفلت" لكن الأحداث الفعلية
-  لم تكن مربوطة إطلاقاً — فقط النقر كان يعمل. تم ربطها فعلياً في `file-handling.js`.
-- **نظام Toast** بدل `alert()` الذي يجمّد الصفحة بالكامل.
-- **زرّا "نسخ" و"مسح"** أسفل حقل النتيجة.
-- **PWA manifest** أساسي يدعم زر "أضف للشاشة الرئيسية" الموجود مسبقاً.
+File size, request size, page count, subprocess timeout, allowed origins, and conversion concurrency are controlled by environment variables. Uploads are checked by extension, signature, archive structure, size, and parser validation before conversion. Outputs are checked by extension, MIME type, and a format-aware parser before download.
 
-## 🚀 قابل للتوسّع لاحقاً (لم يُنفَّذ الآن لإبقاء التغيير مركّزاً)
-- Service Worker للعمل دون اتصال (offline shell).
-- تتبّع تحليلات الاستخدام لكل أداة لمعرفة الأكثر استخدامًا.
-- نظام حسابات + سجل تحويلات سابقة (لتحويل الموقع فعلياً إلى SaaS مدفوع).
+## Deployment
 
----
-
-## ⚠️ ملاحظة نشر مهمة
-تأكد أن `api/_lib/browser.js` قادر على الوصول لشبكة الإنترنت من بيئة السيرفر
-(معظم منصات مثل Vercel تسمح بذلك افتراضياً) حتى يستطيع تحميل خط Noto Naskh
-Arabic. إن كانت بيئتك تمنع الوصول الخارجي بالكامل، أخبرني وسأزوّدك بنسخة بديلة
-تُضمّن الخط كملف مرفق (base64) بدل تحميله من الشبكة.
+Railway is the production platform. `railway.toml` uses the Dockerfile builder and `/api/v2/healthz` as the health check. The application does not include a background queue yet because the existing API contract is synchronous and returns the converted file in the same request; the bounded process limit and subprocess timeout prevent unbounded work while a future job API can be added without changing the engine boundary.

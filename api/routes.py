@@ -6,6 +6,7 @@ from core.tool_registry import get_tool, list_tools
 from core.storage import TempWorkspace
 from security.file_guard import validate_upload
 from converters.dispatcher import convert
+from converters.validation import OutputValidationError
 
 api_bp = Blueprint("api", __name__)
 
@@ -55,14 +56,16 @@ def convert_route():
         safe_inputs = []
         try:
             for uploaded in files:
-                safe_inputs.append(
-                    validate_upload(
-                        uploaded,
-                        max_bytes=settings.max_file_bytes,
-                        inspect_only=False,
-                        workspace=workspace.path,
-                    )
+                safe_input = validate_upload(
+                    uploaded,
+                    max_bytes=settings.max_file_bytes,
+                    inspect_only=False,
+                    workspace=workspace.path,
                 )
+                if safe_input["extension"] not in tool.input_ext:
+                    supported = ", ".join(tool.input_ext)
+                    raise ValueError(f"هذه الأداة تقبل الملفات التالية فقط: {supported}.")
+                safe_inputs.append(safe_input)
 
             output_path, output_name, mime = convert(
                 tool=tool,
@@ -73,6 +76,8 @@ def convert_route():
             )
             return send_file(output_path, mimetype=mime, as_attachment=True, download_name=output_name)
 
+        except OutputValidationError:
+            return jsonify(error="تعذر التحقق من الملف الناتج. جرّب العملية مرة أخرى."), 500
         except ValueError as exc:
             return jsonify(error=str(exc)), 400
         except Exception as exc:

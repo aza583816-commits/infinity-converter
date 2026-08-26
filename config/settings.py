@@ -11,6 +11,7 @@ class Settings:
     max_batch_files: int = int(os.getenv("MAX_BATCH_FILES", "20"))
     max_pdf_pages: int = int(os.getenv("MAX_PDF_PAGES", "1000"))
     subprocess_timeout: int = int(os.getenv("SUBPROCESS_TIMEOUT", "180"))
+    max_concurrent_conversions: int = int(os.getenv("MAX_CONCURRENT_CONVERSIONS", "2"))
     asset_cache_seconds: int = int(os.getenv("ASSET_CACHE_SECONDS", "86400"))
     allowed_origins: list[str] = field(default_factory=lambda: _csv(
         "ALLOWED_ORIGINS",
