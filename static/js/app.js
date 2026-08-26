@@ -2,19 +2,33 @@ const $ = (selector) => document.querySelector(selector);
 const form = $("#converter-form");
 
 const search = $("#tool-search");
-if (search) {
-  const cards = [...document.querySelectorAll(".tool-card")];
-  const emptyState = $("#empty-state");
-  search.addEventListener("input", () => {
-    const query = search.value.trim().toLowerCase();
-    let visible = 0;
-    cards.forEach((card) => {
-      const matches = card.dataset.search.toLowerCase().includes(query);
-      card.hidden = !matches;
-      if (matches) visible += 1;
-    });
-    emptyState.hidden = visible > 0;
+const cards = [...document.querySelectorAll(".tool-card")];
+const emptyState = $("#empty-state");
+const categoryLinks = [...document.querySelectorAll("[data-category]")];
+let selectedCategory = "";
+
+function filterCards() {
+  const query = search ? search.value.trim().toLowerCase() : "";
+  let visible = 0;
+  cards.forEach((card) => {
+    const matchesSearch = card.dataset.search.toLowerCase().includes(query);
+    const matchesCategory = !selectedCategory || card.dataset.search.includes(selectedCategory);
+    card.hidden = !matchesSearch || !matchesCategory;
+    if (!card.hidden) visible += 1;
   });
+  if (emptyState) emptyState.hidden = visible > 0;
+}
+
+if (search) search.addEventListener("input", filterCards);
+categoryLinks.forEach((link) => link.addEventListener("click", () => {
+  selectedCategory = link.dataset.category;
+  if (search) search.value = "";
+  filterCards();
+  document.querySelector("#tools").scrollIntoView({ behavior: "smooth" });
+}));
+
+if (cards.length) {
+  filterCards();
 }
 
 if (form) form.addEventListener("submit", async (event) => {

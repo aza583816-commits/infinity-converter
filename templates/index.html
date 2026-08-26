@@ -19,7 +19,7 @@
 <section class="section-block" id="tools" aria-labelledby="tools-title">
   <div class="section-heading"><div><span class="kicker">الأدوات المتاحة</span><h2 id="tools-title">أنجزها بخطوات أقل</h2></div><span class="tool-count">{{ tools|length }} أدوات</span></div>
   <div class="tool-grid" id="tool-list">
-    {% for tool in tools %}<a class="tool-card" href="/tool/{{ tool.id }}" data-search="{{ tool.name_ar }} {{ tool.name_en }} {{ tool.category }}">
+    {% for tool in tools %}<a class="tool-card" href="/tool/{{ tool.id }}" data-search="{{ tool.name_ar }} {{ tool.name_en }} {{ tool.category }} {{ tool.category_ar }} {{ tool.category_en }}">
       <span class="tool-icon" aria-hidden="true">{{ tool.icon }}</span><span class="tool-card-copy"><span class="tool-category">{{ tool.category_ar }}</span><h3>{{ tool.name_ar }}</h3><p>{{ tool.description_ar }}</p><span class="tool-link">فتح الأداة <span aria-hidden="true">←</span></span></span>
     </a>{% endfor %}
   </div>
@@ -35,64 +35,4 @@
 
 <section class="faq-section" aria-labelledby="faq-title"><span class="kicker">أسئلة شائعة</span><h2 id="faq-title">قبل أن تبدأ</h2><details><summary>هل أحتاج إلى إنشاء حساب؟</summary><p>لا. يمكنك استخدام الأدوات الحالية مباشرة من المتصفح دون إنشاء حساب.</p></details><details><summary>ما أنواع الملفات المدعومة؟</summary><p>تظهر الامتدادات المدعومة داخل صفحة كل أداة. الأدوات الحالية تدعم PDF وDOCX وXLSX وPPTX وعدة صيغ للصور.</p></details><details><summary>هل يتم الاحتفاظ بالملفات؟</summary><p>تُحفظ الملفات مؤقتًا أثناء المعالجة فقط، ثم تُزال مساحة العمل المؤقتة بعد انتهاء الطلب.</p></details></section>
 {% endblock %}
-{% block scripts %}<script src="/static/js/app.js" defer></script>{% endblock %}<!doctype html>
-<html lang="ar" dir="rtl">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Infinity Converter 2.0 — أدوات ملفات مجانية</title>
-  <meta name="description" content="منصة Infinity Converter 2.0 لمعالجة وتحويل الملفات بسرعة وأمان، مع بنية حديثة قابلة للتوسع.">
-  <link rel="stylesheet" href="/static/css/app.css">
-</head>
-<body>
-  <header class="site-header">
-    <div>
-      <strong>∞ Infinity Converter</strong>
-      <span>2.0</span>
-    </div>
-    <a href="/api/v2/healthz">Health</a>
-  </header>
-
-  <main class="container">
-    <section class="hero">
-      <span class="eyebrow">NEW ARCHITECTURE</span>
-      <h1>منصة أدوات ملفات مبنية من جديد</h1>
-      <p>محرك موحد للأمان والتحقق والتحويل، مع بنية قابلة لإضافة عشرات الأدوات بدون تضخيم ملف واحد.</p>
-    </section>
-
-    <section class="tool-grid" aria-label="الأدوات">
-      {% for tool in tools %}
-      <article class="tool-card" data-tool="{{ tool.id }}">
-        <h2>{{ tool.name_ar }}</h2>
-        <p>{{ tool.name_en }}</p>
-        <button type="button" class="choose-tool" data-tool="{{ tool.id }}">اختيار</button>
-      </article>
-      {% endfor %}
-    </section>
-
-    <section class="workspace">
-      <div class="workspace-head">
-        <div>
-          <span class="eyebrow">SMART WORKSPACE</span>
-          <h2 id="selected-name">اختر أداة</h2>
-        </div>
-        <span id="status" class="status">جاهز</span>
-      </div>
-
-      <form id="converter-form">
-        <input id="tool-id" name="tool" type="hidden">
-        <label class="dropzone">
-          <input id="files" name="files" type="file" multiple>
-          <strong>ارفع ملفاتك هنا</strong>
-          <span>سيتم التحقق من البنية والتوقيع والحجم قبل المعالجة.</span>
-        </label>
-        <button class="primary" type="submit">بدء التحويل</button>
-      </form>
-
-      <pre id="result" class="result" aria-live="polite"></pre>
-    </section>
-  </main>
-
-  <script src="/static/js/app.js" defer></script>
-</body>
-</html>
+{% block scripts %}<script src="/static/js/app.js" defer></script>{% endblock %}
