@@ -11,4 +11,4 @@
   <section class="related-tools"><div class="section-heading"><div><span class="kicker">قد تحتاج أيضًا</span><h2>أدوات مرتبطة</h2></div></div><div class="related-grid">{% for related in tools if related.id != tool.id and related.category == tool.category %}<a href="/tools/{{ related.slug }}">{{ related.name_ar }} <span aria-hidden="true">←</span></a>{% endfor %}</div></section>
 </div>
 {% endblock %}
-{% block scripts %}<script src="/static/js/app.js" defer></script>{% endblock %}
+{% block scripts %}<script src="/static/js/app.js?v=9b061e0" defer></script>{% endblock %}
