@@ -23,13 +23,15 @@
         <span><strong>Infinity</strong> Converter</span>
       </a>
       <nav class="main-nav" aria-label="التنقل الرئيسي">
-        <a href="/#tools">الأدوات</a>
+        <a href="/tools">الأدوات</a>
         <a href="/#categories">التصنيفات</a>
         <a href="/about">من نحن</a>
         <a href="/contact">تواصل معنا</a>
       </nav>
-      <a class="header-action" href="/#tools">ابدأ الآن <span aria-hidden="true">←</span></a>
+      <a class="header-action" href="/tools">ابدأ الآن <span aria-hidden="true">←</span></a>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-nav"><span aria-hidden="true">☰</span><span class="sr-only">فتح القائمة</span></button>
     </div>
+    <nav class="mobile-nav" id="mobile-nav" aria-label="تنقل الهاتف" hidden><a href="/tools">الأدوات</a><a href="/#categories">التصنيفات</a><a href="/about">من نحن</a><a href="/contact">تواصل معنا</a></nav>
   </header>
 
   <main>{% block content %}{% endblock %}</main>
@@ -40,7 +42,7 @@
         <a class="brand" href="/"><span class="brand-mark" aria-hidden="true">∞</span><span><strong>Infinity</strong> Converter</span></a>
         <p>أدوات ملفات عملية، واضحة، ومصممة لإنجاز المهمة دون خطوات زائدة.</p>
       </div>
-      <div><h2>الأدوات</h2><a href="/#tools">كل الأدوات</a><a href="/#categories">التصنيفات</a></div>
+      <div><h2>الأدوات</h2><a href="/tools">كل الأدوات</a><a href="/#categories">التصنيفات</a></div>
       <div><h2>عن المنصة</h2><a href="/about">من نحن</a><a href="/contact">تواصل معنا</a></div>
       <div><h2>معلومات قانونية</h2><a href="/privacy">الخصوصية</a><a href="/terms">الشروط والأحكام</a><a href="/cookies">ملفات تعريف الارتباط</a></div>
     </div>

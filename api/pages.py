@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from flask import Blueprint, abort, make_response, render_template, send_file
-from core.tool_registry import get_tool, list_tools
+from core.tool_registry import TOOLS, TOOL_META, get_tool, list_tools, tool_url
 
 pages_bp = Blueprint("pages", __name__)
 
@@ -15,12 +15,25 @@ def home():
     return render_template("index.html", tools=list_tools(), lang="ar")
 
 
+@pages_bp.get("/tools")
+def tools_page():
+    return render_template("tools.html", tools=list_tools(), lang="ar")
+
+
 @pages_bp.get("/tool/<tool_id>")
 def tool_page(tool_id):
     tool = get_tool(tool_id)
     if not tool:
         abort(404)
     return render_template("tool.html", tool=tool, tools=list_tools(), lang="ar")
+
+
+@pages_bp.get("/tools/<tool_slug>")
+def tool_slug_page(tool_slug):
+    for tool in TOOLS.values():
+        if TOOL_META[tool.id]["slug"] == tool_slug:
+            return render_template("tool.html", tool=tool, tools=list_tools(), lang="ar")
+    abort(404)
 
 
 INFO_PAGES = {
@@ -49,8 +62,8 @@ def info_page(page_name):
 
 @pages_bp.get("/sitemap.xml")
 def sitemap():
-    urls = ["/", "/about", "/contact", "/privacy", "/terms", "/cookies"]
-    urls.extend(f"/tool/{tool['id']}" for tool in list_tools())
+    urls = ["/", "/tools", "/about", "/contact", "/privacy", "/terms", "/cookies"]
+    urls.extend(tool_url(get_tool(tool["id"])) for tool in list_tools())
     body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
     body += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
     body += "".join(f"<url><loc>https://infinityconverter.com{url}</loc></url>" for url in urls)

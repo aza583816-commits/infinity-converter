@@ -42,8 +42,25 @@ TOOLS = {
     ),
 }
 
+TOOL_META = {
+    "pdf-merge": {"slug": "merge-pdf", "keywords": "اجمع دمج ملفات pdf combine", "popular": True, "sort": 1},
+    "pdf-split": {"slug": "split-pdf", "keywords": "قسم تقسيم ملف pdf split", "popular": True, "sort": 2},
+    "image-to-jpg": {"slug": "image-to-jpg", "keywords": "صورة jpg تحويل image convert", "popular": False, "sort": 3},
+    "image-to-png": {"slug": "image-to-png", "keywords": "صورة png تحويل image convert", "popular": True, "sort": 4},
+    "word-to-pdf": {"slug": "word-to-pdf", "keywords": "وورد word مستند pdf تحويل", "popular": True, "sort": 5},
+    "excel-to-pdf": {"slug": "excel-to-pdf", "keywords": "اكسل excel جدول pdf تحويل", "popular": False, "sort": 6},
+    "ppt-to-pdf": {"slug": "powerpoint-to-pdf", "keywords": "باوربوينت powerpoint عرض شرائح pdf تحويل", "popular": False, "sort": 7},
+}
+
 def get_tool(tool_id: str) -> Tool | None:
     return TOOLS.get(tool_id)
 
 def list_tools():
-    return [asdict(tool) for tool in TOOLS.values()]
+    return [
+        {**asdict(tool), **TOOL_META[tool.id]}
+        for tool in sorted(TOOLS.values(), key=lambda item: TOOL_META[item.id]["sort"])
+    ]
+
+
+def tool_url(tool: Tool) -> str:
+    return f"/tools/{TOOL_META[tool.id]['slug']}"
