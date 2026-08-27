@@ -51,7 +51,7 @@ function renderSuggestions(query) {
   const suggestions = $("#search-suggestions");
   if (!suggestions || !query) { if (suggestions) suggestions.innerHTML = ""; return; }
   const matches = cards.filter((card) => (card.dataset.search || "").toLowerCase().includes(query)).slice(0, 4);
-  suggestions.innerHTML = matches.map((card) => `<a href="${card.href}">${card.querySelector("h3, h2")?.textContent || "فتح الأداة"}<span aria-hidden="true">←</span></a>`).join("");
+  suggestions.innerHTML = matches.map((card) => `<a href="${card.href}">${card.querySelector("h3, h2")?.textContent || i18n("js.open_tool")}<span aria-hidden="true">←</span></a>`).join("");
 }
 if (search) search.addEventListener("input", () => renderSuggestions(search.value.trim().toLowerCase()));
 
@@ -84,7 +84,7 @@ const favoriteButton = $("#favorite-tool");
 function syncFavorite() {
   if (!favoriteButton) return;
   const active = readFavorites().some((item) => item.id === favoriteButton.dataset.toolId);
-  favoriteButton.textContent = `${active ? "★" : "☆"} ${active ? "في المفضلة" : "إضافة للمفضلة"}`;
+  favoriteButton.textContent = active ? favoriteButton.dataset.labelActive : favoriteButton.dataset.labelInactive;
   favoriteButton.classList.toggle("is-favorite", active);
 }
 if (favoriteButton) favoriteButton.addEventListener("click", () => {
@@ -107,9 +107,14 @@ const fileList = $("#file-list");
 const intelligence = $("#file-intelligence");
 let selectedFiles = [];
 function escapeHtml(value) { return value.replace(/[&<>"']/g, (character) => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;", "'":"&#39;"}[character])); }
+const I18N = window.I18N || {};
+function i18n(key, replacements) {
+  const template = I18N[key] || key;
+  return Object.keys(replacements || {}).reduce((text, name) => text.replace(`{${name}}`, replacements[name]), template);
+}
 function renderFiles() {
   if (!fileList) return;
-  fileList.innerHTML = selectedFiles.map((file, index) => `<div class="file-item" draggable="true" data-file-index="${index}"><span>☷ ${escapeHtml(file.name)} <small>${Math.ceil(file.size / 1024)}KB</small></span><button class="file-remove" type="button" data-remove-file="${index}" aria-label="حذف ${escapeHtml(file.name)}">حذف</button></div>`).join("");
+  fileList.innerHTML = selectedFiles.map((file, index) => `<div class="file-item" draggable="true" data-file-index="${index}"><span>☷ ${escapeHtml(file.name)} <small>${Math.ceil(file.size / 1024)}KB</small></span><button class="file-remove" type="button" data-remove-file="${index}" aria-label="${escapeHtml(i18n("js.remove_file", { name: file.name }))}">${escapeHtml(i18n("js.remove"))}</button></div>`).join("");
 }
 function addFiles(files) {
   const maxFiles = Number($("#max-files")?.value || Infinity);
@@ -119,7 +124,11 @@ function addFiles(files) {
     const extensions = [...new Set(selectedFiles.map((file) => file.name.split(".").pop().toUpperCase()))].join(", ");
     intelligence.hidden = false;
     const limited = attemptedCount > maxFiles;
-    intelligence.textContent = limited ? `هذه الأداة تسمح بحد أقصى ${maxFiles} ملف. تم الاحتفاظ بالملفات الأولى فقط.` : selectedFiles.length > 1 ? `يبدو أنك رفعت ${selectedFiles.length} ملفات من نوع ${extensions}. يمكنك ترتيبها ثم بدء المعالجة.` : `تم التعرف على ملف ${extensions} بحجم ${Math.ceil(selectedFiles[0].size / 1024)}KB.`;
+    intelligence.textContent = limited
+      ? i18n("js.limited_files", { max: maxFiles })
+      : selectedFiles.length > 1
+      ? i18n("js.multiple_files", { count: selectedFiles.length, extensions })
+      : i18n("js.single_file", { extension: extensions, size: Math.ceil(selectedFiles[0].size / 1024) });
   }
   renderFiles();
 }
@@ -138,18 +147,18 @@ if (dropzone) {
 const resultPanel = $("#result-panel");
 if (form) form.addEventListener("submit", async (event) => {
   event.preventDefault(); const status = $("#status"); const result = $("#result");
-  if (!selectedFiles.length) { result.textContent = "اختر ملفًا للبدء."; return; }
-  status.textContent = "جارٍ المعالجة…"; result.textContent = "";
+  if (!selectedFiles.length) { result.textContent = i18n("js.choose_file"); return; }
+  status.textContent = i18n("js.processing"); result.textContent = "";
   const payload = new FormData(); payload.append("tool", $("#tool-id").value); selectedFiles.forEach((file) => payload.append("files", file));
   try {
     const response = await fetch("/api/v2/convert", { method: "POST", body: payload }); const type = response.headers.get("content-type") || "";
-    if (!response.ok) { const data = type.includes("application/json") ? await response.json() : {}; throw new Error(data.error || "تعذر إكمال العملية. جرّب ملفًا آخر."); }
+    if (!response.ok) { const data = type.includes("application/json") ? await response.json() : {}; throw new Error(data.error || i18n("js.generic_error")); }
     const blob = await response.blob(); const match = (response.headers.get("content-disposition") || "").match(/filename="?([^\"]+)"?/i); const filename = match ? match[1] : "InfinityConverter-result";
     const url = URL.createObjectURL(blob); const anchor = document.createElement("a"); anchor.href = url; anchor.download = filename; anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
-    saveRecent($("#tool-id").value, document.title.split(" | ")[0]); renderRecent(); status.textContent = "اكتملت العملية"; result.textContent = `الملف الناتج: ${filename} (${Math.ceil(blob.size / 1024)}KB)`; if (resultPanel) resultPanel.hidden = false;
-  } catch (error) { status.textContent = "تعذر الإكمال"; result.textContent = error.message; }
+    saveRecent($("#tool-id").value, document.title.split(" | ")[0]); renderRecent(); status.textContent = i18n("js.completed"); result.textContent = i18n("js.result_label", { filename, size: Math.ceil(blob.size / 1024) }); if (resultPanel) resultPanel.hidden = false;
+  } catch (error) { status.textContent = i18n("js.failed"); result.textContent = error.message; }
 });
-$("#reset-tool")?.addEventListener("click", () => { selectedFiles = []; renderFiles(); if (intelligence) intelligence.hidden = true; if (resultPanel) resultPanel.hidden = true; $("#status").textContent = "جاهز"; $("#result").textContent = ""; });
+$("#reset-tool")?.addEventListener("click", () => { selectedFiles = []; renderFiles(); if (intelligence) intelligence.hidden = true; if (resultPanel) resultPanel.hidden = true; $("#status").textContent = i18n("js.ready"); $("#result").textContent = ""; });
 
 document.addEventListener("keydown", (event) => {
   if ((event.key === "/" && !["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) || ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k")) { event.preventDefault(); search?.focus(); }

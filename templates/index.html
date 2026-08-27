@@ -1,44 +1,44 @@
 {% extends "base.html" %}
-{% block title %}Infinity Converter | أدوات ملفات سريعة وواضحة{% endblock %}
-{% block description %}حوّل ملفات PDF وWord وExcel وPowerPoint والصور باستخدام أدوات مجانية واضحة وسريعة من Infinity Converter.{% endblock %}
+{% block title %}{{ t('home.title') }}{% endblock %}
+{% block description %}{{ t('home.description') }}{% endblock %}
 {% block content %}
 <section class="hero-shell">
   <div class="hero-copy">
-    <span class="kicker">INFINITY CONVERTER <b>2.0</b></span>
-    <h1>كل أدوات ملفاتك،<br><em>في مكان واحد.</em></h1>
-    <p>حوّل ملفاتك اليومية بسرعة، مع خطوات قليلة وواجهة تفهمها من أول مرة.</p>
-    <div class="hero-meta"><span><i aria-hidden="true">✓</i> معالجة محلية للأدوات المتاحة</span><span><i aria-hidden="true">✓</i> حذف الملفات المؤقتة بعد المعالجة</span></div>
+    <span class="kicker">{{ t('home.kicker') }} <b>2.0</b></span>
+    <h1>{{ t('home.h1_line1') }}<br><em>{{ t('home.h1_line2') }}</em></h1>
+    <p>{{ t('home.subtitle') }}</p>
+    <div class="hero-meta"><span><i aria-hidden="true">✓</i> {{ t('home.meta_local') }}</span><span><i aria-hidden="true">✓</i> {{ t('home.meta_privacy') }}</span></div>
   </div>
   <div class="hero-search">
-    <label for="tool-search">ما الأداة التي تبحث عنها؟</label>
-    <div class="search-wrap"><span aria-hidden="true">⌕</span><input id="tool-search" type="search" placeholder="ابحث عن PDF أو Word أو JPG أو ضغط…" autocomplete="off"><kbd>/</kbd></div>
-    <div class="search-suggestions" id="search-suggestions" aria-live="polite"></div><p>اضغط <kbd>Ctrl K</kbd> أو <kbd>/</kbd> لفتح البحث بسرعة.</p>
+    <label for="tool-search">{{ t('home.search_label') }}</label>
+    <div class="search-wrap"><span aria-hidden="true">⌕</span><input id="tool-search" type="search" placeholder="{{ t('home.search_placeholder') }}" autocomplete="off"><kbd>/</kbd></div>
+    <div class="search-suggestions" id="search-suggestions" aria-live="polite"></div><p>{{ t('home.search_hint_before') }} <kbd>Ctrl K</kbd> {{ t('home.search_hint_or') }} <kbd>/</kbd> {{ t('home.search_hint_after') }}</p>
   </div>
 </section>
 
-<section class="quick-section section-block" aria-labelledby="quick-title"><div class="section-heading"><div><span class="kicker">اختصارات مفيدة</span><h2 id="quick-title">ماذا تريد أن تنجز؟</h2></div></div><div class="quick-grid"><a href="/tools/merge-pdf">أريد دمج ملفات <span aria-hidden="true">←</span></a><a href="/tools/image-to-jpg">أريد تحويل صورة <span aria-hidden="true">←</span></a><a href="/tools/word-to-pdf">أريد تحويل ملف إلى PDF <span aria-hidden="true">←</span></a><a href="/tools/split-pdf">أريد تقسيم PDF <span aria-hidden="true">←</span></a></div></section>
+<section class="quick-section section-block" aria-labelledby="quick-title"><div class="section-heading"><div><span class="kicker">{{ t('home.quick_kicker') }}</span><h2 id="quick-title">{{ t('home.quick_title') }}</h2></div></div><div class="quick-grid"><a href="/tools/merge-pdf">{{ t('home.quick_merge') }} <span aria-hidden="true">←</span></a><a href="/tools/image-to-jpg">{{ t('home.quick_image') }} <span aria-hidden="true">←</span></a><a href="/tools/word-to-pdf">{{ t('home.quick_pdf') }} <span aria-hidden="true">←</span></a><a href="/tools/split-pdf">{{ t('home.quick_split') }} <span aria-hidden="true">←</span></a></div></section>
 
-<section class="personal-section section-block" id="personal-tools" hidden aria-labelledby="personal-title"><div class="section-heading"><div><span class="kicker">على هذا الجهاز فقط</span><h2 id="personal-title">أدواتك الأخيرة</h2></div><button class="text-button" id="clear-recent" type="button">مسح السجل</button></div><div class="personal-list" id="recent-list"></div></section>
-<section class="personal-section section-block" id="favorite-tools" hidden aria-labelledby="favorite-title"><div class="section-heading"><div><span class="kicker">اختياراتك</span><h2 id="favorite-title">أدواتي المفضلة</h2></div></div><div class="personal-list" id="favorite-list"></div></section>
+<section class="personal-section section-block" id="personal-tools" hidden aria-labelledby="personal-title"><div class="section-heading"><div><span class="kicker">{{ t('home.personal_kicker') }}</span><h2 id="personal-title">{{ t('home.recent_title') }}</h2></div><button class="text-button" id="clear-recent" type="button">{{ t('home.clear_recent') }}</button></div><div class="personal-list" id="recent-list"></div></section>
+<section class="personal-section section-block" id="favorite-tools" hidden aria-labelledby="favorite-title"><div class="section-heading"><div><span class="kicker">{{ t('home.favorites_kicker') }}</span><h2 id="favorite-title">{{ t('home.favorites_title') }}</h2></div></div><div class="personal-list" id="favorite-list"></div></section>
 
 <section class="section-block" id="tools" aria-labelledby="tools-title">
-  <div class="section-heading"><div><span class="kicker">الأدوات المتاحة</span><h2 id="tools-title">أنجزها بخطوات أقل</h2></div><span class="tool-count">{{ tools|length }} أدوات</span></div>
+  <div class="section-heading"><div><span class="kicker">{{ t('home.tools_kicker') }}</span><h2 id="tools-title">{{ t('home.tools_title') }}</h2></div><span class="tool-count">{{ t('home.tools_count', count=tools|length) }}</span></div>
   <div class="tool-grid" id="tool-list">
     {% for tool in tools %}<a class="tool-card" href="/tools/{{ tool.slug }}" data-search="{{ tool.name_ar }} {{ tool.name_en }} {{ tool.category }} {{ tool.category_ar }} {{ tool.category_en }} {{ tool.keywords }}" data-category="{{ tool.category }}" data-popular="{{ tool.popular|lower }}">
-      <span class="tool-icon" aria-hidden="true">{{ tool.icon }}</span><span class="tool-card-copy"><span class="tool-category">{{ tool.category_ar }}</span><h3>{{ tool.name_ar }}</h3><p>{{ tool.description_ar }}</p><span class="tool-link">فتح الأداة <span aria-hidden="true">←</span></span></span>
+      <span class="tool-icon" aria-hidden="true">{{ tool.icon }}</span><span class="tool-card-copy"><span class="tool-category">{{ tool.category_en if lang == 'en' else tool.category_ar }}</span><h3>{{ tool.name_en if lang == 'en' else tool.name_ar }}</h3><p>{{ tool.description_en if lang == 'en' else tool.description_ar }}</p><span class="tool-link">{{ t('js.open_tool') }} <span aria-hidden="true">←</span></span></span>
     </a>{% endfor %}
   </div>
-  <p class="empty-state" id="empty-state" hidden>لم نعثر على أداة بهذا الاسم.</p>
+  <p class="empty-state" id="empty-state" hidden>{{ t('common.empty_state') }}</p>
 </section>
 
 <section class="category-strip" id="categories" aria-labelledby="category-title">
-  <div><span class="kicker">تصفح حسب المهمة</span><h2 id="category-title">ابدأ من نوع الملف</h2></div>
+  <div><span class="kicker">{{ t('home.category_kicker') }}</span><h2 id="category-title">{{ t('home.category_title') }}</h2></div>
   <div class="category-list">{% for category, label in [('pdf','PDF'),('images','JPG / PNG'),('office','Word / Excel / PowerPoint')] %}<a href="#tools" data-category="{{ category }}">{{ label }} <span aria-hidden="true">↗</span></a>{% endfor %}</div>
 </section>
 
-<section class="trust-section" aria-labelledby="why-title"><div><span class="kicker">مصمم للاستخدام اليومي</span><h2 id="why-title">لماذا Infinity Converter؟</h2></div><div class="trust-points"><article><span>01</span><h3>واضح من البداية</h3><p>اسم الأداة، نوع الملف، والخطوة التالية ظاهرة دون تشتيت.</p></article><article><span>02</span><h3>حماية قبل المعالجة</h3><p>نتحقق من الامتداد والتوقيع وبنية الملف قبل تشغيل المحرك.</p></article><article><span>03</span><h3>قابل للتوسع</h3><p>كل أداة لها صفحة ومسار واضحان، لتصل إلى ما تحتاجه بسرعة.</p></article></div></section>
+<section class="trust-section" aria-labelledby="why-title"><div><span class="kicker">{{ t('home.trust_kicker') }}</span><h2 id="why-title">{{ t('home.trust_title') }}</h2></div><div class="trust-points"><article><span>01</span><h3>{{ t('home.trust1_title') }}</h3><p>{{ t('home.trust1_desc') }}</p></article><article><span>02</span><h3>{{ t('home.trust2_title') }}</h3><p>{{ t('home.trust2_desc') }}</p></article><article><span>03</span><h3>{{ t('home.trust3_title') }}</h3><p>{{ t('home.trust3_desc') }}</p></article></div></section>
 
-<section class="how-section section-block" aria-labelledby="how-title"><span class="kicker">طريقة بسيطة</span><h2 id="how-title">من الرفع إلى النتيجة</h2><div class="how-grid"><div><b>01</b><h3>اختر الأداة</h3><p>ابحث باسم الملف أو المهمة التي تريد إنجازها.</p></div><div><b>02</b><h3>ارفع الملف</h3><p>اختر ملفًا من جهازك أو اسحبه إلى مساحة الرفع.</p></div><div><b>03</b><h3>حمّل النتيجة</h3><p>بعد المعالجة، يظهر الملف الناتج مباشرة للتنزيل.</p></div></div></section>
-<section class="faq-section" aria-labelledby="faq-title"><span class="kicker">أسئلة شائعة</span><h2 id="faq-title">قبل أن تبدأ</h2><details><summary>هل أحتاج إلى إنشاء حساب؟</summary><p>لا. يمكنك استخدام الأدوات الحالية مباشرة من المتصفح دون إنشاء حساب.</p></details><details><summary>هل يتم الاحتفاظ بالملفات؟</summary><p>تُحفظ الملفات مؤقتًا أثناء المعالجة فقط، ثم تُزال مساحة العمل المؤقتة بعد انتهاء الطلب.</p></details><details><summary>هل تعمل الأدوات على الهاتف؟</summary><p>نعم، صُممت الواجهة لتعمل على الهاتف والكمبيوتر، مع زر اختيار ملف واضح.</p></details></section>
+<section class="how-section section-block" aria-labelledby="how-title"><span class="kicker">{{ t('home.how_kicker') }}</span><h2 id="how-title">{{ t('home.how_title') }}</h2><div class="how-grid"><div><b>01</b><h3>{{ t('home.how1_title') }}</h3><p>{{ t('home.how1_desc') }}</p></div><div><b>02</b><h3>{{ t('home.how2_title') }}</h3><p>{{ t('home.how2_desc') }}</p></div><div><b>03</b><h3>{{ t('home.how3_title') }}</h3><p>{{ t('home.how3_desc') }}</p></div></div></section>
+<section class="faq-section" aria-labelledby="faq-title"><span class="kicker">{{ t('home.faq_kicker') }}</span><h2 id="faq-title">{{ t('home.faq_title') }}</h2><details><summary>{{ t('home.faq1_q') }}</summary><p>{{ t('home.faq1_a') }}</p></details><details><summary>{{ t('home.faq2_q') }}</summary><p>{{ t('home.faq2_a') }}</p></details><details><summary>{{ t('home.faq3_q') }}</summary><p>{{ t('home.faq3_a') }}</p></details></section>
 {% endblock %}
 {% block scripts %}<script src="/static/js/app.js?v=9b061e0" defer></script>{% endblock %}

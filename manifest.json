@@ -1,13 +1,13 @@
 {
-  "name": "V-Infinity Converter",
-  "short_name": "V-Infinity",
+  "name": "Infinity Converter",
+  "short_name": "Infinity",
   "start_url": "/",
   "id": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#090d16",
-  "theme_color": "#6366f1",
-  "description": "The Infinite SaaS Conversion Suite — Word, PDF, Excel, images, and developer tools.",
+  "background_color": "#f7f8f4",
+  "theme_color": "#176b4d",
+  "description": "Free PDF, document, and image conversion tools — Word, Excel, PowerPoint, PDF, and images.",
   "icons": [
     {
       "src": "/static/icon-192.png",

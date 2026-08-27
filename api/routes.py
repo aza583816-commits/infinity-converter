@@ -1,7 +1,9 @@
 from flask import Blueprint, jsonify, request, send_file
 from werkzeug.exceptions import RequestEntityTooLarge
+from flask_limiter.errors import RateLimitExceeded
 
 from config.settings import settings
+from core.limiter import limiter
 from core.tool_registry import get_tool, list_tools
 from core.storage import TempWorkspace
 from security.file_guard import validate_upload
@@ -14,7 +16,12 @@ api_bp = Blueprint("api", __name__)
 def too_large(_):
     return jsonify(error="الملف أو الطلب أكبر من الحد المسموح."), 413
 
+@api_bp.errorhandler(RateLimitExceeded)
+def too_many_requests(_):
+    return jsonify(error="عدد الطلبات كبير جدًا. حاول مرة أخرى بعد قليل."), 429
+
 @api_bp.get("/healthz")
+@limiter.exempt
 def healthz():
     return jsonify(status="ok", version="2.0.0")
 
@@ -23,6 +30,7 @@ def tools():
     return jsonify({"version": "2.0.0", "tools": list_tools()})
 
 @api_bp.post("/inspect")
+@limiter.limit("30 per minute")
 def inspect():
     uploaded = request.files.get("file")
     if not uploaded:
@@ -34,6 +42,7 @@ def inspect():
         return jsonify(error=str(exc)), 400
 
 @api_bp.post("/convert")
+@limiter.limit("10 per minute")
 def convert_route():
     tool_id = request.form.get("tool", "").strip()
     tool = get_tool(tool_id)

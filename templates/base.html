@@ -3,13 +3,16 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}Infinity Converter | أدوات ملفات عملية{% endblock %}</title>
-  <meta name="description" content="{% block description %}أدوات بسيطة وآمنة لتحويل ملفات PDF والمستندات والصور بسرعة.{% endblock %}">
+  <title>{% block title %}{{ t('meta.default_title') }}{% endblock %}</title>
+  <meta name="description" content="{% block description %}{{ t('meta.default_description') }}{% endblock %}">
   <link rel="canonical" href="https://infinityconverter.com{{ request.path }}">
+  {% for code in supported_languages %}<link rel="alternate" hreflang="{{ code }}" href="https://infinityconverter.com{{ request.path }}?lang={{ code }}">{% endfor %}
+  <link rel="alternate" hreflang="x-default" href="https://infinityconverter.com{{ request.path }}">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Infinity Converter">
   <meta property="og:title" content="{% block og_title %}Infinity Converter{% endblock %}">
-  <meta property="og:description" content="أدوات ملفات واضحة لمعالجة ملفاتك اليومية.">
+  <meta property="og:description" content="{{ t('meta.og_description') }}">
+  <meta property="og:locale" content="{{ 'en_US' if lang == 'en' else 'ar_AR' }}">
   <meta property="og:url" content="https://infinityconverter.com{{ request.path }}">
   <link rel="manifest" href="/manifest.json?v=9b061e0">
   <link rel="stylesheet" href="/static/css/app.css?v=9b061e0">
@@ -18,20 +21,21 @@
 <body>
   <header class="site-header">
     <div class="header-inner">
-      <a class="brand" href="/" aria-label="Infinity Converter - الصفحة الرئيسية">
+      <a class="brand" href="/" aria-label="{{ t('brand.home_aria') }}">
         <span class="brand-mark" aria-hidden="true">∞</span>
         <span><strong>Infinity</strong> Converter</span>
       </a>
-      <nav class="main-nav" aria-label="التنقل الرئيسي">
-        <a href="/tools">الأدوات</a>
-        <a href="/#categories">التصنيفات</a>
-        <a href="/about">من نحن</a>
-        <a href="/contact">تواصل معنا</a>
+      <nav class="main-nav" aria-label="{{ t('nav.aria_main') }}">
+        <a href="/tools">{{ t('nav.tools') }}</a>
+        <a href="/#categories">{{ t('nav.categories') }}</a>
+        <a href="/about">{{ t('nav.about') }}</a>
+        <a href="/contact">{{ t('nav.contact') }}</a>
+        <a class="lang-switch" href="/set-language/{{ 'en' if lang == 'ar' else 'ar' }}" rel="alternate" hreflang="{{ 'en' if lang == 'ar' else 'ar' }}">{{ t('lang.switch_label') }}</a>
       </nav>
-      <a class="header-action" href="/tools">ابدأ الآن <span aria-hidden="true">←</span></a>
-      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-nav"><span aria-hidden="true">☰</span><span class="sr-only">فتح القائمة</span></button>
+      <a class="header-action" href="/tools">{{ t('nav.cta') }} <span aria-hidden="true">←</span></a>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-nav"><span aria-hidden="true">☰</span><span class="sr-only">{{ t('nav.open_menu') }}</span></button>
     </div>
-    <nav class="mobile-nav" id="mobile-nav" aria-label="تنقل الهاتف" hidden><a href="/tools">الأدوات</a><a href="/#categories">التصنيفات</a><a href="/about">من نحن</a><a href="/contact">تواصل معنا</a></nav>
+    <nav class="mobile-nav" id="mobile-nav" aria-label="{{ t('nav.aria_mobile') }}" hidden><a href="/tools">{{ t('nav.tools') }}</a><a href="/#categories">{{ t('nav.categories') }}</a><a href="/about">{{ t('nav.about') }}</a><a href="/contact">{{ t('nav.contact') }}</a><a href="/set-language/{{ 'en' if lang == 'ar' else 'ar' }}">{{ t('lang.switch_label') }}</a></nav>
   </header>
 
   <main>{% block content %}{% endblock %}</main>
@@ -40,14 +44,15 @@
     <div class="footer-grid">
       <div class="footer-brand">
         <a class="brand" href="/"><span class="brand-mark" aria-hidden="true">∞</span><span><strong>Infinity</strong> Converter</span></a>
-        <p>أدوات ملفات عملية، واضحة، ومصممة لإنجاز المهمة دون خطوات زائدة.</p>
+        <p>{{ t('footer.tagline') }}</p>
       </div>
-      <div><h2>الأدوات</h2><a href="/tools">كل الأدوات</a><a href="/#categories">التصنيفات</a></div>
-      <div><h2>عن المنصة</h2><a href="/about">من نحن</a><a href="/contact">تواصل معنا</a></div>
-      <div><h2>معلومات قانونية</h2><a href="/privacy">الخصوصية</a><a href="/terms">الشروط والأحكام</a><a href="/cookies">ملفات تعريف الارتباط</a></div>
+      <div><h2>{{ t('footer.tools_heading') }}</h2><a href="/tools">{{ t('footer.all_tools') }}</a><a href="/#categories">{{ t('nav.categories') }}</a></div>
+      <div><h2>{{ t('footer.about_heading') }}</h2><a href="/about">{{ t('nav.about') }}</a><a href="/contact">{{ t('nav.contact') }}</a></div>
+      <div><h2>{{ t('footer.legal_heading') }}</h2><a href="/privacy">{{ t('footer.privacy') }}</a><a href="/terms">{{ t('footer.terms') }}</a><a href="/cookies">{{ t('footer.cookies') }}</a></div>
     </div>
-    <div class="footer-bottom"><span>© 2026 Infinity Converter</span><span>تُعالج الملفات وفق الأداة المختارة ولا تُحفظ كمكتبة دائمة.</span></div>
+    <div class="footer-bottom"><span>{{ t('footer.copyright') }}</span><span>{{ t('footer.disclaimer') }}</span></div>
   </footer>
+  <script>window.I18N = {{ i18n_json|safe }};</script>
   {% block scripts %}{% endblock %}
 </body>
 </html>
