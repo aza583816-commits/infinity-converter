@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from flask import Blueprint, abort, make_response, redirect, render_template, request, send_file
-from core.tool_registry import TOOLS, TOOL_META, get_tool, list_tools, tool_url
+from core.tool_registry import TOOLS, TOOL_META, get_tool, list_tools, related_tools, tool_url
 from i18n import LANGUAGE_COOKIE, SUPPORTED_LANGUAGES
 from i18n.translations import INFO_CONTENT
 
@@ -37,14 +37,14 @@ def tool_page(tool_id):
     tool = get_tool(tool_id)
     if not tool:
         abort(404)
-    return render_template("tool.html", tool=tool, tools=list_tools())
+    return render_template("tool.html", tool=tool, tools=list_tools(), related=related_tools(tool_id))
 
 
 @pages_bp.get("/tools/<tool_slug>")
 def tool_slug_page(tool_slug):
     for tool in TOOLS.values():
         if TOOL_META[tool.id]["slug"] == tool_slug:
-            return render_template("tool.html", tool=tool, tools=list_tools())
+            return render_template("tool.html", tool=tool, tools=list_tools(), related=related_tools(tool.id))
     abort(404)
 
 

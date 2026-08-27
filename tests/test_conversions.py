@@ -1,5 +1,6 @@
 import io
 import shutil
+import zipfile
 
 import pytest
 from PIL import Image
@@ -48,7 +49,10 @@ def test_pdf_engines_validate_real_outputs():
         content_type="multipart/form-data",
     )
     assert response.status_code == 200
-    assert len(PdfReader(io.BytesIO(response.data)).pages) == 1
+    with zipfile.ZipFile(io.BytesIO(response.data)) as zf:
+        names = zf.namelist()
+        assert len(names) == 2
+        assert len(PdfReader(io.BytesIO(zf.read(names[0]))).pages) == 1
 
 
 def test_image_engines_validate_real_outputs():

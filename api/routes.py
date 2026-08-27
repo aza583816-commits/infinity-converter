@@ -76,14 +76,21 @@ def convert_route():
                     raise ValueError(f"هذه الأداة تقبل الملفات التالية فقط: {supported}.")
                 safe_inputs.append(safe_input)
 
-            output_path, output_name, mime = convert(
+            result = convert(
                 tool=tool,
                 safe_inputs=safe_inputs,
                 workspace=workspace,
                 timeout=settings.subprocess_timeout,
                 max_pdf_pages=settings.max_pdf_pages,
+                param=request.form.get("param", ""),
             )
-            return send_file(output_path, mimetype=mime, as_attachment=True, download_name=output_name)
+            response = send_file(
+                result.path, mimetype=result.mime, as_attachment=True, download_name=result.name
+            )
+            response.headers["X-Batch-Total"] = str(result.batch_total)
+            response.headers["X-Batch-Succeeded"] = str(result.batch_succeeded)
+            response.headers["X-Batch-Failed"] = str(len(result.batch_failures))
+            return response
 
         except OutputValidationError:
             return jsonify(error="تعذر التحقق من الملف الناتج. جرّب العملية مرة أخرى."), 500

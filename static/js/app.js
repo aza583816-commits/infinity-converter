@@ -150,15 +150,21 @@ if (form) form.addEventListener("submit", async (event) => {
   if (!selectedFiles.length) { result.textContent = i18n("js.choose_file"); return; }
   status.textContent = i18n("js.processing"); result.textContent = "";
   const payload = new FormData(); payload.append("tool", $("#tool-id").value); selectedFiles.forEach((file) => payload.append("files", file));
+  const paramField = $("#param"); if (paramField && paramField.value) payload.append("param", paramField.value);
   try {
     const response = await fetch("/api/v2/convert", { method: "POST", body: payload }); const type = response.headers.get("content-type") || "";
     if (!response.ok) { const data = type.includes("application/json") ? await response.json() : {}; throw new Error(data.error || i18n("js.generic_error")); }
     const blob = await response.blob(); const match = (response.headers.get("content-disposition") || "").match(/filename="?([^\"]+)"?/i); const filename = match ? match[1] : "InfinityConverter-result";
     const url = URL.createObjectURL(blob); const anchor = document.createElement("a"); anchor.href = url; anchor.download = filename; anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
-    saveRecent($("#tool-id").value, document.title.split(" | ")[0]); renderRecent(); status.textContent = i18n("js.completed"); result.textContent = i18n("js.result_label", { filename, size: Math.ceil(blob.size / 1024) }); if (resultPanel) resultPanel.hidden = false;
+    const batchTotal = Number(response.headers.get("X-Batch-Total") || 0);
+    const batchFailed = Number(response.headers.get("X-Batch-Failed") || 0);
+    saveRecent($("#tool-id").value, document.title.split(" | ")[0]); renderRecent(); status.textContent = i18n("js.completed");
+    result.textContent = i18n("js.result_label", { filename, size: Math.ceil(blob.size / 1024) });
+    if (batchTotal > 1) { const summary = document.createElement("p"); summary.className = "batch-summary"; summary.textContent = i18n("js.batch_summary", { total: batchTotal, succeeded: batchTotal - batchFailed, failed: batchFailed }); result.after(summary); }
+    if (resultPanel) resultPanel.hidden = false;
   } catch (error) { status.textContent = i18n("js.failed"); result.textContent = error.message; }
 });
-$("#reset-tool")?.addEventListener("click", () => { selectedFiles = []; renderFiles(); if (intelligence) intelligence.hidden = true; if (resultPanel) resultPanel.hidden = true; $("#status").textContent = i18n("js.ready"); $("#result").textContent = ""; });
+$("#reset-tool")?.addEventListener("click", () => { selectedFiles = []; renderFiles(); if (intelligence) intelligence.hidden = true; if (resultPanel) resultPanel.hidden = true; $("#status").textContent = i18n("js.ready"); $("#result").textContent = ""; document.querySelectorAll(".batch-summary").forEach((el) => el.remove()); });
 
 document.addEventListener("keydown", (event) => {
   if ((event.key === "/" && !["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) || ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k")) { event.preventDefault(); search?.focus(); }

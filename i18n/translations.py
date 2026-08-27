@@ -103,6 +103,8 @@ TRANSLATIONS = {
         "tools.filter_all": "كل الأدوات",
         "tools.filter_images": "الصور",
         "tools.filter_office": "المستندات",
+        "tools.filter_archive": "الأرشيف",
+        "tools.filter_utilities": "أدوات مساعدة",
         "tools.filter_popular": "الأكثر استخدامًا",
         "tools.empty": "لم نعثر على أداة مطابقة.",
 
@@ -149,6 +151,7 @@ TRANSLATIONS = {
         "js.remove_file": "حذف {name}",
         "js.remove": "حذف",
         "js.open_tool": "فتح الأداة",
+        "js.batch_summary": "من أصل {total} ملف: نجح {succeeded}، فشل {failed}. راجع ملف batch-report.json داخل الـZIP لمعرفة السبب.",
 
         "info.about.title": "من نحن",
         "info.about.description": "تعرف إلى Infinity Converter ونهجنا في بناء أدوات ملفات عملية وواضحة.",
@@ -261,6 +264,8 @@ TRANSLATIONS = {
         "tools.filter_all": "All tools",
         "tools.filter_images": "Images",
         "tools.filter_office": "Documents",
+        "tools.filter_archive": "Archive",
+        "tools.filter_utilities": "Utilities",
         "tools.filter_popular": "Most used",
         "tools.empty": "No matching tool was found.",
 
@@ -307,6 +312,7 @@ TRANSLATIONS = {
         "js.remove_file": "Remove {name}",
         "js.remove": "Remove",
         "js.open_tool": "Open tool",
+        "js.batch_summary": "Out of {total} files: {succeeded} succeeded, {failed} failed. Check batch-report.json inside the ZIP for details.",
 
         "info.about.title": "About us",
         "info.about.description": "Learn about Infinity Converter and our approach to building clear, practical file tools.",

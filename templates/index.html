@@ -33,7 +33,7 @@
 
 <section class="category-strip" id="categories" aria-labelledby="category-title">
   <div><span class="kicker">{{ t('home.category_kicker') }}</span><h2 id="category-title">{{ t('home.category_title') }}</h2></div>
-  <div class="category-list">{% for category, label in [('pdf','PDF'),('images','JPG / PNG'),('office','Word / Excel / PowerPoint')] %}<a href="#tools" data-category="{{ category }}">{{ label }} <span aria-hidden="true">↗</span></a>{% endfor %}</div>
+  <div class="category-list">{% for category, label in [('pdf','PDF'),('images','JPG / PNG / WebP'),('office','Word / Excel / PowerPoint'),('ocr','OCR'),('archive','ZIP'),('utilities', t('tools.filter_utilities'))] %}<a href="#tools" data-category="{{ category }}">{{ label }} <span aria-hidden="true">↗</span></a>{% endfor %}</div>
 </section>
 
 <section class="trust-section" aria-labelledby="why-title"><div><span class="kicker">{{ t('home.trust_kicker') }}</span><h2 id="why-title">{{ t('home.trust_title') }}</h2></div><div class="trust-points"><article><span>01</span><h3>{{ t('home.trust1_title') }}</h3><p>{{ t('home.trust1_desc') }}</p></article><article><span>02</span><h3>{{ t('home.trust2_title') }}</h3><p>{{ t('home.trust2_desc') }}</p></article><article><span>03</span><h3>{{ t('home.trust3_title') }}</h3><p>{{ t('home.trust3_desc') }}</p></article></div></section>
