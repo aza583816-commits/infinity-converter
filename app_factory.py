@@ -1,8 +1,5 @@
 import os
 import json
-import secrets
-import uuid
-import logging
 from flask import Flask, g, request
 from flask_compress import Compress
 from flask_cors import CORS
@@ -14,8 +11,6 @@ from i18n.translations import INFO_CONTENT, TRANSLATIONS
 from api.routes import api_bp
 from api.pages import pages_bp
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
-
 
 def create_app() -> Flask:
     app = Flask(
@@ -25,7 +20,6 @@ def create_app() -> Flask:
     )
 
     app.config.update(
-        SECRET_KEY=os.getenv("SECRET_KEY", secrets.token_hex(32)),
         MAX_CONTENT_LENGTH=settings.max_request_bytes,
         JSON_SORT_KEYS=False,
         SEND_FILE_MAX_AGE_DEFAULT=settings.asset_cache_seconds,
@@ -38,9 +32,6 @@ def create_app() -> Flask:
 
     @app.before_request
     def resolve_locale():
-        g.request_id = request.headers.get("X-Request-ID", "")[:80] or uuid.uuid4().hex
-        g.request_started = __import__("time").perf_counter()
-        g.csp_nonce = secrets.token_urlsafe(18)
         lang, is_explicit = resolve_language(request)
         g.lang = lang
         g.lang_is_explicit = is_explicit
@@ -60,14 +51,11 @@ def create_app() -> Flask:
             "info_content": INFO_CONTENT,
             "i18n_json": json.dumps(js_strings, ensure_ascii=False),
             "max_file_mb": settings.max_file_mb,
-            "public_base_url": settings.public_base_url,
-            "csp_nonce": getattr(g, "csp_nonce", ""),
         }
 
     @app.after_request
     def security_headers(response):
         response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["X-Permitted-Cross-Domain-Policies"] = "none"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = (
@@ -77,12 +65,12 @@ def create_app() -> Flask:
         response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
 
         response.headers["Content-Security-Policy"] = (
-            f"default-src 'self'; "
+            "default-src 'self'; "
             "img-src 'self' data:; "
             "style-src 'self' 'unsafe-inline'; "
+            "script-src 'self'; "
             "font-src 'self'; "
             "connect-src 'self'; "
-            f"script-src 'self' 'nonce-{g.csp_nonce}'; "
             "frame-ancestors 'none'; "
             "base-uri 'self'; "
             "form-action 'self'"
@@ -92,10 +80,6 @@ def create_app() -> Flask:
             response.headers["Strict-Transport-Security"] = (
                 "max-age=31536000; includeSubDomains"
             )
-
-        response.headers["X-Request-ID"] = getattr(g, "request_id", "")
-        if request.path.startswith("/api/v2/convert"):
-            response.headers["Cache-Control"] = "no-store, private"
 
         if getattr(g, "lang_is_explicit", False):
             response.set_cookie(
