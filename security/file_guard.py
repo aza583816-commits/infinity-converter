@@ -4,6 +4,7 @@ import io
 import zipfile
 
 from pypdf import PdfReader
+from PIL import Image, UnidentifiedImageError
 
 ALLOWED_SIGNATURES = {
     ".pdf": (b"%PDF-",),
@@ -11,6 +12,10 @@ ALLOWED_SIGNATURES = {
     ".jpg": (b"\xff\xd8\xff",),
     ".jpeg": (b"\xff\xd8\xff",),
     ".webp": (b"RIFF",),
+    # Pillow performs format-aware validation for raster formats whose
+    # container signatures vary (BMP/TIFF).
+    ".bmp": None,
+    ".tiff": None,
     ".docx": (b"PK\x03\x04", b"PK\x05\x06", b"PK\x07\x08"),
     ".xlsx": (b"PK\x03\x04", b"PK\x05\x06", b"PK\x07\x08"),
     ".pptx": (b"PK\x03\x04", b"PK\x05\x06", b"PK\x07\x08"),
@@ -24,6 +29,7 @@ ALLOWED_SIGNATURES = {
 
 # Formats validated by decodability instead of a binary signature.
 TEXT_EXTENSIONS = {".txt", ".csv", ".md", ".html", ".htm"}
+IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tiff"}
 MAX_TEXT_BYTES = 15 * 1024 * 1024
 
 OFFICE_REQUIRED = {
@@ -83,6 +89,8 @@ def _safe_zip(raw: bytes, suffix: str) -> dict:
                     raise ValueError("الملف يحتوي على مسار غير آمن.")
                 if info.flag_bits & 0x1:
                     raise ValueError("الملفات المضغوطة المشفرة غير مدعومة.")
+                if (info.external_attr >> 16) & 0o170000 == 0o120000:
+                    raise ValueError("الملف المضغوط يحتوي على روابط رمزية غير مدعومة.")
                 total_uncompressed += info.file_size
                 if info.file_size > 50 * 1024 * 1024 or total_uncompressed > 100 * 1024 * 1024:
                     raise ValueError("حجم المحتوى بعد فك الضغط يتجاوز الحد الآمن.")
@@ -104,6 +112,18 @@ def _safe_zip(raw: bytes, suffix: str) -> dict:
     except zipfile.BadZipFile as exc:
         raise ValueError("الملف المضغوط تالف أو غير صالح.") from exc
 
+def _validate_image(raw: bytes) -> dict:
+    try:
+        with Image.open(io.BytesIO(raw)) as image:
+            width, height = image.size
+            image_format = (image.format or "").upper()
+            image.verify()
+        if width < 1 or height < 1:
+            raise ValueError("أبعاد الصورة غير صالحة.")
+        return {"width": width, "height": height, "format": image_format, "safe": True}
+    except (UnidentifiedImageError, OSError, ValueError) as exc:
+        raise ValueError("ملف الصورة غير صالح أو تالف.") from exc
+
 def _validate_pdf(raw: bytes, max_pages: int) -> dict:
     try:
         reader = PdfReader(io.BytesIO(raw))
@@ -114,7 +134,7 @@ def _validate_pdf(raw: bytes, max_pages: int) -> dict:
     except Exception as exc:
         raise ValueError("ملف PDF غير صالح أو تالف.") from exc
 
-def validate_upload(uploaded, *, max_bytes: int, inspect_only: bool, workspace=None):
+def validate_upload(uploaded, *, max_bytes: int, inspect_only: bool, workspace=None, max_pdf_pages: int = 1000):
     name = (uploaded.filename or "").strip()
     if not name:
         raise ValueError("اسم الملف غير صالح.")
@@ -127,7 +147,7 @@ def validate_upload(uploaded, *, max_bytes: int, inspect_only: bool, workspace=N
     if len(raw) > max_bytes:
         raise ValueError(f"الحد الأقصى للملف هو {max_bytes // (1024 * 1024)}MB.")
 
-    if suffix in TEXT_EXTENSIONS:
+    if suffix in TEXT_EXTENSIONS or suffix in IMAGE_EXTENSIONS and suffix in {".bmp", ".tiff"}:
         valid_signature = True
     elif suffix == ".webp":
         valid_signature = len(raw) >= 12 and raw.startswith(b"RIFF") and raw[8:12] == b"WEBP"
@@ -139,7 +159,9 @@ def validate_upload(uploaded, *, max_bytes: int, inspect_only: bool, workspace=N
     details = {"filename": name, "extension": suffix, "size_bytes": len(raw)}
 
     if suffix == ".pdf":
-        details.update(_validate_pdf(raw, 1000))
+        details.update(_validate_pdf(raw, max_pdf_pages))
+    elif suffix in IMAGE_EXTENSIONS:
+        details.update(_validate_image(raw))
     elif suffix in OFFICE_REQUIRED:
         details.update(_safe_zip(raw, suffix))
     elif suffix == ".zip":

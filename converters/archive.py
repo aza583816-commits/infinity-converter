@@ -1,4 +1,5 @@
 import zipfile
+import os
 from pathlib import Path
 
 MAX_ENTRIES = 2000
@@ -31,6 +32,9 @@ def extract_zip(source: Path, output_dir: Path) -> list[Path]:
                 raise ValueError("الأرشيف يحتوي على مسار غير آمن.")
             if info.flag_bits & 0x1:
                 raise ValueError("الأرشيفات المشفرة غير مدعومة.")
+            # Do not materialize symlinks from untrusted archives.
+            if (info.external_attr >> 16) & 0o170000 == 0o120000:
+                raise ValueError("الأرشيف يحتوي على روابط رمزية غير مدعومة.")
             total += info.file_size
             if info.file_size > MAX_ENTRY_BYTES or total > MAX_TOTAL_BYTES:
                 raise ValueError("حجم محتوى الأرشيف بعد فك الضغط يتجاوز الحد الآمن.")
@@ -47,7 +51,11 @@ def extract_zip(source: Path, output_dir: Path) -> list[Path]:
                 target = output_dir / f"{Path(name).stem}-{counter}{Path(name).suffix}"
                 counter += 1
             with zf.open(info) as source_fh, target.open("wb") as target_fh:
-                target_fh.write(source_fh.read())
+                while True:
+                    chunk = source_fh.read(1024 * 1024)
+                    if not chunk:
+                        break
+                    target_fh.write(chunk)
             extracted.append(target)
 
     if not extracted:

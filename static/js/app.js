@@ -107,7 +107,8 @@ const fileList = $("#file-list");
 const intelligence = $("#file-intelligence");
 let selectedFiles = [];
 function escapeHtml(value) { return value.replace(/[&<>"']/g, (character) => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;", "'":"&#39;"}[character])); }
-const I18N = window.I18N || {};
+let I18N = {};
+try { I18N = JSON.parse(document.querySelector("#i18n-data")?.content || "{}"); } catch (_) { I18N = {}; }
 function i18n(key, replacements) {
   const template = I18N[key] || key;
   return Object.keys(replacements || {}).reduce((text, name) => text.replace(`{${name}}`, replacements[name]), template);
@@ -118,6 +119,14 @@ function renderFiles() {
 }
 function addFiles(files) {
   const maxFiles = Number($("#max-files")?.value || Infinity);
+  const maxBytes = Number(document.body.dataset.maxFileBytes || 0);
+  const oversized = maxBytes ? files.filter((file) => file.size > maxBytes) : [];
+  if (oversized.length) {
+    if (intelligence) { intelligence.hidden = false; intelligence.textContent = i18n("js.file_too_large", { name: oversized[0].name }); }
+    files = files.filter((file) => file.size <= maxBytes);
+  }
+  const existing = new Set(selectedFiles.map((file) => `${file.name}\u0000${file.size}\u0000${file.lastModified}`));
+  files = files.filter((file) => !existing.has(`${file.name}\u0000${file.size}\u0000${file.lastModified}`));
   const attemptedCount = selectedFiles.length + files.length;
   selectedFiles = [...selectedFiles, ...files].slice(0, maxFiles);
   if (intelligence && selectedFiles.length) {
@@ -169,3 +178,14 @@ $("#reset-tool")?.addEventListener("click", () => { selectedFiles = []; renderFi
 document.addEventListener("keydown", (event) => {
   if ((event.key === "/" && !["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) || ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k")) { event.preventDefault(); search?.focus(); }
 });
+
+// Pricing billing toggle: presentation only until a payment provider is configured.
+const billingButtons = $$('[data-billing]');
+if (billingButtons.length) {
+  const priceNodes = $$('[data-price-monthly]');
+  billingButtons.forEach((button) => button.addEventListener('click', () => {
+    billingButtons.forEach((b) => b.classList.toggle('is-active', b === button));
+    const yearly = button.dataset.billing === 'yearly';
+    priceNodes.forEach((node) => { node.textContent = `$${yearly ? node.dataset.priceYearly : node.dataset.priceMonthly}`; });
+  }));
+}

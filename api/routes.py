@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request, send_file
+from flask import Blueprint, jsonify, request, send_file, g
 from werkzeug.exceptions import RequestEntityTooLarge
 from flask_limiter.errors import RateLimitExceeded
 
@@ -23,11 +23,22 @@ def too_many_requests(_):
 @api_bp.get("/healthz")
 @limiter.exempt
 def healthz():
-    return jsonify(status="ok", version="2.0.0")
+    return jsonify(
+        status="ok",
+        version=settings.app_version,
+        tools=len(list_tools()),
+        limits={
+            "max_file_mb": settings.max_file_mb,
+            "max_batch_files": settings.max_batch_files,
+            "max_pdf_pages": settings.max_pdf_pages,
+            "max_output_mb": settings.max_output_mb,
+            "max_concurrent_conversions": settings.max_concurrent_conversions,
+        },
+    )
 
 @api_bp.get("/tools")
 def tools():
-    return jsonify({"version": "2.0.0", "tools": list_tools()})
+    return jsonify({"version": settings.app_version, "tools": list_tools()})
 
 @api_bp.post("/inspect")
 @limiter.limit("30 per minute")
@@ -36,7 +47,7 @@ def inspect():
     if not uploaded:
         return jsonify(error="لم يتم إرفاق ملف."), 400
     try:
-        result = validate_upload(uploaded, max_bytes=settings.max_file_bytes, inspect_only=True)
+        result = validate_upload(uploaded, max_bytes=settings.max_file_bytes, inspect_only=True, max_pdf_pages=settings.max_pdf_pages)
         return jsonify(result)
     except ValueError as exc:
         return jsonify(error=str(exc)), 400
@@ -70,6 +81,7 @@ def convert_route():
                     max_bytes=settings.max_file_bytes,
                     inspect_only=False,
                     workspace=workspace.path,
+                    max_pdf_pages=settings.max_pdf_pages,
                 )
                 if safe_input["extension"] not in tool.input_ext:
                     supported = ", ".join(tool.input_ext)
@@ -87,9 +99,13 @@ def convert_route():
             response = send_file(
                 result.path, mimetype=result.mime, as_attachment=True, download_name=result.name
             )
+            response.headers["Cache-Control"] = "no-store, private"
+            response.headers["Pragma"] = "no-cache"
             response.headers["X-Batch-Total"] = str(result.batch_total)
             response.headers["X-Batch-Succeeded"] = str(result.batch_succeeded)
             response.headers["X-Batch-Failed"] = str(len(result.batch_failures))
+            response.headers["X-Conversion-Engine"] = result.engine
+            response.headers["X-Request-ID"] = getattr(g, "request_id", "")
             return response
 
         except OutputValidationError:

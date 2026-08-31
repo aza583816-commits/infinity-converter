@@ -6,7 +6,7 @@ def test_health():
     client = app.test_client()
     response = client.get("/api/v2/healthz")
     assert response.status_code == 200
-    assert response.get_json()["version"] == "2.0.0"
+    assert response.get_json()["version"] == "4.0.0"
 
 
 def test_public_tool_pages_and_metadata_routes():

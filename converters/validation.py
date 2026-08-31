@@ -25,9 +25,12 @@ class OutputValidationError(ValueError):
     """Raised when a converter produces an unusable output file."""
 
 
-def validate_output(path: Path, *, expected_extension: str, expected_mime: str) -> dict:
+def validate_output(path: Path, *, expected_extension: str, expected_mime: str, max_bytes: int | None = None) -> dict:
     if not path.exists() or not path.is_file() or path.stat().st_size == 0:
         raise OutputValidationError("لم يُنتج محرك التحويل ملفًا صالحًا.")
+
+    if max_bytes is not None and path.stat().st_size > max_bytes:
+        raise OutputValidationError("حجم الملف الناتج يتجاوز الحد الآمن.")
 
     extension = path.suffix.lower()
     if extension != expected_extension.lower():

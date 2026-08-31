@@ -78,7 +78,7 @@ def _h_images_to_pdf(safe_inputs, output_dir, param):
 
 def _h_zip_create(safe_inputs, output_dir, param):
     output = output_dir / "InfinityConverter-Archive.zip"
-    entries = [(item["path"], item["filename"]) for item in safe_inputs]
+    entries = [(item["path"], Path(item["filename"]).name or "file") for item in safe_inputs]
     archive.create_zip(entries, output)
     return output, "application/zip"
 
@@ -306,7 +306,7 @@ class ConversionEngine:
         try:
             if tool.id in COMBINE_HANDLERS:
                 output, mime = COMBINE_HANDLERS[tool.id](safe_inputs, output_dir, param)
-                details = validate_output(output, expected_extension=output.suffix, expected_mime=mime)
+                details = validate_output(output, expected_extension=output.suffix, expected_mime=mime, max_bytes=settings.max_output_mb * 1024 * 1024)
                 batch_total, batch_succeeded, batch_failures = len(safe_inputs), len(safe_inputs), ()
             else:
                 handler = SINGLE_HANDLERS.get(tool.id)
@@ -368,7 +368,7 @@ class ConversionEngine:
 
         if len(outputs) == 1 and not failures:
             path, mime, _ = outputs[0]
-            details = validate_output(path, expected_extension=path.suffix, expected_mime=mime)
+            details = validate_output(path, expected_extension=path.suffix, expected_mime=mime, max_bytes=settings.max_output_mb * 1024 * 1024)
             return path, mime, details, 1, 1, []
 
         used_names: set = set()
@@ -389,7 +389,7 @@ class ConversionEngine:
 
         zip_path = output_dir / "InfinityConverter-Batch.zip"
         archive.create_zip(entries, zip_path)
-        details = validate_output(zip_path, expected_extension=".zip", expected_mime="application/zip")
+        details = validate_output(zip_path, expected_extension=".zip", expected_mime="application/zip", max_bytes=settings.max_output_mb * 1024 * 1024)
         total = len(outputs) + len(failures)
         return zip_path, "application/zip", details, total, len(outputs), [name for name, _ in failures]
 
