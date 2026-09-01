@@ -229,10 +229,7 @@ if (billingButtons.length) {
     billingButtons.forEach((b) => b.classList.toggle('is-active', b === button));
     const yearly = button.dataset.billing === 'yearly';
     priceNodes.forEach((node) => { node.textContent = `$${yearly ? node.dataset.priceYearly : node.dataset.priceMonthly}`; });
-    $$('[data-billing-yearly]').forEach((node) => {
-      node.textContent = yearly ? node.dataset.billingYearly : '';
-      node.hidden = !yearly;
-    });
+    $$('[data-price-period]').forEach((node) => { node.textContent = yearly ? node.dataset.periodYearly : node.dataset.periodMonthly; });
   }));
 }
 
