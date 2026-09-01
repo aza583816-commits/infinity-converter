@@ -6,19 +6,21 @@ from core.browser_tools import BROWSER_TOOLS, BROWSER_TOOL_MAP
 
 def test_all_browser_tool_routes_render_and_are_in_sitemap():
     client = create_app().test_client()
-    assert len(BROWSER_TOOLS) == 100
+    assert len(BROWSER_TOOLS) == 101
     assert Counter(tool.collection for tool in BROWSER_TOOLS) == {
-        "students": 20,
+        "students": 21,
         "educators": 20,
         "developers": 20,
         "business": 20,
         "everyday": 20,
     }
-    for tool in BROWSER_TOOLS:
-        response = client.get(f"/browser-tools/{tool.id}?lang=ar")
+    for index, tool in enumerate(BROWSER_TOOLS, start=1):
+        address = f"10.1.{index // 250}.{index % 250}"
+        response = client.get(f"/browser-tools/{tool.id}?lang=ar", environ_overrides={"REMOTE_ADDR": address})
         assert response.status_code == 200
         assert tool.name_ar in response.get_data(as_text=True)
-        assert tool.name_en in client.get(f"/browser-tools/{tool.id}?lang=en").get_data(as_text=True)
+        english = client.get(f"/browser-tools/{tool.id}?lang=en", environ_overrides={"REMOTE_ADDR": address})
+        assert tool.name_en in english.get_data(as_text=True)
     sitemap = client.get("/sitemap.xml")
     assert sitemap.status_code == 200
     for tool in BROWSER_TOOLS:
