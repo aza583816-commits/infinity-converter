@@ -28,9 +28,26 @@ function filterCards() {
       || (selectedFilter === "popular" ? card.dataset.popular === "true" : category === selectedFilter);
     card.hidden = !text.includes(query) || !matchesFilter;
     if (!card.hidden) visible += 1;
+    const title = card.querySelector("h3, h2");
+    if (title && title.dataset.originalTitle) {
+      const original = title.dataset.originalTitle;
+      const index = query ? original.toLowerCase().indexOf(query) : -1;
+      title.replaceChildren();
+      if (index < 0) title.textContent = original;
+      else {
+        title.append(document.createTextNode(original.slice(0, index)));
+        const mark = document.createElement("mark");
+        mark.textContent = original.slice(index, index + query.length);
+        title.append(mark, document.createTextNode(original.slice(index + query.length)));
+      }
+    }
   });
   if (emptyState) emptyState.hidden = visible > 0;
 }
+cards.forEach((card) => {
+  const title = card.querySelector("h3, h2");
+  if (title) title.dataset.originalTitle = title.textContent;
+});
 if (search) search.addEventListener("input", filterCards);
 filterTabs.forEach((tab) => tab.addEventListener("click", () => {
   selectedFilter = tab.dataset.filter;
@@ -39,12 +56,17 @@ filterTabs.forEach((tab) => tab.addEventListener("click", () => {
 }));
 filterCards();
 
-const categoryLinks = $$(".category-list [data-category]");
+const categoryLinks = $$('[data-filter]');
 categoryLinks.forEach((link) => link.addEventListener("click", () => {
-  selectedFilter = link.dataset.category;
-  filterTabs.forEach((tab) => tab.classList.toggle("is-active", tab.dataset.filter === selectedFilter));
+  if (!cards.some((card) => card.dataset.category === link.dataset.filter)) return;
+  selectedFilter = link.dataset.filter;
+  categoryLinks.forEach((item) => item.classList.toggle("is-active", item === link));
   filterCards();
-  $("#tools")?.scrollIntoView({ behavior: "smooth" });
+  $("#featured-tools")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}));
+
+$$('[data-scroll-target]').forEach((link) => link.addEventListener("click", () => {
+  $(`#${link.dataset.scrollTarget}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
 }));
 
 function renderSuggestions(query) {
