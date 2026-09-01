@@ -9,7 +9,7 @@ from flask_cors import CORS
 
 from config.settings import settings
 from core.limiter import limiter
-from core.accounts import csrf_token, ensure_account_tables, get_effective_plan, get_user
+from core.accounts import PLAN_LIMITS, csrf_token, ensure_account_tables, get_effective_plan, get_user
 from core.tool_registry import PREMIUM_TOOL_IDS
 from i18n import LANGUAGE_COOKIE, SUPPORTED_LANGUAGES, resolve_language, translator
 from i18n.translations import INFO_CONTENT, TRANSLATIONS
@@ -58,6 +58,8 @@ def create_app() -> Flask:
     @app.context_processor
     def inject_i18n():
         lang = getattr(g, "lang", "ar")
+        current_user = getattr(g, "current_user", None)
+        current_plan = get_effective_plan(current_user["id"]) if current_user else "free"
         js_strings = {
             key: value
             for key, value in TRANSLATIONS.get(lang, TRANSLATIONS["ar"]).items()
@@ -72,8 +74,10 @@ def create_app() -> Flask:
             "max_file_mb": settings.max_file_mb,
             "public_base_url": settings.public_base_url,
             "csp_nonce": getattr(g, "csp_nonce", ""),
-            "current_user": getattr(g, "current_user", None),
-            "current_plan": get_effective_plan(getattr(g, "current_user", {}).get("id")) if getattr(g, "current_user", None) else "free",
+            "current_user": current_user,
+            "current_plan": current_plan,
+            "plan_max_file_mb": min(settings.max_file_mb, PLAN_LIMITS[current_plan]["max_file_mb"]),
+            "plan_max_files": PLAN_LIMITS[current_plan]["max_files"],
             "csrf_token": csrf_token(),
             "premium_tool_ids": PREMIUM_TOOL_IDS,
         }

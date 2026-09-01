@@ -198,13 +198,29 @@ const resultPanel = $("#result-panel");
 if (form) form.addEventListener("submit", async (event) => {
   event.preventDefault(); const status = $("#status"); const result = $("#result");
   if (fileInput && !selectedFiles.length) { result.textContent = i18n("js.choose_file"); return; }
+  const progress = $("#conversion-progress");
+  const submitButton = form.querySelector('[type="submit"]');
+  if (progress) progress.hidden = false;
+  if (submitButton) submitButton.disabled = true;
   status.textContent = i18n("js.processing"); result.textContent = "";
   const payload = new FormData(); payload.append("tool", $("#tool-id").value); selectedFiles.forEach((file) => payload.append("files", file));
   form.querySelectorAll("[name]").forEach((field) => { if (field.name && field.name !== "tool" && field.name !== "files" && field.value) payload.set(field.name, field.value); });
   const paramField = $("#param"); if (paramField && paramField.value) payload.append("param", paramField.value);
   try {
     const response = await fetch("/api/v2/convert", { method: "POST", body: payload }); const type = response.headers.get("content-type") || "";
-    if (!response.ok) { const data = type.includes("application/json") ? await response.json() : {}; throw new Error(data.error || i18n("js.generic_error")); }
+    if (!response.ok) {
+      const data = type.includes("application/json") ? await response.json() : {};
+      if (response.status === 401 || response.status === 403) {
+        result.replaceChildren(document.createTextNode(data.error || i18n("js.generic_error")), document.createElement("br"));
+        const upgrade = document.createElement("a");
+        upgrade.href = "/pricing";
+        upgrade.className = "upgrade-link";
+        upgrade.textContent = i18n("js.upgrade_plans");
+        result.append(upgrade);
+        if (resultPanel) resultPanel.hidden = false;
+      }
+      throw new Error(data.error || i18n("js.generic_error"));
+    }
     const blob = await response.blob(); const match = (response.headers.get("content-disposition") || "").match(/filename="?([^\"]+)"?/i); const filename = match ? match[1] : "InfinityConverter-result";
     const url = URL.createObjectURL(blob); const anchor = document.createElement("a"); anchor.href = url; anchor.download = filename; anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
     const batchTotal = Number(response.headers.get("X-Batch-Total") || 0);
@@ -213,7 +229,8 @@ if (form) form.addEventListener("submit", async (event) => {
     result.textContent = i18n("js.result_label", { filename, size: Math.ceil(blob.size / 1024) });
     if (batchTotal > 1) { const summary = document.createElement("p"); summary.className = "batch-summary"; summary.textContent = i18n("js.batch_summary", { total: batchTotal, succeeded: batchTotal - batchFailed, failed: batchFailed }); result.after(summary); }
     if (resultPanel) resultPanel.hidden = false;
-  } catch (error) { status.textContent = i18n("js.failed"); result.textContent = error.message; }
+  } catch (error) { status.textContent = i18n("js.failed"); if (!result.querySelector(".upgrade-link")) result.textContent = error.message; }
+  finally { if (progress) progress.hidden = true; if (submitButton) submitButton.disabled = false; }
 });
 $("#reset-tool")?.addEventListener("click", () => { selectedFiles = []; renderFiles(); if (intelligence) intelligence.hidden = true; if (resultPanel) resultPanel.hidden = true; $("#status").textContent = i18n("js.ready"); $("#result").textContent = ""; document.querySelectorAll(".batch-summary").forEach((el) => el.remove()); });
 
