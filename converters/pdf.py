@@ -112,6 +112,130 @@ def compress_pdf(path: Path, output: Path):
         doc.close()
 
 
+def optimize_pdf_for_lms(path: Path, output: Path, target: str):
+    profiles = {
+        "small": (180, 120, 45),
+        "medium": (240, 160, 65),
+        "large": (300, 220, 80),
+    }
+    if target not in profiles:
+        raise ValueError("خيار حجم PDF غير صالح.")
+    threshold, dpi, quality = profiles[target]
+    doc = pymupdf.open(str(path))
+    try:
+        doc.rewrite_images(dpi_threshold=threshold, dpi_target=dpi, quality=quality)
+        doc.save(str(output), garbage=4, deflate=True, deflate_images=True, clean=True)
+    finally:
+        doc.close()
+
+
+def make_booklet(path: Path, output: Path, layout: str):
+    if layout not in {"2", "4"}:
+        raise ValueError("اختر صفحتين أو أربع صفحات في الورقة.")
+    source = pymupdf.open(str(path))
+    result = pymupdf.open()
+    try:
+        if source.page_count < 1:
+            raise ValueError("ملف PDF لا يحتوي على صفحات.")
+        if layout == "2":
+            total = ((source.page_count + 3) // 4) * 4
+            imposed = []
+            for sheet in range(total // 4):
+                imposed.extend(((total - 1) - sheet * 2, sheet * 2, sheet * 2 + 1, (total - 2) - sheet * 2))
+            slots = ((36, 36, 401, 559), (441, 36, 806, 559))
+            for index in range(0, len(imposed), 2):
+                page = result.new_page(width=842, height=595)
+                for slot, source_index in zip(slots, imposed[index:index + 2]):
+                    if source_index < source.page_count:
+                        page.show_pdf_page(pymupdf.Rect(slot), source, source_index, keep_proportion=True)
+        else:
+            slots = ((30, 30, 287, 401), (308, 30, 565, 401), (30, 441, 287, 812), (308, 441, 565, 812))
+            for start in range(0, source.page_count, 4):
+                page = result.new_page(width=595, height=842)
+                for slot, source_index in zip(slots, range(start, min(start + 4, source.page_count))):
+                    page.show_pdf_page(pymupdf.Rect(slot), source, source_index, keep_proportion=True)
+        result.save(str(output), garbage=4, deflate=True)
+    finally:
+        result.close()
+        source.close()
+
+
+def _english_text(value: str, label: str, *, required: bool = False, limit: int = 160) -> str:
+    value = (value or "").strip()
+    if required and not value:
+        raise ValueError(f"{label} مطلوب.")
+    if len(value) > limit or any(ord(char) > 127 for char in value):
+        raise ValueError(f"{label} يجب أن يكون نصًا إنجليزيًا قصيرًا.")
+    return value
+
+
+def create_assignment_cover(output: Path, options: dict):
+    course = _english_text(options.get("course"), "Course", required=True)
+    assignment = _english_text(options.get("assignment"), "Assignment title", required=True)
+    student = _english_text(options.get("student"), "Student name", required=True)
+    instructor = _english_text(options.get("instructor"), "Instructor")
+    due_date = _english_text(options.get("due_date"), "Due date")
+    doc = pymupdf.open()
+    try:
+        page = doc.new_page(width=595, height=842)
+        page.draw_rect(pymupdf.Rect(48, 48, 547, 794), color=(0.08, 0.18, 0.32), width=1.5)
+        page.insert_textbox(pymupdf.Rect(72, 130, 523, 225), "ASSIGNMENT COVER PAGE", fontname="helv", fontsize=24, align=pymupdf.TEXT_ALIGN_CENTER)
+        lines = [("Course", course), ("Assignment", assignment), ("Student", student), ("Instructor", instructor or "-"), ("Due date", due_date or "-")]
+        top = 305
+        for label, value in lines:
+            page.insert_text((100, top), f"{label}:", fontname="helv", fontsize=12)
+            page.insert_textbox(pymupdf.Rect(205, top - 16, 490, top + 8), value, fontname="helv", fontsize=12)
+            page.draw_line((100, top + 14), (490, top + 14), color=(0.55, 0.58, 0.62), width=0.5)
+            top += 68
+        doc.save(str(output), garbage=4, deflate=True)
+    finally:
+        doc.close()
+
+
+def create_omr_sheet(output: Path, question_count: int):
+    if question_count not in {20, 50, 100}:
+        raise ValueError("عدد الأسئلة غير صالح.")
+    doc = pymupdf.open()
+    try:
+        page = doc.new_page(width=595, height=842)
+        page.insert_textbox(pymupdf.Rect(50, 35, 545, 65), "OMR ANSWER SHEET", fontname="helv", fontsize=17, align=pymupdf.TEXT_ALIGN_CENTER)
+        page.insert_text((55, 92), "Name:", fontname="helv", fontsize=10)
+        page.draw_line((95, 94), (300, 94), color=(0, 0, 0), width=0.7)
+        page.insert_text((330, 92), "ID:", fontname="helv", fontsize=10)
+        page.draw_line((355, 94), (540, 94), color=(0, 0, 0), width=0.7)
+        rows_per_column = (question_count + 1) // 2
+        for number in range(1, question_count + 1):
+            column = 0 if number <= rows_per_column else 1
+            row = number - 1 if column == 0 else number - rows_per_column - 1
+            x = 65 + column * 270
+            y = 130 + row * min(13, 620 / max(rows_per_column, 1))
+            page.insert_text((x, y + 3), str(number), fontname="helv", fontsize=7)
+            for choice in range(4):
+                center = pymupdf.Point(x + 35 + choice * 29, y)
+                page.draw_circle(center, 6, color=(0, 0, 0), width=0.7)
+                page.insert_text((center.x - 2.4, y + 2.5), "ABCD"[choice], fontname="helv", fontsize=5)
+        doc.save(str(output), garbage=4, deflate=True)
+    finally:
+        doc.close()
+
+
+def create_certificate(output: Path, name: str, title: str, issuer: str):
+    name = _english_text(name, "CSV name", required=True)
+    title = _english_text(title, "Certificate title", required=True)
+    issuer = _english_text(issuer, "Issuer")
+    doc = pymupdf.open()
+    try:
+        page = doc.new_page(width=842, height=595)
+        page.draw_rect(pymupdf.Rect(28, 28, 814, 567), color=(0.65, 0.48, 0.12), width=3)
+        page.insert_textbox(pymupdf.Rect(85, 105, 757, 165), title.upper(), fontname="helv", fontsize=28, align=pymupdf.TEXT_ALIGN_CENTER)
+        page.insert_textbox(pymupdf.Rect(100, 205, 742, 235), "This certificate is presented to", fontname="helv", fontsize=15, align=pymupdf.TEXT_ALIGN_CENTER)
+        page.insert_textbox(pymupdf.Rect(80, 260, 762, 320), name, fontname="helv", fontsize=30, align=pymupdf.TEXT_ALIGN_CENTER)
+        page.insert_textbox(pymupdf.Rect(100, 390, 742, 420), f"Issued by {issuer or 'Infinity Converter'}", fontname="helv", fontsize=13, align=pymupdf.TEXT_ALIGN_CENTER)
+        doc.save(str(output), garbage=4, deflate=True)
+    finally:
+        doc.close()
+
+
 def pdf_to_images(path: Path, output_dir: Path, fmt: str, dpi: int = 150) -> list[Path]:
     fmt = fmt.upper()
     ext = "jpg" if fmt == "JPEG" else fmt.lower()

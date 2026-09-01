@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import ast
-import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -23,8 +22,26 @@ def tool_ids() -> set[str]:
 
 
 def handler_ids() -> set[str]:
-    text = (ROOT / "converters/engine.py").read_text(encoding="utf-8")
-    return set(re.findall(r'"([^"]+)": _h_[A-Za-z0-9_]+', text))
+    tree = ast.parse((ROOT / "converters/engine.py").read_text(encoding="utf-8"))
+    ids = set()
+    for node in tree.body:
+        if isinstance(node, ast.Assign) and any(
+            isinstance(target, ast.Name) and target.id in {"COMBINE_HANDLERS", "SINGLE_HANDLERS"}
+            for target in node.targets
+        ) and isinstance(node.value, ast.Dict):
+            ids.update(
+                key.value for key in node.value.keys
+                if isinstance(key, ast.Constant) and isinstance(key.value, str)
+            )
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Compare) or not isinstance(node.left, ast.Attribute):
+            continue
+        if not isinstance(node.left.value, ast.Name) or node.left.value.id != "tool" or node.left.attr != "id":
+            continue
+        for comparator in node.comparators:
+            if isinstance(comparator, ast.Constant) and isinstance(comparator.value, str):
+                ids.add(comparator.value)
+    return ids
 
 
 def main() -> int:

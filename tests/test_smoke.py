@@ -1,5 +1,5 @@
 from app_factory import create_app
-from core.tool_registry import list_tools
+from core.tool_registry import AUDIENCE_COLLECTIONS, list_tools
 
 def test_health():
     app = create_app()
@@ -17,5 +17,7 @@ def test_public_tool_pages_and_metadata_routes():
         assert response.status_code == 200
         assert tool["name_ar"].encode() in response.data
     assert client.get("/tools").status_code == 200
+    for collection_id in AUDIENCE_COLLECTIONS:
+        assert client.get(f"/collections/{collection_id}").status_code == 200
     assert client.get("/sitemap.xml").status_code == 200
     assert client.get("/manifest.json").status_code == 200

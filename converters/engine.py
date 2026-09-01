@@ -2,6 +2,7 @@ import json
 import logging
 import threading
 import time
+import csv
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -89,7 +90,6 @@ COMBINE_HANDLERS = {
     "zip-create": _h_zip_create,
 }
 
-
 # --- Single-file handlers: one input can produce one or many outputs.
 # Multiple outputs (or multiple input files) are aggregated into a ZIP by
 # the engine, so every handler just returns the files it produced. ---
@@ -126,6 +126,18 @@ def _h_pdf_rotate(safe_input, output_dir, param, timeout, max_pdf_pages):
 def _h_pdf_compress(safe_input, output_dir, param, timeout, max_pdf_pages):
     out = output_dir / f"{_safe_stem(safe_input['filename'])}-compressed.pdf"
     pdf.compress_pdf(safe_input["path"], out)
+    return [(out, "application/pdf")]
+
+
+def _h_pdf_booklet(safe_input, output_dir, param, timeout, max_pdf_pages, options):
+    out = output_dir / f"{_safe_stem(safe_input['filename'])}-booklet.pdf"
+    pdf.make_booklet(safe_input["path"], out, options["layout"])
+    return [(out, "application/pdf")]
+
+
+def _h_lms_pdf_optimizer(safe_input, output_dir, param, timeout, max_pdf_pages, options):
+    out = output_dir / f"{_safe_stem(safe_input['filename'])}-lms-optimized.pdf"
+    pdf.optimize_pdf_for_lms(safe_input["path"], out, options["target"])
     return [(out, "application/pdf")]
 
 
@@ -251,12 +263,72 @@ def _h_file_info(safe_input, output_dir, param, timeout, max_pdf_pages):
     return [(out, "application/json")]
 
 
+def _h_social_resize(safe_input, output_dir, param, timeout, max_pdf_pages, options):
+    out = output_dir / f"{_safe_stem(safe_input['filename'])}-social.png"
+    images.resize_for_social(safe_input["path"], out, options["preset"], options["fit"])
+    return [(out, "image/png")]
+
+
+def _h_question_bank(safe_input, output_dir, param, timeout, max_pdf_pages, options):
+    out = output_dir / f"{_safe_stem(safe_input['filename'])}-gift.txt"
+    utility.text_to_gift(safe_input["path"], out)
+    return [(out, "text/plain")]
+
+
+def _h_bulk_certificates(safe_input, output_dir, param, timeout, max_pdf_pages, options):
+    certificates = []
+    try:
+        with safe_input["path"].open("r", encoding="utf-8", newline="") as handle:
+            reader = csv.DictReader(handle, strict=True)
+            if not reader.fieldnames or "name" not in reader.fieldnames:
+                raise ValueError("يجب أن يحتوي CSV على عمود باسم name.")
+            for index, row in enumerate(reader, start=1):
+                if index > 500:
+                    raise ValueError("الحد الأقصى هو 500 شهادة في العملية الواحدة.")
+                certificate = output_dir / f"certificate-{index:03d}.pdf"
+                pdf.create_certificate(certificate, (row.get("name") or "").strip(), options["title"], options.get("issuer", ""))
+                certificates.append((certificate, certificate.name))
+    except csv.Error as exc:
+        raise ValueError("ملف CSV غير صالح.") from exc
+    if not certificates:
+        raise ValueError("لا يحتوي CSV على أسماء شهادات.")
+    out = output_dir / "InfinityConverter-Certificates.zip"
+    archive.create_zip(certificates, out)
+    return [(out, "application/zip")]
+
+
+def _h_assignment_cover(output_dir, options):
+    out = output_dir / "InfinityConverter-Assignment-Cover.pdf"
+    pdf.create_assignment_cover(out, options)
+    return out, "application/pdf"
+
+
+def _h_omr_sheet(output_dir, options):
+    out = output_dir / "InfinityConverter-OMR-Sheet.pdf"
+    pdf.create_omr_sheet(out, int(options["questions"]))
+    return out, "application/pdf"
+
+
+def _h_quote_graphic(output_dir, options):
+    out = output_dir / "InfinityConverter-Quote.png"
+    images.quote_social_graphic(out, options["quote"], options.get("author", ""), options["preset"], options["theme"])
+    return out, "image/png"
+
+
+def _h_csv_merge(safe_inputs, output_dir, param, options=None):
+    out = output_dir / "InfinityConverter-Merged.csv"
+    utility.merge_and_deduplicate_csv([item["path"] for item in safe_inputs], out)
+    return out, "text/csv"
+
+
 SINGLE_HANDLERS = {
     "pdf-split": _h_pdf_split,
     "pdf-extract-pages": _h_pdf_extract,
     "pdf-delete-pages": _h_pdf_delete,
     "pdf-rotate": _h_pdf_rotate,
     "pdf-compress": _h_pdf_compress,
+    "pdf-booklet": _h_pdf_booklet,
+    "lms-pdf-size-optimizer": _h_lms_pdf_optimizer,
     "pdf-to-jpg": _h_pdf_to_images("JPEG", "image/jpeg"),
     "pdf-to-png": _h_pdf_to_images("PNG", "image/png"),
     "pdf-to-text": _h_pdf_to_text,
@@ -270,6 +342,7 @@ SINGLE_HANDLERS = {
     "image-compress": _h_image_compress,
     "image-rotate": _h_image_rotate,
     "image-ocr": _h_image_ocr,
+    "social-media-image-resizer": _h_social_resize,
     "word-to-pdf": _h_office_to_pdf,
     "excel-to-pdf": _h_office_to_pdf,
     "ppt-to-pdf": _h_office_to_pdf,
@@ -279,6 +352,8 @@ SINGLE_HANDLERS = {
     "markdown-to-html": _h_markdown_to_html,
     "markdown-to-pdf": _h_markdown_to_pdf,
     "csv-to-xlsx": _h_csv_to_xlsx,
+    "bulk-certificate-maker": _h_bulk_certificates,
+    "lms-question-bank-formatter": _h_question_bank,
     "zip-extract": _h_zip_extract,
     "file-hash": _h_file_hash,
     "file-info": _h_file_info,
@@ -296,15 +371,32 @@ class ConversionEngine:
       any failures.
     """
 
-    def convert(self, *, tool, safe_inputs, workspace, timeout, max_pdf_pages, param="") -> ConversionResult:
+    def convert(self, *, tool, safe_inputs, workspace, timeout, max_pdf_pages, param="", options=None) -> ConversionResult:
         if not CONVERSION_LIMIT.acquire(timeout=timeout):
             raise RuntimeError("عدد عمليات التحويل الحالية تجاوز الحد المؤقت.")
         started = time.perf_counter()
         input_bytes = sum(item["size_bytes"] for item in safe_inputs)
         engine_name = self._engine_name(tool.id)
         output_dir = workspace.path / "output"
+        options = options or {}
         try:
-            if tool.id in COMBINE_HANDLERS:
+            if tool.id == "assignment-cover-page":
+                output, mime = _h_assignment_cover(output_dir, options)
+                details = validate_output(output, expected_extension=output.suffix, expected_mime=mime, max_bytes=settings.max_output_mb * 1024 * 1024)
+                batch_total, batch_succeeded, batch_failures = 0, 0, ()
+            elif tool.id == "omr-bubble-sheet":
+                output, mime = _h_omr_sheet(output_dir, options)
+                details = validate_output(output, expected_extension=output.suffix, expected_mime=mime, max_bytes=settings.max_output_mb * 1024 * 1024)
+                batch_total, batch_succeeded, batch_failures = 0, 0, ()
+            elif tool.id == "quote-social-graphic":
+                output, mime = _h_quote_graphic(output_dir, options)
+                details = validate_output(output, expected_extension=output.suffix, expected_mime=mime, max_bytes=settings.max_output_mb * 1024 * 1024)
+                batch_total, batch_succeeded, batch_failures = 0, 0, ()
+            elif tool.id == "csv-merge-deduplicate":
+                output, mime = _h_csv_merge(safe_inputs, output_dir, param, options)
+                details = validate_output(output, expected_extension=output.suffix, expected_mime=mime, max_bytes=settings.max_output_mb * 1024 * 1024)
+                batch_total, batch_succeeded, batch_failures = len(safe_inputs), len(safe_inputs), ()
+            elif tool.id in COMBINE_HANDLERS:
                 output, mime = COMBINE_HANDLERS[tool.id](safe_inputs, output_dir, param)
                 details = validate_output(output, expected_extension=output.suffix, expected_mime=mime, max_bytes=settings.max_output_mb * 1024 * 1024)
                 batch_total, batch_succeeded, batch_failures = len(safe_inputs), len(safe_inputs), ()
@@ -313,7 +405,7 @@ class ConversionEngine:
                 if handler is None:
                     raise ValueError("هذه الأداة لم تُوصل بمحرك التحويل بعد.")
                 output, mime, details, batch_total, batch_succeeded, batch_failures = self._run_single(
-                    handler, safe_inputs, output_dir, param, timeout, max_pdf_pages
+                    handler, safe_inputs, output_dir, param, timeout, max_pdf_pages, options
                 )
 
             duration_ms = round((time.perf_counter() - started) * 1000)
@@ -347,7 +439,7 @@ class ConversionEngine:
             CONVERSION_LIMIT.release()
 
     @staticmethod
-    def _run_single(handler, safe_inputs, output_dir, param, timeout, max_pdf_pages):
+    def _run_single(handler, safe_inputs, output_dir, param, timeout, max_pdf_pages, options):
         outputs = []  # (path, mime, source_filename)
         failures = []  # (filename, message)
         for index, safe_input in enumerate(safe_inputs):
@@ -356,7 +448,10 @@ class ConversionEngine:
             item_dir = output_dir / f"item-{index}"
             item_dir.mkdir(parents=True, exist_ok=True)
             try:
-                produced = handler(safe_input, item_dir, param, timeout, max_pdf_pages)
+                if handler in {_h_pdf_booklet, _h_lms_pdf_optimizer, _h_social_resize, _h_question_bank, _h_bulk_certificates}:
+                    produced = handler(safe_input, item_dir, param, timeout, max_pdf_pages, options)
+                else:
+                    produced = handler(safe_input, item_dir, param, timeout, max_pdf_pages)
                 for path, mime in produced:
                     outputs.append((path, mime, safe_input["filename"]))
             except Exception as exc:
@@ -399,6 +494,12 @@ class ConversionEngine:
             return "pymupdf+pypdf"
         if tool_id.startswith("image-"):
             return "pillow"
+        if tool_id in {"assignment-cover-page", "omr-bubble-sheet", "bulk-certificate-maker"}:
+            return "pymupdf"
+        if tool_id in {"social-media-image-resizer", "quote-social-graphic"}:
+            return "pillow"
+        if tool_id in {"csv-merge-deduplicate", "lms-question-bank-formatter"}:
+            return "stdlib"
         if tool_id in {"word-to-pdf", "excel-to-pdf", "ppt-to-pdf", "txt-to-pdf", "html-to-pdf", "csv-to-pdf", "markdown-to-pdf"}:
             return "libreoffice"
         if tool_id in {"markdown-to-html"}:

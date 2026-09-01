@@ -1,3 +1,5 @@
+from datetime import date
+
 from flask import Blueprint, jsonify, request, send_file, g
 from werkzeug.exceptions import RequestEntityTooLarge
 from flask_limiter.errors import RateLimitExceeded
@@ -11,6 +13,25 @@ from converters.dispatcher import convert
 from converters.validation import OutputValidationError
 
 api_bp = Blueprint("api", __name__)
+
+
+def _validated_options(tool):
+    options = {}
+    for field in tool.fields:
+        value = request.form.get(field.id, "").strip()
+        if field.required and not value:
+            raise ValueError("أكمل جميع الحقول المطلوبة.")
+        if len(value) > (600 if field.type == "textarea" else 160):
+            raise ValueError("إحدى القيم المدخلة طويلة جدًا.")
+        if field.type == "select" and value not in {choice[0] for choice in field.choices}:
+            raise ValueError("خيار الأداة غير صالح.")
+        if field.type == "date" and value:
+            try:
+                date.fromisoformat(value)
+            except ValueError as exc:
+                raise ValueError("صيغة التاريخ غير صالحة.") from exc
+        options[field.id] = value
+    return options
 
 @api_bp.errorhandler(RequestEntityTooLarge)
 def too_large(_):
@@ -66,7 +87,7 @@ def convert_route():
         if single:
             files = [single]
 
-    if not files:
+    if not files and tool.input_required:
         return jsonify(error="ارفع ملفًا واحدًا على الأقل."), 400
 
     if len(files) > tool.max_files:
@@ -75,6 +96,7 @@ def convert_route():
     with TempWorkspace() as workspace:
         safe_inputs = []
         try:
+            options = _validated_options(tool)
             for uploaded in files:
                 safe_input = validate_upload(
                     uploaded,
@@ -95,6 +117,7 @@ def convert_route():
                 timeout=settings.subprocess_timeout,
                 max_pdf_pages=settings.max_pdf_pages,
                 param=request.form.get("param", ""),
+                options=options,
             )
             response = send_file(
                 result.path, mimetype=result.mime, as_attachment=True, download_name=result.name

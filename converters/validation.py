@@ -14,6 +14,7 @@ MIME_BY_EXTENSION = {
     ".png": "image/png",
     ".webp": "image/webp",
     ".txt": "text/plain",
+    ".csv": "text/csv",
     ".html": "text/html",
     ".json": "application/json",
     ".zip": "application/zip",
@@ -67,6 +68,15 @@ def validate_output(path: Path, *, expected_extension: str, expected_mime: str, 
             raise OutputValidationError("ملف النص الناتج غير صالح.") from exc
         if not text.strip():
             raise OutputValidationError("ملف النص الناتج فارغ.")
+        return {"characters": len(text)}
+
+    if extension == ".csv":
+        try:
+            text = path.read_text(encoding="utf-8")
+        except Exception as exc:
+            raise OutputValidationError("ملف CSV الناتج غير صالح.") from exc
+        if not text.strip():
+            raise OutputValidationError("ملف CSV الناتج فارغ.")
         return {"characters": len(text)}
 
     if extension == ".html":

@@ -1,6 +1,18 @@
 from dataclasses import dataclass, asdict
 
 @dataclass(frozen=True)
+class FormField:
+    id: str
+    type: str
+    label_ar: str
+    label_en: str
+    required: bool = False
+    placeholder_ar: str = ""
+    placeholder_en: str = ""
+    default: str = ""
+    choices: tuple[tuple[str, str, str], ...] = ()
+
+@dataclass(frozen=True)
 class Tool:
     id: str
     name_ar: str
@@ -25,6 +37,8 @@ class Tool:
     param_placeholder_ar: str = ""
     param_placeholder_en: str = ""
     param_default: str = ""
+    input_required: bool = True
+    fields: tuple[FormField, ...] = ()
 
 TOOLS = {
     # --- PDF tools ---
@@ -75,6 +89,22 @@ TOOLS = {
         param_field="param", param_label_ar="لغة النص", param_label_en="Text language",
         param_placeholder_ar="ar أو en أو ar+en", param_placeholder_en="ar, en, or ar+en", param_default="ar+en",
     ),
+    "pdf-booklet": Tool(
+        "pdf-booklet", "صانع كتيب PDF", "PDF Booklet Maker", "رتّب صفحات PDF على ورقة واحدة للطباعة ككتيب، بخيار صفحتين أو أربع صفحات.", "Tile PDF pages two-up or four-up into a print-ready PDF.", "pdf", "PDF", "PDF", "PDF", (".pdf",), ".pdf", 1, True,
+        fields=(FormField("layout", "select", "تخطيط الصفحات", "Page layout", True, default="2", choices=(("2", "صفحتان في الورقة", "2 pages per sheet"), ("4", "أربع صفحات في الورقة", "4 pages per sheet"))),),
+    ),
+    "lms-pdf-size-optimizer": Tool(
+        "lms-pdf-size-optimizer", "محسن حجم PDF للمنصات التعليمية", "LMS PDF Size Optimizer", "أنشئ PDF أخف للرفع إلى المنصات التعليمية. الهدف تقديري وليس حجمًا مضمونًا.", "Create a smaller PDF for LMS uploads. The chosen target is a best-effort profile, not a guaranteed final size.", "pdf", "PDF", "PDF", "PDF", (".pdf",), ".pdf", 1, True,
+        fields=(FormField("target", "select", "هدف الحجم التقريبي", "Approximate size target", True, default="medium", choices=(("small", "صغير (نحو 1MB)", "Small (about 1 MB)"), ("medium", "متوسط (نحو 5MB)", "Medium (about 5 MB)"), ("large", "كبير (نحو 10MB)", "Large (about 10 MB)"))),),
+    ),
+    "assignment-cover-page": Tool(
+        "assignment-cover-page", "إنشاء صفحة غلاف للواجب", "Assignment Cover Page PDF", "أنشئ صفحة غلاف PDF منظمة للواجب. تُدعَم الكتابة الإنجليزية لضمان خط PDF موثوق.", "Create a structured assignment cover-page PDF. English field content is supported for dependable PDF font rendering.", "pdf", "PDF", "PDF", "PDF", (), ".pdf", 0, True, input_required=False,
+        fields=(FormField("course", "text", "المقرر", "Course", True, "CS101", "CS101"), FormField("assignment", "text", "عنوان الواجب", "Assignment title", True, "Project 1", "Project 1"), FormField("student", "text", "اسم الطالب", "Student name", True, "Alex Morgan", "Alex Morgan"), FormField("instructor", "text", "اسم المدرس", "Instructor", False, "Dr. Taylor", "Dr. Taylor"), FormField("due_date", "date", "تاريخ التسليم", "Due date")),
+    ),
+    "omr-bubble-sheet": Tool(
+        "omr-bubble-sheet", "إنشاء ورقة إجابة OMR", "OMR Bubble Sheet Generator", "أنشئ ورقة إجابة قابلة للطباعة تضم 20 أو 50 أو 100 سؤال.", "Create a print-ready blank answer sheet with 20, 50, or 100 questions.", "pdf", "PDF", "PDF", "PDF", (), ".pdf", 0, True, input_required=False,
+        fields=(FormField("questions", "select", "عدد الأسئلة", "Question count", True, default="50", choices=(("20", "20 سؤالًا", "20 questions"), ("50", "50 سؤالًا", "50 questions"), ("100", "100 سؤال", "100 questions"))),),
+    ),
 
     # --- Image tools ---
     "image-to-jpg": Tool(
@@ -113,6 +143,22 @@ TOOLS = {
         param_field="param", param_label_ar="لغة النص", param_label_en="Text language",
         param_placeholder_ar="ar أو en أو ar+en", param_placeholder_en="ar, en, or ar+en", param_default="ar+en",
     ),
+    "social-media-image-resizer": Tool(
+        "social-media-image-resizer", "تغيير حجم صورة للسوشيال ميديا", "Social Media Image Resizer", "جهّز صورة PNG لمقاس منشور أو قصة مع القص أو الحواف مع الحفاظ على النسبة.", "Create a PNG for a social post or story, using sensible cropping or padding while preserving aspect ratio.", "images", "الصور", "Images", "IMG", (".jpg", ".jpeg", ".png", ".webp"), ".png", 1, True,
+        fields=(
+            FormField("preset", "select", "المقاس", "Preset", True, default="instagram-post", choices=(("instagram-post", "منشور إنستغرام 1080x1080", "Instagram post 1080x1080"), ("instagram-story", "قصة إنستغرام 1080x1920", "Instagram story 1080x1920"), ("linkedin", "منشور LinkedIn 1200x627", "LinkedIn post 1200x627"), ("x", "منشور X 1600x900", "X post 1600x900"))),
+            FormField("fit", "select", "طريقة الملاءمة", "Fit method", True, default="crop", choices=(("crop", "قص من المنتصف", "Center crop"), ("pad", "إضافة حواف بيضاء", "White padding"))),
+        ),
+    ),
+    "quote-social-graphic": Tool(
+        "quote-social-graphic", "اقتباس كصورة اجتماعية", "Quote to Social Graphic", "أنشئ صورة PNG لاقتباس قصير باللغة الإنجليزية مع التفاف نص مضبوط.", "Create a PNG graphic for a short English quote with robust text wrapping.", "images", "الصور", "Images", "IMG", (), ".png", 0, True, input_required=False,
+        fields=(
+            FormField("quote", "textarea", "الاقتباس", "Quote", True, "Keep it short.", "Keep it short."),
+            FormField("author", "text", "صاحب الاقتباس", "Attribution", False, "Name", "Name"),
+            FormField("preset", "select", "المقاس", "Preset", True, default="square", choices=(("square", "مربع 1080x1080", "Square 1080x1080"), ("portrait", "عمودي 1080x1350", "Portrait 1080x1350"))),
+            FormField("theme", "select", "النمط", "Theme", True, default="ink", choices=(("ink", "حبر", "Ink"), ("paper", "ورق", "Paper"), ("ocean", "بحر", "Ocean"))),
+        ),
+    ),
 
     # --- Document tools ---
     "word-to-pdf": Tool(
@@ -141,6 +187,16 @@ TOOLS = {
     ),
     "csv-to-pdf": Tool(
         "csv-to-pdf", "تحويل CSV إلى PDF", "CSV to PDF", "حوّل بيانات CSV إلى مستند PDF قابل للطباعة.", "Convert CSV data into a printable PDF document.", "office", "المستندات", "Documents", "TXT", (".csv",), ".pdf", 10, True, batch=True
+    ),
+    "bulk-certificate-maker": Tool(
+        "bulk-certificate-maker", "إنشاء شهادات جماعية", "Bulk Certificate Maker", "حوّل CSV يحتوي على عمود name إلى أرشيف ZIP من شهادات PDF. محتوى CSV الإنجليزي هو المدعوم لضمان خط موثوق.", "Turn a CSV with a name column into a ZIP of certificate PDFs. English CSV content is supported for dependable font rendering.", "office", "المستندات", "Documents", "PDF", (".csv",), ".zip", 1, True,
+        fields=(FormField("title", "text", "عنوان الشهادة", "Certificate title", True, "Certificate of Completion", "Certificate of Completion"), FormField("issuer", "text", "الجهة المانحة", "Issued by", False, "Infinity Academy", "Infinity Academy")),
+    ),
+    "csv-merge-deduplicate": Tool(
+        "csv-merge-deduplicate", "دمج CSV وحذف التكرار", "CSV Merger & Deduplicator", "ادمج ملفات CSV ذات الأعمدة المتطابقة واحذف الصفوف المكررة.", "Merge CSV files with matching headers and remove duplicate rows.", "office", "المستندات", "Documents", "CSV", (".csv",), ".csv", 20, True
+    ),
+    "lms-question-bank-formatter": Tool(
+        "lms-question-bank-formatter", "منسق بنك أسئلة LMS", "LMS Question Bank Formatter", "حوّل نص UTF-8 إلى GIFT. استخدم كتلًا مفصولة بسطر فارغ: Q: السؤال ثم A: الإجابة.", "Convert UTF-8 text to GIFT. Use blank-line-separated blocks: Q: question followed by A: answer.", "office", "المستندات", "Documents", "TXT", (".txt",), ".txt", 1, True
     ),
 
     # --- Archive tools ---
@@ -177,6 +233,10 @@ TOOL_META = {
     "pdf-to-html": {"slug": "pdf-to-html", "keywords": "pdf html تحويل convert", "popular": False, "sort": 11},
     "pdf-metadata": {"slug": "pdf-metadata", "keywords": "pdf بيانات وصفية metadata info", "popular": False, "sort": 12},
     "pdf-ocr": {"slug": "pdf-ocr", "keywords": "pdf ocr نص استخراج ممسوح scanned", "popular": True, "sort": 13},
+    "pdf-booklet": {"slug": "pdf-booklet-maker", "keywords": "pdf كتيب booklet 2-up 4-up طباعة", "popular": False, "sort": 14},
+    "lms-pdf-size-optimizer": {"slug": "lms-pdf-size-optimizer", "keywords": "lms pdf ضغط حجم رفع منصة تعليمية", "popular": False, "sort": 15},
+    "assignment-cover-page": {"slug": "assignment-cover-page", "keywords": "واجب غلاف assignment cover page pdf", "popular": False, "sort": 16},
+    "omr-bubble-sheet": {"slug": "omr-bubble-sheet", "keywords": "omr bubble answer sheet ورقة إجابة", "popular": False, "sort": 17},
     "image-to-jpg": {"slug": "image-to-jpg", "keywords": "صورة jpg تحويل image convert", "popular": False, "sort": 14},
     "image-to-png": {"slug": "image-to-png", "keywords": "صورة png تحويل image convert", "popular": True, "sort": 15},
     "image-to-webp": {"slug": "image-to-webp", "keywords": "صورة webp تحويل image convert", "popular": False, "sort": 16},
@@ -184,6 +244,8 @@ TOOL_META = {
     "image-compress": {"slug": "compress-image", "keywords": "ضغط تصغير صورة compress image size", "popular": True, "sort": 18},
     "image-rotate": {"slug": "rotate-image", "keywords": "تدوير صورة rotate image", "popular": False, "sort": 19},
     "image-ocr": {"slug": "image-ocr", "keywords": "صورة ocr نص استخراج image text", "popular": False, "sort": 20},
+    "social-media-image-resizer": {"slug": "social-media-image-resizer", "keywords": "social media instagram linkedin image resize صورة سوشيال", "popular": False, "sort": 21},
+    "quote-social-graphic": {"slug": "quote-to-social-graphic", "keywords": "quote اقتباس social graphic صورة", "popular": False, "sort": 22},
     "word-to-pdf": {"slug": "word-to-pdf", "keywords": "وورد word مستند pdf تحويل", "popular": True, "sort": 21},
     "excel-to-pdf": {"slug": "excel-to-pdf", "keywords": "اكسل excel جدول pdf تحويل", "popular": False, "sort": 22},
     "ppt-to-pdf": {"slug": "powerpoint-to-pdf", "keywords": "باوربوينت powerpoint عرض شرائح pdf تحويل", "popular": False, "sort": 23},
@@ -193,10 +255,55 @@ TOOL_META = {
     "markdown-to-pdf": {"slug": "markdown-to-pdf", "keywords": "ماركداون markdown pdf تحويل", "popular": False, "sort": 27},
     "csv-to-xlsx": {"slug": "csv-to-excel", "keywords": "csv اكسل excel جدول تحويل", "popular": False, "sort": 28},
     "csv-to-pdf": {"slug": "csv-to-pdf", "keywords": "csv pdf جدول تحويل", "popular": False, "sort": 29},
+    "bulk-certificate-maker": {"slug": "bulk-certificate-maker", "keywords": "شهادات certificates csv pdf zip جماعية", "popular": False, "sort": 30},
+    "csv-merge-deduplicate": {"slug": "csv-merge-deduplicate", "keywords": "csv merge دمج حذف تكرار deduplicate", "popular": False, "sort": 31},
+    "lms-question-bank-formatter": {"slug": "lms-question-bank-formatter", "keywords": "lms gift question bank أسئلة بنك", "popular": False, "sort": 32},
     "zip-create": {"slug": "create-zip", "keywords": "ضغط أرشيف zip إنشاء archive create", "popular": False, "sort": 30},
     "zip-extract": {"slug": "extract-zip", "keywords": "فك ضغط أرشيف zip استخراج archive extract", "popular": False, "sort": 31},
-    "file-hash": {"slug": "file-hash", "keywords": "بصمة hash sha256 md5 تحقق", "popular": False, "sort": 32},
-    "file-info": {"slug": "file-info", "keywords": "معلومات ملف تحليل info analyzer", "popular": False, "sort": 33},
+    "file-hash": {"slug": "file-hash", "keywords": "بصمة hash sha256 md5 تحقق", "popular": False, "sort": 33},
+    "file-info": {"slug": "file-info", "keywords": "معلومات ملف تحليل info analyzer", "popular": False, "sort": 34},
+}
+
+AUDIENCE_COLLECTIONS = {
+    "students": {
+        "title_ar": "للطلاب", "title_en": "For Students",
+        "description_ar": "رتب محاضراتك وواجباتك وملفاتك الدراسية بسرعة.",
+        "description_en": "Organize lecture notes, assignments, and study files quickly.",
+        "tool_ids": ("pdf-merge", "pdf-split", "pdf-compress", "pdf-to-text", "pdf-ocr", "image-to-pdf", "word-to-pdf", "ppt-to-pdf", "assignment-cover-page", "lms-pdf-size-optimizer", "omr-bubble-sheet", "lms-question-bank-formatter"),
+    },
+    "educators": {
+        "title_ar": "للمعلمين والدكاترة", "title_en": "For Educators",
+        "description_ar": "جهز موادك التعليمية وشارك المستندات بوضوح.",
+        "description_en": "Prepare teaching materials and share documents with clarity.",
+        "tool_ids": ("pdf-merge", "pdf-extract-pages", "pdf-delete-pages", "pdf-ocr", "word-to-pdf", "ppt-to-pdf", "image-to-pdf", "zip-create", "bulk-certificate-maker", "omr-bubble-sheet", "lms-question-bank-formatter"),
+    },
+    "developers": {
+        "title_ar": "للمطورين", "title_en": "For Developers",
+        "description_ar": "أدوات ملفات عملية للمواصفات والتوثيق والتحقق.",
+        "description_en": "Practical file tools for documentation, data, and verification.",
+        "tool_ids": ("markdown-to-html", "html-to-pdf", "csv-to-xlsx", "file-hash", "file-info", "zip-create", "zip-extract", "pdf-to-text", "csv-merge-deduplicate"),
+    },
+    "business": {
+        "title_ar": "للأعمال", "title_en": "For Business",
+        "description_ar": "حوّل وشارك المستندات والفواتير والملفات اليومية.",
+        "description_en": "Convert and share documents, invoices, and everyday files.",
+        "tool_ids": ("excel-to-pdf", "csv-to-xlsx", "csv-to-pdf", "pdf-compress", "pdf-merge", "image-to-pdf", "zip-create", "file-info", "bulk-certificate-maker", "csv-merge-deduplicate"),
+    },
+    "everyday": {
+        "title_ar": "للاستخدام اليومي", "title_en": "Everyday Tools",
+        "description_ar": "أدوات سريعة للصور وملفات PDF والمهام اليومية.",
+        "description_en": "Fast tools for images, PDFs, and everyday tasks.",
+        "tool_ids": ("image-to-jpg", "image-to-png", "image-to-webp", "image-resize", "image-compress", "image-rotate", "image-to-pdf", "pdf-compress", "social-media-image-resizer", "quote-social-graphic", "pdf-booklet"),
+    },
+}
+
+DEVELOPER_TOOLS = {
+    "json-formatter": {"name_ar": "منسق JSON", "name_en": "JSON Formatter", "description_ar": "نسّق وتحقق من JSON محليًا في متصفحك.", "description_en": "Format and validate JSON locally in your browser.", "icon": "{}"},
+    "base64": {"name_ar": "Base64 تشفير وفك", "name_en": "Base64 Encode / Decode", "description_ar": "شفّر النص أو فك Base64 دون إرسال المحتوى.", "description_en": "Encode text or decode Base64 without sending its contents.", "icon": "64"},
+    "url-encoder": {"name_ar": "تشفير URL", "name_en": "URL Encoder", "description_ar": "شفّر أو فك مكونات الروابط محليًا.", "description_en": "Encode or decode URL components locally.", "icon": "URL"},
+    "uuid-generator": {"name_ar": "مولد UUID", "name_en": "UUID Generator", "description_ar": "ولّد UUID v4 عشوائيًا محليًا.", "description_en": "Generate random UUID v4 values locally.", "icon": "ID"},
+    "hash-generator": {"name_ar": "مولد SHA-256", "name_en": "SHA-256 Generator", "description_ar": "احسب بصمة SHA-256 للنص محليًا.", "description_en": "Calculate a SHA-256 text hash locally.", "icon": "SHA"},
+    "timestamp-converter": {"name_ar": "محول التوقيت", "name_en": "Timestamp Converter", "description_ar": "حوّل Unix timestamp إلى تاريخ عالمي والعكس.", "description_en": "Convert Unix timestamps to global dates and back.", "icon": "UTC"},
 }
 
 def get_tool(tool_id: str) -> Tool | None:
@@ -207,6 +314,22 @@ def list_tools():
         {**asdict(tool), **TOOL_META[tool.id]}
         for tool in sorted(TOOLS.values(), key=lambda item: TOOL_META[item.id]["sort"])
     ]
+
+
+def popular_tools(limit: int = 10) -> list[dict]:
+    return [tool for tool in list_tools() if tool["popular"]][:limit]
+
+
+def collection_tools(collection_id: str) -> tuple[dict, list[dict]] | None:
+    collection = AUDIENCE_COLLECTIONS.get(collection_id)
+    if not collection:
+        return None
+    by_id = {tool["id"]: tool for tool in list_tools()}
+    return collection, [by_id[tool_id] for tool_id in collection["tool_ids"] if tool_id in by_id]
+
+
+def get_developer_tool(tool_id: str) -> dict | None:
+    return DEVELOPER_TOOLS.get(tool_id)
 
 
 def tool_url(tool: Tool) -> str:
