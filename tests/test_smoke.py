@@ -9,6 +9,15 @@ def test_health():
     assert response.get_json()["version"] == "4.0.0"
 
 
+def test_homepage_has_bento_navigation_and_filterable_featured_tools():
+    page = create_app().test_client().get("/?lang=en")
+    assert page.status_code == 200
+    assert b"category-dock" in page.data
+    assert b"audience-bento" in page.data
+    assert b'id="tool-search"' in page.data
+    assert page.data.count(b"data-category=") == 9
+
+
 def test_public_tool_pages_and_metadata_routes():
     app = create_app()
     client = app.test_client()

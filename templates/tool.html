@@ -13,4 +13,4 @@
   <section class="related-tools"><div class="section-heading"><div><span class="kicker">{{ t('tool.related_kicker') }}</span><h2>{{ t('tool.related_title') }}</h2></div></div><div class="related-grid">{% for related_tool in related %}<a href="/tools/{{ related_tool.slug }}">{{ related_tool.name_en if lang == 'en' else related_tool.name_ar }} <span aria-hidden="true">←</span></a>{% endfor %}</div></section>
 </div>
 {% endblock %}
-{% block scripts %}<script src="/static/js/app.js?v=9b061e0" defer></script>{% endblock %}
+{% block scripts %}<script src="/static/js/app.js?v=4.2.0" defer></script>{% endblock %}

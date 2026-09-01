@@ -82,7 +82,7 @@ def create_app() -> Flask:
             "style-src 'self' 'unsafe-inline'; "
             "font-src 'self'; "
             "connect-src 'self'; "
-            f"script-src 'self' 'nonce-{g.csp_nonce}'; "
+            f"script-src 'self' 'nonce-{getattr(g, 'csp_nonce', '')}'; "
             "frame-ancestors 'none'; "
             "base-uri 'self'; "
             "form-action 'self'"
