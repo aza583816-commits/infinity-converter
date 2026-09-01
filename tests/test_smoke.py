@@ -18,6 +18,16 @@ def test_homepage_has_bento_navigation_and_filterable_featured_tools():
     assert page.data.count(b"data-category=") == 9
 
 
+def test_pricing_uses_clean_hardcoded_annual_equivalents():
+    client = create_app().test_client()
+    page = client.get("/pricing?lang=en")
+    assert page.status_code == 200
+    assert b'data-price-yearly="2.41"' in page.data
+    assert b'data-price-yearly="8.25"' in page.data
+    assert b"Billed $29 yearly" in page.data
+    assert b"Billed $99 yearly" in page.data
+
+
 def test_public_tool_pages_and_metadata_routes():
     app = create_app()
     client = app.test_client()
