@@ -11,6 +11,7 @@
     <article class="price-card"><h2>{{ t('pricing.business_name') }}</h2><p>{{ t('pricing.business_desc') }}</p><div class="price"><strong data-price-monthly="9.99" data-price-yearly="99">$9.99</strong><span data-price-period data-period-monthly="{{ t('pricing.per_month') }}" data-period-yearly="{{ t('pricing.per_year') }}">{{ t('pricing.per_month') }}</span></div><button class="secondary" type="button" data-paddle-checkout data-price-monthly="pri_01m1dc0c192gye7yyhhfkpcc13" data-price-yearly="pri_01m1dc28fr8rsv3jfyg3jp0qcp"{% if not paddle_client_token or not checkout_user %} disabled{% endif %}>{{ t('pricing.business_cta') }}</button>{% if not checkout_user %}<a href="/login">{{ t('pricing.login_to_checkout') }}</a>{% endif %}<ul class="feature-list"><li>{{ t('pricing.biz_f1') }}</li><li>{{ t('pricing.biz_f2') }}</li><li>{{ t('pricing.biz_f3') }}</li><li>{{ t('pricing.biz_f4') }}</li><li>{{ t('pricing.biz_f5') }}</li></ul></article>
   </div>
   <p class="pricing-note">{{ t('pricing.note') }}</p>
+  <p class="pricing-note paddle-notice" id="paddle-notice" hidden>{{ t('pricing.paddle_unavailable') }}</p>
   <div class="pricing-faq"><details><summary>{{ t('pricing.faq1_q') }}</summary><p>{{ t('pricing.faq1_a') }}</p></details><details><summary>{{ t('pricing.faq2_q') }}</summary><p>{{ t('pricing.faq2_a') }}</p></details><details><summary>{{ t('pricing.faq3_q') }}</summary><p>{{ t('pricing.faq3_a') }}</p></details></div>
 </section>
 {% endblock %}

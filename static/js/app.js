@@ -245,6 +245,7 @@ if (billingButtons.length) {
   let selectedBilling = 'monthly';
   const pricingPage = $('.pricing-wrap[data-paddle-client-token]');
   const checkoutButtons = $$('[data-paddle-checkout]');
+  const paddleNotice = $('#paddle-notice');
   const paddleToken = pricingPage?.dataset.paddleClientToken || '';
   const checkoutUserId = pricingPage?.dataset.userId || '';
   const checkoutEmail = pricingPage?.dataset.userEmail || '';
@@ -255,7 +256,8 @@ if (billingButtons.length) {
       paddleReady = true;
     } catch (_) { paddleReady = false; }
   }
-  checkoutButtons.forEach((button) => { button.disabled = !paddleReady; });
+  checkoutButtons.forEach((button) => { if (!button.disabled) button.disabled = !paddleReady; });
+  if (paddleToken && checkoutUserId && !paddleReady && paddleNotice) paddleNotice.hidden = false;
   billingButtons.forEach((button) => button.addEventListener('click', () => {
     billingButtons.forEach((b) => b.classList.toggle('is-active', b === button));
     const yearly = button.dataset.billing === 'yearly';

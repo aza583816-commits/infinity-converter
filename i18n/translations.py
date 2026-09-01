@@ -180,6 +180,7 @@ TRANSLATIONS = {
         "pricing.save": "وفّر 20%",
         "pricing.per_month": "/ شهر",
         "pricing.per_year": "/ سنويًا",
+        "pricing.paddle_unavailable": "تعذر تحميل بوابة الدفع الآن. تحقق من اتصالك أو حاول لاحقًا.",
         "pricing.pro_yearly_bill": "(يُدفع $29 سنويًا)",
         "pricing.business_yearly_bill": "(يُدفع $99 سنويًا)",
         "pricing.popular": "الأكثر شعبية",
@@ -195,7 +196,7 @@ TRANSLATIONS = {
         "pricing.faq3_q": "كيف يبدأ الاشتراك؟", "pricing.faq3_a": "افتح صفحة الدفع الآمنة عبر Paddle وأكمل الطلب. يتم تأكيد حالة الاشتراك من مزود الدفع.",
         "pricing.login_to_checkout": "سجل الدخول لإتمام الاشتراك",
         "nav.login": "دخول", "nav.register": "إنشاء حساب", "nav.logout": "خروج", "nav.credits": "{count} رصيد",
-        "auth.register_title": "إنشاء حساب", "auth.login_title": "تسجيل الدخول", "auth.register_heading": "إنشاء حساب", "auth.login_heading": "تسجيل الدخول", "auth.email": "البريد الإلكتروني", "auth.password": "كلمة المرور (12 حرفًا على الأقل)", "auth.register_submit": "إنشاء الحساب", "auth.login_submit": "دخول", "auth.register_invalid": "أدخل بريدًا صحيحًا وكلمة مرور من 12 حرفًا على الأقل.", "auth.register_exists": "هذا البريد مستخدم بالفعل.", "auth.login_invalid": "بيانات الدخول غير صحيحة.",
+        "auth.register_title": "إنشاء حساب", "auth.login_title": "تسجيل الدخول", "auth.register_heading": "إنشاء حساب", "auth.login_heading": "تسجيل الدخول", "auth.email": "البريد الإلكتروني", "auth.email_placeholder": "you@example.com", "auth.password": "كلمة المرور (12 حرفًا على الأقل)", "auth.password_placeholder": "••••••••••••", "auth.register_submit": "إنشاء الحساب", "auth.login_submit": "دخول", "auth.register_invalid": "أدخل بريدًا صحيحًا وكلمة مرور من 12 حرفًا على الأقل.", "auth.register_exists": "هذا البريد مستخدم بالفعل.", "auth.login_invalid": "بيانات الدخول غير صحيحة.",
         "account.title": "الحساب", "account.heading": "حسابك", "account.email": "البريد الإلكتروني", "account.plan": "الخطة الحالية", "account.credits": "الأرصدة المتبقية", "account.subscription_status": "حالة الاشتراك", "account.period_end": "نهاية الفترة", "account.no_period": "غير متاح", "account.manage_plan": "إدارة الخطة", "tool.pro_badge": "Pro",
 
         "tools.title": "كل الأدوات | Infinity Converter",
@@ -454,6 +455,7 @@ TRANSLATIONS = {
         "pricing.save": "Save 20%",
         "pricing.per_month": "/ month",
         "pricing.per_year": "/ year",
+        "pricing.paddle_unavailable": "The checkout could not load right now. Check your connection or try again shortly.",
         "pricing.pro_yearly_bill": "(Billed $29 yearly)",
         "pricing.business_yearly_bill": "(Billed $99 yearly)",
         "pricing.popular": "Most popular",
@@ -469,7 +471,7 @@ TRANSLATIONS = {
         "pricing.faq3_q": "How does a subscription start?", "pricing.faq3_a": "Open the secure Paddle checkout and complete your order. Subscription status is confirmed by the payment provider.",
         "pricing.login_to_checkout": "Log in to subscribe",
         "nav.login": "Log in", "nav.register": "Register", "nav.logout": "Log out", "nav.credits": "{count} credits",
-        "auth.register_title": "Create account", "auth.login_title": "Log in", "auth.register_heading": "Create your account", "auth.login_heading": "Log in", "auth.email": "Email", "auth.password": "Password (at least 12 characters)", "auth.register_submit": "Create account", "auth.login_submit": "Log in", "auth.register_invalid": "Enter a valid email and a password of at least 12 characters.", "auth.register_exists": "That email is already registered.", "auth.login_invalid": "Invalid login details.",
+        "auth.register_title": "Create account", "auth.login_title": "Log in", "auth.register_heading": "Create your account", "auth.login_heading": "Log in", "auth.email": "Email", "auth.email_placeholder": "you@example.com", "auth.password": "Password (at least 12 characters)", "auth.password_placeholder": "••••••••••••", "auth.register_submit": "Create account", "auth.login_submit": "Log in", "auth.register_invalid": "Enter a valid email and a password of at least 12 characters.", "auth.register_exists": "That email is already registered.", "auth.login_invalid": "Invalid login details.",
         "account.title": "Account", "account.heading": "Your account", "account.email": "Email", "account.plan": "Current plan", "account.credits": "Credits remaining", "account.subscription_status": "Subscription status", "account.period_end": "Period ends", "account.no_period": "Unavailable", "account.manage_plan": "Manage plan", "tool.pro_badge": "Pro",
 
         "tools.title": "All Tools | Infinity Converter",
