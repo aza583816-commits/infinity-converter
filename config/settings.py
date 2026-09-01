@@ -14,7 +14,8 @@ def _int(name: str, default: int, minimum: int = 0):
 @dataclass(frozen=True)
 class Settings:
     debug: bool = os.getenv("DEBUG", "0") == "1"
-    max_file_mb: int = _int("MAX_FILE_MB", 25, 1)
+    max_file_mb: int = _int("MAX_FILE_MB", 200, 1)
+    max_total_upload_mb: int = _int("MAX_TOTAL_UPLOAD_MB", 200, 1)
     max_batch_files: int = _int("MAX_BATCH_FILES", 20, 1)
     max_pdf_pages: int = _int("MAX_PDF_PAGES", 1000, 1)
     max_output_mb: int = _int("MAX_OUTPUT_MB", 200, 1)
@@ -47,6 +48,6 @@ class Settings:
 
     @property
     def max_request_bytes(self) -> int:
-        return self.max_file_bytes * self.max_batch_files + 2 * 1024 * 1024
+        return self.max_total_upload_mb * 1024 * 1024
 
 settings = Settings()

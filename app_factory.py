@@ -3,16 +3,19 @@ import json
 import secrets
 import uuid
 import logging
-from flask import Flask, g, request
+from flask import Flask, g, request, session
 from flask_compress import Compress
 from flask_cors import CORS
 
 from config.settings import settings
 from core.limiter import limiter
+from core.accounts import csrf_token, ensure_account_tables, get_effective_plan, get_user
+from core.tool_registry import PREMIUM_TOOL_IDS
 from i18n import LANGUAGE_COOKIE, SUPPORTED_LANGUAGES, resolve_language, translator
 from i18n.translations import INFO_CONTENT, TRANSLATIONS
 from api.routes import api_bp
 from api.pages import pages_bp
+from api.paddle import paddle_bp
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 
@@ -29,10 +32,14 @@ def create_app() -> Flask:
         MAX_CONTENT_LENGTH=settings.max_request_bytes,
         JSON_SORT_KEYS=False,
         SEND_FILE_MAX_AGE_DEFAULT=settings.asset_cache_seconds,
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SAMESITE="Lax",
+        SESSION_COOKIE_SECURE=not settings.debug,
     )
 
     Compress(app)
     limiter.init_app(app)
+    ensure_account_tables()
     # CORS only applies to the JSON API; page routes stay same-origin only.
     CORS(app, resources={r"/api/v2/*": {"origins": settings.allowed_origins}})
 
@@ -44,6 +51,9 @@ def create_app() -> Flask:
         lang, is_explicit = resolve_language(request)
         g.lang = lang
         g.lang_is_explicit = is_explicit
+        g.current_user = get_user(session.get("user_id"))
+        if session.get("user_id") and not g.current_user:
+            session.clear()
 
     @app.context_processor
     def inject_i18n():
@@ -62,6 +72,10 @@ def create_app() -> Flask:
             "max_file_mb": settings.max_file_mb,
             "public_base_url": settings.public_base_url,
             "csp_nonce": getattr(g, "csp_nonce", ""),
+            "current_user": getattr(g, "current_user", None),
+            "current_plan": get_effective_plan(getattr(g, "current_user", {}).get("id")) if getattr(g, "current_user", None) else "free",
+            "csrf_token": csrf_token(),
+            "premium_tool_ids": PREMIUM_TOOL_IDS,
         }
 
     @app.after_request
@@ -81,8 +95,9 @@ def create_app() -> Flask:
             "img-src 'self' data:; "
             "style-src 'self' 'unsafe-inline'; "
             "font-src 'self'; "
-            "connect-src 'self'; "
-            f"script-src 'self' 'nonce-{getattr(g, 'csp_nonce', '')}'; "
+            "connect-src 'self' https://*.paddle.com; "
+            f"script-src 'self' 'nonce-{getattr(g, 'csp_nonce', '')}' https://cdn.paddle.com; "
+            "frame-src https://*.paddle.com; "
             "frame-ancestors 'none'; "
             "base-uri 'self'; "
             "form-action 'self'"
@@ -109,6 +124,7 @@ def create_app() -> Flask:
         return response
 
     app.register_blueprint(api_bp, url_prefix="/api/v2")
+    app.register_blueprint(paddle_bp)
     app.register_blueprint(pages_bp)
 
     return app

@@ -306,12 +306,22 @@ DEVELOPER_TOOLS = {
     "timestamp-converter": {"name_ar": "محول التوقيت", "name_en": "Timestamp Converter", "description_ar": "حوّل Unix timestamp إلى تاريخ عالمي والعكس.", "description_en": "Convert Unix timestamps to global dates and back.", "icon": "UTC"},
 }
 
+PREMIUM_TOOL_IDS = frozenset({
+    "pdf-booklet", "lms-pdf-size-optimizer", "assignment-cover-page",
+    "omr-bubble-sheet", "bulk-certificate-maker", "social-media-image-resizer",
+    "quote-social-graphic", "csv-merge-deduplicate", "lms-question-bank-formatter",
+})
+
+
+def plan_required_for_tool(tool_id: str) -> str:
+    return "pro" if tool_id in PREMIUM_TOOL_IDS else "free"
+
 def get_tool(tool_id: str) -> Tool | None:
     return TOOLS.get(tool_id)
 
 def list_tools():
     return [
-        {**asdict(tool), **TOOL_META[tool.id]}
+        {**asdict(tool), **TOOL_META[tool.id], "plan_required": plan_required_for_tool(tool.id)}
         for tool in sorted(TOOLS.values(), key=lambda item: TOOL_META[item.id]["sort"])
     ]
 

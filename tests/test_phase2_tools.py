@@ -2,10 +2,13 @@ import csv
 import io
 import zipfile
 
+import pytest
 from PIL import Image
 from pypdf import PdfReader, PdfWriter
 
 from app_factory import create_app
+from core.accounts import create_user
+from core.subscriptions import upsert_subscription
 
 
 def _pdf(pages=1):
@@ -30,8 +33,24 @@ def _post(client, tool, data=None, files=None):
     return client.post("/api/v2/convert", data=payload, content_type="multipart/form-data")
 
 
-def test_phase2_pdf_tools_produce_valid_pdfs():
+@pytest.fixture
+def pro_client(tmp_path, monkeypatch):
+    monkeypatch.setenv("DATABASE_URL", f"sqlite:///{tmp_path / 'phase2.db'}")
+    user = create_user("pro@example.com", "a secure password")
+    upsert_subscription({
+        "subscription_id": "sub_phase2", "customer_id": "ctm_phase2", "user_email": user["email"],
+        "user_id": user["id"], "plan_tier": "pro", "status": "active",
+        "current_period_end": "2099-01-01T00:00:00Z", "latest_event_id": "evt_phase2",
+        "latest_event_time": "2026-09-01T00:00:00Z",
+    })
     client = create_app().test_client()
+    with client.session_transaction() as session:
+        session["user_id"] = user["id"]
+    return client
+
+
+def test_phase2_pdf_tools_produce_valid_pdfs(pro_client):
+    client = pro_client
     booklet = _post(client, "pdf-booklet", {"layout": "2"}, [("notes.pdf", _pdf(5))])
     assert booklet.status_code == 200
     assert len(PdfReader(io.BytesIO(booklet.data)).pages) == 4
@@ -41,8 +60,8 @@ def test_phase2_pdf_tools_produce_valid_pdfs():
     assert len(PdfReader(io.BytesIO(optimized.data)).pages) == 2
 
 
-def test_phase2_pdf_generators_produce_valid_pdfs():
-    client = create_app().test_client()
+def test_phase2_pdf_generators_produce_valid_pdfs(pro_client):
+    client = pro_client
     cover = _post(client, "assignment-cover-page", {"course": "CS101", "assignment": "Project", "student": "Alex", "due_date": "2026-09-01"})
     assert cover.status_code == 200
     assert len(PdfReader(io.BytesIO(cover.data)).pages) == 1
@@ -52,8 +71,8 @@ def test_phase2_pdf_generators_produce_valid_pdfs():
     assert len(PdfReader(io.BytesIO(omr.data)).pages) == 1
 
 
-def test_bulk_certificates_returns_pdf_zip():
-    client = create_app().test_client()
+def test_bulk_certificates_returns_pdf_zip(pro_client):
+    client = pro_client
     response = _post(client, "bulk-certificate-maker", {"title": "Completion", "issuer": "Academy"}, [("people.csv", b"name\nAda\nGrace\n")])
     assert response.status_code == 200
     with zipfile.ZipFile(io.BytesIO(response.data)) as archive:
@@ -61,8 +80,8 @@ def test_bulk_certificates_returns_pdf_zip():
         assert len(PdfReader(io.BytesIO(archive.read(archive.namelist()[0]))).pages) == 1
 
 
-def test_phase2_image_tools_produce_pngs():
-    client = create_app().test_client()
+def test_phase2_image_tools_produce_pngs(pro_client):
+    client = pro_client
     resized = _post(client, "social-media-image-resizer", {"preset": "instagram-story", "fit": "pad"}, [("photo.png", _image())])
     assert resized.status_code == 200
     with Image.open(io.BytesIO(resized.data)) as image:
@@ -76,8 +95,8 @@ def test_phase2_image_tools_produce_pngs():
         assert image.size == (1080, 1080)
 
 
-def test_csv_merge_and_gift_formatter_produce_valid_text_outputs():
-    client = create_app().test_client()
+def test_csv_merge_and_gift_formatter_produce_valid_text_outputs(pro_client):
+    client = pro_client
     merged = _post(client, "csv-merge-deduplicate", files=[("first.csv", b"name,score\nAda,10\nGrace,9\n"), ("second.csv", b"name,score\nAda,10\nLinus,8\n")])
     assert merged.status_code == 200
     assert list(csv.reader(io.StringIO(merged.data.decode("utf-8")))) == [["name", "score"], ["Ada", "10"], ["Grace", "9"], ["Linus", "8"]]

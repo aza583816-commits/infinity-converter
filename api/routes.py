@@ -6,6 +6,7 @@ from flask_limiter.errors import RateLimitExceeded
 
 from config.settings import settings
 from core.limiter import limiter
+from core.accounts import PLAN_LIMITS, PREMIUM_TOOL_IDS, consume_credit, get_effective_plan
 from core.tool_registry import get_tool, list_tools
 from core.storage import TempWorkspace
 from security.file_guard import validate_upload
@@ -81,6 +82,16 @@ def convert_route():
     if not tool:
         return jsonify(error="الأداة غير موجودة."), 404
 
+    current_user = getattr(g, "current_user", None)
+    plan = get_effective_plan(current_user["id"]) if current_user else "free"
+    if tool_id in PREMIUM_TOOL_IDS:
+        if not current_user:
+            return jsonify(error="يلزم تسجيل الدخول لاستخدام هذه الأداة."), 401
+        if plan == "free":
+            return jsonify(error="تتطلب هذه الأداة اشتراك Pro أو Business."), 403
+    if current_user and current_user["credits_balance"] <= 0:
+        return jsonify(error="لا توجد أرصدة متبقية. اشحن رصيدك أو جدد اشتراكك."), 402
+
     files = request.files.getlist("files")
     if not files:
         single = request.files.get("file")
@@ -90,8 +101,9 @@ def convert_route():
     if not files and tool.input_required:
         return jsonify(error="ارفع ملفًا واحدًا على الأقل."), 400
 
-    if len(files) > tool.max_files:
-        return jsonify(error=f"الأداة تسمح بحد أقصى {tool.max_files} ملف/ملفات."), 400
+    max_files = min(tool.max_files, PLAN_LIMITS[plan]["max_files"])
+    if len(files) > max_files:
+        return jsonify(error=f"الخطة الحالية تسمح بحد أقصى {max_files} ملف/ملفات."), 400
 
     with TempWorkspace() as workspace:
         safe_inputs = []
@@ -100,7 +112,7 @@ def convert_route():
             for uploaded in files:
                 safe_input = validate_upload(
                     uploaded,
-                    max_bytes=settings.max_file_bytes,
+                    max_bytes=min(settings.max_file_bytes, PLAN_LIMITS[plan]["max_file_mb"] * 1024 * 1024),
                     inspect_only=False,
                     workspace=workspace.path,
                     max_pdf_pages=settings.max_pdf_pages,
@@ -122,6 +134,8 @@ def convert_route():
             response = send_file(
                 result.path, mimetype=result.mime, as_attachment=True, download_name=result.name
             )
+            if current_user and not consume_credit(current_user["id"]):
+                return jsonify(error="تعذر خصم الرصيد. حاول مرة أخرى."), 409
             response.headers["Cache-Control"] = "no-store, private"
             response.headers["Pragma"] = "no-cache"
             response.headers["X-Batch-Total"] = str(result.batch_total)

@@ -1,13 +1,67 @@
+import os
 from pathlib import Path
 
-from flask import Blueprint, abort, make_response, redirect, render_template, request, send_file
+from flask import Blueprint, abort, flash, g, make_response, redirect, render_template, request, send_file
 from config.settings import settings
+from core.accounts import EmailAlreadyExistsError, authenticate, create_user, csrf_token, get_effective_plan, get_latest_subscription_for_user, login_required, login_user, logout_user, valid_email, verify_csrf
 from core.browser_tools import BROWSER_TOOLS, browser_collection_tools, get_browser_tool
 from core.tool_registry import AUDIENCE_COLLECTIONS, DEVELOPER_TOOLS, TOOLS, TOOL_META, collection_tools, get_developer_tool, get_tool, list_tools, popular_tools, related_tools, tool_url
 from i18n import LANGUAGE_COOKIE, SUPPORTED_LANGUAGES
 from i18n.translations import INFO_CONTENT
 
 pages_bp = Blueprint("pages", __name__)
+
+
+def _auth_post_is_valid() -> bool:
+    return verify_csrf(request.form.get("csrf_token"))
+
+
+@pages_bp.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        email = request.form.get("email", "")
+        password = request.form.get("password", "")
+        if not _auth_post_is_valid():
+            abort(400)
+        if not valid_email(email) or len(password) < 12:
+            flash("auth.register_invalid")
+        else:
+            try:
+                user = create_user(email, password)
+            except EmailAlreadyExistsError:
+                flash("auth.register_exists")
+            else:
+                login_user(user)
+                return redirect("/account")
+    return render_template("auth.html", mode="register", csrf_token=csrf_token())
+
+
+@pages_bp.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        if not _auth_post_is_valid():
+            abort(400)
+        user = authenticate(request.form.get("email", ""), request.form.get("password", ""))
+        if user:
+            login_user(user)
+            return redirect("/account")
+        flash("auth.login_invalid")
+    return render_template("auth.html", mode="login", csrf_token=csrf_token())
+
+
+@pages_bp.post("/logout")
+@login_required
+def logout():
+    if not _auth_post_is_valid():
+        abort(400)
+    logout_user()
+    return redirect("/")
+
+
+@pages_bp.get("/account")
+@login_required
+def account():
+    return render_template("account.html", user=g.current_user, plan=get_effective_plan(g.current_user["id"]), subscription=get_latest_subscription_for_user(g.current_user["id"]))
 
 
 @pages_bp.get("/manifest.json")
@@ -31,7 +85,12 @@ def home():
 
 @pages_bp.get("/pricing")
 def pricing_page():
-    return render_template("pricing.html", tools=list_tools())
+    return render_template(
+        "pricing.html",
+        tools=list_tools(),
+        paddle_client_token=os.getenv("PADDLE_CLIENT_TOKEN", ""),
+        checkout_user=getattr(g, "current_user", None),
+    )
 
 
 @pages_bp.get("/tools")

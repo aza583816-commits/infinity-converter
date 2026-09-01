@@ -221,15 +221,35 @@ document.addEventListener("keydown", (event) => {
   if ((event.key === "/" && !["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) || ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k")) { event.preventDefault(); search?.focus(); }
 });
 
-// Pricing billing toggle: presentation only until a payment provider is configured.
+// Pricing billing toggle and Paddle checkout are scoped to the pricing page.
 const billingButtons = $$('[data-billing]');
 if (billingButtons.length) {
   const priceNodes = $$('[data-price-monthly]');
+  let selectedBilling = 'monthly';
+  const pricingPage = $('.pricing-wrap[data-paddle-client-token]');
+  const checkoutButtons = $$('[data-paddle-checkout]');
+  const paddleToken = pricingPage?.dataset.paddleClientToken || '';
+  const checkoutUserId = pricingPage?.dataset.userId || '';
+  const checkoutEmail = pricingPage?.dataset.userEmail || '';
+  let paddleReady = false;
+  if (paddleToken && window.Paddle) {
+    try {
+      window.Paddle.Initialize({ token: paddleToken });
+      paddleReady = true;
+    } catch (_) { paddleReady = false; }
+  }
+  checkoutButtons.forEach((button) => { button.disabled = !paddleReady; });
   billingButtons.forEach((button) => button.addEventListener('click', () => {
     billingButtons.forEach((b) => b.classList.toggle('is-active', b === button));
     const yearly = button.dataset.billing === 'yearly';
+    selectedBilling = yearly ? 'yearly' : 'monthly';
     priceNodes.forEach((node) => { node.textContent = `$${yearly ? node.dataset.priceYearly : node.dataset.priceMonthly}`; });
     $$('[data-price-period]').forEach((node) => { node.textContent = yearly ? node.dataset.periodYearly : node.dataset.periodMonthly; });
+  }));
+  checkoutButtons.forEach((button) => button.addEventListener('click', () => {
+    if (!paddleReady) return;
+    const priceId = selectedBilling === 'yearly' ? button.dataset.priceYearly : button.dataset.priceMonthly;
+    if (priceId && checkoutUserId && checkoutEmail) window.Paddle.Checkout.open({ items: [{ priceId, quantity: 1 }], customData: { user_id: checkoutUserId, email: checkoutEmail } });
   }));
 }
 
