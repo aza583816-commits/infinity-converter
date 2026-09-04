@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="{{ 'en' if lang == 'en' else 'ar' }}" dir="{{ 'ltr' if lang == 'en' else 'rtl' }}">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ t('meta.default_title') }}{% endblock %}</title>
+  <meta name="description" content="{% block description %}{{ t('meta.default_description') }}{% endblock %}">
+  <link rel="canonical" href="{{ public_base_url }}{{ request.path }}">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta name="theme-color" content="#071a14">
+  <link rel="icon" type="image/png" sizes="192x192" href="/static/icon-192.png?v=6.0.0">
+  <link rel="apple-touch-icon" sizes="192x192" href="/static/icon-192.png?v=6.0.0">
+  {% for code in supported_languages %}<link rel="alternate" hreflang="{{ code }}" href="{{ public_base_url }}{{ request.path }}?lang={{ code }}">{% endfor %}
+  <link rel="alternate" hreflang="x-default" href="{{ public_base_url }}{{ request.path }}">
+  <meta property="og:type" content="website"><meta property="og:site_name" content="Infinity Converter">
+  <meta property="og:title" content="{% block og_title %}Infinity Converter{% endblock %}"><meta property="og:description" content="{{ t('meta.og_description') }}"><meta property="og:locale" content="{{ 'en_US' if lang == 'en' else 'ar_AR' }}"><meta property="og:url" content="{{ public_base_url }}{{ request.path }}">
+  <meta property="og:image" content="{{ public_base_url }}/static/og-banner.png?v=6.0.0"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Infinity Converter — practical file tools">
+  <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="{% block twitter_title %}Infinity Converter{% endblock %}"><meta name="twitter:description" content="{{ t('meta.og_description') }}"><meta name="twitter:image" content="{{ public_base_url }}/static/og-banner.png?v=6.0.0">
+  {% if google_site_verification %}<meta name="google-site-verification" content="{{ google_site_verification }}">{% endif %}
+  {% if adsense_client_id %}<meta name="google-adsense-account" content="{{ adsense_client_id }}"><script nonce="{{ csp_nonce }}" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={{ adsense_client_id }}" crossorigin="anonymous"></script>{% endif %}
+  <script type="application/ld+json" nonce="{{ csp_nonce }}">{{ organization_schema|tojson }}</script>
+  <link rel="manifest" href="/manifest.json?v=6.0.0"><link rel="stylesheet" href="/static/css/app.css?v=6.0.0">
+  {% block head %}{% endblock %}
+</head>
+<div class="site-ambient" aria-hidden="true"><span></span><span></span><span></span></div>
+<body data-max-file-bytes="{{ plan_max_file_mb * 1024 * 1024 }}" data-direction="{{ 'ltr' if lang == 'en' else 'rtl' }}" data-billing-enabled="{{ '1' if public_billing_enabled else '0' }}">
+<div class="top-signal"><span class="signal-pulse"></span><span>{{ '∞ SYSTEMS READY' if lang == 'en' else '∞ الأنظمة جاهزة' }}</span><span class="top-signal-note">{{ ('Free tools · privacy-first · no sign-up required' if lang == 'en' else 'أدوات مجانية · الخصوصية أولًا · بدون تسجيل') if not public_auth_enabled else ('Accounts enabled · privacy-first' if lang == 'en' else 'الحسابات مفعلة · الخصوصية أولًا') }}</span></div><header class="site-header"><div class="header-inner">
+  <a class="brand" href="/" aria-label="{{ t('brand.home_aria') }}"><span class="brand-mark" aria-hidden="true">∞</span><span><strong>INFINITY</strong> Converter</span></a>
+  <nav class="main-nav" aria-label="{{ t('nav.aria_main') }}"><a href="/">{{ t('nav.home') }}</a><a href="/tools">{{ t('nav.tools') }}</a><a href="/#categories">{{ t('nav.categories') }}</a><a href="/blog">{{ 'Knowledge Center' if lang == 'en' else 'مركز المعرفة' }}</a><a href="/how-it-works">{{ 'How it works' if lang == 'en' else 'كيف يعمل' }}</a><a href="/about">{{ t('nav.about') }}</a><a href="/contact">{{ t('nav.contact') }}</a><a class="lang-switch" href="/set-language/{{ 'en' if lang == 'ar' else 'ar' }}">{{ t('lang.switch_label') }}</a></nav>
+  <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-nav"><span aria-hidden="true">☰</span><span class="sr-only">{{ t('nav.open_menu') }}</span></button>
+</div><nav class="mobile-nav" id="mobile-nav" aria-label="{{ t('nav.aria_mobile') }}" hidden><a href="/">{{ t('nav.home') }}</a><a href="/tools">{{ t('nav.tools') }}</a><a href="/#categories">{{ t('nav.categories') }}</a><a href="/about">{{ t('nav.about') }}</a><a href="/contact">{{ t('nav.contact') }}</a><a href="/set-language/{{ 'en' if lang == 'ar' else 'ar' }}">{{ t('lang.switch_label') }}</a></nav></header>
+<main>{% block content %}{% endblock %}</main>
+<footer class="site-footer"><div class="footer-grid">
+  <div class="footer-brand"><a class="brand" href="/"><span class="brand-mark" aria-hidden="true">∞</span><span><strong>INFINITY</strong> Converter</span></a><p>{{ t('footer.tagline') }}</p></div>
+  <div><h2>{{ t('footer.tools_heading') }}</h2><a href="/tools">{{ t('footer.all_tools') }}</a><a href="/#categories">{{ t('nav.categories') }}</a></div>
+  <div><h2>{{ t('footer.about_heading') }}</h2><a href="/about">{{ t('nav.about') }}</a><a href="/how-it-works">{{ 'How it works' if lang == 'en' else 'كيف يعمل' }}</a><a href="/contact">{{ t('nav.contact') }}</a><a href="/privacy">{{ t('footer.privacy') }}</a></div>
+  <div><h2>{{ t('footer.legal_heading') }}</h2><a href="/terms">{{ t('footer.terms') }}</a><a href="/cookies">{{ t('footer.cookies') }}</a></div>
+  <div><h2>{{ 'Knowledge Center' if lang == 'en' else 'مركز المعرفة' }}</h2><p style="color:#9fb5ab;font-size:11px;margin:0 0 8px">{{ 'Practical guides about files, formats, OCR, PDFs and everyday conversion workflows.' if lang == 'en' else 'أدلة عملية عن الملفات والصيغ وOCR وPDF ومسارات تحويل الملفات اليومية.' }}</p><a class="footer-knowledge-link" href="/blog">{{ 'Explore the guides →' if lang == 'en' else 'تصفح الأدلة ←' }}</a></div>
+</div><div class="footer-bottom"><span>{{ t('footer.copyright') }}</span><span>{{ t('footer.disclaimer') }}</span></div></footer>
+<meta id="i18n-data" name="infinity-i18n" content="{{ i18n_json|e }}">{% block scripts %}{% endblock %}
+</body></html>

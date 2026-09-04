@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% set page_title = post.title_en if lang == 'en' else post.title_ar %}
+{% set page_description = post.description_en if lang == 'en' else post.description_ar %}
+{% block title %}{{ page_title }} | Infinity Converter{% endblock %}
+{% block description %}{{ page_description }}{% endblock %}
+{% block og_title %}{{ page_title }}{% endblock %}
+{% block head %}
+<script type="application/ld+json" nonce="{{ csp_nonce }}">{{ {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  'headline': page_title,
+  'description': page_description,
+  'mainEntityOfPage': public_base_url ~ '/blog/' ~ post.slug,
+  'dateModified': '2026-09-05',
+  'publisher': {'@type': 'Organization', 'name': 'Infinity Converter', 'url': public_base_url}
+}|tojson }}</script>
+{% endblock %}
+{% block content %}
+<div class="page-wrap blog-post-page">
+  <nav class="breadcrumbs" aria-label="{{ 'Breadcrumbs' if lang == 'en' else 'مسار التنقل' }}"><a href="/">{{ t('common.home') }}</a><span aria-hidden="true">/</span><a href="/blog">{{ 'Knowledge Center' if lang == 'en' else 'مركز المعرفة' }}</a><span aria-hidden="true">/</span><strong>{{ page_title }}</strong></nav>
+  <article class="blog-article reveal-on-scroll page-ambient-frame">
+    <header class="blog-article-head">
+      <span class="blog-category">{{ post.category_en if lang == 'en' else post.category_ar }}</span>
+      <h1>{{ page_title }}</h1>
+      <p class="lead">{{ page_description }}</p>
+      <div class="article-meta"><span>{{ post.minutes }} {{ 'min read' if lang == 'en' else 'دقائق قراءة' }}</span><span>•</span><span>{{ 'Practical guide' if lang == 'en' else 'دليل عملي' }}</span></div>
+    </header>
+    <div class="article-body">
+      {% for heading, paragraph in post.sections %}
+      <section class="article-section reveal-on-scroll" style="--delay: {{ loop.index0 * 45 }}ms">
+        <span class="article-index">{{ '%02d'|format(loop.index) }}</span>
+        <div><h2>{{ heading if lang == 'ar' else post.section_en[loop.index0] }}</h2><p>{{ paragraph if lang == 'ar' else post.paragraph_en[loop.index0] }}</p></div>
+      </section>
+      {% endfor %}
+    </div>
+    <div class="article-cta">
+      <div><span class="kicker">{{ 'NEXT STEP' if lang == 'en' else 'الخطوة التالية' }}</span><h2>{{ post.tool_label_en if lang == 'en' else post.tool_label_ar }}</h2><p>{{ 'Use the matching Infinity Converter tool when you are ready.' if lang == 'en' else 'إذا خلصت من القراءة، استخدم أداة Infinity Converter المناسبة مباشرة.' }}</p></div>
+      <a class="primary" href="{{ post.tool }}">{{ 'Open the tool →' if lang == 'en' else 'افتح الأداة ←' }}</a>
+    </div>
+  </article>
+  <section class="related-guides reveal-on-scroll" aria-labelledby="related-title">
+    <div class="section-heading"><div><span class="kicker">{{ 'KEEP READING' if lang == 'en' else 'كمّل القراءة' }}</span><h2 id="related-title">{{ 'More useful guides' if lang == 'en' else 'أدلة ثانية ممكن تفيدك' }}</h2></div></div>
+    <div class="blog-grid related-grid">{% for item in related %}<article class="blog-card"><div class="blog-card-top"><span class="blog-category">{{ item.category_en if lang == 'en' else item.category_ar }}</span><span>{{ item.minutes }} min</span></div><h2><a href="/blog/{{ item.slug }}">{{ item.title_en if lang == 'en' else item.title_ar }}</a></h2><p>{{ item.description_en if lang == 'en' else item.description_ar }}</p><a class="blog-card-link" href="/blog/{{ item.slug }}">{{ 'Read' if lang == 'en' else 'اقرأ' }} <span aria-hidden="true">{{ '→' if lang == 'en' else '←' }}</span></a></article>{% endfor %}</div>
+  </section>
+</div>
+{% endblock %}
