@@ -1,6 +1,0 @@
-{% extends "base.html" %}
-{% set page_title = t('info.' + page_name + '.title') %}
-{% set page_description = t('info.' + page_name + '.description') %}
-{% block title %}{{ page_title }} | Infinity Converter{% endblock %}
-{% block description %}{{ page_description }}{% endblock %}
-{% block content %}<div class="page-wrap info-page"><nav class="breadcrumbs" aria-label="مسار التنقل"><a href="/">{{ t('common.home') }}</a><span aria-hidden="true">/</span><strong>{{ page_title }}</strong></nav><article class="prose"><span class="kicker">Infinity Converter</span><h1>{{ page_title }}</h1><p class="lead">{{ page_description }}</p>{% for heading, paragraph in info_content[lang][page_name] %}<h2>{{ heading }}</h2><p>{{ paragraph|safe }}</p>{% endfor %}<p class="updated">{{ t('info.updated') }}</p></article></div>{% endblock %}
