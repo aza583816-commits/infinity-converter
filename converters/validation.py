@@ -19,6 +19,7 @@ MIME_BY_EXTENSION = {
     ".json": "application/json",
     ".zip": "application/zip",
     ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ".doc": "application/msword",
     ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     ".md": "text/markdown",
     ".markdown": "text/markdown",

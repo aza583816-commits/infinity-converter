@@ -162,7 +162,7 @@ TOOLS = {
 
     # --- Document tools ---
     "word-to-pdf": Tool(
-        "word-to-pdf", "تحويل Word إلى PDF", "Word to PDF", "حوّل مستندات Word إلى PDF عبر LibreOffice.", "Convert Word documents to PDF using LibreOffice.", "office", "المستندات", "Documents", "DOC", (".docx",), ".pdf", 10, True, batch=True
+        "word-to-pdf", "تحويل Word إلى PDF", "Word to PDF", "حوّل مستندات Word بصيغتي DOC وDOCX إلى PDF عبر LibreOffice.", "Convert DOC and DOCX Word documents to PDF using LibreOffice.", "office", "المستندات", "Documents", "DOC", (".doc", ".docx"), ".pdf", 10, True, batch=True
     ),
     "excel-to-pdf": Tool(
         "excel-to-pdf", "تحويل Excel إلى PDF", "Excel to PDF", "حوّل جداول Excel إلى ملفات PDF قابلة للمشاركة.", "Convert Excel workbooks into shareable PDF files.", "office", "Excel", "Excel", "XLS", (".xlsx",), ".pdf", 10, True, batch=True

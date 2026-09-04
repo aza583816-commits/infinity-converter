@@ -17,6 +17,7 @@ ALLOWED_SIGNATURES = {
     # container signatures vary (BMP/TIFF).
     ".bmp": None,
     ".tiff": None,
+    ".doc": (b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1",),
     ".docx": (b"PK\x03\x04", b"PK\x05\x06", b"PK\x07\x08"),
     ".xlsx": (b"PK\x03\x04", b"PK\x05\x06", b"PK\x07\x08"),
     ".pptx": (b"PK\x03\x04", b"PK\x05\x06", b"PK\x07\x08"),
