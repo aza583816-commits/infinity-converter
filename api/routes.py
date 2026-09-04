@@ -82,15 +82,18 @@ def convert_route():
     if not tool:
         return jsonify(error="الأداة غير موجودة."), 404
 
+    # إتاحة الأدوات لجميع الزوار مع الإبقاء على منطق الحسابات للمستقبل
     current_user = getattr(g, "current_user", None)
     plan = get_effective_plan(current_user["id"]) if current_user else "free"
-    if tool_id in PREMIUM_TOOL_IDS:
-        if not current_user:
-            return jsonify(error="يلزم تسجيل الدخول لاستخدام هذه الأداة."), 401
-        if plan == "free":
-            return jsonify(error="تتطلب هذه الأداة اشتراك Pro أو Business."), 403
-    if current_user and current_user["credits_balance"] <= 0:
-        return jsonify(error="لا توجد أرصدة متبقية. اشحن رصيدك أو جدد اشتراكك."), 402
+
+    # تم تعطيل فحص الأدوات المدفوعة والأرصدة مؤقتاً لتسهيل الاستخدام المجاني
+    # if tool_id in PREMIUM_TOOL_IDS:
+    #     if not current_user:
+    #         return jsonify(error="يلزم تسجيل الدخول لاستخدام هذه الأداة."), 401
+    #     if plan == "free":
+    #         return jsonify(error="تتطلب هذه الأداة اشتراك Pro أو Business."), 403
+    # if current_user and current_user["credits_balance"] <= 0:
+    #     return jsonify(error="لا توجد أرصدة متبقية. اشحن رصيدك أو جدد اشتراكك."), 402
 
     files = request.files.getlist("files")
     if not files:
@@ -101,9 +104,9 @@ def convert_route():
     if not files and tool.input_required:
         return jsonify(error="ارفع ملفًا واحدًا على الأقل."), 400
 
-    max_files = min(tool.max_files, PLAN_LIMITS[plan]["max_files"])
+    max_files = min(tool.max_files, PLAN_LIMITS.get(plan, {}).get("max_files", tool.max_files))
     if len(files) > max_files:
-        return jsonify(error=f"الخطة الحالية تسمح بحد أقصى {max_files} ملف/ملفات."), 400
+        return jsonify(error=f"الحد الأقصى المسموح به هو {max_files} ملف/ملفات."), 400
 
     with TempWorkspace() as workspace:
         safe_inputs = []
@@ -112,7 +115,7 @@ def convert_route():
             for uploaded in files:
                 safe_input = validate_upload(
                     uploaded,
-                    max_bytes=min(settings.max_file_bytes, PLAN_LIMITS[plan]["max_file_mb"] * 1024 * 1024),
+                    max_bytes=min(settings.max_file_bytes, PLAN_LIMITS.get(plan, {}).get("max_file_mb", settings.max_file_mb) * 1024 * 1024),
                     inspect_only=False,
                     workspace=workspace.path,
                     max_pdf_pages=settings.max_pdf_pages,
@@ -134,8 +137,8 @@ def convert_route():
             response = send_file(
                 result.path, mimetype=result.mime, as_attachment=True, download_name=result.name
             )
-            if current_user and not consume_credit(current_user["id"]):
-                return jsonify(error="تعذر خصم الرصيد. حاول مرة أخرى."), 409
+            if current_user:
+                consume_credit(current_user["id"])
             response.headers["Cache-Control"] = "no-store, private"
             response.headers["Pragma"] = "no-cache"
             response.headers["X-Batch-Total"] = str(result.batch_total)
@@ -149,6 +152,5 @@ def convert_route():
             return jsonify(error="تعذر التحقق من الملف الناتج. جرّب العملية مرة أخرى."), 500
         except ValueError as exc:
             return jsonify(error=str(exc)), 400
-        except Exception as exc:
-            # Do not leak converter internals to users.
+        except Exception:
             return jsonify(error="تعذر إكمال التحويل. جرّب ملفًا آخر أو أعد المحاولة."), 500
