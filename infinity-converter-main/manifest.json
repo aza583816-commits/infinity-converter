@@ -1,0 +1,26 @@
+{
+  "name": "Infinity Converter",
+  "short_name": "Infinity",
+  "start_url": "/",
+  "id": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f7f8f4",
+  "theme_color": "#176b4d",
+  "description": "Free PDF, document, image, OCR, archive, and utility tools with a smart AI workflow assistant.",
+  "icons": [
+    {
+      "src": "/static/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "version": "6.0.0"
+}
