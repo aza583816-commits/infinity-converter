@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}{{ tool.name_en if lang == 'en' else tool.name_ar }} | Infinity Converter{% endblock %}
+{% block description %}{{ tool.description_en if lang == 'en' else tool.description_ar }}{% endblock %}
+{% block content %}
+<div class="page-wrap developer-tool-page">
+  <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/">{{ t('common.home') }}</a><span aria-hidden="true">/</span><a href="/collections/developers">{{ t('developer.collection') }}</a><span aria-hidden="true">/</span><strong>{{ tool.name_en if lang == 'en' else tool.name_ar }}</strong></nav>
+  <header class="collection-hero"><span class="kicker">{{ t('developer.local') }}</span><h1>{{ tool.name_en if lang == 'en' else tool.name_ar }}</h1><p>{{ tool.description_en if lang == 'en' else tool.description_ar }}</p></header>
+  <section class="developer-workspace" data-developer-tool="{{ tool_id }}"><label for="developer-input">{{ t('developer.input') }}</label><textarea id="developer-input" rows="10" spellcheck="false" placeholder="{{ t('developer.placeholder') }}"></textarea><div class="developer-actions"><button class="primary" type="button" id="developer-run">{{ t('developer.run') }}</button><button class="secondary" type="button" id="developer-copy">{{ t('developer.copy') }}</button></div><label for="developer-output">{{ t('developer.output') }}</label><textarea id="developer-output" rows="10" readonly spellcheck="false" aria-live="polite"></textarea><p class="developer-note">{{ t('developer.note') }}</p></section>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/js/app.js?v=6.0.0" defer></script>{% endblock %}
