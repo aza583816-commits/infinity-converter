@@ -1,3 +1,0 @@
-{% extends "base.html" %}
-{% block title %}{{ t('account.title') }} | Infinity Converter{% endblock %}
-{% block content %}<section class="auth-page"><div class="auth-form"><h1>{{ t('account.heading') }}</h1><dl class="account-details"><dt>{{ t('account.email') }}</dt><dd>{{ user.email }}</dd><dt>{{ t('account.plan') }}</dt><dd>{{ plan|upper }}</dd><dt>{{ t('account.credits') }}</dt><dd>{{ user.credits_balance }}</dd>{% if subscription %}<dt>{{ t('account.subscription_status') }}</dt><dd>{{ subscription.status }}</dd><dt>{{ t('account.period_end') }}</dt><dd>{{ subscription.current_period_end or t('account.no_period') }}</dd>{% endif %}</dl><a class="primary" href="/pricing">{{ t('account.manage_plan') }}</a></div></section>{% endblock %}
