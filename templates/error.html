@@ -1,0 +1,4 @@
+{% extends "base.html" %}
+{% block title %}{{ code }} | Infinity Converter{% endblock %}
+{% block description %}{{ 'The page could not be found.' if code == 404 else 'Something went wrong while loading this page.' }}{% endblock %}
+{% block content %}<div class="page-wrap error-page"><div class="error-orbit" aria-hidden="true">∞</div><span class="kicker">{{ code }}</span><h1>{{ 'That page is not here.' if code == 404 else 'Something went wrong.' }}</h1><p>{{ 'The link may be outdated, or the page may have moved. Try the tools or knowledge center instead.' if code == 404 else 'Please try again. If the problem continues, contact us and tell us what you were doing.' }}</p><div class="error-actions"><a class="primary" href="/">{{ 'Back home' if lang == 'en' else 'العودة للرئيسية' }}</a><a class="secondary" href="/tools">{{ 'Browse tools' if lang == 'en' else 'تصفح الأدوات' }}</a></div></div>{% endblock %}

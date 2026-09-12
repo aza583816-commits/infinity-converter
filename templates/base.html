@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="{{ 'en' if lang == 'en' else 'ar' }}" dir="{{ 'ltr' if lang == 'en' else 'rtl' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{% block title %}{{ t('meta.default_title') }}{% endblock %}</title>
+  <meta name="description" content="{% block description %}{{ t('meta.default_description') }}{% endblock %}">
+  {% set noindex_page = (page_noindex|default(false)) or (code is defined) %}
+  {% set canonical_suffix = '?lang=en' if lang == 'en' else '' %}
+  {% set language_target = request.path ~ ('' if lang == 'en' else '?lang=en') %}
+  <link rel="canonical" href="{{ public_base_url }}{{ request.path }}{{ canonical_suffix }}">
+  <meta name="robots" content="{{ 'noindex,follow' if noindex_page else 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1' }}">
+  <meta name="theme-color" content="#071712">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" type="image/png" sizes="192x192" href="/static/icon-192.png?v=6.1.2">
+  <link rel="apple-touch-icon" sizes="192x192" href="/static/icon-192.png?v=6.1.2">
+  <link rel="alternate" hreflang="ar" href="{{ public_base_url }}{{ request.path }}">
+  <link rel="alternate" hreflang="en" href="{{ public_base_url }}{{ request.path }}?lang=en">
+  <link rel="alternate" hreflang="x-default" href="{{ public_base_url }}{{ request.path }}">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Infinity Converter">
+  <meta property="og:title" content="{% block og_title %}Infinity Converter{% endblock %}">
+  <meta property="og:description" content="{{ t('meta.og_description') }}">
+  <meta property="og:locale" content="{{ 'en_US' if lang == 'en' else 'ar_AR' }}">
+  <meta property="og:url" content="{{ public_base_url }}{{ request.path }}{{ canonical_suffix }}">
+  <meta property="og:image" content="{{ public_base_url }}/static/og-banner.png?v=6.1.2">
+  <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Infinity Converter — practical file tools">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{% block twitter_title %}Infinity Converter{% endblock %}">
+  <meta name="twitter:description" content="{{ t('meta.og_description') }}">
+  <meta name="twitter:image" content="{{ public_base_url }}/static/og-banner.png?v=6.1.2">
+  {% if google_site_verification %}<meta name="google-site-verification" content="{{ google_site_verification }}">{% endif %}
+  {% if adsense_client_id %}<meta name="google-adsense-account" content="{{ adsense_client_id }}">{% endif %}
+  {# Keep Google-served ads off thin/noindex/dead-end/navigation-only surfaces. #}
+  {% set adsense_content_page = not noindex_page and (request.path == '/' or request.path.startswith('/blog/') or request.path.startswith('/tools/')) %}
+  {% if adsense_client_id and adsense_content_page %}<script nonce="{{ csp_nonce }}" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={{ adsense_client_id }}" crossorigin="anonymous"></script>{% endif %}
+  <script type="application/ld+json" nonce="{{ csp_nonce }}">{{ organization_schema|tojson }}</script>
+  <script type="application/ld+json" nonce="{{ csp_nonce }}">{{ website_schema|tojson }}</script>
+  <link rel="manifest" href="/manifest.json?v=6.1.2">
+  <link rel="stylesheet" href="/static/css/app.css?v=6.1.2">
+  {% block head %}{% endblock %}
+</head>
+<body class="infinity-shell" data-max-file-bytes="{{ plan_max_file_mb * 1024 * 1024 }}" data-direction="{{ 'ltr' if lang == 'en' else 'rtl' }}" data-billing-enabled="{{ '1' if public_billing_enabled else '0' }}">
+<a class="skip-link" href="#main-content">{{ 'Skip to content' if lang == 'en' else 'انتقل إلى المحتوى' }}</a>
+<div class="infinity-backdrop" aria-hidden="true">
+  <div class="aurora aurora-a"></div><div class="aurora aurora-b"></div><div class="aurora aurora-c"></div>
+  <div class="cell-matrix"></div><div class="starfield"></div><div class="cursor-glow"></div>
+</div>
+<div class="top-signal">
+  <span class="signal-pulse"></span><span>∞ INFINITY CONVERTER</span>
+  <span class="top-signal-note">{{ 'Free tools · transparent processing · no sign-up required' if lang == 'en' else 'أدوات مجانية · معالجة واضحة · بدون تسجيل' }}</span>
+</div>
+<header class="site-header"><div class="header-inner">
+  <a class="brand" href="/" aria-label="{{ t('brand.home_aria') }}"><span class="brand-mark" aria-hidden="true">∞</span><span><strong>INFINITY</strong> <small>Converter</small></span></a>
+  <nav class="main-nav" aria-label="{{ t('nav.aria_main') }}">
+    <a href="/">{{ t('nav.home') }}</a><a href="/tools">{{ t('nav.tools') }}</a><a href="/blog">{{ 'Knowledge' if lang == 'en' else 'المعرفة' }}</a><a href="/trust">{{ 'Trust' if lang == 'en' else 'الثقة' }}</a><a href="/about">{{ t('nav.about') }}</a>
+    <a class="lang-switch" href="{{ language_target }}" hreflang="{{ 'ar' if lang == 'en' else 'en' }}">{{ 'العربية' if lang == 'en' else 'English' }}</a>
+    <button class="command-trigger" id="command-trigger" type="button" aria-haspopup="dialog" aria-controls="command-palette"><span aria-hidden="true">⌕</span><span>{{ 'Jump' if lang == 'en' else 'انتقل' }}</span><kbd>⌘K</kbd></button>
+    <button class="theme-toggle" id="theme-toggle" type="button" aria-label="{{ 'Switch theme' if lang == 'en' else 'تبديل المظهر' }}" aria-pressed="false"><span aria-hidden="true">☼</span><span class="theme-toggle-label">{{ 'Theme' if lang == 'en' else 'المظهر' }}</span></button>
+  </nav>
+  <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-nav"><span aria-hidden="true">☰</span><span class="sr-only">{{ t('nav.open_menu') }}</span></button>
+</div>
+<nav class="mobile-nav" id="mobile-nav" aria-label="{{ t('nav.aria_mobile') }}" hidden>
+  <a href="/">{{ t('nav.home') }}</a><a href="/tools">{{ t('nav.tools') }}</a><a href="/blog">{{ 'Knowledge Center' if lang == 'en' else 'مركز المعرفة' }}</a><a href="/trust">{{ 'Trust & security' if lang == 'en' else 'الثقة والأمان' }}</a><a href="/editorial">{{ 'Editorial policy' if lang == 'en' else 'سياسة التحرير' }}</a><a href="/about">{{ t('nav.about') }}</a><a href="/contact">{{ t('nav.contact') }}</a><a href="{{ language_target }}">{{ 'العربية' if lang == 'en' else 'English' }}</a><button class="mobile-command-trigger" id="mobile-command-trigger" type="button">⌕ {{ 'Quick jump' if lang == 'en' else 'انتقال سريع' }}</button>
+  <button class="theme-toggle mobile-theme-toggle" id="theme-toggle-mobile" type="button" aria-label="{{ 'Switch theme' if lang == 'en' else 'تبديل المظهر' }}" aria-pressed="false"><span aria-hidden="true">☼</span><span class="theme-toggle-label">{{ 'Theme' if lang == 'en' else 'المظهر' }}</span></button>
+</nav></header>
+<main id="main-content">{% block content %}{% endblock %}</main>
+<footer class="site-footer"><div class="footer-grid">
+  <div class="footer-brand"><a class="brand" href="/"><span class="brand-mark" aria-hidden="true">∞</span><span><strong>INFINITY</strong> Converter</span></a><p>{{ t('footer.tagline') }}</p><a class="footer-mail" href="mailto:v.infinityconverter@gmail.com">v.infinityconverter@gmail.com</a></div>
+  <div><h2>{{ t('footer.tools_heading') }}</h2><a href="/tools">{{ t('footer.all_tools') }}</a><a href="/#categories">{{ t('nav.categories') }}</a><a href="/how-it-works">{{ 'How it works' if lang == 'en' else 'كيف يعمل' }}</a></div>
+  <div><h2>{{ 'Trust' if lang == 'en' else 'الثقة' }}</h2><a href="/trust">{{ 'Trust & security' if lang == 'en' else 'مركز الثقة والأمان' }}</a><a href="/editorial">{{ 'Editorial policy' if lang == 'en' else 'سياسة التحرير والجودة' }}</a><a href="/about">{{ t('nav.about') }}</a><a href="/contact">{{ t('nav.contact') }}</a></div>
+  <div><h2>{{ t('footer.legal_heading') }}</h2><a href="/privacy">{{ t('footer.privacy') }}</a><a href="/terms">{{ t('footer.terms') }}</a><a href="/cookies">{{ t('footer.cookies') }}</a></div>
+  <div><h2>{{ 'Knowledge Center' if lang == 'en' else 'مركز المعرفة' }}</h2><p>{{ 'Practical guides about files, formats, OCR, PDFs, privacy and reliable workflows.' if lang == 'en' else 'أدلة عملية عن الملفات والصيغ وOCR وPDF والخصوصية ومسارات العمل الموثوقة.' }}</p><a class="footer-knowledge-link" href="/blog">{{ 'Explore the guides →' if lang == 'en' else 'تصفح الأدلة ←' }}</a></div>
+</div><div class="footer-bottom"><span>{{ t('footer.copyright') }}</span><span>{{ 'Independent web project · Version ' ~ app_version if lang == 'en' else 'مشروع ويب مستقل · الإصدار ' ~ app_version }}</span></div></footer>
+<div class="command-palette" id="command-palette" hidden>
+  <div class="command-backdrop" data-command-close></div>
+  <section class="command-dialog" role="dialog" aria-modal="true" aria-labelledby="command-title">
+    <div class="command-head"><div><span class="kicker">INFINITY QUICK JUMP</span><strong id="command-title">{{ 'Go anywhere without hunting through menus.' if lang == 'en' else 'وصل لأي مكان بدون ما تدوّر بين القوائم.' }}</strong></div><button type="button" data-command-close aria-label="{{ 'Close' if lang == 'en' else 'إغلاق' }}">×</button></div>
+    <label class="command-search"><span aria-hidden="true">⌕</span><input id="command-input" type="search" autocomplete="off" placeholder="{{ 'Search reviewed tools or site pages…' if lang == 'en' else 'ابحث في الأدوات المراجعة أو صفحات الموقع…' }}"><kbd>ESC</kbd></label>
+    <div class="command-results" id="command-results" role="listbox"></div>
+    <div class="command-footer"><span>↑↓ {{ 'navigate' if lang == 'en' else 'تنقل' }}</span><span>↵ {{ 'open' if lang == 'en' else 'فتح' }}</span><span>{{ 'Only reviewed tool pages are promoted here.' if lang == 'en' else 'نعرض هنا صفحات الأدوات المراجعة فقط.' }}</span></div>
+  </section>
+</div>
+<script id="command-palette-data" type="application/json" nonce="{{ csp_nonce }}">{{ command_palette_tools|tojson }}</script>
+<section class="ai-dock" id="global-ai-dock" aria-label="Infinity AI">
+  <button class="ai-dock-toggle" id="ai-dock-toggle" type="button" aria-expanded="false" aria-controls="ai-dock-panel"><span class="ai-dock-spark">✦</span><span>Infinity AI</span><i id="ai-dock-state" aria-hidden="true"></i></button>
+  <div class="ai-dock-panel" id="ai-dock-panel" hidden>
+    <div class="ai-dock-head"><div><span class="kicker">INFINITY AI</span><strong>{{ 'Describe the result, not the tool name' if lang == 'en' else 'اوصف النتيجة بدل اسم الأداة' }}</strong></div><button id="ai-dock-close" type="button" aria-label="{{ 'Close' if lang == 'en' else 'إغلاق' }}">×</button></div>
+    <p>{{ 'Tell us what you have and what you want. Infinity AI suggests a practical path through the available tools.' if lang == 'en' else 'قل وش عندك ووش تبي. Infinity AI يقترح لك مسارًا عمليًا عبر الأدوات المتاحة.' }}</p>
+    <form id="global-ai-form"><textarea id="global-ai-prompt" maxlength="12000" placeholder="{{ 'Example: I have a scanned Arabic PDF and need editable Word text' if lang == 'en' else 'مثال: عندي PDF عربي مصوّر وأبيه Word قابل للتعديل' }}"></textarea><button class="primary" type="submit">{{ 'Find my workflow' if lang == 'en' else 'ابحث عن مساري' }} ✦</button></form>
+    <div id="global-ai-answer" class="ai-dock-answer" hidden aria-live="polite"></div>
+    <small id="global-ai-status">{{ 'Checking secure connection…' if lang == 'en' else 'جاري التحقق من الاتصال الآمن…' }}</small>
+  </div>
+</section>
+<meta id="i18n-data" name="infinity-i18n" content="{{ i18n_json|e }}">
+{% block scripts %}<script nonce="{{ csp_nonce }}" src="/static/js/app.js?v=6.1.2" defer></script>{% endblock %}
+</body></html>
