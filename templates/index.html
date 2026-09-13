@@ -15,7 +15,7 @@
       </div>
     </div>
 
-    <div class="v7-intelligence-console" id="infinity-ai">
+    <div data-surface="intelligence-console" class="v7-intelligence-console" id="infinity-ai">
       <div class="v7-console-head">
         <div><span class="v7-ai-orb" aria-hidden="true">∞</span><div><small>INFINITY INTELLIGENCE</small><strong>{{ 'What do you want to achieve?' if lang == 'en' else 'وش النتيجة اللي تبيها؟' }}</strong></div></div>
         <span class="v7-live"><i></i>{{ 'Smart Core ready' if lang == 'en' else 'النواة الذكية جاهزة' }}</span>
@@ -46,7 +46,7 @@
   </section>
 
   <section class="v7-two-col section-block reveal-on-scroll">
-    <div class="v7-router-card smart-router">
+    <div class="v7-router-card smart-router" data-surface="file-router">
       <div class="v7-section-label"><span>01</span><small>SMART FILE ROUTER</small></div>
       <h2>{{ 'Start with the file, not the tool list.' if lang == 'en' else 'ابدأ بالملف، مو بقائمة الأدوات.' }}</h2>
       <p>{{ 'Choose one file locally. Infinity reads only its type and size here, then points you toward compatible tools without uploading it.' if lang == 'en' else 'اختر ملفًا محليًا. Infinity يقرأ نوعه وحجمه هنا فقط، ثم يوجّهك للأدوات المتوافقة بدون رفع الملف.' }}</p>
@@ -67,7 +67,7 @@
   <section class="section-block v7-workflows reveal-on-scroll" aria-labelledby="v7-flow-title">
     <div class="v7-section-heading"><div><span class="kicker">INFINITY FLOW</span><h2 id="v7-flow-title">{{ 'Complete outcomes in a few clear steps.' if lang == 'en' else 'أنجز النتيجة في خطوات واضحة قليلة.' }}</h2><p>{{ 'These are real workflows built from tools that already exist — no placeholder features.' if lang == 'en' else 'هذه مسارات حقيقية مبنية من أدوات موجودة فعلًا — بدون ميزات وهمية أو غير مكتملة.' }}</p></div><a class="text-button" href="/assistant">{{ 'Build a custom flow' if lang == 'en' else 'ابنِ مسار مخصص' }} ↗</a></div>
     <div class="v7-flow-grid">
-      <article class="v7-flow-card"><span class="v7-flow-index">01</span><div class="v7-flow-icon">OCR</div><h3>{{ 'Scanned PDF → editable work' if lang == 'en' else 'PDF مصوّر ← محتوى قابل للتعديل' }}</h3><p>{{ 'Recognize the scan, export useful text, then move into an editable document workflow.' if lang == 'en' else 'اقرأ المسح، استخرج النص المفيد، ثم انتقل لمسار مستند قابل للتعديل.' }}</p><div class="v7-flow-line"><a href="/tools/pdf-ocr">PDF OCR</a><span>→</span><a href="/tools/pdf-to-docx">PDF → DOCX</a></div></article>
+      <article class="v7-flow-card"><span class="v7-flow-index">01</span><div class="v7-flow-icon">OCR</div><h3>{{ 'Scanned PDF → editable work' if lang == 'en' else 'PDF مصوّر ← محتوى قابل للتعديل' }}</h3><p>{{ 'Add a searchable text layer to the scanned PDF, then export it to editable Word.' if lang == 'en' else 'أضف طبقة نص قابلة للبحث إلى PDF الممسوح، ثم حوّله إلى Word قابل للتعديل.' }}</p><div class="v7-flow-line"><a href="/tools/ocr-pdf-to-searchable">OCR → PDF</a><span>→</span><a href="/tools/pdf-to-docx">PDF → DOCX</a></div></article>
       <article class="v7-flow-card"><span class="v7-flow-index">02</span><div class="v7-flow-icon">SAFE</div><h3>{{ 'Review → redact → protect' if lang == 'en' else 'راجع ← نقّح ← احمِ' }}</h3><p>{{ 'Prepare a safer sharing copy by removing matching sensitive text, then add protection if needed.' if lang == 'en' else 'جهّز نسخة مشاركة أكثر أمانًا بإزالة النص الحساس المطابق ثم أضف الحماية إذا احتجت.' }}</p><div class="v7-flow-line"><a href="/tools/pdf-redact">Redact</a><span>→</span><a href="/tools/pdf-password-protect">Protect</a></div></article>
       <article class="v7-flow-card"><span class="v7-flow-index">03</span><div class="v7-flow-icon">IMG</div><h3>{{ 'Images → clean PDF → lighter copy' if lang == 'en' else 'صور ← PDF مرتب ← نسخة أخف' }}</h3><p>{{ 'Combine images in order, then reduce the finished PDF only when size actually matters.' if lang == 'en' else 'اجمع الصور بالترتيب، ثم قلّل حجم PDF النهائي فقط إذا كان الحجم مهمًا.' }}</p><div class="v7-flow-line"><a href="/tools/jpg-to-pdf">Images → PDF</a><span>→</span><a href="/tools/compress-pdf">Compress</a></div></article>
     </div>

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import io
 import warnings
+import stat
+from pathlib import PureWindowsPath
 import zipfile
 from pathlib import Path
 from uuid import uuid4
@@ -70,9 +72,9 @@ MIME_HINTS = {
     ".xlsx": {"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/zip"},
     ".pptx": {"application/vnd.openxmlformats-officedocument.presentationml.presentation", "application/zip"},
     ".zip": {"application/zip", "application/x-zip-compressed"},
-    ".gz": {"application/gzip", "application/x-gzip"},
+    ".gz": {"application/gzip", "application/x-gzip", "application/x-tar"},
     ".tgz": {"application/gzip", "application/x-gzip", "application/x-compressed-tar"},
-    ".bz2": {"application/x-bzip2", "application/octet-stream"},
+    ".bz2": {"application/x-bzip2", "application/octet-stream", "application/x-tar"},
     ".tbz2": {"application/x-bzip2", "application/octet-stream"},
     ".xz": {"application/x-xz", "application/octet-stream"},
     ".tar": {"application/x-tar", "application/octet-stream"},
@@ -114,12 +116,16 @@ def _validate_text(raw: bytes) -> dict:
     return {"safe": True, "characters": len(text)}
 
 
+def _unsafe_archive_name(name: str) -> bool:
+    normalized = name.replace("\\", "/")
+    return (not normalized or "\x00" in normalized or normalized.startswith("/")
+            or bool(PureWindowsPath(normalized).drive)
+            or ".." in normalized.split("/"))
+
+
 def _unsafe_zip_member(info: zipfile.ZipInfo) -> bool:
-    name = info.filename.replace("\\", "/")
-    if not name or name.startswith("/") or name.startswith("../") or "/../" in name:
-        return True
-    unix_type = (info.external_attr >> 16) & 0o170000
-    return unix_type == 0o120000  # symlink
+    kind = stat.S_IFMT(info.external_attr >> 16)
+    return _unsafe_archive_name(info.filename) or kind not in (0, stat.S_IFREG, stat.S_IFDIR)
 
 
 def _safe_generic_zip(raw: bytes) -> dict:
@@ -141,6 +147,10 @@ def _safe_generic_zip(raw: bytes) -> dict:
                     raise ValueError("حجم محتوى الأرشيف بعد فك الضغط يتجاوز الحد الآمن.")
             if len(raw) and total_uncompressed / len(raw) > settings.max_archive_ratio:
                 raise ValueError("تم رفض الأرشيف بسبب نسبة ضغط غير طبيعية.")
+            if len({info.filename.replace("\\", "/") for info in infos}) != len(infos):
+                raise ValueError("الأرشيف يحتوي على أسماء مكررة.")
+            if zf.testzip() is not None:
+                raise ValueError("الأرشيف تالف أو غير صالح.")
             return {"container_entries": len(infos), "expanded_bytes": total_uncompressed, "safe": True}
     except zipfile.BadZipFile as exc:
         raise ValueError("الأرشيف تالف أو غير صالح.") from exc
@@ -211,6 +221,10 @@ def _safe_zip(raw: bytes, suffix: str) -> dict:
                 raise ValueError("ملف PPTX غير مكتمل.")
             if _office_has_unsafe_external_resource(zf):
                 raise ValueError("ملف Office يحتوي على مورد خارجي مضمن غير مسموح للمعالجة الآمنة.")
+            if len({info.filename.replace("\\", "/") for info in infos}) != len(infos):
+                raise ValueError("الأرشيف يحتوي على أسماء مكررة.")
+            if zf.testzip() is not None:
+                raise ValueError("الأرشيف تالف أو غير صالح.")
             return {"container_entries": len(infos), "expanded_bytes": total_uncompressed, "safe": True}
     except zipfile.BadZipFile as exc:
         raise ValueError("الملف المضغوط تالف أو غير صالح.") from exc
@@ -254,7 +268,7 @@ def _validate_pdf(raw: bytes, max_pages: int) -> dict:
         raise ValueError("ملف PDF غير صالح أو تالف.") from exc
 
 
-def _validate_compressed_stream(raw: bytes, suffix: str) -> dict:
+def _validate_compressed_stream(raw: bytes, suffix: str, *, tar_container: bool = False) -> dict:
     """Fully bound stream expansion instead of validating only the first byte."""
     limit = settings.max_archive_uncompressed_bytes
     try:
@@ -264,17 +278,79 @@ def _validate_compressed_stream(raw: bytes, suffix: str) -> dict:
                 expanded = fh.read(limit + 1)
         elif suffix in {".bz2", ".tbz2"}:
             import bz2
-            expanded = bz2.BZ2Decompressor().decompress(raw, limit + 1)
+            with bz2.BZ2File(io.BytesIO(raw)) as fh:
+                expanded = fh.read(limit + 1)
         else:
             import lzma
-            expanded = lzma.LZMADecompressor().decompress(raw, limit + 1)
+            with lzma.LZMAFile(io.BytesIO(raw)) as fh:
+                expanded = fh.read(limit + 1)
     except Exception as exc:
         raise ValueError("ملف الضغط غير صالح أو تالف.") from exc
     if len(expanded) > limit:
         raise ValueError("حجم المحتوى بعد فك الضغط يتجاوز الحد الآمن.")
     if len(raw) and len(expanded) / len(raw) > settings.max_archive_ratio:
         raise ValueError("تم رفض الملف بسبب نسبة ضغط غير طبيعية.")
+    if tar_container:
+        _validate_tar(expanded)
     return {"expanded_sample_bytes": len(expanded), "safe": True}
+
+
+def _validate_tar(raw: bytes) -> dict:
+    try:
+        import tarfile
+        with tarfile.open(fileobj=io.BytesIO(raw), mode="r:") as tf:
+            members = tf.getmembers()
+            if not members:
+                raise ValueError("أرشيف TAR فارغ.")
+            if len(members) > settings.max_archive_entries:
+                raise ValueError("أرشيف TAR يحتوي على عدد عناصر غير طبيعي.")
+            total_uncompressed = 0
+            for member in members:
+                member_name = member.name.replace("\\", "/")
+                if _unsafe_archive_name(member_name):
+                    raise ValueError("أرشيف TAR يحتوي على مسار غير آمن.")
+                if member.issym() or member.islnk() or member.isdev() or member.isfifo():
+                    raise ValueError("أرشيف TAR يحتوي على ملف خاص أو رابط غير مدعوم.")
+                total_uncompressed += max(0, member.size)
+                if member.size > settings.max_archive_uncompressed_bytes or total_uncompressed > settings.max_archive_uncompressed_bytes:
+                    raise ValueError("حجم محتوى أرشيف TAR بعد الاستخراج يتجاوز الحد الآمن.")
+            if len(raw) and total_uncompressed / len(raw) > settings.max_archive_ratio:
+                raise ValueError("تم رفض أرشيف TAR بسبب نسبة ضغط غير طبيعية.")
+            return {"container_entries": len(members), "expanded_bytes": total_uncompressed, "safe": True}
+    except ValueError:
+        raise
+    except Exception as exc:
+        raise ValueError("أرشيف TAR غير صالح أو تالف.") from exc
+
+def _validate_legacy_doc(raw: bytes) -> dict:
+    # A CFB signature alone also accepts XLS, MSI and malformed containers.
+    try:
+        import olefile
+    except ImportError as exc:
+        raise ValueError("التحقق من DOC غير متاح على الخادم حاليًا.") from exc
+    try:
+        with olefile.OleFileIO(io.BytesIO(raw), raise_defects=olefile.DEFECT_INCORRECT) as ole:
+            streams = ole.listdir()
+            if len(streams) > settings.max_archive_entries or not ole.exists("WordDocument"):
+                raise ValueError("ملف DOC لا يحتوي على مستند Word صالح.")
+            if any(part.casefold() in {"vba", "macros", "objectpool"} for stream in streams for part in stream):
+                raise ValueError("ملفات DOC ذات وحدات ماكرو أو كائنات مضمنة غير مدعومة.")
+            header = ole.openstream("WordDocument").read(32)
+            if len(header) < 32 or header[:2] != b"\xec\xa5":
+                raise ValueError("بنية مستند DOC غير صالحة.")
+            flags = int.from_bytes(header[10:12], "little")
+            if flags & (0x0100 | 0x8000):
+                raise ValueError("ملفات DOC المشفرة غير مدعومة.")
+            table = "1Table" if flags & 0x0200 else "0Table"
+            if not ole.exists(table):
+                raise ValueError("بنية مستند DOC غير مكتملة.")
+            if sum(ole.get_size(stream) for stream in streams) > settings.max_archive_uncompressed_bytes:
+                raise ValueError("محتوى DOC يتجاوز الحد الآمن.")
+    except ValueError:
+        raise
+    except Exception as exc:
+        raise ValueError("ملف DOC تالف أو غير صالح.") from exc
+    return {"safe": True, "container": "ole-word", "encrypted": False}
 
 
 def validate_upload(uploaded, *, max_bytes: int, inspect_only: bool, workspace=None, max_pdf_pages: int = 1000):
@@ -307,38 +383,19 @@ def validate_upload(uploaded, *, max_bytes: int, inspect_only: bool, workspace=N
         details.update(_validate_pdf(raw, max_pdf_pages))
     elif suffix in IMAGE_EXTENSIONS:
         details.update(_validate_image(raw))
+        expected_format = {".jpg": "JPEG", ".jpeg": "JPEG", ".png": "PNG", ".webp": "WEBP", ".bmp": "BMP", ".tiff": "TIFF"}[suffix]
+        if details["format"] != expected_format:
+            raise ValueError("تنسيق الصورة لا يطابق امتدادها.")
+    elif suffix == ".doc":
+        details.update(_validate_legacy_doc(raw))
     elif suffix in OFFICE_REQUIRED:
         details.update(_safe_zip(raw, suffix))
     elif suffix == ".zip":
         details.update(_safe_generic_zip(raw))
     elif suffix in {".gz", ".tgz", ".bz2", ".tbz2", ".xz"}:
-        details.update(_validate_compressed_stream(raw, suffix))
+        details.update(_validate_compressed_stream(raw, suffix, tar_container=suffix in {".tgz", ".tbz2"} or name.lower().endswith((".tar.gz", ".tar.bz2"))))
     elif suffix == ".tar":
-        try:
-            import tarfile
-            with tarfile.open(fileobj=io.BytesIO(raw), mode="r:") as tf:
-                members = tf.getmembers()
-                if not members:
-                    raise ValueError("أرشيف TAR فارغ.")
-                if len(members) > settings.max_archive_entries:
-                    raise ValueError("أرشيف TAR يحتوي على عدد عناصر غير طبيعي.")
-                total_uncompressed = 0
-                for member in members:
-                    member_name = member.name.replace("\\", "/")
-                    if member_name.startswith("/") or member_name.startswith("../") or "/../" in member_name:
-                        raise ValueError("أرشيف TAR يحتوي على مسار غير آمن.")
-                    if member.issym() or member.islnk() or member.isdev() or member.isfifo():
-                        raise ValueError("أرشيف TAR يحتوي على ملف خاص أو رابط غير مدعوم.")
-                    total_uncompressed += max(0, member.size)
-                    if member.size > settings.max_archive_uncompressed_bytes or total_uncompressed > settings.max_archive_uncompressed_bytes:
-                        raise ValueError("حجم محتوى أرشيف TAR بعد الاستخراج يتجاوز الحد الآمن.")
-                if len(raw) and total_uncompressed / len(raw) > settings.max_archive_ratio:
-                    raise ValueError("تم رفض أرشيف TAR بسبب نسبة ضغط غير طبيعية.")
-                details.update({"container_entries": len(members), "expanded_bytes": total_uncompressed, "safe": True})
-        except ValueError:
-            raise
-        except Exception as exc:
-            raise ValueError("أرشيف TAR غير صالح أو تالف.") from exc
+        details.update(_validate_tar(raw))
     elif suffix in TEXT_EXTENSIONS:
         details.update(_validate_text(raw))
 

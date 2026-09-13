@@ -2,6 +2,7 @@ FROM python:3.11-slim-bookworm
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app \
     PIP_NO_CACHE_DIR=1 \
     DEBIAN_FRONTEND=noninteractive \
     HOME=/home/appuser
@@ -25,6 +26,7 @@ RUN python -m pip install --upgrade pip setuptools wheel && \
     pip install --no-cache-dir -r requirements.txt
 
 COPY --chown=appuser:appuser . .
+RUN mkdir -p /app/instance && chown appuser:appuser /app/instance
 USER appuser
 
 # Fail the image build early if architecture, routes, security gates, AdSense/SEO,
@@ -37,6 +39,6 @@ RUN python scripts/preflight.py
 RUN DATABASE_URL=sqlite:////tmp/infinity-tests.db \
     PUBLIC_AUTH_ENABLED=0 \
     PUBLIC_BILLING_ENABLED=0 \
-    pytest -q && rm -f /tmp/infinity-tests.db*
+    python -m pytest -q -p no:cacheprovider && rm -f /tmp/infinity-tests.db*
 
 CMD ["sh","-c","exec gunicorn --bind 0.0.0.0:${PORT:-5000} --workers 1 --threads 4 --timeout 240 --graceful-timeout 30 --access-logfile - --error-logfile - app:app"]

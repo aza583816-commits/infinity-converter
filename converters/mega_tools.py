@@ -550,9 +550,23 @@ def checksum_compare(a: Path,b: Path,output: Path):
 def uuid_list(count: str, output: Path):
     n=max(1,min(500,int(count or 10))); _write_text(output,"\n".join(str(uuid.uuid4()) for _ in range(n))+"\n")
 def regex_extract(source: Path, output: Path, pattern: str):
-    try: rx=re.compile(pattern or r"\b\w+\b",re.I|re.UNICODE)
-    except re.error as exc: raise ValueError("التعبير المنتظم غير صالح.") from exc
-    _write_text(output,"\n".join(sorted(set(rx.findall(source.read_text(encoding="utf-8")))))+"\n")
+    # A regex heuristic cannot stop all exponential backtracking. Execute in a
+    # disposable child with a wall-clock deadline, including direct engine calls.
+    import subprocess
+    import sys
+    worker = Path(__file__).with_name("regex_worker.py")
+    try:
+        completed = subprocess.run(
+            [sys.executable, "-I", str(worker), str(source), str(output)],
+            input=(pattern or r"\b\w+\b").encode("utf-8"),
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            timeout=3, check=False,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise ValueError("استغرق نمط البحث وقتًا أطول من الحد الآمن.") from exc
+    if completed.returncode:
+        raise ValueError("نمط البحث غير صالح أو تجاوز الحدود الآمنة.")
+
 
 def rename_extension_report(source: Path, output: Path):
     p=Path(source.name); _write_text(output,json.dumps({"filename":p.name,"extension":p.suffix.lower(),"stem":p.stem,"mime":mimetypes.guess_type(p.name)[0]},ensure_ascii=False,indent=2))

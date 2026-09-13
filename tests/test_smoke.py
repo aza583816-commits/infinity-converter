@@ -1,4 +1,6 @@
+import html
 from app_factory import create_app
+from config.settings import settings
 from core.tool_registry import AUDIENCE_COLLECTIONS, list_tools
 
 def test_health():
@@ -6,7 +8,7 @@ def test_health():
     client = app.test_client()
     response = client.get("/api/v2/healthz")
     assert response.status_code == 200
-    assert response.get_json()["version"] == "7.2.0"
+    assert response.get_json()["version"] == settings.app_version
 
 
 def test_homepage_has_intelligence_workspace_and_filterable_tools():
@@ -32,10 +34,11 @@ def test_pricing_uses_clean_hardcoded_annual_prices(monkeypatch):
 def test_public_tool_pages_and_metadata_routes():
     app = create_app()
     client = app.test_client()
-    for tool in list_tools():
-        response = client.get(f"/tools/{tool['slug']}")
-        assert response.status_code == 200
-        assert tool["name_ar"].encode() in response.data
+    for index, tool in enumerate(list_tools(), 1):
+        for lang in ("ar", "en"):
+            response = client.get(f"/tools/{tool['slug']}?lang={lang}", environ_overrides={"REMOTE_ADDR": f"192.0.2.{index}"})
+            assert response.status_code == 200
+            assert tool[f"name_{lang}"] in html.unescape(response.get_data(as_text=True))
     assert client.get("/tools").status_code == 200
     for collection_id in AUDIENCE_COLLECTIONS:
         assert client.get(f"/collections/{collection_id}").status_code == 200

@@ -46,7 +46,10 @@ def _model_probe():
     req = urllib.request.Request(url, headers={"x-goog-api-key": key}, method="GET")
     try:
         with urllib.request.urlopen(req, timeout=8) as response:
-            payload = json.loads(response.read().decode("utf-8"))
+            raw = response.read(1024 * 1024 + 1)
+            if len(raw) > 1024 * 1024:
+                raise ValueError("Provider response too large")
+            payload = json.loads(raw.decode("utf-8"))
         supported = payload.get("supportedGenerationMethods") or []
         enhanced = "generateContent" in supported
         result = {
@@ -87,7 +90,10 @@ def _call_gemini(prompt: str, system: str = "", max_tokens: int = 1800) -> str:
     req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json", "x-goog-api-key": key}, method="POST")
     try:
         with urllib.request.urlopen(req, timeout=45) as response:
-            payload = json.loads(response.read().decode("utf-8"))
+            raw = response.read(1024 * 1024 + 1)
+            if len(raw) > 1024 * 1024:
+                raise ValueError("Provider response too large")
+            payload = json.loads(raw.decode("utf-8"))
     except urllib.error.HTTPError as exc:
         logger.warning("AI provider request failed with HTTP %s", exc.code)
         raise RuntimeError("Enhanced Infinity AI is temporarily unavailable.") from exc
@@ -166,7 +172,8 @@ def _structured_prompt(prompt: str, mode: str, context: dict, history: list, lan
 
 
 def _normalize_plan(plan: dict, fallback: dict, lang: str) -> dict:
-    catalog = {line.split(" | ", 1)[0] for line in catalog_prompt().splitlines() if " | " in line}
+    from core.tooling import TOOLS
+    catalog = set(TOOLS)
     fallback_by_id = {step["tool_id"]: step for step in fallback.get("steps", [])}
     steps = []
     for raw in plan.get("steps", [])[:4]:
@@ -175,6 +182,11 @@ def _normalize_plan(plan: dict, fallback: dict, lang: str) -> dict:
         tool_id = str(raw.get("tool_id", ""))
         if tool_id not in catalog:
             continue
+        if steps:
+            previous = TOOLS[steps[-1]["tool_id"]]
+            accepted = TOOLS[tool_id].input_ext
+            if previous.output_ext not in accepted and not {"*", ".*"}.intersection(accepted):
+                return fallback
         # Trust canonical URL/name from fallback when available; otherwise derive from catalog text through smart core.
         canonical = fallback_by_id.get(tool_id)
         if canonical:
@@ -204,6 +216,7 @@ def _normalize_plan(plan: dict, fallback: dict, lang: str) -> dict:
 
 
 @ai_bp.get("/status")
+@limiter.limit("30 per minute")
 def status():
     return jsonify(_model_probe())
 
@@ -211,7 +224,9 @@ def status():
 @ai_bp.post("/plan")
 @limiter.limit("12 per minute")
 def plan():
-    payload = request.get_json(silent=True) or {}
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return jsonify(error="Expected a JSON object."), 400
     prompt = str(payload.get("prompt", "")).strip()
     if not prompt:
         return jsonify(error="اكتب هدفك أولاً."), 400
@@ -246,7 +261,9 @@ def plan():
 @limiter.limit("10 per minute")
 def ask():
     """Compatibility endpoint. It now benefits from Smart Core fallback."""
-    payload = request.get_json(silent=True) or {}
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return jsonify(error="Expected a JSON object."), 400
     prompt = str(payload.get("prompt", "")).strip()
     if not prompt:
         return jsonify(error="اكتب سؤالك أولاً."), 400
@@ -258,12 +275,14 @@ def ask():
     key, _model = _gemini_config()
     if key:
         try:
-            system = _system_prompt(lang) + "\nRespond naturally and concisely. Include real Infinity tool URLs when useful."
-            answer = _call_gemini(f"USER GOAL: {prompt}\nSAFE CONTEXT: {json.dumps(context, ensure_ascii=False)}", system, max_tokens=1600)
-            return jsonify(answer=answer, enhanced=True)
-        except RuntimeError:
-            pass
+            raw = _call_gemini(_structured_prompt(prompt, "plan", context, [], lang), _system_prompt(lang), max_tokens=1600)
+            local = _normalize_plan(_extract_json(raw), local, lang)
+            enhanced = True
+        except Exception:
+            enhanced = False
+    else:
+        enhanced = False
     parts = [local["title"], local["summary"]]
     for step in local.get("steps", []):
         parts.append(f"{step['order']}. {step['tool_name']} — {step['why']} ({step['url']})")
-    return jsonify(answer="\n".join(parts), enhanced=False)
+    return jsonify(answer="\n".join(parts), enhanced=enhanced)

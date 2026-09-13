@@ -5,6 +5,7 @@ from datetime import date
 
 from flask import Blueprint, jsonify, request, send_file, g, current_app
 from werkzeug.exceptions import RequestEntityTooLarge
+from werkzeug.wsgi import ClosingIterator
 from flask_limiter.errors import RateLimitExceeded
 
 from config.settings import settings
@@ -198,6 +199,9 @@ def convert_route():
             download_name=result.name,
             conditional=False,
         )
+        # send_file uses direct_passthrough: the WSGI server closes its iterable,
+        # not necessarily Response.close(). Tie cleanup to both lifecycles.
+        response.response = ClosingIterator(response.response, workspace.cleanup)
         response.call_on_close(workspace.cleanup)
         cleanup_deferred = True
 

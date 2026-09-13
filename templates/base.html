@@ -6,15 +6,15 @@
   <title>{% block title %}{{ t('meta.default_title') }}{% endblock %}</title>
   <meta name="description" content="{% block description %}{{ t('meta.default_description') }}{% endblock %}">
   {% set noindex_page = (page_noindex|default(false)) or (code is defined) %}
-  {% set canonical_suffix = '?lang=en' if lang == 'en' else '' %}
-  {% set language_target = request.path ~ ('' if lang == 'en' else '?lang=en') %}
+  {% set canonical_suffix = '?lang=en' if lang == 'en' else '?lang=ar' %}
+  {% set language_target = request.path ~ ('?lang=ar' if lang == 'en' else '?lang=en') %}
   <link rel="canonical" href="{{ public_base_url }}{{ request.path }}{{ canonical_suffix }}">
   <meta name="robots" content="{{ 'noindex,follow' if noindex_page else 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1' }}">
   <meta name="theme-color" content="#06110f">
   <meta name="color-scheme" content="light dark">
   <link rel="icon" type="image/png" sizes="192x192" href="/static/icon-192.png?v={{ app_version }}">
   <link rel="apple-touch-icon" sizes="192x192" href="/static/icon-192.png?v={{ app_version }}">
-  <link rel="alternate" hreflang="ar" href="{{ public_base_url }}{{ request.path }}">
+  <link rel="alternate" hreflang="ar" href="{{ public_base_url }}{{ request.path }}?lang=ar">
   <link rel="alternate" hreflang="en" href="{{ public_base_url }}{{ request.path }}?lang=en">
   <link rel="alternate" hreflang="x-default" href="{{ public_base_url }}{{ request.path }}">
   <meta property="og:type" content="website"><meta property="og:site_name" content="Infinity Converter">

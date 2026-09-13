@@ -58,31 +58,42 @@ def _tokens(text: str) -> set[str]:
     return {word for word in words if len(word) > 1 and word not in AR_STOP and word not in EN_STOP}
 
 
+# Default-deny context: free-form options (passwords, redaction text, names),
+# error messages and unknown nested fields must never reach a remote provider.
+_CONTEXT_CONTAINERS = {"tool", "file", "files", "smart_file", "result", "privacy", "nested"}
+_CONTEXT_NUMBERS = {"size_bytes", "input_bytes", "output_bytes", "duration_ms", "pages", "width", "height", "pixels", "batch_total", "batch_succeeded"}
+
+
 def _safe_context(context: Any, depth: int = 0) -> Any:
-    """Keep only bounded, JSON-like context. Never accept file bytes/content here."""
+    import math
     if depth > 4:
         return None
-    if context is None or isinstance(context, (bool, int, float)):
-        return context
-    if isinstance(context, str):
-        return context[:1200]
     if isinstance(context, list):
-        return [_safe_context(item, depth + 1) for item in context[:20]]
-    if isinstance(context, dict):
-        result = {}
-        for key, value in list(context.items())[:40]:
-            key_text = str(key)[:80]
-            if key_text.casefold() in {"content", "bytes", "blob", "data_url", "base64", "file_content"}:
-                continue
-            result[key_text] = _safe_context(value, depth + 1)
-        return result
-    return str(context)[:400]
+        return [_safe_context(item, depth + 1) for item in context[:20] if isinstance(item, dict)]
+    if not isinstance(context, dict):
+        return {}
+    result = {}
+    for key, value in list(context.items())[:40]:
+        if key in _CONTEXT_CONTAINERS and isinstance(value, (dict, list)):
+            result[key] = _safe_context(value, depth + 1)
+        elif key in {"id", "tool_id"} and isinstance(value, str) and value in TOOLS:
+            result[key] = value
+        elif key in _CONTEXT_NUMBERS and isinstance(value, (int, float)) and math.isfinite(value) and 0 <= value <= 10**12:
+            result[key] = value
+        elif key == "extension" and isinstance(value, str) and re.fullmatch(r"\.[a-z0-9]{1,10}", value):
+            result[key] = value
+        elif key == "mime" and isinstance(value, str) and re.fullmatch(r"[a-z0-9.+-]+/[a-z0-9.+-]+", value) and len(value) < 120:
+            result[key] = value
+        elif key in {"safe", "encrypted"} and isinstance(value, bool):
+            result[key] = value
+        elif key == "error" and isinstance(value, dict):
+            result[key] = {"present": True}  # raw exception text may contain personal data
+    return result
 
 
 def sanitize_context(context: Any) -> dict[str, Any]:
     cleaned = _safe_context(context)
     return cleaned if isinstance(cleaned, dict) else {}
-
 
 
 def _has_any(text: str, phrases: tuple[str, ...]) -> bool:
@@ -250,7 +261,18 @@ def fallback_plan(prompt: str, context: dict[str, Any] | None = None, lang: str 
     by_id = {item["id"]: item for item in public_catalog()}
     matches = [by_id[tool_id] for tool_id in route if tool_id in by_id]
     if not matches:
-        matches = ranked[:3]
+        matches = ranked[:1]
+    # Keep only a compatible prefix: recommendations are sequential steps,
+    # not a bag of similarly named tools with incompatible input formats.
+    compatible = []
+    for item in matches:
+        if compatible:
+            previous_output = compatible[-1]["output_ext"]
+            accepted = item["input_ext"]
+            if previous_output not in accepted and not {"*", ".*"}.intersection(accepted):
+                break
+        compatible.append(item)
+    matches = compatible
     ar = lang != "en"
     if not matches:
         return {
