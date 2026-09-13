@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /login
+Disallow: /register
+Disallow: /account
+Disallow: /set-language/
+
+Sitemap: https://infinityconverter.com/sitemap.xml
