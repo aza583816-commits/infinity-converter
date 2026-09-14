@@ -6,12 +6,18 @@ const $ = (selector) => document.querySelector(selector);
   const root = document.documentElement;
   const buttons = [document.querySelector('#theme-toggle'), document.querySelector('#theme-toggle-mobile')].filter(Boolean);
   if (!buttons.length) return;
-  const stored = localStorage.getItem('infinity-theme');
+  const readStoredTheme = () => {
+    try { return localStorage.getItem('infinity-theme'); } catch (_) { return null; }
+  };
+  const persistTheme = (theme) => {
+    try { localStorage.setItem('infinity-theme', theme); } catch (_) {}
+  };
+  const stored = readStoredTheme();
   const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
   const apply = (theme) => {
     root.dataset.theme = theme;
     root.style.colorScheme = theme;
-    localStorage.setItem('infinity-theme', theme);
+    persistTheme(theme);
     buttons.forEach((button) => {
       const isDark = theme === 'dark';
       button.setAttribute('aria-pressed', String(isDark));
@@ -39,6 +45,18 @@ const emptyState = $("#empty-state") || $("#listing-empty");
 const search = $("#tool-search") || $("#listing-search");
 const filterTabs = $$(".filter-tabs [data-filter]");
 let selectedFilter = toolGrid?.dataset.activeFilter || "all";
+const validFilters = new Set(["all", "popular", ...cards.map((card) => card.dataset.category).filter(Boolean)]);
+if (!validFilters.has(selectedFilter)) {
+  selectedFilter = "all";
+  if (toolGrid) toolGrid.dataset.activeFilter = selectedFilter;
+}
+function syncFilterTabs() {
+  filterTabs.forEach((item) => {
+    const active = item.dataset.filter === selectedFilter;
+    item.classList.toggle("is-active", active);
+    item.setAttribute("aria-pressed", String(active));
+  });
+}
 
 function filterCards() {
   if (!cards.length) return;
@@ -76,9 +94,10 @@ if (search) search.addEventListener("input", filterCards);
 filterTabs.forEach((tab) => tab.addEventListener("click", () => {
   selectedFilter = tab.dataset.filter;
   if (toolGrid) toolGrid.dataset.activeFilter = selectedFilter;
-  filterTabs.forEach((item) => item.classList.toggle("is-active", item === tab));
+  syncFilterTabs();
   filterCards();
 }));
+syncFilterTabs();
 filterCards();
 
 const categoryLinks = $$(".category-dock [data-filter]");
