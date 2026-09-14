@@ -9,7 +9,6 @@ from config.settings import settings
 from converters import archive
 from converters.contracts import ConversionBusyError, ConversionResult, Operation
 from converters.operations import get_operation
-from converters.legacy_handlers import COMBINE_HANDLERS, SINGLE_HANDLERS  # compatibility exports
 from converters.validation import MIME_BY_EXTENSION, OutputValidationError, validate_output
 from core.admission import AdmissionToken, acquire_slot
 
