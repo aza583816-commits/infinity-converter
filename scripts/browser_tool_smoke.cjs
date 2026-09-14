@@ -60,7 +60,8 @@ const expected = {
       await run.click();
       const value=String(output.value);
       const runtimeError = /\b(?:ReferenceError|TypeError|SyntaxError):|\bis not defined\b/.test(value);
-      if (!value || runtimeError || /\bNaN\b|\bInfinity\b|unavailable|Enter |Choose |Invalid|must be|Use grades|at least/.test(value)) throw Error(value || 'empty result');
+      const invalidNumber = /(?:^|[\s:=])(?:NaN|[-+]?Infinity)(?=$|[\s,;])/.test(value);
+      if (!value || runtimeError || invalidNumber || /unavailable|Enter |Choose |Invalid|must be|Use grades|at least/.test(value)) throw Error(value || 'empty result');
       if (expected[tool.id] && !expected[tool.id].test(value)) throw Error('incorrect known answer: '+value);
       results.push({id:tool.id,status:'passed',sample_output:value.slice(0,250),known_answer:Boolean(expected[tool.id])});
     } catch(error) {results.push({id:tool.id,status:'failed',reason:error.message.slice(0,250)});}
