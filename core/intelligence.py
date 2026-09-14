@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import re
-from dataclasses import asdict
 from typing import Any
 
-from core.tooling import TOOLS, _meta_for
+from core.browser_tools import BROWSER_TOOL_MAP
+from core.discovery import BROWSER_PREFIX, unified_catalog, unified_index
+from core.tooling import TOOLS
 
 AR_STOP = {
     "ابي", "أبي", "ابغى", "أبغى", "اريد", "أريد", "احتاج", "أحتاج", "عندي", "هذا", "هذه", "في", "من", "الى", "إلى", "على", "مع", "بدون", "وش", "كيف", "لي", "و", "او", "أو",
@@ -15,37 +16,20 @@ EN_STOP = {
 
 
 def public_catalog() -> list[dict[str, Any]]:
-    items: list[dict[str, Any]] = []
-    for tool in TOOLS.values():
-        meta = _meta_for(tool)
-        items.append({
-            "id": tool.id,
-            "slug": meta["slug"],
-            "url": f"/tools/{meta['slug']}",
-            "name_ar": tool.name_ar,
-            "name_en": tool.name_en,
-            "description_ar": tool.description_ar,
-            "description_en": tool.description_en,
-            "category": tool.category,
-            "category_ar": tool.category_ar,
-            "category_en": tool.category_en,
-            "icon": tool.icon,
-            "input_ext": list(tool.input_ext),
-            "output_ext": tool.output_ext,
-            "max_files": tool.max_files,
-            "input_required": tool.input_required,
-            "batch": tool.batch,
-            "keywords": meta.get("keywords", ""),
-        })
-    return items
+    """AI-facing catalog for every real public Infinity tool surface.
+
+    Converter tools preserve their historic IDs. Browser-only tools are namespaced
+    as ``browser:<id>`` so discovery stays unambiguous even when raw IDs overlap.
+    """
+    return unified_catalog()
 
 
 def catalog_prompt() -> str:
     lines = []
     for item in public_catalog():
-        inp = ",".join(item["input_ext"]) or "no-upload"
+        inp = ",".join(item["input_ext"]) or ("browser-local" if item["kind"] == "browser" else "no-upload")
         lines.append(
-            f"{item['id']} | {item['name_en']} | {item['name_ar']} | "
+            f"{item['id']} | kind:{item['kind']} | {item['name_en']} | {item['name_ar']} | "
             f"{item['category']} | in:{inp} | out:{item['output_ext']} | {item['url']} | "
             f"{item['description_en']} | {item['description_ar']}"
         )
@@ -54,8 +38,18 @@ def catalog_prompt() -> str:
 
 def _tokens(text: str) -> set[str]:
     text = text.casefold()
-    words = re.findall(r"[\w.+#-]+", text, flags=re.UNICODE)
+    words = re.findall(r"[\w.+#:-]+", text, flags=re.UNICODE)
     return {word for word in words if len(word) > 1 and word not in AR_STOP and word not in EN_STOP}
+
+
+def _normalize_catalog_id(value: str) -> str | None:
+    if value in TOOLS:
+        return value
+    if value in BROWSER_TOOL_MAP:
+        return f"{BROWSER_PREFIX}{value}"
+    if value in unified_index():
+        return value
+    return None
 
 
 # Default-deny context: free-form options (passwords, redaction text, names),
@@ -76,8 +70,10 @@ def _safe_context(context: Any, depth: int = 0) -> Any:
     for key, value in list(context.items())[:40]:
         if key in _CONTEXT_CONTAINERS and isinstance(value, (dict, list)):
             result[key] = _safe_context(value, depth + 1)
-        elif key in {"id", "tool_id"} and isinstance(value, str) and value in TOOLS:
-            result[key] = value
+        elif key in {"id", "tool_id"} and isinstance(value, str):
+            normalized = _normalize_catalog_id(value)
+            if normalized:
+                result[key] = normalized
         elif key in _CONTEXT_NUMBERS and isinstance(value, (int, float)) and math.isfinite(value) and 0 <= value <= 10**12:
             result[key] = value
         elif key == "extension" and isinstance(value, str) and re.fullmatch(r"\.[a-z0-9]{1,10}", value):
@@ -101,12 +97,7 @@ def _has_any(text: str, phrases: tuple[str, ...]) -> bool:
 
 
 def intent_route(prompt: str, context: dict[str, Any] | None = None) -> list[str]:
-    """High-confidence routes for common goals, used before fuzzy ranking.
-
-    This is intentionally conservative: it only fires when the user's wording
-    contains a clear task/format signal. Gemini can still refine or replace the
-    route when enhanced AI is available.
-    """
+    """High-confidence routes for common goals, used before fuzzy ranking."""
     text = " ".join([prompt, str((context or {}).get("tool", ""))]).casefold()
     ids: list[str] = []
     pdf = _has_any(text, ("pdf", "بي دي اف"))
@@ -122,7 +113,6 @@ def intent_route(prompt: str, context: dict[str, Any] | None = None) -> list[str
     compare = _has_any(text, ("compare", "difference", "diff", "مقارنة", "قارن", "فرق", "الفروقات"))
     extract_text = _has_any(text, ("extract text", "get text", "text from", "استخراج نص", "استخرج النص", "طلع النص"))
 
-    # Strong format + goal routes.
     if pdf and scanned and editable:
         ids += ["ocr-pdf-to-searchable", "pdf-to-docx"]
     elif pdf and scanned and extract_text:
@@ -144,7 +134,6 @@ def intent_route(prompt: str, context: dict[str, Any] | None = None) -> list[str
     if pdf and split:
         ids += ["pdf-split"]
 
-    # Images → PDF or image processing.
     if image and pdf and _has_any(text, ("to pdf", "into pdf", "one pdf", "pdf واحد", "إلى pdf", "الى pdf", "لـ pdf", "pdf مرتب")):
         ids = ["image-to-pdf"] + [x for x in ids if x != "pdf-merge"]
     if image and smaller:
@@ -158,7 +147,6 @@ def intent_route(prompt: str, context: dict[str, Any] | None = None) -> list[str
     if image and _has_any(text, ("background", "خلفية", "remove background", "white background")):
         ids += ["image-background-cleaner"]
 
-    # Direct format conversions.
     if _has_any(text, ("word to pdf", "docx to pdf", "وورد إلى pdf", "word إلى pdf", "وورد ل pdf")):
         ids += ["word-to-pdf"]
     if _has_any(text, ("pdf to word", "pdf to docx", "pdf إلى word", "pdf الى word", "pdf إلى وورد", "pdf لوورد")) and not scanned:
@@ -176,7 +164,6 @@ def intent_route(prompt: str, context: dict[str, Any] | None = None) -> list[str
     if _has_any(text, ("to webp", "إلى webp", "الى webp")):
         ids += ["image-to-webp"]
 
-    # Archives / data / developer workflows.
     if _has_any(text, ("create zip", "make zip", "zip files", "إنشاء zip", "انشاء zip", "اضغط الملفات zip")):
         ids += ["zip-create"]
     if _has_any(text, ("extract zip", "unzip", "فك zip", "فك الضغط")):
@@ -188,24 +175,42 @@ def intent_route(prompt: str, context: dict[str, Any] | None = None) -> list[str
     if _has_any(text, ("compare text", "text diff", "قارن نص", "مقارنة نص")):
         ids += ["text-diff"]
 
-    # Current-tool modes should keep the active tool grounded in the response.
+    # High-value browser-only workflows. Generic fuzzy ranking covers the rest.
+    browser_routes = (
+        (("gpa", "معدلي", "المعدل التراكمي"), "browser:gpa-calculator"),
+        (("vat", "value added tax", "ضريبة القيمة المضافة"), "browser:vat-calculator"),
+        (("word count", "character count", "عدد الكلمات", "عداد الكلمات"), "browser:word-character-counter"),
+        (("reading time", "وقت القراءة"), "browser:reading-time-estimator"),
+        (("jwt", "decode token", "فك jwt"), "browser:jwt-decoder"),
+        (("cron", "كرون"), "browser:cron-explainer"),
+        (("color contrast", "wcag contrast", "تباين الألوان"), "browser:color-contrast-checker"),
+        (("loan payment", "monthly payment", "قسط القرض", "القسط الشهري"), "browser:loan-payment-estimator"),
+        (("random number", "رقم عشوائي"), "browser:random-number-generator"),
+    )
+    for phrases, tool_id in browser_routes:
+        if _has_any(text, phrases):
+            ids.append(tool_id)
+
     current = (context or {}).get("tool")
     if isinstance(current, dict):
-        current_id = str(current.get("id", ""))
-        if current_id in TOOLS and current_id not in ids:
+        current_id = _normalize_catalog_id(str(current.get("id", "")))
+        if current_id and current_id not in ids:
             ids.append(current_id)
 
+    known = unified_index()
     seen: set[str] = set()
-    return [tool_id for tool_id in ids if tool_id in TOOLS and not (tool_id in seen or seen.add(tool_id))]
+    return [tool_id for tool_id in ids if tool_id in known and not (tool_id in seen or seen.add(tool_id))]
+
 
 def rank_tools(prompt: str, context: dict[str, Any] | None = None, limit: int = 6) -> list[dict[str, Any]]:
     query = " ".join([prompt, str((context or {}).get("tool", "")), str((context or {}).get("file", ""))])
     q_tokens = _tokens(query)
     q_folded = query.casefold()
+    catalog = public_catalog()
     scored: list[tuple[float, dict[str, Any]]] = []
-    for item in public_catalog():
+    for item in catalog:
         haystack = " ".join([
-            item["id"], item["name_ar"], item["name_en"], item["description_ar"], item["description_en"],
+            item["id"], item.get("raw_id", ""), item["name_ar"], item["name_en"], item["description_ar"], item["description_en"],
             item["category"], item["category_ar"], item["category_en"], item["keywords"], " ".join(item["input_ext"]), item["output_ext"],
         ]).casefold()
         h_tokens = _tokens(haystack)
@@ -213,18 +218,18 @@ def rank_tools(prompt: str, context: dict[str, Any] | None = None, limit: int = 
         score = overlap * 4.0
         if item["name_en"].casefold() in q_folded or item["name_ar"].casefold() in q_folded:
             score += 12
-        if item["id"].replace("-", " ") in q_folded:
+        if item.get("raw_id", item["id"]).replace("-", " ").casefold() in q_folded:
             score += 8
         for ext in item["input_ext"]:
             clean = ext.lstrip(".").casefold()
             if clean and clean in q_tokens:
                 score += 5
-        if item["output_ext"].lstrip(".").casefold() in q_tokens:
+        output_ext = item["output_ext"].lstrip(".").casefold()
+        if output_ext and output_ext != "browser-result" and output_ext in q_tokens:
             score += 3
         category = item["category"].casefold()
         if category in q_tokens:
             score += 4
-        # Intent nudges for common natural-language requests in Arabic and English.
         intent_pairs = {
             "ocr": ("ocr", "ممسوح", "مصوّر", "مصور", "scan", "scanned", "extract text", "استخراج نص"),
             "compress": ("compress", "smaller", "reduce size", "ضغط", "تصغير", "خفف", "أصغر"),
@@ -232,16 +237,20 @@ def rank_tools(prompt: str, context: dict[str, Any] | None = None, limit: int = 
             "redact": ("redact", "sensitive", "privacy", "تنقيح", "حساس", "إخفاء"),
             "convert": ("convert", "تحويل", "حوّل", "حول"),
             "repair": ("repair", "fix", "broken", "إصلاح", "خربان", "تالف"),
+            "calculator": ("calculate", "calculator", "احسب", "حاسبة"),
         }
         for marker, phrases in intent_pairs.items():
             if any(p in q_folded for p in phrases) and marker in haystack:
                 score += 5
+        if item["kind"] == "browser" and _has_any(q_folded, ("بدون رفع", "محلي", "داخل المتصفح", "local", "browser")):
+            score += 5
         if score > 0:
             scored.append((score, item))
+
     priority = intent_route(prompt, context)
     priority_map = {tool_id: (len(priority) - index) * 100.0 for index, tool_id in enumerate(priority)}
     if priority_map:
-        for item in public_catalog():
+        for item in catalog:
             bonus = priority_map.get(item["id"])
             if bonus:
                 scored.append((bonus, item))
@@ -258,40 +267,46 @@ def fallback_plan(prompt: str, context: dict[str, Any] | None = None, lang: str 
     context = sanitize_context(context or {})
     route = intent_route(prompt, context)
     ranked = rank_tools(prompt, context, limit=5)
-    by_id = {item["id"]: item for item in public_catalog()}
+    by_id = unified_index()
     matches = [by_id[tool_id] for tool_id in route if tool_id in by_id]
     if not matches:
         matches = ranked[:1]
-    # Keep only a compatible prefix: recommendations are sequential steps,
-    # not a bag of similarly named tools with incompatible input formats.
+
     compatible = []
     for item in matches:
         if compatible:
-            previous_output = compatible[-1]["output_ext"]
+            previous = compatible[-1]
+            if previous["kind"] != "converter" or item["kind"] != "converter":
+                break
+            previous_output = previous["output_ext"]
             accepted = item["input_ext"]
             if previous_output not in accepted and not {"*", ".*"}.intersection(accepted):
                 break
         compatible.append(item)
     matches = compatible
+
     ar = lang != "en"
     if not matches:
         return {
             "title": "أحتاج وصفًا أدق للنتيجة" if ar else "I need a little more detail about the result",
-            "summary": "اذكر نوع الملف والنتيجة التي تريدها، مثل: PDF ممسوح إلى Word قابل للتعديل." if ar else "Mention the file type and desired outcome, for example: scanned PDF to editable Word.",
+            "summary": "اذكر نوع الملف أو المهمة والنتيجة التي تريدها، مثل: PDF ممسوح إلى Word قابل للتعديل أو احسب ضريبة القيمة المضافة." if ar else "Mention the file type or task and desired outcome, for example: scanned PDF to editable Word or calculate VAT.",
             "steps": [],
             "tips": ["لن يرسل Infinity ملفاتك للذكاء تلقائيًا." if ar else "Infinity does not attach your conversion files to AI automatically."],
             "source": "smart-core",
         }
+
     steps = []
     for idx, item in enumerate(matches[:3], start=1):
+        browser_local = item["kind"] == "browser"
         steps.append({
             "order": idx,
             "tool_id": item["id"],
             "tool_name": item["name_ar"] if ar else item["name_en"],
             "url": item["url"],
             "why": item["description_ar"] if ar else item["description_en"],
-            "input": ", ".join(item["input_ext"]) or ("بدون رفع ملف" if ar else "No upload required"),
-            "output": item["output_ext"],
+            "input": ("يعمل محليًا داخل المتصفح" if ar else "Runs locally in your browser") if browser_local else (", ".join(item["input_ext"]) or ("بدون رفع ملف" if ar else "No upload required")),
+            "output": ("نتيجة داخل المتصفح" if ar else "Browser result") if browser_local else item["output_ext"],
+            "kind": item["kind"],
         })
     title = "مسار مقترح من Infinity" if ar else "Infinity suggested workflow"
     if mode == "troubleshoot":
@@ -300,7 +315,7 @@ def fallback_plan(prompt: str, context: dict[str, Any] | None = None, lang: str 
         title = "أفضل خطوة تالية" if ar else "Best next step"
     return {
         "title": title,
-        "summary": ("بنيت هذا المسار من الأدوات الفعلية الموجودة في الموقع. فعّل Infinity AI المتقدم لتحليل أعمق عند توفره." if ar else "This path is built from the real tools available on the site. Enhanced Infinity AI can add deeper reasoning when available."),
+        "summary": ("بنيت هذا المسار من الأدوات الفعلية الموجودة في مساحة Infinity، بما فيها الأدوات المحلية داخل المتصفح." if ar else "This path is built from the real tools available across the Infinity workspace, including local browser utilities."),
         "steps": steps,
         "tips": [
             "ابدأ بأول خطوة فقط، ثم قيّم الناتج قبل الانتقال للخطوة التالية." if ar else "Start with the first step, then inspect the result before continuing.",
