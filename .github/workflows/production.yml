@@ -15,12 +15,15 @@ jobs:
       - name: JavaScript syntax and browser calculation gates
         run: |
           node --check static/js/app.js
+          node --check static/js/smart-flow.js
           node --check static/sw.js
           python scripts/export_browser_catalog.py /tmp/browser-catalog.json
           node scripts/browser_tool_smoke.cjs /tmp/browser-catalog.json
           node tests/browser-calculations.cjs
       - name: Build Python 3.11 production image with preflight and all tests
         run: docker build --progress=plain -t infinity-verified .
+      - name: Verify installed Python dependency consistency
+        run: docker run --rm --network none infinity-verified python -m pip check
       - name: Every registered operation through the real engine
         run: docker run --rm --network none infinity-verified python scripts/full_operation_smoke.py
       - name: Every registered operation through the HTTP API
