@@ -138,15 +138,13 @@ def create_app() -> Flask:
         response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
         response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
         response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
+        response.headers["Origin-Agent-Cluster"] = "?1"
 
         adsense_enabled = bool(adsense_client_id())
         nonce = getattr(g, "csp_nonce", "")
         connect_src = "connect-src 'self' https://*.paddle.com"
         frame_src = "frame-src https://*.paddle.com"
         if adsense_enabled:
-            # Google documents nonce + strict-dynamic as a robust AdSense CSP
-            # strategy because serving hosts can change. Public pages remain
-            # crawlable; only private/API surfaces are excluded by robots rules.
             script_src = f"script-src 'nonce-{nonce}' 'strict-dynamic' https: http:"
             connect_src += " https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net"
             frame_src += " https://googleads.g.doubleclick.net"
@@ -173,9 +171,24 @@ def create_app() -> Flask:
         if not settings.debug:
             response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
 
+        started = getattr(g, "request_started", None)
+        if started is not None:
+            import time
+            elapsed_ms = max(0.0, (time.perf_counter() - started) * 1000)
+            response.headers["Server-Timing"] = f"app;dur={elapsed_ms:.1f}"
+
         response.headers["X-Request-ID"] = getattr(g, "request_id", "")
         if request.path.startswith("/api/"):
             response.headers["Cache-Control"] = "no-store, private"
+            response.headers["X-Robots-Tag"] = "noindex, nofollow, noarchive"
+        elif request.path.startswith("/static/"):
+            if request.args.get("v") == settings.app_version:
+                response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+            else:
+                response.headers["Cache-Control"] = f"public, max-age={settings.asset_cache_seconds}"
+        elif response.mimetype == "text/html":
+            response.vary.add("Accept-Language")
+            response.vary.add("Cookie")
 
         if getattr(g, "lang_is_explicit", False):
             response.set_cookie(
