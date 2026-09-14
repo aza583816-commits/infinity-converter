@@ -451,6 +451,7 @@ if (form) form.addEventListener("submit", async (event) => {
   }
 });
 $("#reset-tool")?.addEventListener("click", () => {
+  releaseResult();
   window.InfinityRuntimeContext = window.InfinityRuntimeContext || {};
   window.InfinityRuntimeContext.lastResult = null;
   window.InfinityRuntimeContext.lastError = null;
@@ -536,6 +537,7 @@ document.addEventListener("keydown", (event) => {
   const allItems = [...toolItems, ...pageItems];
   let activeIndex = 0;
   let visibleItems = [];
+  let lastTrigger = null;
   const normalize = (value) => String(value || "").toLowerCase().normalize("NFKD").replace(/[\u064B-\u065F\u0670]/g, "").replace(/[أإآ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه");
   const label = (item) => isEnglish ? item.name_en : item.name_ar;
   const category = (item) => isEnglish ? item.category_en : item.category_ar;
@@ -558,8 +560,20 @@ document.addEventListener("keydown", (event) => {
       a.append(icon, copy, arrow); results.append(a);
     });
   }
-  function openPalette() { palette.hidden = false; document.documentElement.classList.add("command-open"); activeIndex = 0; input.value = ""; render(); requestAnimationFrame(() => input.focus()); }
-  function closePalette() { palette.hidden = true; document.documentElement.classList.remove("command-open"); }
+  function openPalette(event) {
+    lastTrigger = event?.currentTarget || document.activeElement;
+    palette.hidden = false;
+    document.documentElement.classList.add("command-open");
+    activeIndex = 0;
+    input.value = "";
+    render();
+    window.setTimeout(() => input.focus(), 30);
+  }
+  function closePalette() {
+    palette.hidden = true;
+    document.documentElement.classList.remove("command-open");
+    window.setTimeout(() => lastTrigger?.focus(), 0);
+  }
   triggers.forEach((trigger) => trigger.addEventListener("click", openPalette));
   palette.querySelectorAll("[data-command-close]").forEach((node) => node.addEventListener("click", closePalette));
   input.addEventListener("input", () => { activeIndex = 0; render(); });

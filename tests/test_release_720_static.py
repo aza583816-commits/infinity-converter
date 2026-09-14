@@ -61,7 +61,7 @@ def test_720_future_entitlements_are_guarded_while_public_defaults_stay_free():
 
 def test_720_visual_cohesion_layer_covers_shared_surfaces():
     css = read('static/css/app.css')
-    assert 'Infinity Converter 7.2.2 — final product cohesion' in css
+    assert 'Infinity Converter 7.2.3 — final product cohesion' in css
     for selector in (
         '.listing-head', '.collection-hero', '.blog-hero', '.how-hero',
         '.blog-article', '.auth-form', '.pricing-grid', '.developer-workspace',

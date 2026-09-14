@@ -1,12 +1,12 @@
-const CACHE = 'infinity-static-v7.2.2';
+const CACHE = 'infinity-static-v7.2.3';
 const STATIC_ASSETS = [
-  '/static/css/app.css?v=7.2.2',
-  '/static/css/a11y.css?v=7.2.2',
-  '/static/js/app.js?v=7.2.2',
-  '/static/js/smart-flow.js?v=7.2.2',
-  '/static/icon-192.png?v=7.2.2',
-  '/static/icon-512.png?v=7.2.2',
-  '/manifest.json?v=7.2.2'
+  '/static/css/app.css?v=7.2.3',
+  '/static/css/a11y.css?v=7.2.3',
+  '/static/js/app.js?v=7.2.3',
+  '/static/js/smart-flow.js?v=7.2.3',
+  '/static/icon-192.png?v=7.2.3',
+  '/static/icon-512.png?v=7.2.3',
+  '/manifest.json?v=7.2.3'
 ];
 
 self.addEventListener('install', (event) => {
