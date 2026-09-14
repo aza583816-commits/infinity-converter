@@ -10,6 +10,7 @@ import urllib.request
 
 from flask import Blueprint, jsonify, request
 
+from core.discovery import unified_index
 from core.intelligence import catalog_prompt, fallback_plan, sanitize_context
 from core.limiter import limiter
 
@@ -135,10 +136,12 @@ def _system_prompt(lang: str) -> str:
     return (
         "You are Infinity Intelligence, the site-wide orchestration brain inside Infinity Converter. "
         "You are not a generic chatbot. You understand the current page, safe file metadata, tool options, conversion result metadata, and the complete real tool catalog. "
+        "The catalog includes server conversion tools and browser-local utilities. Browser tool IDs are namespaced with browser:. "
         "Your job is to turn the user's goal into the shortest reliable workflow using ONLY tools in the catalog. "
         "Never invent a tool, URL, completed action, benchmark, guarantee, or file analysis that did not happen. "
         "Never claim to have read file contents unless the request explicitly includes text content. Metadata such as extension, MIME and size is not content. "
-        "Prefer 1-3 steps. Explain trade-offs when quality, editability, OCR, privacy, layout, or file size matter. "
+        "Prefer 1-3 steps. Browser-local utilities should normally be standalone steps; do not pretend their result is an uploaded file. "
+        "Explain trade-offs when quality, editability, OCR, privacy, layout, or file size matter. "
         "If context contains a conversion error, diagnose it and recommend the most likely recovery path. "
         "If context contains a successful result, recommend only useful next steps, not busywork. "
         f"{language_rule}\n\nREAL INFINITY TOOL CATALOG:\n{catalog_prompt()}"
@@ -149,7 +152,7 @@ def _structured_prompt(prompt: str, mode: str, context: dict, history: list, lan
     schema = {
         "title": "short title",
         "summary": "2-5 sentence answer",
-        "steps": [{"order": 1, "tool_id": "catalog tool id", "tool_name": "localized name", "url": "/tools/real-slug", "why": "why this step", "input": "expected input", "output": "expected output"}],
+        "steps": [{"order": 1, "tool_id": "exact catalog id", "tool_name": "localized name", "url": "/tools/... or /browser-tools/...", "why": "why this step", "input": "expected input", "output": "expected output"}],
         "tips": ["important trade-off or quality/privacy check"],
         "questions": ["only if a missing detail materially changes the path"],
     }
@@ -172,31 +175,28 @@ def _structured_prompt(prompt: str, mode: str, context: dict, history: list, lan
 
 
 def _normalize_plan(plan: dict, fallback: dict, lang: str) -> dict:
-    from core.tooling import TOOLS
-    catalog = set(TOOLS)
+    catalog = unified_index()
     fallback_by_id = {step["tool_id"]: step for step in fallback.get("steps", [])}
     steps = []
     for raw in plan.get("steps", [])[:4]:
         if not isinstance(raw, dict):
             continue
         tool_id = str(raw.get("tool_id", ""))
-        if tool_id not in catalog:
+        item = catalog.get(tool_id)
+        if not item:
             continue
         if steps:
-            previous = TOOLS[steps[-1]["tool_id"]]
-            accepted = TOOLS[tool_id].input_ext
-            if previous.output_ext not in accepted and not {"*", ".*"}.intersection(accepted):
+            previous = catalog[steps[-1]["tool_id"]]
+            # Browser utilities produce UI results, not files. Do not fabricate
+            # cross-tool file chaining to or from them.
+            if previous["kind"] != "converter" or item["kind"] != "converter":
                 return fallback
-        # Trust canonical URL/name from fallback when available; otherwise derive from catalog text through smart core.
+            accepted = item["input_ext"]
+            if previous["output_ext"] not in accepted and not {"*", ".*"}.intersection(accepted):
+                return fallback
         canonical = fallback_by_id.get(tool_id)
-        if canonical:
-            url = canonical["url"]
-            tool_name = canonical["tool_name"]
-        else:
-            from core.tooling import TOOLS, _meta_for
-            tool = TOOLS[tool_id]
-            url = f"/tools/{_meta_for(tool)['slug']}"
-            tool_name = tool.name_ar if lang == "ar" else tool.name_en
+        url = canonical["url"] if canonical else item["url"]
+        tool_name = canonical["tool_name"] if canonical else (item["name_ar"] if lang == "ar" else item["name_en"])
         steps.append({
             "order": len(steps) + 1,
             "tool_id": tool_id,
@@ -205,6 +205,7 @@ def _normalize_plan(plan: dict, fallback: dict, lang: str) -> dict:
             "why": str(raw.get("why", ""))[:600],
             "input": str(raw.get("input", ""))[:220],
             "output": str(raw.get("output", ""))[:120],
+            "kind": item["kind"],
         })
     return {
         "title": str(plan.get("title") or fallback.get("title") or "Infinity")[:160],
