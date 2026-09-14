@@ -113,3 +113,25 @@ def test_two_file_batch_reports_inputs_and_downloads_zip(client):
         for name in archive.namelist():
             assert json.loads(archive.read(name))
     response.close()
+
+
+@pytest.mark.parametrize('configured', ['pub-1234567890123456', 'ca-pub-1234567890123456'])
+def test_adsense_id_forms_are_normalized_for_html_and_ads_txt(client, monkeypatch, configured):
+    monkeypatch.setenv('ADSENSE_CLIENT_ID', configured)
+    html = client.get('/?lang=en').get_data(as_text=True)
+    assert 'content="ca-pub-1234567890123456"' in html
+    assert 'client=ca-pub-1234567890123456' in html
+
+    ads = client.get('/ads.txt')
+    assert ads.status_code == 200
+    assert ads.get_data(as_text=True) == (
+        'google.com, pub-1234567890123456, DIRECT, f08c47fec0942fa0\n'
+    )
+
+
+def test_invalid_adsense_id_is_never_rendered_or_served(client, monkeypatch):
+    monkeypatch.setenv('ADSENSE_CLIENT_ID', 'publisher-not-validated')
+    home = client.get('/?lang=en').get_data(as_text=True)
+    assert 'google-adsense-account' not in home
+    assert 'adsbygoogle.js' not in home
+    assert client.get('/ads.txt').status_code == 404
