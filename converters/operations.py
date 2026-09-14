@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from typing import Callable
 
-from converters import advanced_handlers, core_handlers, mega_tools, product_handlers
+from converters import advanced_handlers, core_handlers, mega_handlers, mega_tools, product_handlers
 from converters.contracts import Operation
-from converters import legacy_handlers as legacy
 from core.tooling.catalog import TOOLS
 
 
@@ -126,31 +125,26 @@ def build_operations() -> dict[str, Operation]:
             force_zip=tool.output_ext == ".zip",
         )
 
+    # Core multi-file workflows.
     for tool_id, handler in core_handlers.CORE_COMBINE_HANDLERS.items():
         add(tool_id, "combine", _combine(handler))
-    for tool_id, handler in legacy.COMBINE_HANDLERS.items():
-        if tool_id not in core_handlers.CORE_COMBINE_HANDLERS:
-            add(tool_id, "combine", _combine(handler))
-
     add("csv-merge-deduplicate", "combine", _combine(product_handlers.csv_merge_deduplicate))
-
     for tool_id in mega_tools.COMBINE_IDS:
-        add(tool_id, "combine", _combine_tool(legacy._h_mega_combine, tool_id))
+        add(tool_id, "combine", _combine_tool(mega_handlers.combine, tool_id))
 
+    # No-upload generators.
     for tool_id, handler in product_handlers.GENERATOR_HANDLERS.items():
         add(tool_id, "generator", _generator(handler))
     for tool_id in mega_tools.NO_INPUT_IDS:
         add(tool_id, "generator", _uuid_generator)
 
+    # Stable classic and option-heavy product workflows.
     for tool_id, handler in core_handlers.CORE_SINGLE_HANDLERS.items():
         add(tool_id, "single", _single(handler))
     for tool_id, handler in product_handlers.OPTION_SINGLE_HANDLERS.items():
         add(tool_id, "single", _single(handler, with_options=True))
-    migrated_classic = set(core_handlers.CORE_SINGLE_HANDLERS) | set(product_handlers.OPTION_SINGLE_HANDLERS)
-    for tool_id, handler in legacy.SINGLE_HANDLERS.items():
-        if tool_id not in migrated_classic:
-            add(tool_id, "single", _single(handler))
 
+    # Advanced families.
     for tool_id in PDF_ADVANCED_IDS:
         add(tool_id, "single", _advanced(advanced_handlers.pdf, tool_id))
     for tool_id in IMAGE_ADVANCED_IDS:
@@ -164,6 +158,8 @@ def build_operations() -> dict[str, Operation]:
     for tool_id in UTILITY_ADVANCED_IDS:
         add(tool_id, "single", _advanced(advanced_handlers.utility, tool_id))
 
+    # 6.x mega families keep their implementations but now use a current
+    # runtime adapter instead of the historical legacy dispatcher.
     mega_single_ids = (
         set(mega_tools.PDF_IDS)
         | set(mega_tools.IMAGE_IDS)
@@ -173,7 +169,7 @@ def build_operations() -> dict[str, Operation]:
         | set(mega_tools.UTILITY_IDS)
     ) - set(mega_tools.COMBINE_IDS) - set(mega_tools.NO_INPUT_IDS)
     for tool_id in mega_single_ids:
-        add(tool_id, "single", _advanced(legacy._h_mega, tool_id))
+        add(tool_id, "single", _advanced(mega_handlers.single, tool_id))
 
     return operations
 
