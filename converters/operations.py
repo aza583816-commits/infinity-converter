@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Callable
 
-from converters import mega_tools
+from converters import core_handlers, mega_tools
 from converters.contracts import Operation
 from converters import legacy_handlers as legacy
 from core.tooling.catalog import TOOLS
@@ -131,9 +131,12 @@ def build_operations() -> dict[str, Operation]:
             force_zip=tool.output_ext == ".zip",
         )
 
-    # Multiple inputs -> one result.
-    for tool_id, handler in legacy.COMBINE_HANDLERS.items():
+    # Stable core paths now bypass the historical compatibility dispatcher.
+    for tool_id, handler in core_handlers.CORE_COMBINE_HANDLERS.items():
         add(tool_id, "combine", _combine(handler))
+    for tool_id, handler in legacy.COMBINE_HANDLERS.items():
+        if tool_id not in core_handlers.CORE_COMBINE_HANDLERS:
+            add(tool_id, "combine", _combine(handler))
 
     add("csv-merge-deduplicate", "combine", lambda safe_inputs, output_dir, param, timeout, max_pdf_pages, options: legacy._h_csv_merge(safe_inputs, output_dir, param, options))
 
@@ -147,9 +150,13 @@ def build_operations() -> dict[str, Operation]:
     for tool_id in mega_tools.NO_INPUT_IDS:
         add(tool_id, "generator", _uuid_generator)
 
-    # Classic single-file handlers.
+    # Stable classic handlers are first-class modules; remaining legacy paths
+    # stay wrapped until their implementation is migrated domain by domain.
+    for tool_id, handler in core_handlers.CORE_SINGLE_HANDLERS.items():
+        add(tool_id, "single", _single(handler))
     for tool_id, handler in legacy.SINGLE_HANDLERS.items():
-        add(tool_id, "single", _single(handler, with_options=tool_id in _OPTIONS_SINGLE))
+        if tool_id not in core_handlers.CORE_SINGLE_HANDLERS:
+            add(tool_id, "single", _single(handler, with_options=tool_id in _OPTIONS_SINGLE))
 
     # 6.x advanced groups now register declaratively rather than living in a
     # giant ConversionEngine if/elif chain.
