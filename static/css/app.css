@@ -68,7 +68,7 @@ html[data-theme="dark"] .hero-badges span,html[data-theme="dark"] .format-orbit 
 html[data-theme="dark"] .ad-zone{background:rgba(9,29,22,.58);border-color:rgba(188,226,209,.15)}html[data-theme="dark"] .site-footer{background:#03100b;color:#dcece5}
 \n/* 6.1 Knowledge Center refinements */\n.knowledge-controls{margin:24px 0 28px;padding:18px;border:1px solid var(--line);border-radius:24px;background:color-mix(in srgb,var(--surface) 90%,transparent);box-shadow:var(--shadow-sm)}\n.knowledge-search{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.knowledge-search input{flex:1;min-width:220px;min-height:48px;border:1px solid var(--line);border-radius:15px;padding:0 16px;background:var(--surface);color:var(--text)}.knowledge-clear{font-size:13px}.knowledge-category-list{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.knowledge-category-list a{padding:8px 12px;border-radius:999px;border:1px solid var(--line);font-size:12px}.knowledge-category-list a.is-active{background:var(--text);color:var(--surface);border-color:var(--text)}.knowledge-empty{text-align:center;padding:50px 20px;border:1px dashed var(--line);border-radius:24px}\n.reading-progress{position:fixed;z-index:120;top:0;inset-inline:0;height:3px;pointer-events:none}.reading-progress span{display:block;width:100%;height:100%;background:linear-gradient(90deg,#31d39c,#55c7ff,#e8bd62);transform:scaleX(0);transform-origin:left center}.article-toc{margin:4px 0 28px;padding:20px;border:1px solid var(--line);border-radius:20px;background:color-mix(in srgb,var(--surface) 92%,transparent)}.article-toc strong{display:block;margin-bottom:10px}.article-toc ol{margin:0;padding-inline-start:22px;display:grid;gap:7px}.article-toc a{text-decoration:none}.article-toc a:hover{text-decoration:underline}.article-section{scroll-margin-top:110px}\n[dir="rtl"] .reading-progress span{transform-origin:right center}\n@media(max-width:640px){.knowledge-search{align-items:stretch}.knowledge-search input,.knowledge-search button{width:100%}.article-toc{padding:16px}}\n
 /* ========================================================================
-   Infinity Converter 7.2.1 — Production Cohesion / Intelligence Workspace
+   Infinity Converter 7.2.2 — Production Cohesion / Intelligence Workspace
    Motion is intentionally ambient and disabled by prefers-reduced-motion.
    ======================================================================== */
 :root{
@@ -184,7 +184,7 @@ html[data-theme="dark"] .result-panel-v71[data-state="error"],html[data-theme="d
 @media(max-width:560px){.panel-actions>*{width:100%}.result-panel-v71{display:grid!important;grid-template-columns:auto 1fr}.result-panel-v71>.secondary{grid-column:1/-1;width:100%}}
 
 /* ========================================================================
-   Infinity Converter 7.2.1 — final product cohesion
+   Infinity Converter 7.2.2 — final product cohesion
    Shared visual language for every public surface. Mobile first, low motion.
    ======================================================================== */
 :root{
@@ -268,7 +268,7 @@ html[data-theme="dark"] .auth-error{color:#ffc5c5;background:rgba(202,73,73,.12)
 @media(hover:none){.tool-card:hover,.blog-card:hover{transform:none}}
 @media(prefers-reduced-motion:reduce){.tool-card,.blog-card,.search-control input,.knowledge-search input,.param-field input,.param-field select,.param-field textarea{transition:none!important}}
 
-/* 7.2.1 shared interaction and small-screen refinements. */
+/* 7.2.2 shared interaction and small-screen refinements. */
 :where(a,button,input,select,textarea,[tabindex]):focus-visible{
   outline:3px solid var(--accent,#8b5cf6);outline-offset:4px;
 }
@@ -286,3 +286,24 @@ html[data-theme="dark"] .auth-error{color:#ffc5c5;background:rgba(202,73,73,.12)
   html{scroll-behavior:auto!important}
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
+
+/* 7.2.2 — reliable UI states and a calmer, touch-first tools filter. */
+html [hidden]{display:none!important}
+.tools-page .listing-controls{display:grid;gap:13px;padding:16px;border-radius:22px;background:color-mix(in srgb,var(--v72-panel) 94%,transparent)}
+.tools-page .tools-search{min-height:56px;padding:5px 14px;border-color:color-mix(in srgb,var(--v72-accent) 14%,var(--v72-border));border-radius:16px;background:var(--v72-panel-strong);box-shadow:0 8px 26px rgba(7,43,30,.035);transition:border-color .16s ease,box-shadow .16s ease}
+.tools-page .tools-search:focus-within{border-color:color-mix(in srgb,var(--v72-accent) 48%,var(--line));box-shadow:0 0 0 4px color-mix(in srgb,var(--v72-accent) 9%,transparent),0 12px 34px rgba(7,43,30,.05)}
+.tools-page .tools-search input{min-height:44px;padding:8px 0;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+.tools-page .filter-tabs{align-items:center;gap:9px;padding:3px 2px 5px;overscroll-behavior-inline:contain;-webkit-overflow-scrolling:touch;scroll-snap-type:inline proximity}
+.tools-page .filter-tab{min-height:44px;padding:9px 16px;border-color:color-mix(in srgb,var(--v72-accent) 11%,var(--line));background:color-mix(in srgb,var(--v72-panel-strong) 88%,transparent);color:var(--muted);font-size:12px;font-weight:720;scroll-snap-align:start;transition:color .16s ease,background-color .16s ease,border-color .16s ease,box-shadow .16s ease}
+.tools-page .filter-tab:hover{border-color:color-mix(in srgb,var(--v72-accent) 28%,var(--line));color:var(--v72-accent-strong)}
+.tools-page .filter-tab.is-active{background:linear-gradient(135deg,#08251b,#0b3a2a)!important;border-color:#0b3527!important;color:#f2fbf7!important;box-shadow:0 9px 24px rgba(7,52,37,.16),inset 0 1px 0 rgba(255,255,255,.12)}
+.filter-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:24px;color:var(--muted);font-size:11px}
+.filter-result-count{display:inline-flex;align-items:center;gap:6px}.filter-result-count i{width:7px;height:7px;border-radius:50%;background:var(--v72-accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--v72-accent) 11%,transparent)}.filter-result-count strong{color:var(--ink);font-variant-numeric:tabular-nums}.filter-swipe-hint{display:none}
+html[data-theme="dark"] .tools-page .tools-search{background:rgba(255,255,255,.035)}
+html[data-theme="dark"] .tools-page .filter-tab{background:rgba(255,255,255,.035);border-color:rgba(255,255,255,.075)}
+html[data-theme="dark"] .tools-page .filter-tab.is-active{background:linear-gradient(135deg,#dff6ec,#bfead7)!important;border-color:#dff6ec!important;color:#092018!important;box-shadow:0 9px 24px rgba(0,0,0,.18)}
+@media(max-width:640px){
+  .tools-page .listing-controls{margin-inline:-2px;padding:11px;border-radius:18px}
+  .tools-page .tools-search{min-height:52px}.tools-page .filter-tabs{margin-inline:-2px;padding-inline:2px}.filter-swipe-hint{display:inline}
+}
+@media(prefers-reduced-motion:reduce){.tools-page .tools-search,.tools-page .filter-tab{transition:none!important}}

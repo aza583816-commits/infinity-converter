@@ -1,17 +1,22 @@
 const $ = (selector) => document.querySelector(selector);
 
+/* Safari private browsing and embedded browsers can deny Web Storage access. */
+function storageGet(key) { try { return localStorage.getItem(key); } catch (_) { return null; } }
+function storageSet(key, value) { try { localStorage.setItem(key, value); return true; } catch (_) { return false; } }
+function storageRemove(key) { try { localStorage.removeItem(key); return true; } catch (_) { return false; } }
+
 
 /* Persistent dark/light theme with system fallback. */
 (() => {
   const root = document.documentElement;
   const buttons = [document.querySelector('#theme-toggle'), document.querySelector('#theme-toggle-mobile')].filter(Boolean);
   if (!buttons.length) return;
-  const stored = localStorage.getItem('infinity-theme');
+  const stored = storageGet('infinity-theme');
   const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
   const apply = (theme) => {
     root.dataset.theme = theme;
     root.style.colorScheme = theme;
-    localStorage.setItem('infinity-theme', theme);
+    storageSet('infinity-theme', theme);
     buttons.forEach((button) => {
       const isDark = theme === 'dark';
       button.setAttribute('aria-pressed', String(isDark));
@@ -38,12 +43,31 @@ const cards = toolGrid ? [...toolGrid.querySelectorAll(".tool-card")] : [];
 const emptyState = $("#empty-state") || $("#listing-empty");
 const search = $("#tool-search") || $("#listing-search");
 const filterTabs = $$(".filter-tabs [data-filter]");
+const visibleCount = $("#listing-visible-count");
 let selectedFilter = toolGrid?.dataset.activeFilter || "all";
+const validFilters = new Set(["all", "popular", ...cards.map((card) => card.dataset.category).filter(Boolean)]);
+if (!validFilters.has(selectedFilter)) selectedFilter = "all";
+
+function syncFilterTabs(scrollActive = false) {
+  filterTabs.forEach((tab) => {
+    const active = tab.dataset.filter === selectedFilter;
+    tab.classList.toggle("is-active", active);
+    if (tab.matches("button")) tab.setAttribute("aria-pressed", String(active));
+    else if (active) tab.setAttribute("aria-current", "true");
+    else tab.removeAttribute("aria-current");
+    if (active && scrollActive) {
+      tab.scrollIntoView({
+        behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+        block: "nearest",
+        inline: "center",
+      });
+    }
+  });
+}
 
 function filterCards() {
   if (!cards.length) return;
   const query = search ? search.value.trim().toLowerCase() : "";
-  selectedFilter = toolGrid?.dataset.activeFilter || selectedFilter;
   let visible = 0;
   cards.forEach((card) => {
     const text = (card.dataset.search || "").toLowerCase();
@@ -67,18 +91,25 @@ function filterCards() {
     }
   });
   if (emptyState) emptyState.hidden = visible > 0;
+  if (visibleCount) visibleCount.textContent = String(visible);
 }
 cards.forEach((card) => {
   const title = card.querySelector("h3, h2");
   if (title) title.dataset.originalTitle = title.textContent;
 });
 if (search) search.addEventListener("input", filterCards);
-filterTabs.forEach((tab) => tab.addEventListener("click", () => {
-  selectedFilter = tab.dataset.filter;
+filterTabs.forEach((tab) => tab.addEventListener("click", (event) => {
+  const plainPrimaryClick = event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey;
+  if (tab.matches("a[href]") && !plainPrimaryClick) return;
+  if (tab.matches("a[href]")) event.preventDefault();
+  selectedFilter = validFilters.has(tab.dataset.filter) ? tab.dataset.filter : "all";
   if (toolGrid) toolGrid.dataset.activeFilter = selectedFilter;
-  filterTabs.forEach((item) => item.classList.toggle("is-active", item === tab));
+  if (tab.matches("a[href]") && history.replaceState) history.replaceState(null, "", tab.href);
+  syncFilterTabs(true);
   filterCards();
 }));
+if (toolGrid) toolGrid.dataset.activeFilter = selectedFilter;
+syncFilterTabs();
 filterCards();
 
 const categoryLinks = $$(".category-dock [data-filter]");
@@ -103,12 +134,12 @@ function renderSuggestions(query) {
 }
 if (search) search.addEventListener("input", () => renderSuggestions(search.value.trim().toLowerCase()));
 
-function safeStorageArray(key) { try { const value = JSON.parse(localStorage.getItem(key) || "[]"); return Array.isArray(value) ? value : []; } catch (_) { localStorage.removeItem(key); return []; } }
+function safeStorageArray(key) { try { const value = JSON.parse(storageGet(key) || "[]"); return Array.isArray(value) ? value : []; } catch (_) { storageRemove(key); return []; } }
 function readRecent() { return safeStorageArray("infinity-recent"); }
 function saveRecent(toolId, name, path) {
   const recent = readRecent().filter((item) => item.id !== toolId);
   recent.unshift({ id: toolId, name, path: path || `/tool/${encodeURIComponent(toolId)}` });
-  localStorage.setItem("infinity-recent", JSON.stringify(recent.slice(0, 5)));
+  storageSet("infinity-recent", JSON.stringify(recent.slice(0, 5)));
 }
 function renderRecent() {
   const section = $("#personal-tools");
@@ -118,7 +149,7 @@ function renderRecent() {
   section.hidden = recent.length === 0;
   list.innerHTML = recent.map((item) => `<a href="${item.path || `/tool/${encodeURIComponent(item.id)}`}">${escapeHtml(item.name || item.id)} <span aria-hidden="true">↗</span></a>`).join("");
 }
-$("#clear-recent")?.addEventListener("click", () => { localStorage.removeItem("infinity-recent"); renderRecent(); });
+$("#clear-recent")?.addEventListener("click", () => { storageRemove("infinity-recent"); renderRecent(); });
 
 function readFavorites() { return safeStorageArray("infinity-favorites"); }
 function renderFavorites() {
@@ -141,7 +172,7 @@ if (favoriteButton) favoriteButton.addEventListener("click", () => {
   const index = favorites.findIndex((item) => item.id === favoriteButton.dataset.toolId);
   if (index >= 0) favorites.splice(index, 1);
   else favorites.unshift({ id: favoriteButton.dataset.toolId, name: favoriteButton.dataset.toolName, path: favoriteButton.dataset.toolPath || `/tool/${encodeURIComponent(favoriteButton.dataset.toolId)}` });
-  localStorage.setItem("infinity-favorites", JSON.stringify(favorites.slice(0, 10)));
+  storageSet("infinity-favorites", JSON.stringify(favorites.slice(0, 10)));
   syncFavorite();
   renderFavorites();
 });

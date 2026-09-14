@@ -1,11 +1,13 @@
-# Current candidate: 7.2.1
+# Current release: 7.2.2
 
-The active review is `work/production-hardening`, based on verified upstream
-commit `00ae9b35`. Read [current release notes](RELEASE_NOTES_7.2.1.md) and
-[current audit](FINAL_AUDIT_7.2.1.md) before deployment. Earlier reports below
-are historical and do not certify this candidate.
+This release continues the latest verified `main` history; it does not recreate
+the project or roll back the modular handler, Smart Flow, resilience, editorial,
+security, accessibility, and performance work already merged. Read
+[current release notes](RELEASE_NOTES_7.2.2.md) and the final 7.2.2 audit before
+deployment. Earlier reports below are historical evidence only.
 
-Verified implementation CI: **175 pytest tests passed**, **162/162 engine operations passed**, and **162/162 HTTP operation paths passed**, including genuine legacy DOC conversion and Arabic OCR. See `release/CI_RESULTS.md`.
+Exact 7.2.2 validation evidence is recorded in `FINAL_AUDIT_7.2.2.md` after the
+production-image and live deployment gates complete.
 
 Production gates remain mandatory:
 
