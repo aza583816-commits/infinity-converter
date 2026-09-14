@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Callable
 
-from converters import advanced_handlers, core_handlers, mega_tools
+from converters import advanced_handlers, core_handlers, mega_tools, product_handlers
 from converters.contracts import Operation
 from converters import legacy_handlers as legacy
 from core.tooling.catalog import TOOLS
@@ -40,11 +40,6 @@ UTILITY_ADVANCED_IDS = {
     "text-deduplicate", "text-sort", "filename-normalizer",
     "csv-validator", "json-validator", "number-list-analyzer",
     "text-to-base64",
-}
-
-_OPTIONS_SINGLE = {
-    "pdf-booklet", "lms-pdf-size-optimizer", "social-media-image-resizer",
-    "lms-question-bank-formatter", "bulk-certificate-maker",
 }
 
 
@@ -131,35 +126,31 @@ def build_operations() -> dict[str, Operation]:
             force_zip=tool.output_ext == ".zip",
         )
 
-    # Stable core paths bypass the historical compatibility dispatcher.
     for tool_id, handler in core_handlers.CORE_COMBINE_HANDLERS.items():
         add(tool_id, "combine", _combine(handler))
     for tool_id, handler in legacy.COMBINE_HANDLERS.items():
         if tool_id not in core_handlers.CORE_COMBINE_HANDLERS:
             add(tool_id, "combine", _combine(handler))
 
-    add("csv-merge-deduplicate", "combine", lambda safe_inputs, output_dir, param, timeout, max_pdf_pages, options: legacy._h_csv_merge(safe_inputs, output_dir, param, options))
+    add("csv-merge-deduplicate", "combine", _combine(product_handlers.csv_merge_deduplicate))
 
     for tool_id in mega_tools.COMBINE_IDS:
         add(tool_id, "combine", _combine_tool(legacy._h_mega_combine, tool_id))
 
-    # No-upload generators.
-    add("assignment-cover-page", "generator", _generator(legacy._h_assignment_cover))
-    add("omr-bubble-sheet", "generator", _generator(legacy._h_omr_sheet))
-    add("quote-social-graphic", "generator", _generator(legacy._h_quote_graphic))
+    for tool_id, handler in product_handlers.GENERATOR_HANDLERS.items():
+        add(tool_id, "generator", _generator(handler))
     for tool_id in mega_tools.NO_INPUT_IDS:
         add(tool_id, "generator", _uuid_generator)
 
-    # Stable classic handlers are first-class modules; remaining legacy paths
-    # stay wrapped until their implementation is migrated domain by domain.
     for tool_id, handler in core_handlers.CORE_SINGLE_HANDLERS.items():
         add(tool_id, "single", _single(handler))
+    for tool_id, handler in product_handlers.OPTION_SINGLE_HANDLERS.items():
+        add(tool_id, "single", _single(handler, with_options=True))
+    migrated_classic = set(core_handlers.CORE_SINGLE_HANDLERS) | set(product_handlers.OPTION_SINGLE_HANDLERS)
     for tool_id, handler in legacy.SINGLE_HANDLERS.items():
-        if tool_id not in core_handlers.CORE_SINGLE_HANDLERS:
-            add(tool_id, "single", _single(handler, with_options=tool_id in _OPTIONS_SINGLE))
+        if tool_id not in migrated_classic:
+            add(tool_id, "single", _single(handler))
 
-    # The six advanced families now route through a dedicated first-class
-    # adapter module rather than the historical compatibility dispatcher.
     for tool_id in PDF_ADVANCED_IDS:
         add(tool_id, "single", _advanced(advanced_handlers.pdf, tool_id))
     for tool_id in IMAGE_ADVANCED_IDS:
