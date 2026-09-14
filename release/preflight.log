@@ -1,0 +1,35 @@
+Python 3.11 syntax OK: 86 files
+warning: The `fitz` API is deprecated and will be removed in future. Use `import pymupdf` instead.
+2026-09-13 14:46:10,402 INFO converters.engine conversion_completed tool=file-hash engine=hashlib duration_ms=1 input_bytes=19 output_bytes=178 batch_total=1 batch_succeeded=1
+2026-09-13 14:46:10,463 INFO converters.engine conversion_completed tool=pdf-merge engine=pymupdf+pypdf duration_ms=2 input_bytes=2066 output_bytes=1842 batch_total=2 batch_succeeded=2
+2026-09-13 14:46:10,507 INFO converters.engine conversion_completed tool=image-to-png engine=pillow duration_ms=39 input_bytes=16505 output_bytes=33863 batch_total=1 batch_succeeded=1
+2026-09-13 14:46:10,513 WARNING converters.engine conversion_failed tool=word-to-pdf engine=libreoffice duration_ms=1 input_bytes=36774 error=ValueError
+runtime registry 162/162 OK
+startup route /api/v2/healthz OK
+startup route / OK
+startup route /assistant OK
+startup route /tools OK
+startup route /blog OK
+startup route /blog/word-to-pdf-without-losing-formatting OK
+startup route /about OK
+startup route /trust OK
+startup route /editorial OK
+startup route /contact OK
+startup route /privacy OK
+startup route /robots.txt OK
+startup route /sitemap.xml OK
+startup route /ads.txt OK
+startup route /sw.js OK
+startup route /tools/word-to-pdf OK
+all 162 public tool pages resolve OK
+inspect -> convert -> validate -> download smoke path OK
+AdSense/search quality + 7.2.1 experience guards OK
+representative conversion pdf-merge OK (1842 bytes)
+representative conversion image-to-png OK (33863 bytes)
+Traceback (most recent call last):
+  File "<stdin>", line 3, in <module>
+  File "/workspace/scratch/f8b3506d1972/source/infinity-converter-7.2.0/scripts/preflight.py", line 316, in startup_routes
+    real_conversion("word-to-pdf", ("sample-word.docx",))
+  File "/workspace/scratch/f8b3506d1972/source/infinity-converter-7.2.0/scripts/preflight.py", line 183, in real_conversion
+    raise RuntimeError(f"representative conversion {tool_id} failed: {response.status_code} {detail}")
+RuntimeError: representative conversion word-to-pdf failed: 400 {'error': 'تعذرت معالجة هذا الملف.'}

@@ -1,0 +1,30 @@
+{
+  "local_python": "3.12.14",
+  "pytest": {
+    "passed": 169,
+    "failed": 3,
+    "skipped": 3,
+    "tests": 175
+  },
+  "server_engine": {
+    "passed": 155,
+    "total": 162
+  },
+  "server_http": {
+    "passed": 155,
+    "total": 162
+  },
+  "browser_calculation_smoke": {
+    "passed": 99,
+    "not_tested": 2,
+    "total": 101
+  },
+  "browser_known_answer_and_negative": 10,
+  "upstream_sha": "00ae9b35cce7ac7e11fe7737fe21211025f49ac1",
+  "code_review_sha": "9c1e16781a5d1e33838ed87119b4dfe508ede5c3",
+  "production_approved": false,
+  "notes": [
+    "The legacy DOC and Arabic OCR gates skip locally because their system dependencies are absent.",
+    "Both are mandatory and passed inside the production image; see CI_RESULTS.md."
+  ]
+}
