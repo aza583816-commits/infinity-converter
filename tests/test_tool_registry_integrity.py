@@ -1,10 +1,9 @@
 from collections import Counter
 
-from converters.engine import COMBINE_HANDLERS, SINGLE_HANDLERS
+from converters.operations import operation_ids
 from converters.validation import MIME_BY_EXTENSION
 from core.tool_registry import TOOLS, list_tools, PREMIUM_TOOL_IDS
 from security.file_guard import ALLOWED_SIGNATURES
-from converters import mega_tools
 
 ADVANCED_GROUPS = {
     "pdf": {"pdf-reorder-pages","pdf-rotate-selected","pdf-page-numbers","pdf-watermark-text","pdf-grayscale","pdf-remove-blank-pages","pdf-crop-margins","pdf-poster-split","pdf-contact-sheet","pdf-password-protect"},
@@ -14,7 +13,7 @@ ADVANCED_GROUPS = {
     "archive": {"tar-create","tar-extract","gzip-compress","gzip-decompress","zip-list","zip-integrity","zip-flatten","tar-list","gzip-info","zip-to-tar"},
     "utilities": {"file-mime-report","text-statistics","text-clean","text-deduplicate","text-sort","filename-normalizer","csv-validator","json-validator","number-list-analyzer","text-to-base64"},
 }
-SPECIAL = {"assignment-cover-page","omr-bubble-sheet","quote-social-graphic","csv-merge-deduplicate"}
+
 
 def test_registry_integrity_and_category_expansion():
     assert len(TOOLS) == 162
@@ -25,11 +24,15 @@ def test_registry_integrity_and_category_expansion():
     assert len(slugs) == len(set(slugs)) == 162
     assert PREMIUM_TOOL_IDS <= set(TOOLS)
 
+    # The declarative Operation registry is the runtime source of truth. Every
+    # public server tool must have exactly one registered operation; legacy
+    # compatibility dictionaries are intentionally not imported here.
+    operations = operation_ids()
+    assert operations == set(TOOLS)
+
     for tool in TOOLS.values():
         assert tool.output_ext in MIME_BY_EXTENSION
         assert all(ext in ALLOWED_SIGNATURES or ext in {".*", "*"} for ext in tool.input_ext)
-        mega_ids = (mega_tools.PDF_IDS | mega_tools.IMAGE_IDS | mega_tools.OFFICE_IDS | mega_tools.OCR_IDS | mega_tools.ARCHIVE_IDS | mega_tools.UTILITY_IDS | mega_tools.COMBINE_IDS | mega_tools.NO_INPUT_IDS)
-        assert tool.id in COMBINE_HANDLERS or tool.id in SINGLE_HANDLERS or tool.id in SPECIAL or tool.id in mega_ids or any(tool.id in group for group in ADVANCED_GROUPS.values())
         for field in tool.fields:
             if field.type == "select":
                 assert field.choices

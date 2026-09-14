@@ -11,7 +11,12 @@ const start = source.indexOf('const browserWorkspace =');
 const end = source.indexOf('/* Infinity 7.0 — one contextual', start);
 if (start < 0 || end < 0) throw Error('Browser handler entry points missing');
 const catalog = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
-const excluded = new Set(['light-background-cleanup', 'focus-timer']);
+const excludedReasons = new Map([
+  ['light-background-cleanup', 'requires real browser canvas'],
+  ['focus-timer', 'requires a real browser timer lifecycle'],
+  ['html-entity-converter', 'requires browser DOMParser'],
+  ['html-tag-stripper', 'requires browser DOMParser'],
+]);
 const samples = {
   'deadline-countdown': {deadline: new Date(Date.now()+86400000).toISOString().slice(0,16)},
   'jwt-decoder': {token:'eyJhbGciOiJub25lIn0.eyJzdWIiOiJ0ZXN0In0.'},
@@ -21,6 +26,7 @@ const samples = {
   'temperature-converter': {value:'0',from:'c',to:'f'},
   'percentage-change': {old:'100',new:'125'},
   'word-character-counter': {text:'Hello world'},
+  'query-string-parser-builder': {query:'name=Infinity&lang=en'},
 };
 const expected = {
   'gpa-calculator': /GPA: 3\.50/,
@@ -28,11 +34,15 @@ const expected = {
   'temperature-converter': /32 F/,
   'percentage-change': /25%/,
   'word-character-counter': /Words: 2/,
+  'query-string-parser-builder': /name|Infinity/,
 };
 (async () => {
   const results=[];
   for (const tool of catalog) {
-    if (excluded.has(tool.id)) { results.push({id:tool.id,status:'not_tested',reason:'requires real browser canvas or timer'}); continue; }
+    if (excludedReasons.has(tool.id)) {
+      results.push({id:tool.id,status:'not_tested',reason:excludedReasons.get(tool.id)});
+      continue;
+    }
     const fields = {};
     for (const field of tool.fields) {
       const fallback = field.type === 'datetime-local' ? '2026-09-01T10:00' : field.type === 'date' ? '2026-09-01' : field.type === 'number' ? '10' : 'Example';
@@ -43,19 +53,23 @@ const expected = {
     const context = vm.createContext({
       document:{querySelector:()=>({dataset:{browserTool:tool.id}})},
       $:key=>fields[key], crypto:webcrypto, TextDecoder, TextEncoder, atob, btoa,
-      URL, Blob, setInterval:()=>1, clearInterval:()=>{}, navigator:{}, console,
+      URL, URLSearchParams, Blob, setInterval:()=>1, clearInterval:()=>{}, navigator:{}, console,
     });
     try {
       vm.runInContext(source.slice(start,end),context,{timeout:2000});
       await run.click();
       const value=String(output.value);
-      if (!value || /\bNaN\b|\bInfinity\b|unavailable|Enter |Choose |Invalid|must be|Use grades|at least/.test(value)) throw Error(value || 'empty result');
+      const runtimeError = /\b(?:ReferenceError|TypeError|SyntaxError):|\bis not defined\b/.test(value);
+      const invalidNumber = /(?:^|[\s:=])(?:NaN|[-+]?Infinity)(?=$|[\s,;])/.test(value);
+      if (!value || runtimeError || invalidNumber || /unavailable|Enter |Choose |Invalid|must be|Use grades|at least/.test(value)) throw Error(value || 'empty result');
       if (expected[tool.id] && !expected[tool.id].test(value)) throw Error('incorrect known answer: '+value);
       results.push({id:tool.id,status:'passed',sample_output:value.slice(0,250),known_answer:Boolean(expected[tool.id])});
     } catch(error) {results.push({id:tool.id,status:'failed',reason:error.message.slice(0,250)});}
   }
   console.log(JSON.stringify(results,null,2));
   const failed=results.filter(r=>r.status==='failed');
-  console.error(`VM ${results.filter(r=>r.status==='passed').length}/${catalog.length} passed; ${failed.length} failed; ${excluded.size} not tested`);
+  const passed=results.filter(r=>r.status==='passed').length;
+  const notTested=results.filter(r=>r.status==='not_tested').length;
+  console.error(`VM ${passed}/${catalog.length} passed; ${failed.length} failed; ${notTested} not tested`);
   if(failed.length) process.exitCode=1;
 })();

@@ -6,6 +6,7 @@ from pypdf import PdfReader, PdfWriter
 
 
 def parse_pages(spec: str, page_count: int) -> list[int]:
+    """Parse a page selection into sorted, unique zero-based indexes."""
     spec = (spec or '').strip()
     if not spec:
         return list(range(page_count))
@@ -24,13 +25,35 @@ def parse_pages(spec: str, page_count: int) -> list[int]:
     return sorted(result)
 
 
+def parse_page_order(spec: str, page_count: int) -> list[int]:
+    """Parse an explicit permutation while preserving the user's order.
+
+    The generic page-selection parser intentionally sorts/de-duplicates ranges,
+    which is correct for rotate/extract style selection but wrong for a reorder
+    tool.  Reordering therefore has its own strict permutation parser.
+    """
+    spec = (spec or '').strip()
+    if not spec:
+        return list(range(page_count))
+    order: list[int] = []
+    for chunk in spec.split(','):
+        token = chunk.strip()
+        if not re.fullmatch(r'\d+', token):
+            raise ValueError('ترتيب الصفحات يجب أن يكون أرقامًا مفصولة بفواصل، مثل 3,1,2,4.')
+        page = int(token)
+        if page < 1 or page > page_count:
+            raise ValueError(f'الصفحات يجب أن تكون بين 1 و {page_count}.')
+        order.append(page - 1)
+    if len(order) != page_count:
+        raise ValueError('يجب أن يتضمن ترتيب الصفحات جميع صفحات الملف مرة واحدة.')
+    if len(set(order)) != page_count:
+        raise ValueError('لا يمكن تكرار صفحة في الترتيب.')
+    return order
+
+
 def reorder_pages(source: Path, output: Path, spec: str):
     reader = PdfReader(str(source), strict=False)
-    order = parse_pages(spec, len(reader.pages))
-    if len(order) != len(reader.pages):
-        raise ValueError('يجب أن يتضمن ترتيب الصفحات جميع صفحات الملف مرة واحدة.')
-    if len(set(order)) != len(order):
-        raise ValueError('لا يمكن تكرار صفحة في الترتيب.')
+    order = parse_page_order(spec, len(reader.pages))
     writer = PdfWriter()
     for index in order:
         writer.add_page(reader.pages[index])
@@ -170,8 +193,12 @@ def poster_tile(source: Path, output: Path, columns: int = 2, rows: int = 2):
             for row in range(rows):
                 for col in range(columns):
                     tile = result.new_page(width=tile_w, height=tile_h)
-                    rect = pymupdf.Rect(-col * tile_w, -row * tile_h, (columns - col) * tile_w, (rows - row) * tile_h)
-                    tile.show_pdf_page(tile.rect, src, original.number, clip=pymupdf.Rect(col * tile_w, row * tile_h, (col + 1) * tile_w, (row + 1) * tile_h))
+                    tile.show_pdf_page(
+                        tile.rect,
+                        src,
+                        original.number,
+                        clip=pymupdf.Rect(col * tile_w, row * tile_h, (col + 1) * tile_w, (row + 1) * tile_h),
+                    )
         result.save(str(output), garbage=4, deflate=True)
     finally:
         result.close()
@@ -181,32 +208,41 @@ def poster_tile(source: Path, output: Path, columns: int = 2, rows: int = 2):
 def contact_sheet(source: Path, output: Path, columns: int = 2):
     if columns not in {2, 3, 4}:
         raise ValueError('عدد الأعمدة يجب أن يكون 2 أو 3 أو 4.')
-    doc = pymupdf.open(str(source))
+    src = pymupdf.open(str(source))
     result = pymupdf.open()
     try:
-        thumb_w, thumb_h = 180, 240
-        rows = (doc.page_count + columns - 1) // columns
-        page = result.new_page(width=columns * thumb_w, height=rows * thumb_h)
-        for i, source_page in enumerate(doc):
-            col = i % columns
-            row = i // columns
-            slot = pymupdf.Rect(col * thumb_w + 8, row * thumb_h + 8, (col + 1) * thumb_w - 8, (row + 1) * thumb_h - 8)
-            page.show_pdf_page(slot, doc, source_page.number, keep_proportion=True)
-            page.insert_text((slot.x0, slot.y1 - 8), str(source_page.number + 1), fontname='helv', fontsize=8, color=(0.2, 0.2, 0.2))
+        thumb_w = 180
+        gap = 20
+        rows = max(1, (len(src) + columns - 1) // columns)
+        page = result.new_page(width=columns * thumb_w + (columns + 1) * gap, height=rows * 250 + (rows + 1) * gap)
+        for i, original in enumerate(src):
+            row, col = divmod(i, columns)
+            x0 = gap + col * (thumb_w + gap)
+            y0 = gap + row * 250
+            rect = pymupdf.Rect(x0, y0, x0 + thumb_w, y0 + 220)
+            page.show_pdf_page(rect, src, original.number, keep_proportion=True)
+            page.insert_text((x0, y0 + 240), str(i + 1), fontsize=9, color=(0.35, 0.35, 0.35))
         result.save(str(output), garbage=4, deflate=True)
     finally:
         result.close()
-        doc.close()
+        src.close()
 
 
 def password_protect(source: Path, output: Path, password: str):
     password = (password or '').strip()
     if len(password) < 6 or len(password) > 128:
-        raise ValueError('كلمة المرور يجب أن تكون بين 6 و128 حرفًا.')
-    reader = PdfReader(str(source), strict=False)
-    writer = PdfWriter()
-    for page in reader.pages:
-        writer.add_page(page)
-    writer.encrypt(password)
-    with output.open('wb') as fh:
-        writer.write(fh)
+        raise ValueError('كلمة مرور PDF يجب أن تكون بين 6 و128 حرفًا.')
+    doc = pymupdf.open(str(source))
+    try:
+        permissions = int(pymupdf.PDF_PERM_ACCESSIBILITY | pymupdf.PDF_PERM_PRINT)
+        doc.save(
+            str(output),
+            encryption=pymupdf.PDF_ENCRYPT_AES_256,
+            owner_pw=password,
+            user_pw=password,
+            permissions=permissions,
+            garbage=4,
+            deflate=True,
+        )
+    finally:
+        doc.close()

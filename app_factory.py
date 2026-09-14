@@ -13,11 +13,13 @@ from core.accounts import PLAN_LIMITS, csrf_token, ensure_account_tables, get_ef
 from core.tooling import PREMIUM_TOOL_IDS, TOOLS
 from core.discovery import catalog_counts, command_palette_catalog
 from core.editorial_score90 import install as install_score90_editorial
+from core.editorial_score95_runtime import install as install_score95_editorial
 
-# Install the second reviewed content set before pages import the canonical
-# editorial registry. This keeps indexing/AdSense decisions tied to content that
-# was explicitly checked against the real implementation.
+# Install implementation-reviewed content before pages import the canonical
+# editorial registry. Search/AdSense eligibility therefore remains tied to pages
+# checked against the real converter behavior, not to catalog size alone.
 install_score90_editorial()
+install_score95_editorial()
 from core.editorial import reviewed_tool_ids
 from i18n import LANGUAGE_COOKIE, SUPPORTED_LANGUAGES, resolve_language, translator
 from i18n.translations import INFO_CONTENT, TRANSLATIONS
