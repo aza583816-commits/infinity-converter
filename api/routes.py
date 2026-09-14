@@ -15,6 +15,7 @@ from core.tooling import PREMIUM_TOOL_IDS, get_tool, list_tools
 from core.tooling.runtime import runtime_coverage
 from core.storage import TempWorkspace
 from security.file_guard import validate_upload
+from converters.contracts import ConversionBusyError
 from converters.dispatcher import convert
 from converters.validation import OutputValidationError
 
@@ -62,12 +63,12 @@ def too_large(_):
 
 @api_bp.errorhandler(RateLimitExceeded)
 def too_many_requests(_):
-    return jsonify(error="عدد الطلبات كبير جدًا. حاول مرة أخرى بعد قليل."), 429
+    response = jsonify(error="عدد الطلبات كبير جدًا. حاول مرة أخرى بعد قليل.")
+    response.headers["Retry-After"] = "60"
+    return response, 429
 
 
-@api_bp.get("/healthz")
-@limiter.exempt
-def healthz():
+def _runtime_health_payload() -> tuple[dict, bool]:
     coverage = runtime_coverage()
     payload = {
         "status": "ok" if coverage.healthy else "degraded",
@@ -80,10 +81,28 @@ def healthz():
             "max_pdf_pages": settings.max_pdf_pages,
             "max_output_mb": settings.max_output_mb,
             "max_concurrent_conversions": settings.max_concurrent_conversions,
+            "max_concurrent_office": settings.max_concurrent_office,
+            "max_concurrent_ocr": settings.max_concurrent_ocr,
             "max_image_pixels": settings.max_image_pixels,
         },
     }
-    return jsonify(payload), (200 if coverage.healthy else 503)
+    return payload, coverage.healthy
+
+
+@api_bp.get("/livez")
+@limiter.exempt
+def livez():
+    """Cheap liveness probe: proves the Flask worker can answer HTTP."""
+    return jsonify(status="ok", version=settings.app_version)
+
+
+@api_bp.get("/healthz")
+@api_bp.get("/readyz")
+@limiter.exempt
+def healthz():
+    """Readiness probe: verifies the runtime registry and public tool wiring."""
+    payload, healthy = _runtime_health_payload()
+    return jsonify(payload), (200 if healthy else 503)
 
 
 @api_bp.get("/tools")
@@ -125,18 +144,12 @@ def convert_route():
     plan = get_effective_plan(current_user["id"]) if current_user else "free"
     auth_enabled = bool(current_app.config.get("PUBLIC_AUTH_ENABLED", False))
 
-    # Entitlement checks are dormant on today's free public product, but they
-    # remain correct and testable for the future account launch. Check them
-    # before upload validation so a protected operation never leaks work to an
-    # anonymous/free request.
     if auth_enabled and tool.id in PREMIUM_TOOL_IDS:
         if not current_user:
             return jsonify(error="سجّل الدخول لاستخدام هذه الأداة."), 401
         if plan == "free":
             return jsonify(error="هذه الأداة تتطلب خطة Pro أو Business."), 403
 
-    # Auth/billing remains available in code but intentionally disabled on the
-    # public free product until those product switches are enabled.
     files = request.files.getlist("files")
     if not files:
         single = request.files.get("file")
@@ -153,8 +166,6 @@ def convert_route():
     if len(files) > max_files:
         return jsonify(error=f"الحد الأقصى المسموح به هو {max_files} ملف/ملفات."), 400
 
-    # Do not use a normal `with TempWorkspace()` here. send_file can stream
-    # after the view returns, so cleanup is deferred until the response closes.
     workspace = TempWorkspace().__enter__()
     cleanup_deferred = False
     try:
@@ -199,8 +210,6 @@ def convert_route():
             download_name=result.name,
             conditional=False,
         )
-        # send_file uses direct_passthrough: the WSGI server closes its iterable,
-        # not necessarily Response.close(). Tie cleanup to both lifecycles.
         response.response = ClosingIterator(response.response, workspace.cleanup)
         response.call_on_close(workspace.cleanup)
         cleanup_deferred = True
@@ -219,6 +228,10 @@ def convert_route():
         response.headers["X-Request-ID"] = getattr(g, "request_id", "")
         return response
 
+    except ConversionBusyError:
+        response = jsonify(error="المعالجة مشغولة مؤقتًا. حاول مرة أخرى بعد لحظات.")
+        response.headers["Retry-After"] = "3"
+        return response, 503
     except OutputValidationError:
         return jsonify(error="تعذر التحقق من الملف الناتج. جرّب العملية مرة أخرى."), 500
     except ValueError as exc:

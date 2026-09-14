@@ -10,7 +10,14 @@ from flask_cors import CORS
 from config.settings import adsense_client_id, settings
 from core.limiter import limiter
 from core.accounts import PLAN_LIMITS, csrf_token, ensure_account_tables, get_effective_plan, get_user
-from core.tooling import PREMIUM_TOOL_IDS, TOOLS, _meta_for
+from core.tooling import PREMIUM_TOOL_IDS, TOOLS
+from core.discovery import catalog_counts, command_palette_catalog
+from core.editorial_score90 import install as install_score90_editorial
+
+# Install the second reviewed content set before pages import the canonical
+# editorial registry. This keeps indexing/AdSense decisions tied to content that
+# was explicitly checked against the real implementation.
+install_score90_editorial()
 from core.editorial import reviewed_tool_ids
 from i18n import LANGUAGE_COOKIE, SUPPORTED_LANGUAGES, resolve_language, translator
 from i18n.translations import INFO_CONTENT, TRANSLATIONS
@@ -74,19 +81,8 @@ def create_app() -> Flask:
         }
         reviewed_ids = reviewed_tool_ids()
         normalized_adsense_id = adsense_client_id()
-        command_palette_tools = [
-            {
-                "id": tool.id,
-                "name_ar": tool.name_ar,
-                "name_en": tool.name_en,
-                "category_ar": tool.category_ar,
-                "category_en": tool.category_en,
-                "href": f"/tools/{_meta_for(tool)['slug']}",
-                "icon": tool.icon,
-                "input_ext": list(tool.input_ext),
-            }
-            for tool in TOOLS.values()
-        ]
+        counts = catalog_counts()
+        command_palette_tools = command_palette_catalog()
         return {
             "lang": lang,
             "t": translator(lang),
@@ -130,6 +126,8 @@ def create_app() -> Flask:
                 "description": "Free and privacy-first tools for PDF, documents, images, OCR, archives, and everyday file tasks.",
             },
             "tool_count": len(TOOLS),
+            "browser_tool_count": counts["browser"],
+            "workspace_tool_count": counts["total"],
             "app_version": settings.app_version,
             "csrf_token": csrf_token(),
             "premium_tool_ids": PREMIUM_TOOL_IDS,
@@ -146,15 +144,13 @@ def create_app() -> Flask:
         response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
         response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
         response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
+        response.headers["Origin-Agent-Cluster"] = "?1"
 
         adsense_enabled = bool(adsense_client_id())
         nonce = getattr(g, "csp_nonce", "")
         connect_src = "connect-src 'self' https://*.paddle.com"
         frame_src = "frame-src https://*.paddle.com"
         if adsense_enabled:
-            # Google documents nonce + strict-dynamic as a robust AdSense CSP
-            # strategy because serving hosts can change. Public pages remain
-            # crawlable; only private/API surfaces are excluded by robots rules.
             script_src = f"script-src 'nonce-{nonce}' 'strict-dynamic' https: http:"
             connect_src += " https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net"
             frame_src += " https://googleads.g.doubleclick.net"
@@ -181,9 +177,24 @@ def create_app() -> Flask:
         if not settings.debug:
             response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
 
+        started = getattr(g, "request_started", None)
+        if started is not None:
+            import time
+            elapsed_ms = max(0.0, (time.perf_counter() - started) * 1000)
+            response.headers["Server-Timing"] = f"app;dur={elapsed_ms:.1f}"
+
         response.headers["X-Request-ID"] = getattr(g, "request_id", "")
         if request.path.startswith("/api/"):
             response.headers["Cache-Control"] = "no-store, private"
+            response.headers["X-Robots-Tag"] = "noindex, nofollow, noarchive"
+        elif request.path.startswith("/static/"):
+            if request.args.get("v") == settings.app_version:
+                response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+            else:
+                response.headers["Cache-Control"] = f"public, max-age={settings.asset_cache_seconds}"
+        elif response.mimetype == "text/html":
+            response.vary.add("Accept-Language")
+            response.vary.add("Cookie")
 
         if getattr(g, "lang_is_explicit", False):
             response.set_cookie(

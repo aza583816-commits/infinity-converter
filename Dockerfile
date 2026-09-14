@@ -5,7 +5,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH=/app \
     PIP_NO_CACHE_DIR=1 \
     DEBIAN_FRONTEND=noninteractive \
-    HOME=/home/appuser
+    HOME=/home/appuser \
+    MALLOC_ARENA_MAX=2
 
 WORKDIR /app
 
@@ -41,4 +42,7 @@ RUN DATABASE_URL=sqlite:////tmp/infinity-tests.db \
     PUBLIC_BILLING_ENABLED=0 \
     python -m pytest -q -p no:cacheprovider && rm -f /tmp/infinity-tests.db*
 
-CMD ["sh","-c","exec gunicorn --bind 0.0.0.0:${PORT:-5000} --workers 1 --threads 4 --timeout 240 --graceful-timeout 30 --access-logfile - --error-logfile - app:app"]
+# Recycle the threaded worker periodically. Native document/image libraries can
+# retain allocator arenas after large files; bounded recycling improves long-run
+# stability without interrupting active requests (Gunicorn replaces gracefully).
+CMD ["sh","-c","exec gunicorn --bind 0.0.0.0:${PORT:-5000} --workers 1 --threads 4 --timeout 240 --graceful-timeout 30 --keep-alive 5 --max-requests 250 --max-requests-jitter 50 --access-logfile - --error-logfile - app:app"]

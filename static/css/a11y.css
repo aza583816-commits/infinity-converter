@@ -1,0 +1,150 @@
+/* Accessibility + mobile resilience layer for the shared Infinity shell. */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.skip-link {
+  position: fixed;
+  inset-inline-start: 1rem;
+  top: max(.75rem, env(safe-area-inset-top));
+  z-index: 10000;
+  transform: translateY(-160%);
+  transition: transform .16s ease;
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+:where(a, button, input, select, textarea, [tabindex]:not([tabindex="-1"])):focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 3px;
+}
+
+:where(button, [role="button"], a) {
+  -webkit-tap-highlight-color: transparent;
+}
+
+[aria-busy="true"] {
+  cursor: progress;
+}
+
+/* Keep long filenames, URLs and generated AI text inside the viewport. */
+:where(.result, .file-list, .v7-ai-render, .command-results, .editorial-tool-content, .blog-post, .info-content) {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+/* Below-fold rich sections do not need to participate in initial paint. */
+@supports (content-visibility: auto) {
+  :where(.editorial-tool-content, .knowledge-section, .trust-section, .related-tools, .v7-tool-ai-companion) {
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 700px;
+  }
+}
+
+@media (max-width: 760px) {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    min-width: 0;
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  :where(button, input, select, textarea) {
+    font-size: max(16px, 1em); /* Prevent iOS focus zoom. */
+  }
+
+  :where(button, .primary, .secondary, .lang-switch, .theme-toggle, .menu-toggle, .command-trigger, .mobile-command-trigger) {
+    min-height: 44px;
+  }
+
+  :where(.page-wrap, .v7-header-inner, .footer-grid, .footer-bottom) {
+    min-width: 0;
+  }
+
+  .command-dialog {
+    width: min(100% - 1rem, 48rem);
+    max-height: min(88dvh, 760px);
+    margin-top: max(.5rem, env(safe-area-inset-top));
+    margin-bottom: max(.5rem, env(safe-area-inset-bottom));
+  }
+
+  .command-results {
+    overscroll-behavior: contain;
+  }
+
+  .v7-ai-dock-panel {
+    max-height: min(82dvh, 720px);
+    overscroll-behavior: contain;
+  }
+
+  .dropzone,
+  .converter-panel,
+  .result-panel,
+  .processing-card {
+    min-width: 0;
+  }
+
+  .file-list,
+  .result-panel,
+  .v7-ai-render {
+    max-width: 100%;
+  }
+}
+
+@media (pointer: coarse) {
+  :where(a, button, input[type="checkbox"], input[type="radio"], summary) {
+    touch-action: manipulation;
+  }
+
+  summary {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within {
+    scroll-behavior: auto;
+  }
+
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .cursor-glow,
+  .v7-aurora,
+  .reveal-on-scroll {
+    transform: none !important;
+  }
+}
+
+@media (forced-colors: active) {
+  :where(a, button, input, select, textarea):focus-visible {
+    outline: 2px solid Highlight;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    border: 1px solid CanvasText;
+  }
+}
