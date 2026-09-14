@@ -1,7 +1,19 @@
 from app_factory import create_app
 from config.settings import settings
+from converters.core_handlers import MIGRATED_TOOL_IDS
 from converters.engine import workload_class
-from converters.operations import get_operation
+from converters.operations import get_operation, operation_ids
+
+
+def test_stable_core_runtime_is_migrating_out_of_legacy_dispatch():
+    assert len(MIGRATED_TOOL_IDS) >= 30
+    assert MIGRATED_TOOL_IDS <= operation_ids()
+    for tool_id in {
+        "pdf-merge", "pdf-compress", "pdf-to-png", "image-resize",
+        "image-ocr", "word-to-pdf", "markdown-to-pdf", "csv-to-xlsx",
+        "zip-extract", "file-hash",
+    }:
+        assert tool_id in MIGRATED_TOOL_IDS
 
 
 def test_heavy_native_workloads_have_dedicated_classes():
@@ -23,6 +35,16 @@ def test_versioned_static_assets_are_long_lived_and_immutable():
     assert response.status_code == 200
     assert response.headers["Cache-Control"] == "public, max-age=31536000, immutable"
     assert response.headers.get("Server-Timing", "").startswith("app;dur=")
+
+
+def test_mobile_resilience_layer_covers_touch_ios_and_render_cost():
+    css = open("static/css/a11y.css", encoding="utf-8").read()
+    assert "min-height: 44px" in css
+    assert "font-size: max(16px, 1em)" in css
+    assert "env(safe-area-inset" in css
+    assert "content-visibility: auto" in css
+    assert "prefers-reduced-motion: reduce" in css
+    assert "forced-colors: active" in css
 
 
 def test_api_responses_are_private_and_not_search_indexable():
@@ -49,6 +71,8 @@ def test_liveness_and_readiness_are_separate_and_versioned():
     assert payload["status"] == "ok"
     assert payload["limits"]["max_concurrent_office"] == settings.max_concurrent_office
     assert payload["limits"]["max_concurrent_ocr"] == settings.max_concurrent_ocr
+    railway = open("railway.toml", encoding="utf-8").read()
+    assert 'healthcheckPath = "/api/v2/readyz"' in railway
 
 
 def test_shared_shell_exposes_keyboard_and_screen_reader_guards():
