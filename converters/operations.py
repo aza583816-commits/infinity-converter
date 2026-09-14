@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Callable
 
-from converters import core_handlers, mega_tools
+from converters import advanced_handlers, core_handlers, mega_tools
 from converters.contracts import Operation
 from converters import legacy_handlers as legacy
 from core.tooling.catalog import TOOLS
@@ -131,7 +131,7 @@ def build_operations() -> dict[str, Operation]:
             force_zip=tool.output_ext == ".zip",
         )
 
-    # Stable core paths now bypass the historical compatibility dispatcher.
+    # Stable core paths bypass the historical compatibility dispatcher.
     for tool_id, handler in core_handlers.CORE_COMBINE_HANDLERS.items():
         add(tool_id, "combine", _combine(handler))
     for tool_id, handler in legacy.COMBINE_HANDLERS.items():
@@ -158,20 +158,20 @@ def build_operations() -> dict[str, Operation]:
         if tool_id not in core_handlers.CORE_SINGLE_HANDLERS:
             add(tool_id, "single", _single(handler, with_options=tool_id in _OPTIONS_SINGLE))
 
-    # 6.x advanced groups now register declaratively rather than living in a
-    # giant ConversionEngine if/elif chain.
+    # The six advanced families now route through a dedicated first-class
+    # adapter module rather than the historical compatibility dispatcher.
     for tool_id in PDF_ADVANCED_IDS:
-        add(tool_id, "single", _advanced(legacy._h_adv_pdf, tool_id))
+        add(tool_id, "single", _advanced(advanced_handlers.pdf, tool_id))
     for tool_id in IMAGE_ADVANCED_IDS:
-        add(tool_id, "single", _advanced(legacy._h_adv_image, tool_id))
+        add(tool_id, "single", _advanced(advanced_handlers.image, tool_id))
     for tool_id in OFFICE_ADVANCED_IDS:
-        add(tool_id, "single", _advanced(legacy._h_adv_office, tool_id))
+        add(tool_id, "single", _advanced(advanced_handlers.office, tool_id))
     for tool_id in OCR_ADVANCED_IDS:
-        add(tool_id, "single", _advanced(legacy._h_adv_ocr, tool_id))
+        add(tool_id, "single", _advanced(advanced_handlers.ocr, tool_id))
     for tool_id in ARCHIVE_ADVANCED_IDS:
-        add(tool_id, "single", _advanced(legacy._h_adv_archive, tool_id))
+        add(tool_id, "single", _advanced(advanced_handlers.archive_tools, tool_id))
     for tool_id in UTILITY_ADVANCED_IDS:
-        add(tool_id, "single", _advanced(legacy._h_adv_utility, tool_id))
+        add(tool_id, "single", _advanced(advanced_handlers.utility, tool_id))
 
     mega_single_ids = (
         set(mega_tools.PDF_IDS)
