@@ -20,6 +20,8 @@ jobs:
           python scripts/export_browser_catalog.py /tmp/browser-catalog.json
           node scripts/browser_tool_smoke.cjs /tmp/browser-catalog.json
           node tests/browser-calculations.cjs
+      - name: Enforce shared mobile asset performance budgets
+        run: python scripts/performance_budget.py
       - name: Build Python 3.11 production image with preflight and all tests
         run: docker build --progress=plain -t infinity-verified .
       - name: Verify installed Python dependency consistency
