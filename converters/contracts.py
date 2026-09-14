@@ -7,6 +7,10 @@ from typing import Callable, Literal
 OperationMode = Literal["single", "combine", "generator"]
 
 
+class ConversionBusyError(RuntimeError):
+    """Raised when bounded conversion capacity is temporarily exhausted."""
+
+
 @dataclass(frozen=True)
 class ConversionResult:
     path: Path
