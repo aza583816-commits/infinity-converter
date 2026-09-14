@@ -6,7 +6,7 @@ import pymupdf
 from docx import Document
 from openpyxl import Workbook
 from pptx import Presentation
-from pypdf import PdfWriter
+from pypdf import PdfReader, PdfWriter
 
 from config.settings import settings
 from core.storage import TempWorkspace
@@ -99,6 +99,25 @@ def param_for(tool):
     special={'pdf-extract-pages':'1-2','pdf-delete-pages':'3','pdf-redact':'SECRET','regex-extract':r'\b[A-Za-z]+\b'}
     return special.get(tool.id,tool.param_default or '')
 
+
+def verify_semantics(tool_id: str, path: Path) -> None:
+    """Check security-sensitive outcomes, not only file existence/shape."""
+    if tool_id == 'pdf-password-protect':
+        reader = PdfReader(str(path), strict=False)
+        if not reader.is_encrypted:
+            raise RuntimeError('password-protect output is not encrypted')
+        if not reader.decrypt('secret'):
+            raise RuntimeError('password-protect output does not accept the requested password')
+        if len(reader.pages) < 1:
+            raise RuntimeError('password-protect output has no readable pages after decryption')
+    elif tool_id == 'pdf-unlock':
+        reader = PdfReader(str(path), strict=False)
+        if reader.is_encrypted:
+            raise RuntimeError('unlock output is still encrypted')
+        if len(reader.pages) < 1:
+            raise RuntimeError('unlock output has no readable pages')
+
+
 def run():
     engine=ConversionEngine(); results=[]; failures=[]
     with tempfile.TemporaryDirectory(prefix='ic72-smoke-fixtures-') as td:
@@ -117,6 +136,7 @@ def run():
                             safe.append(item)
                     res=engine.convert(tool=tool,safe_inputs=safe,workspace=ws,timeout=min(settings.subprocess_timeout,90),max_pdf_pages=settings.max_pdf_pages,param=param_for(tool),options=options_for(tool))
                     if not res.path.exists() or res.path.stat().st_size<=0: raise RuntimeError('empty output')
+                    verify_semantics(tool.id, res.path)
                     results.append((tool.id,res.path.suffix,res.mime,res.path.stat().st_size))
                     print(f'OK {idx:03d} {tool.id} -> {res.path.name} {res.path.stat().st_size}')
             except Exception as e:
