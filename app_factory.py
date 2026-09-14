@@ -12,6 +12,12 @@ from core.limiter import limiter
 from core.accounts import PLAN_LIMITS, csrf_token, ensure_account_tables, get_effective_plan, get_user
 from core.tooling import PREMIUM_TOOL_IDS, TOOLS
 from core.discovery import catalog_counts, command_palette_catalog
+from core.editorial_score90 import install as install_score90_editorial
+
+# Install the second reviewed content set before pages import the canonical
+# editorial registry. This keeps indexing/AdSense decisions tied to content that
+# was explicitly checked against the real implementation.
+install_score90_editorial()
 from core.editorial import reviewed_tool_ids
 from i18n import LANGUAGE_COOKIE, SUPPORTED_LANGUAGES, resolve_language, translator
 from i18n.translations import INFO_CONTENT, TRANSLATIONS
