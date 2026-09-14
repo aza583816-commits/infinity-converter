@@ -15,7 +15,28 @@ from converters.validation import MIME_BY_EXTENSION, OutputValidationError, vali
 
 logger = logging.getLogger(__name__)
 CONVERSION_LIMIT = threading.BoundedSemaphore(settings.max_concurrent_conversions)
+OFFICE_LIMIT = threading.BoundedSemaphore(settings.max_concurrent_office)
+OCR_LIMIT = threading.BoundedSemaphore(settings.max_concurrent_ocr)
 _UNSAFE_NAME_CHARS = '\\/:*?"<>|'
+
+
+def workload_class(operation: Operation) -> str:
+    engine = (operation.engine or "").lower()
+    if "libreoffice" in engine:
+        return "office"
+    if "tesseract" in engine:
+        return "ocr"
+    return "default"
+
+
+def _acquire_workload_limit(operation: Operation, timeout: int):
+    kind = workload_class(operation)
+    semaphore = OFFICE_LIMIT if kind == "office" else OCR_LIMIT if kind == "ocr" else None
+    if semaphore is None:
+        return None
+    if not semaphore.acquire(timeout=timeout):
+        raise RuntimeError("هذا النوع من التحويلات مشغول حاليًا. حاول مرة أخرى بعد قليل.")
+    return semaphore
 
 
 def _safe_stem(filename: str) -> str:
@@ -38,7 +59,6 @@ def _unique_name(name: str, used: set[str]) -> str:
 
 
 def _safe_input_paths(safe_inputs: list[dict], workspace) -> None:
-    """Defense in depth: only validated files inside this request workspace run."""
     for item in safe_inputs:
         if not item.get("safe"):
             raise ValueError("تم رفض ملف لم يجتز التحقق الأمني.")
@@ -50,7 +70,6 @@ def _safe_input_paths(safe_inputs: list[dict], workspace) -> None:
 
 
 def _artifact_guard(path: Path, mime: str, workspace) -> dict:
-    """Validate an artifact before it can be returned or inserted into a ZIP."""
     path = Path(path)
     if not workspace.contains_output(path):
         raise OutputValidationError("مسار الملف الناتج خارج مساحة المعالجة الآمنة.")
@@ -60,13 +79,8 @@ def _artifact_guard(path: Path, mime: str, workspace) -> dict:
         raise OutputValidationError("محرك التحويل أنتج ملفًا فارغًا.")
     if path.stat().st_size > settings.max_output_bytes:
         raise OutputValidationError("حجم الملف الناتج يتجاوز الحد الآمن.")
-
-    # Extracted archive entries intentionally use application/octet-stream
-    # because they may be arbitrary formats. They are path/size checked here
-    # and the final download ZIP receives full structural validation below.
     if mime == "application/octet-stream":
         return {"bytes": path.stat().st_size, "generic": True}
-
     return validate_output(
         path,
         expected_extension=path.suffix,
@@ -75,19 +89,11 @@ def _artifact_guard(path: Path, mime: str, workspace) -> dict:
     )
 
 
-
-
 def _declared_output_guard(path: Path, mime: str, tool, *, batch_container: bool = False) -> None:
-    """Enforce the public Tool output contract after backend execution.
-
-    Multi-input single operations are intentionally returned as a batch ZIP.
-    Every other final artifact must match the registry-declared suffix and MIME.
-    """
     if batch_container:
         if path.suffix.lower() != ".zip" or mime != "application/zip":
             raise OutputValidationError("حاوية نتائج الدفعة لا تطابق عقد التنزيل الآمن.")
         return
-
     declared = (tool.output_ext or "").lower()
     if declared and not path.name.lower().endswith(declared):
         raise OutputValidationError("الملف الناتج لا يطابق امتداد الأداة المعلن.")
@@ -97,12 +103,7 @@ def _declared_output_guard(path: Path, mime: str, tool, *, batch_container: bool
 
 
 class ConversionEngine:
-    """Generic orchestrator over the declarative backend operation registry.
-
-    Tool-specific branching no longer lives here. Each public Tool ID resolves
-    to one :class:`Operation`, while this class owns concurrency, workspace
-    containment, batch isolation, artifact validation and observability.
-    """
+    """Generic orchestrator over the declarative backend operation registry."""
 
     def convert(self, *, tool, safe_inputs, workspace, timeout, max_pdf_pages, param="", options=None) -> ConversionResult:
         operation = get_operation(tool.id)
@@ -113,10 +114,12 @@ class ConversionEngine:
         if not CONVERSION_LIMIT.acquire(timeout=timeout):
             raise RuntimeError("عدد عمليات التحويل الحالية تجاوز الحد المؤقت.")
 
+        workload_limit = None
         started = time.perf_counter()
         options = options or {}
         input_bytes = sum(int(item.get("size_bytes", 0)) for item in safe_inputs)
         try:
+            workload_limit = _acquire_workload_limit(operation, timeout)
             _safe_input_paths(safe_inputs, workspace)
             output_dir = workspace.output_dir
 
@@ -143,9 +146,8 @@ class ConversionEngine:
             duration_ms = round((time.perf_counter() - started) * 1000)
             output_bytes = output.stat().st_size
             logger.info(
-                "conversion_completed tool=%s engine=%s duration_ms=%s input_bytes=%s output_bytes=%s "
-                "batch_total=%s batch_succeeded=%s",
-                tool.id, operation.engine, duration_ms, input_bytes, output_bytes,
+                "conversion_completed tool=%s engine=%s workload=%s duration_ms=%s input_bytes=%s output_bytes=%s batch_total=%s batch_succeeded=%s",
+                tool.id, operation.engine, workload_class(operation), duration_ms, input_bytes, output_bytes,
                 batch_total, batch_succeeded,
             )
             return ConversionResult(
@@ -164,11 +166,13 @@ class ConversionEngine:
         except Exception as exc:
             duration_ms = round((time.perf_counter() - started) * 1000)
             logger.warning(
-                "conversion_failed tool=%s engine=%s duration_ms=%s input_bytes=%s error=%s",
-                tool.id, operation.engine, duration_ms, input_bytes, type(exc).__name__,
+                "conversion_failed tool=%s engine=%s workload=%s duration_ms=%s input_bytes=%s error=%s",
+                tool.id, operation.engine, workload_class(operation), duration_ms, input_bytes, type(exc).__name__,
             )
             raise
         finally:
+            if workload_limit is not None:
+                workload_limit.release()
             CONVERSION_LIMIT.release()
 
     @staticmethod
@@ -196,8 +200,6 @@ class ConversionEngine:
                 outputs.extend(item_outputs)
                 succeeded_inputs += 1
             except Exception as exc:
-                # Batch tools isolate a bad item without disclosing internal
-                # exception text. User-caused validation errors remain useful.
                 message = str(exc) if isinstance(exc, ValueError) else "تعذرت معالجة هذا الملف."
                 failures.append((safe_input["filename"], message))
 
