@@ -1,12 +1,12 @@
-# Current release: 7.2.2
+# Current release: 7.2.3
 
 This release continues the latest verified `main` history; it does not recreate
 the project or roll back the modular handler, Smart Flow, resilience, editorial,
 security, accessibility, and performance work already merged. Read
-[current release notes](RELEASE_NOTES_7.2.2.md) and the final 7.2.2 audit before
+[current release notes](RELEASE_NOTES_7.2.3.md) and the final 7.2.3 audit before
 deployment. Earlier reports below are historical evidence only.
 
-Exact 7.2.2 validation evidence is recorded in `FINAL_AUDIT_7.2.2.md` after the
+Exact 7.2.3 validation evidence is recorded in `FINAL_AUDIT_7.2.3.md` after the
 production-image and live deployment gates complete.
 
 Production gates remain mandatory:

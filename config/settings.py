@@ -55,7 +55,7 @@ class Settings:
         "ALLOWED_ORIGINS",
         "https://infinityconverter.com,https://www.infinityconverter.com"
     ))
-    app_version: str = os.getenv("APP_VERSION", "7.2.2")
+    app_version: str = os.getenv("APP_VERSION", "7.2.3")
     max_archive_entries: int = _int("MAX_ARCHIVE_ENTRIES", 2000, 1)
     max_archive_uncompressed_mb: int = _int("MAX_ARCHIVE_UNCOMPRESSED_MB", 300, 1)
     max_archive_ratio: int = _int("MAX_ARCHIVE_RATIO", 150, 1)

@@ -33,6 +33,10 @@ def test_tools_filter_has_safe_storage_and_accessible_state_sync():
     assert 'tab.setAttribute("aria-current", "true")' in javascript
     assert 'card.hidden = !text.includes(query) || !matchesFilter' in javascript
     assert 'history.replaceState(null, "", tab.href)' in javascript
+    reset_block = javascript.split('$("#reset-tool")?.addEventListener', 1)[1].split("});", 1)[0]
+    assert "releaseResult();" in reset_block
+    assert "window.setTimeout(() => input.focus(), 30)" in javascript
+    assert "window.setTimeout(() => lastTrigger?.focus(), 0)" in javascript
 
 
 def test_tools_category_is_rendered_progressively_without_javascript():
@@ -62,18 +66,18 @@ def test_invalid_tools_category_falls_back_to_all():
     assert all(" hidden" not in tag for tag in tags)
 
 
-def test_722_version_and_worker_cache_are_consistent():
+def test_723_version_and_worker_cache_are_consistent():
     from config.settings import settings
 
-    assert settings.app_version == "7.2.2"
-    assert 'APP_VERSION=7.2.2' in read('.env.example')
-    assert '"version": "7.2.2"' in read('manifest.json')
+    assert settings.app_version == "7.2.3"
+    assert 'APP_VERSION=7.2.3' in read('.env.example')
+    assert '"version": "7.2.3"' in read('manifest.json')
     worker = read('static/sw.js')
-    assert "infinity-static-v7.2.2" in worker
+    assert "infinity-static-v7.2.3" in worker
     for asset in (
-        "/static/css/app.css?v=7.2.2",
-        "/static/css/a11y.css?v=7.2.2",
-        "/static/js/app.js?v=7.2.2",
-        "/static/js/smart-flow.js?v=7.2.2",
+        "/static/css/app.css?v=7.2.3",
+        "/static/css/a11y.css?v=7.2.3",
+        "/static/js/app.js?v=7.2.3",
+        "/static/js/smart-flow.js?v=7.2.3",
     ):
         assert asset in worker
