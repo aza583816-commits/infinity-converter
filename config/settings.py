@@ -1,4 +1,5 @@
 import os
+import re
 from dataclasses import dataclass, field
 
 
@@ -12,6 +13,22 @@ def _int(name: str, default: int, minimum: int = 0):
     except ValueError:
         value = default
     return max(minimum, value)
+
+
+_ADSENSE_ID = re.compile(r"^(?:ca-)?pub-(\d{16})$")
+
+
+def adsense_client_id(value: str | None = None) -> str:
+    """Normalize either Google publisher form to the browser-facing client ID."""
+    raw = (os.getenv("ADSENSE_CLIENT_ID", "") if value is None else value).strip()
+    match = _ADSENSE_ID.fullmatch(raw)
+    return f"ca-pub-{match.group(1)}" if match else ""
+
+
+def adsense_publisher_id(value: str | None = None) -> str:
+    """Return the strictly validated pub-* form required by ads.txt."""
+    client_id = adsense_client_id(value)
+    return client_id[3:] if client_id else ""
 
 
 @dataclass(frozen=True)

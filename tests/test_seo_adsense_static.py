@@ -18,8 +18,11 @@ def test_base_has_search_social_and_adsense_metadata():
 
 def test_ads_txt_is_dynamic_and_never_uses_a_fake_publisher_id():
     pages = read("api/pages.py")
+    settings = read("config/settings.py")
     assert 'def ads_txt()' in pages
-    assert 'ADSENSE_CLIENT_ID' in pages
+    assert 'adsense_publisher_id()' in pages
+    assert 'ADSENSE_CLIENT_ID' in settings
+    assert 'fullmatch(raw)' in settings
     assert 'f08c47fec0942fa0' in pages
     assert 'abort(404)' in pages
 

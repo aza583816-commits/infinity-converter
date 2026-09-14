@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 
 from flask import Blueprint, abort, current_app, flash, g, make_response, redirect, render_template, request, send_file
-from config.settings import settings
+from config.settings import adsense_publisher_id, settings
 from core.accounts import EmailAlreadyExistsError, authenticate, create_user, csrf_token, get_effective_plan, get_latest_subscription_for_user, login_required, login_user, logout_user, valid_email, verify_csrf
 from core.browser_tools import BROWSER_TOOLS, browser_collection_tools, get_browser_tool
 from core.tooling import AUDIENCE_COLLECTIONS, DEVELOPER_TOOLS, TOOLS, TOOL_META, collection_tools, get_developer_tool, get_tool, list_tools, popular_tools, related_tools, tool_url, _meta_for
@@ -182,10 +182,10 @@ def robots_txt():
 @pages_bp.get("/ads.txt")
 def ads_txt():
     """Serve a valid AdSense ads.txt line only after a real publisher ID is configured."""
-    publisher_id = os.getenv("ADSENSE_CLIENT_ID", "").strip()
-    if not publisher_id.startswith("ca-pub-"):
+    publisher_id = adsense_publisher_id()
+    if not publisher_id:
         abort(404)
-    response = make_response(f"google.com, {publisher_id[3:]}, DIRECT, f08c47fec0942fa0\n")
+    response = make_response(f"google.com, {publisher_id}, DIRECT, f08c47fec0942fa0\n")
     response.headers["Content-Type"] = "text/plain; charset=utf-8"
     response.headers["Cache-Control"] = "public, max-age=3600"
     return response

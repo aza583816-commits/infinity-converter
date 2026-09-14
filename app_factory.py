@@ -7,7 +7,7 @@ from flask import Flask, current_app, g, request, session, render_template
 from flask_compress import Compress
 from flask_cors import CORS
 
-from config.settings import settings
+from config.settings import adsense_client_id, settings
 from core.limiter import limiter
 from core.accounts import PLAN_LIMITS, csrf_token, ensure_account_tables, get_effective_plan, get_user
 from core.tooling import PREMIUM_TOOL_IDS, TOOLS, _meta_for
@@ -73,6 +73,7 @@ def create_app() -> Flask:
             if key.startswith("js.")
         }
         reviewed_ids = reviewed_tool_ids()
+        normalized_adsense_id = adsense_client_id()
         command_palette_tools = [
             {
                 "id": tool.id,
@@ -106,7 +107,7 @@ def create_app() -> Flask:
             "adsense_slot_home": os.getenv("ADSENSE_SLOT_HOME", "").strip(),
             "adsense_slot_tool": os.getenv("ADSENSE_SLOT_TOOL", "").strip(),
             "adsense_slot_article": os.getenv("ADSENSE_SLOT_ARTICLE", "").strip(),
-            "adsense_client_id": os.getenv("ADSENSE_CLIENT_ID", "").strip(),
+            "adsense_client_id": normalized_adsense_id,
             "google_site_verification": os.getenv("GOOGLE_SITE_VERIFICATION", "").strip(),
             "website_schema": {
                 "@context": "https://schema.org",
@@ -146,7 +147,7 @@ def create_app() -> Flask:
         response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
         response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
 
-        adsense_enabled = bool(os.getenv("ADSENSE_CLIENT_ID", "").strip())
+        adsense_enabled = bool(adsense_client_id())
         nonce = getattr(g, "csp_nonce", "")
         connect_src = "connect-src 'self' https://*.paddle.com"
         frame_src = "frame-src https://*.paddle.com"
