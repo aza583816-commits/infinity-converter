@@ -2,11 +2,37 @@
 {% block title %}{{ t('tools.title') }}{% endblock %}
 {% block description %}{{ t('tools.description') }}{% endblock %}
 {% block content %}
+{% macro filter_link(value, label) -%}
+  <a class="filter-tab{{ ' is-active' if active_filter == value else '' }}"
+     href="/tools?lang={{ lang }}&amp;category={{ value }}"
+     data-filter="{{ value }}"
+     aria-controls="listing-grid"
+     {% if active_filter == value %}aria-current="true"{% endif %}>{{ label }}</a>
+{%- endmacro %}
 <div class="page-wrap tools-page">
-  <nav class="breadcrumbs" aria-label="مسار التنقل"><a href="/">{{ t('common.home') }}</a><span aria-hidden="true">/</span><strong>{{ t('tools.breadcrumb') }}</strong></nav>
+  <nav class="breadcrumbs" aria-label="{{ 'Breadcrumb' if lang == 'en' else 'مسار التنقل' }}"><a href="/">{{ t('common.home') }}</a><span aria-hidden="true">/</span><strong>{{ t('tools.breadcrumb') }}</strong></nav>
   <header class="listing-head"><div><span class="kicker">{{ t('tools.kicker') }}</span><h1>{{ t('tools.h1') }}</h1><p>{{ t('tools.subtitle') }}</p></div><span class="tool-count">{{ t('tools.count', count=tools|length) }}</span></header>
-  <div class="listing-controls"><label class="search-control" for="listing-search"><span aria-hidden="true">⌕</span><input id="listing-search" type="search" placeholder="{{ t('tools.search_placeholder') }}"></label><div class="filter-tabs" role="group" aria-label="تصفية الأدوات"><button class="filter-tab is-active" type="button" data-filter="all">{{ t('tools.filter_all') }}</button><button class="filter-tab" type="button" data-filter="pdf">PDF</button><button class="filter-tab" type="button" data-filter="images">{{ t('tools.filter_images') }}</button><button class="filter-tab" type="button" data-filter="office">{{ t('tools.filter_office') }}</button><button class="filter-tab" type="button" data-filter="ocr">OCR</button><button class="filter-tab" type="button" data-filter="archive">{{ t('tools.filter_archive') }}</button><button class="filter-tab" type="button" data-filter="utilities">{{ t('tools.filter_utilities') }}</button><button class="filter-tab" type="button" data-filter="popular">{{ t('tools.filter_popular') }}</button></div></div>
-  <div class="tool-grid listing-grid" id="listing-grid" data-active-filter="{{ request.args.get('category', 'all') }}">{% for tool in tools %}<a class="tool-card" href="/tools/{{ tool.slug }}" data-search="{{ tool.name_ar }} {{ tool.name_en }} {{ tool.category_ar }} {{ tool.category_en }} {{ tool.keywords }}" data-category="{{ tool.category }}" data-popular="{{ tool.popular|lower }}"><span class="tool-card-top"><span class="tool-icon" aria-hidden="true">{{ tool.icon }}</span><span class="tool-category">{{ tool.category_en if lang == 'en' else tool.category_ar }}</span></span><span class="tool-card-copy"><h2>{{ tool.name_en if lang == 'en' else tool.name_ar }}</h2><p>{{ tool.description_en if lang == 'en' else tool.description_ar }}</p><span class="tool-link">{{ t('js.open_tool') }} <span aria-hidden="true">{{ '←' if lang == 'ar' else '→' }}</span></span></span></a>{% endfor %}</div><p class="empty-state" id="listing-empty" hidden>{{ t('tools.empty') }}</p>
+  <div class="listing-controls">
+    <label class="search-control tools-search" for="listing-search"><span aria-hidden="true">⌕</span><input id="listing-search" type="search" inputmode="search" autocomplete="off" placeholder="{{ t('tools.search_placeholder') }}"></label>
+    <div class="filter-tabs" role="group" aria-label="{{ 'Filter tools by category' if lang == 'en' else 'تصفية الأدوات حسب الفئة' }}">
+      {{ filter_link('all', t('tools.filter_all')) }}
+      {{ filter_link('pdf', 'PDF') }}
+      {{ filter_link('images', t('tools.filter_images')) }}
+      {{ filter_link('office', t('tools.filter_office')) }}
+      {{ filter_link('ocr', 'OCR') }}
+      {{ filter_link('archive', t('tools.filter_archive')) }}
+      {{ filter_link('utilities', t('tools.filter_utilities')) }}
+      {{ filter_link('popular', t('tools.filter_popular')) }}
+    </div>
+    <div class="filter-summary"><span class="filter-result-count" aria-live="polite" aria-atomic="true"><i aria-hidden="true"></i><strong id="listing-visible-count">{{ visible_count }}</strong><span>{{ 'tools shown' if lang == 'en' else 'أداة ظاهرة' }}</span></span><span class="filter-swipe-hint">{{ 'Swipe to explore categories' if lang == 'en' else 'اسحب لاستكشاف الفئات' }}</span></div>
+  </div>
+  <div class="tool-grid listing-grid" id="listing-grid" data-active-filter="{{ active_filter }}">
+    {% for tool in tools %}
+      {% set card_is_visible = active_filter == 'all' or (active_filter == 'popular' and tool.popular) or tool.category == active_filter %}
+      <a class="tool-card" href="/tools/{{ tool.slug }}" data-search="{{ tool.name_ar }} {{ tool.name_en }} {{ tool.category_ar }} {{ tool.category_en }} {{ tool.keywords }}" data-category="{{ tool.category }}" data-popular="{{ tool.popular|lower }}"{% if not card_is_visible %} hidden{% endif %}><span class="tool-card-top"><span class="tool-icon" aria-hidden="true">{{ tool.icon }}</span><span class="tool-category">{{ tool.category_en if lang == 'en' else tool.category_ar }}</span></span><span class="tool-card-copy"><h2>{{ tool.name_en if lang == 'en' else tool.name_ar }}</h2><p>{{ tool.description_en if lang == 'en' else tool.description_ar }}</p><span class="tool-link">{{ t('js.open_tool') }} <span aria-hidden="true">{{ '←' if lang == 'ar' else '→' }}</span></span></span></a>
+    {% endfor %}
+  </div>
+  <p class="empty-state" id="listing-empty" hidden>{{ t('tools.empty') }}</p>
 </div>
 {% endblock %}
 {% block scripts %}<script nonce="{{ csp_nonce }}" src="/static/js/app.js?v={{ app_version }}" defer></script>{% endblock %}

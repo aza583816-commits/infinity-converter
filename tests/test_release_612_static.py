@@ -112,7 +112,7 @@ def test_trust_editorial_pwa_and_premium_experience_are_wired():
     assert "serviceWorker.register('/sw.js'" in js
     assert f"infinity-static-v{settings.app_version}" in sw
     assert "url.pathname.startsWith('/static/') || url.pathname === '/manifest.json'" in sw
-    assert "Infinity Converter 7.2.1 — Production Cohesion / Intelligence Workspace" in css
+    assert "Infinity Converter 7.2.2 — Production Cohesion / Intelligence Workspace" in css
     assert "prefers-reduced-motion:reduce" in css
 
 

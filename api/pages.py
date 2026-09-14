@@ -234,7 +234,22 @@ def pricing_page():
 
 @pages_bp.get("/tools")
 def tools_page():
-    return render_template("tools.html", tools=list_tools())
+    tools = list_tools()
+    allowed_filters = {"all", "pdf", "images", "office", "ocr", "archive", "utilities", "popular"}
+    requested_filter = (request.args.get("category") or "all").strip().lower()
+    active_filter = requested_filter if requested_filter in allowed_filters else "all"
+    visible_count = sum(
+        1 for tool in tools
+        if active_filter == "all"
+        or (active_filter == "popular" and tool["popular"])
+        or tool["category"] == active_filter
+    )
+    return render_template(
+        "tools.html",
+        tools=tools,
+        active_filter=active_filter,
+        visible_count=visible_count,
+    )
 
 
 @pages_bp.get("/how-it-works")
