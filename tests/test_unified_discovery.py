@@ -36,7 +36,7 @@ def test_quick_jump_catalog_includes_converter_and_browser_tools():
     entries = command_palette_catalog()
     assert len(entries) == len(TOOLS) + len(BROWSER_TOOLS)
     assert len({item["id"] for item in entries}) == len(entries)
-    assert any(item["href"] == "/tools/pdf-compress" for item in entries)
+    assert any(item["href"] == "/tools/compress-pdf" for item in entries)
     assert any(item["href"] == "/browser-tools/vat-calculator" for item in entries)
 
 
