@@ -1,0 +1,70 @@
+/* Accessibility layer for the shared Infinity shell. */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.skip-link {
+  position: fixed;
+  inset-inline-start: 1rem;
+  top: .75rem;
+  z-index: 10000;
+  transform: translateY(-160%);
+  transition: transform .16s ease;
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+:where(a, button, input, select, textarea, [tabindex]:not([tabindex="-1"])):focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 3px;
+}
+
+:where(button, [role="button"], a) {
+  -webkit-tap-highlight-color: transparent;
+}
+
+[aria-busy="true"] {
+  cursor: progress;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within {
+    scroll-behavior: auto;
+  }
+
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .cursor-glow,
+  .v7-aurora,
+  .reveal-on-scroll {
+    transform: none !important;
+  }
+}
+
+@media (forced-colors: active) {
+  :where(a, button, input, select, textarea):focus-visible {
+    outline: 2px solid Highlight;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    border: 1px solid CanvasText;
+  }
+}
