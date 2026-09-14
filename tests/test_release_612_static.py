@@ -1,6 +1,9 @@
 from pathlib import Path
 from config.settings import settings
 
+# Importing the application installs the implementation-reviewed score-90
+# editorial extension before we inspect the canonical registry.
+import app_factory  # noqa: F401
 from core.editorial import TOOL_EDITORIAL, reviewed_tool_ids
 from core.tool_registry import TOOLS, _meta_for
 
@@ -24,8 +27,8 @@ def test_release_version_and_new_support_email_are_consistent():
     assert ("2saree3.tech" + "@gmail.com") not in corpus
 
 
-def test_reviewed_tool_surface_is_small_real_and_fully_editorialized():
-    assert len(TOOL_EDITORIAL) == 21
+def test_reviewed_tool_surface_is_real_and_fully_editorialized():
+    assert len(TOOL_EDITORIAL) >= 29
     assert reviewed_tool_ids() == set(TOOL_EDITORIAL)
     required = {
         "processing", "engine_ar", "engine_en", "sample_urls", "sample_names",
@@ -121,7 +124,7 @@ def test_sitemap_is_quality_first_not_all_tools():
     assert '"/trust"' in pages and '"/editorial"' in pages
     # Make sure every reviewed page has a real canonical slug.
     slugs = {_meta_for(TOOLS[tool_id])["slug"] for tool_id in reviewed_tool_ids()}
-    assert len(slugs) == 21
+    assert len(slugs) == len(reviewed_tool_ids()) >= 29
 
 
 def test_no_public_construction_language_in_templates():
