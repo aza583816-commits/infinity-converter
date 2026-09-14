@@ -44,6 +44,11 @@ class Settings:
     subprocess_timeout: int = _int("SUBPROCESS_TIMEOUT", 180, 5)
     ocr_timeout_seconds: int = _int("OCR_TIMEOUT_SECONDS", 60, 5)
     max_concurrent_conversions: int = _int("MAX_CONCURRENT_CONVERSIONS", 2, 1)
+    # Native renderers are materially heavier than text/hash utilities. Keep
+    # separate gates so a burst of Office/OCR work cannot consume every
+    # conversion slot or trigger avoidable memory pressure inside one web pod.
+    max_concurrent_office: int = _int("MAX_CONCURRENT_OFFICE", 1, 1)
+    max_concurrent_ocr: int = _int("MAX_CONCURRENT_OCR", 1, 1)
     asset_cache_seconds: int = _int("ASSET_CACHE_SECONDS", 86400, 0)
     public_base_url: str = os.getenv("PUBLIC_BASE_URL", "https://infinityconverter.com").rstrip("/")
     allowed_origins: list[str] = field(default_factory=lambda: _csv(
