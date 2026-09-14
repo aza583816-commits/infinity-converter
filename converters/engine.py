@@ -8,7 +8,7 @@ from pathlib import Path
 
 from config.settings import settings
 from converters import archive
-from converters.contracts import ConversionResult, Operation
+from converters.contracts import ConversionBusyError, ConversionResult, Operation
 from converters.operations import get_operation
 from converters.legacy_handlers import COMBINE_HANDLERS, SINGLE_HANDLERS  # compatibility exports
 from converters.validation import MIME_BY_EXTENSION, OutputValidationError, validate_output
@@ -35,7 +35,7 @@ def _acquire_workload_limit(operation: Operation, timeout: int):
     if semaphore is None:
         return None
     if not semaphore.acquire(timeout=timeout):
-        raise RuntimeError("هذا النوع من التحويلات مشغول حاليًا. حاول مرة أخرى بعد قليل.")
+        raise ConversionBusyError("هذا النوع من التحويلات مشغول حاليًا. حاول مرة أخرى بعد قليل.")
     return semaphore
 
 
@@ -112,7 +112,7 @@ class ConversionEngine:
         if workspace.path is None or workspace.output_dir is None:
             raise RuntimeError("مساحة المعالجة غير مهيأة.")
         if not CONVERSION_LIMIT.acquire(timeout=timeout):
-            raise RuntimeError("عدد عمليات التحويل الحالية تجاوز الحد المؤقت.")
+            raise ConversionBusyError("عدد عمليات التحويل الحالية تجاوز الحد المؤقت.")
 
         workload_limit = None
         started = time.perf_counter()
