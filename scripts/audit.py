@@ -96,7 +96,8 @@ def main() -> int:
     if "PUBLIC_AUTH_ENABLED=0" not in flags or "PUBLIC_BILLING_ENABLED=0" not in flags:
         print("Public auth/billing defaults are not disabled.")
         return 1
-    if "APP_VERSION=7.2.0" not in flags:
+    from config.settings import settings
+    if f"APP_VERSION={settings.app_version}" not in flags:
         print(".env.example release version is not synchronized.")
         return 1
 

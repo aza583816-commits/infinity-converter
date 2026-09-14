@@ -1,9 +1,11 @@
 import io
+import os
 import shutil
+import subprocess
 import zipfile
 
 import pytest
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 from pypdf import PdfReader, PdfWriter
 from werkzeug.datastructures import FileStorage
 
@@ -31,6 +33,23 @@ def make_image(format_name, mode="RGBA"):
     image.save(stream, format=format_name)
     stream.seek(0)
     return stream
+
+
+def _tesseract_has_language(language):
+    binary = shutil.which("tesseract")
+    if not binary:
+        return False
+    try:
+        result = subprocess.run(
+            [binary, "--list-langs"],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return language in {line.strip() for line in result.stdout.splitlines()}
 
 
 def test_pdf_engines_validate_real_outputs():
@@ -107,3 +126,87 @@ def test_office_engine_converts_docx(tmp_path):
         )
     assert response.status_code == 200
     assert len(PdfReader(io.BytesIO(response.data)).pages) >= 1
+
+
+@pytest.mark.skipif(shutil.which("libreoffice") is None, reason="LibreOffice is required for legacy DOC integration tests")
+def test_office_engine_converts_real_legacy_doc(tmp_path):
+    """Generate a genuine OLE DOC, then exercise upload validation and conversion."""
+    from docx import Document
+
+    source = tmp_path / "legacy-source.docx"
+    document = Document()
+    document.add_heading("Infinity legacy DOC", level=1)
+    document.add_paragraph("Real binary Word 97 input with Arabic: اختبار التحويل")
+    document.save(source)
+
+    profile = tmp_path / "fixture-profile"
+    fixture = subprocess.run(
+        [
+            shutil.which("libreoffice"),
+            "--headless",
+            f"-env:UserInstallation={profile.resolve().as_uri()}",
+            "--convert-to",
+            "doc:MS Word 97",
+            "--outdir",
+            str(tmp_path),
+            str(source),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=60,
+        env={
+            "PATH": os.environ.get("PATH", "/usr/bin:/bin"),
+            "LANG": "C.UTF-8",
+            "LC_ALL": "C.UTF-8",
+        },
+    )
+    legacy = tmp_path / "legacy-source.doc"
+    assert fixture.returncode == 0, fixture.stderr[-500:]
+    assert legacy.read_bytes().startswith(b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1")
+
+    client = create_app().test_client()
+    with legacy.open("rb") as stream:
+        response = client.post(
+            "/api/v2/convert",
+            data={
+                "tool": "word-to-pdf",
+                "file": FileStorage(
+                    stream=stream,
+                    filename="legacy-source.doc",
+                    content_type="application/msword",
+                ),
+            },
+            content_type="multipart/form-data",
+        )
+    assert response.status_code == 200
+    assert response.headers["Content-Type"].startswith("application/pdf")
+    assert len(PdfReader(io.BytesIO(response.data)).pages) >= 1
+
+
+@pytest.mark.skipif(not _tesseract_has_language("ara"), reason="Arabic Tesseract data is required")
+def test_image_ocr_reads_arabic_content():
+    """Verify the installed Arabic model does real work, beyond appearing in a package list."""
+    image = Image.new("RGB", (1800, 760), "white")
+    draw = ImageDraw.Draw(image)
+    font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+    font = ImageFont.truetype(font_path, 100)
+    lines = ("اختبار التحويل", "ملفات عربية واضحة", "تحويل ملفات")
+    for index, line in enumerate(lines):
+        position = (1650, 100 + index * 200)
+        try:
+            draw.text(position, line, fill="black", font=font, anchor="ra", direction="rtl")
+        except (KeyError, ValueError):
+            draw.text((100, position[1]), line, fill="black", font=font)
+    stream = io.BytesIO()
+    image.save(stream, format="PNG")
+
+    client = create_app().test_client()
+    response = client.post(
+        "/api/v2/convert",
+        data={"tool": "image-ocr", "param": "ar", "file": upload("arabic-scan.png", stream.getvalue())},
+        content_type="multipart/form-data",
+    )
+    assert response.status_code == 200
+    text = response.data.decode("utf-8")
+    assert any("\u0600" <= character <= "\u06ff" for character in text)

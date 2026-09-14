@@ -7,6 +7,8 @@ from pathlib import Path
 from openpyxl import load_workbook
 from PIL import Image
 from pypdf import PdfReader
+from config.settings import settings
+from security.file_guard import _safe_generic_zip, _unsafe_archive_name
 
 
 MIME_BY_EXTENSION = {
@@ -44,6 +46,7 @@ class OutputValidationError(ValueError):
 
 def _safe_zip_output(path: Path, *, office_kind: str | None = None) -> dict:
     try:
+        _safe_generic_zip(path.read_bytes())
         with zipfile.ZipFile(path) as zf:
             infos = zf.infolist()
             if not infos:
@@ -104,6 +107,9 @@ def validate_output(path: Path, *, expected_extension: str, expected_mime: str, 
         try:
             with Image.open(path) as image:
                 width, height = image.size
+                expected_format = {".jpg": "JPEG", ".jpeg": "JPEG", ".png": "PNG", ".webp": "WEBP"}[extension]
+                if image.format != expected_format or width * height > settings.max_image_pixels:
+                    raise OutputValidationError("تنسيق الصورة الناتجة أو أبعادها غير صالحة.")
                 image.verify()
         except Exception as exc:
             raise OutputValidationError("ملف الصورة الناتج غير صالح.") from exc
@@ -177,9 +183,11 @@ def validate_output(path: Path, *, expected_extension: str, expected_mime: str, 
             raise OutputValidationError("ملف TAR الناتج غير صالح.") from exc
         if not entries:
             raise OutputValidationError("ملف TAR الناتج فارغ.")
+        if len(entries) > settings.max_archive_entries or sum(m.size for m in entries) > settings.max_archive_uncompressed_bytes:
+            raise OutputValidationError("الأرشيف الناتج يتجاوز الحدود الآمنة.")
         for member in entries:
             name = member.name.replace("\\", "/")
-            if name.startswith("/") or name.startswith("../") or "/../" in name or member.issym() or member.islnk():
+            if _unsafe_archive_name(name) or not (member.isfile() or member.isdir()):
                 raise OutputValidationError("ملف TAR الناتج يحتوي على مسار أو رابط غير آمن.")
         return {"entries": len(entries), "bytes": size}
 

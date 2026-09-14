@@ -189,14 +189,10 @@ def startup_routes():
 
             # Exercise each major backend family with tiny bundled samples. This
             # catches UI-only tools and missing system binaries during image build.
-            real_conversion("pdf-merge", ("sample-a.pdf", "sample-b.pdf"))
-            real_conversion("image-to-png", ("sample-image.jpg",))
-            real_conversion("word-to-pdf", ("sample-word.docx",))
-            real_conversion("image-ocr", ("sample-scan.png",))
-            real_conversion("zip-create", ("sample-note.txt", "sample-image-small.png"))
+
 
             home = client.get("/").get_data(as_text=True)
-            for marker in ("v7-intelligence-console", "SMART FILE ROUTER", "INFINITY FLOW", 'id="tool-search"'):
+            for marker in ('data-surface="intelligence-console"', 'data-surface="file-router"', 'id="tool-search"'):
                 if marker not in home:
                     raise RuntimeError(f"current Intelligence Workspace is missing {marker}")
 
@@ -315,6 +311,11 @@ def startup_routes():
             if len(indexed_tool_urls) != len(TOOL_EDITORIAL):
                 raise RuntimeError("sitemap reviewed-tool count does not match editorial review set")
             print(f"AdSense/search quality + {settings.app_version} experience guards OK")
+            real_conversion("pdf-merge", ("sample-a.pdf", "sample-b.pdf"))
+            real_conversion("image-to-png", ("sample-image.jpg",))
+            real_conversion("word-to-pdf", ("sample-word.docx",))
+            real_conversion("image-ocr", ("sample-scan.png",))
+            real_conversion("zip-create", ("sample-note.txt", "sample-image-small.png"))
 
 
 def main():

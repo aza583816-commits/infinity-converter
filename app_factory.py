@@ -181,7 +181,7 @@ def create_app() -> Flask:
             response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
 
         response.headers["X-Request-ID"] = getattr(g, "request_id", "")
-        if request.path.startswith("/api/v2/convert"):
+        if request.path.startswith("/api/"):
             response.headers["Cache-Control"] = "no-store, private"
 
         if getattr(g, "lang_is_explicit", False):

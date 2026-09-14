@@ -1,4 +1,5 @@
 from pathlib import Path
+from config.settings import settings
 
 from core.editorial import TOOL_EDITORIAL, reviewed_tool_ids
 from core.tool_registry import TOOLS, _meta_for
@@ -11,8 +12,8 @@ def _read(relative):
 
 
 def test_release_version_and_new_support_email_are_consistent():
-    assert '"version": "7.2.0"' in _read("manifest.json")
-    assert '"7.2.0"' in _read("config/settings.py")
+    assert __import__("json").loads(_read("manifest.json"))["version"] == settings.app_version
+    assert settings.app_version in _read("config/settings.py")
     corpus = "\n".join(
         p.read_text(encoding="utf-8", errors="ignore")
         for p in ROOT.rglob("*")
@@ -106,9 +107,9 @@ def test_trust_editorial_pwa_and_premium_experience_are_wired():
     assert "Try safe sample" in tool
     assert "result-metrics" in tool
     assert "serviceWorker.register('/sw.js'" in js
-    assert "infinity-static-v7.2.0" in sw
+    assert f"infinity-static-v{settings.app_version}" in sw
     assert "url.pathname.startsWith('/static/') || url.pathname === '/manifest.json'" in sw
-    assert "Infinity Converter 7.2.0 — Production Cohesion / Intelligence Workspace" in css
+    assert "Infinity Converter 7.2.1 — Production Cohesion / Intelligence Workspace" in css
     assert "prefers-reduced-motion:reduce" in css
 
 

@@ -10,14 +10,16 @@ def read(path: str) -> str:
     return (ROOT / path).read_text(encoding="utf-8")
 
 
-def test_720_runtime_version_is_consistent():
-    assert 'APP_VERSION=7.2.0' in read('.env.example')
-    assert '"7.2.0"' in read('config/settings.py')
-    assert '"version": "7.2.0"' in read('manifest.json')
+def test_runtime_version_is_consistent():
+    import json
+    from config.settings import settings
+    version = settings.app_version
+    assert f'APP_VERSION={version}' in read('.env.example')
+    assert json.loads(read('manifest.json'))['version'] == version
     sw = read('static/sw.js')
-    assert "infinity-static-v7.2.0" in sw
-    assert "app.js?v=7.2.0" in sw
-    assert "manifest.json?v=7.2.0" in sw
+    assert f'infinity-static-v{version}' in sw
+    assert f'app.js?v={version}' in sw
+    assert f'manifest.json?v={version}' in sw
     assert 'data-release="{{ app_version }}"' in read('templates/base.html')
 
 
@@ -59,7 +61,7 @@ def test_720_future_entitlements_are_guarded_while_public_defaults_stay_free():
 
 def test_720_visual_cohesion_layer_covers_shared_surfaces():
     css = read('static/css/app.css')
-    assert 'Infinity Converter 7.2.0 — final product cohesion' in css
+    assert 'Infinity Converter 7.2.1 — final product cohesion' in css
     for selector in (
         '.listing-head', '.collection-hero', '.blog-hero', '.how-hero',
         '.blog-article', '.auth-form', '.pricing-grid', '.developer-workspace',

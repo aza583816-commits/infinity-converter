@@ -1,0 +1,606 @@
+[
+  {
+    "id": "gpa-calculator",
+    "status": "passed",
+    "sample_output": "GPA: 3.50\nCredits: 6",
+    "known_answer": true
+  },
+  {
+    "id": "weighted-grade-calculator",
+    "status": "passed",
+    "sample_output": "Weighted grade: 90%\nTotal weight: 100%",
+    "known_answer": true
+  },
+  {
+    "id": "study-session-planner",
+    "status": "passed",
+    "sample_output": "Topic 1: 36 minutes\nBreak: 5 minutes\nTopic 2: 36 minutes\nBreak: 5 minutes\nTopic 3: 36 minutes",
+    "known_answer": false
+  },
+  {
+    "id": "focus-timer",
+    "status": "not_tested",
+    "reason": "requires real browser canvas or timer"
+  },
+  {
+    "id": "flashcard-maker",
+    "status": "passed",
+    "sample_output": "1. Q: Capital of France\n   A: Paris",
+    "known_answer": false
+  },
+  {
+    "id": "reading-time-estimator",
+    "status": "passed",
+    "sample_output": "1 words\nEstimated reading time: 1 minute(s)",
+    "known_answer": false
+  },
+  {
+    "id": "word-character-counter",
+    "status": "passed",
+    "sample_output": "Words: 2\nCharacters: 11\nCharacters without spaces: 10\nLines: 1",
+    "known_answer": true
+  },
+  {
+    "id": "presentation-outline-builder",
+    "status": "passed",
+    "sample_output": "1. Renewable energy\n2. Context and goal\n3. Solar power\n4. Wind power\n5. Storage\n6. Summary and next steps",
+    "known_answer": false
+  },
+  {
+    "id": "slide-glossary-translator",
+    "status": "passed",
+    "sample_output": "الطاقة المتجددة reduces انبعاثات الكربون.",
+    "known_answer": false
+  },
+  {
+    "id": "rubric-score-calculator",
+    "status": "passed",
+    "sample_output": "Rubric score: 82.5%\nBased on a 4-point scale.",
+    "known_answer": false
+  },
+  {
+    "id": "classroom-group-maker",
+    "status": "passed",
+    "sample_output": "Group 1: Omar, Amina\nGroup 2: Sara",
+    "known_answer": false
+  },
+  {
+    "id": "random-name-picker",
+    "status": "passed",
+    "sample_output": "Selected name: Example",
+    "known_answer": false
+  },
+  {
+    "id": "score-to-percentage",
+    "status": "passed",
+    "sample_output": "90%",
+    "known_answer": false
+  },
+  {
+    "id": "lesson-timing-planner",
+    "status": "passed",
+    "sample_output": "Opening: 5 min\nInstruction: 33 min\nPractice: 8 min\nReview: 5 min",
+    "known_answer": false
+  },
+  {
+    "id": "learning-objective-builder",
+    "status": "passed",
+    "sample_output": "By the end of the lesson, learners will be able to Analyze photosynthesis  after the lesson.",
+    "known_answer": false
+  },
+  {
+    "id": "seating-plan-generator",
+    "status": "passed",
+    "sample_output": "Example",
+    "known_answer": false
+  },
+  {
+    "id": "text-similarity-checker",
+    "status": "passed",
+    "sample_output": "Shared words: 1\nSimilarity: 100%\nexample",
+    "known_answer": false
+  },
+  {
+    "id": "jwt-decoder",
+    "status": "passed",
+    "sample_output": "Header (signature unverified):\n{\n  \"alg\": \"none\"\n}\n\nPayload:\n{\n  \"sub\": \"test\"\n}",
+    "known_answer": false
+  },
+  {
+    "id": "query-string-parser-builder",
+    "status": "passed",
+    "sample_output": "URLSearchParams is not defined",
+    "known_answer": false
+  },
+  {
+    "id": "html-entity-converter",
+    "status": "passed",
+    "sample_output": "DOMParser is not defined",
+    "known_answer": false
+  },
+  {
+    "id": "unicode-inspector",
+    "status": "passed",
+    "sample_output": "H\tU+0048\t\\u{48}\ne\tU+0065\t\\u{65}\nl\tU+006C\t\\u{6C}\nl\tU+006C\t\\u{6C}\no\tU+006F\t\\u{6F}\n \tU+0020\t\\u{20}\nم\tU+0645\t\\u{645}\nر\tU+0631\t\\u{631}\nح\tU+062D\t\\u{62D}\nب\tU+0628\t\\u{628}\nا\tU+0627\t\\u{627}",
+    "known_answer": false
+  },
+  {
+    "id": "cron-explainer",
+    "status": "passed",
+    "sample_output": "Minute: 0\nHour: 9\nDay of month: *\nMonth: *\nDay of week: 1-5",
+    "known_answer": false
+  },
+  {
+    "id": "color-contrast-checker",
+    "status": "passed",
+    "sample_output": "Contrast ratio: 16.90:1\nWCAG AA normal text: Pass\nWCAG AA large text: Pass",
+    "known_answer": false
+  },
+  {
+    "id": "semantic-version-comparator",
+    "status": "passed",
+    "sample_output": "1.2.0 is older than 1.10.0.",
+    "known_answer": false
+  },
+  {
+    "id": "secret-redactor",
+    "status": "passed",
+    "sample_output": "Example",
+    "known_answer": false
+  },
+  {
+    "id": "vat-calculator",
+    "status": "passed",
+    "sample_output": "VAT: 15\nTotal: 115",
+    "known_answer": false
+  },
+  {
+    "id": "profit-margin-calculator",
+    "status": "passed",
+    "sample_output": "Profit: 40\nMargin: 33.33%",
+    "known_answer": false
+  },
+  {
+    "id": "break-even-calculator",
+    "status": "passed",
+    "sample_output": "Break-even units: 67",
+    "known_answer": false
+  },
+  {
+    "id": "invoice-due-date",
+    "status": "passed",
+    "sample_output": "Due date: 10/1/2026",
+    "known_answer": false
+  },
+  {
+    "id": "timesheet-hours-calculator",
+    "status": "passed",
+    "sample_output": "Total hours: 15.5\nTotal minutes: 930",
+    "known_answer": false
+  },
+  {
+    "id": "expense-splitter",
+    "status": "passed",
+    "sample_output": "Each person pays: 50",
+    "known_answer": false
+  },
+  {
+    "id": "percentage-change",
+    "status": "passed",
+    "sample_output": "Change: +25%",
+    "known_answer": true
+  },
+  {
+    "id": "document-key-points",
+    "status": "passed",
+    "sample_output": "1. Example",
+    "known_answer": false
+  },
+  {
+    "id": "unit-converter",
+    "status": "passed",
+    "sample_output": "1 km = 0.62 mi",
+    "known_answer": false
+  },
+  {
+    "id": "cooking-measurement-converter",
+    "status": "passed",
+    "sample_output": "1 cup = 236.59 ml",
+    "known_answer": false
+  },
+  {
+    "id": "tip-calculator",
+    "status": "passed",
+    "sample_output": "Tip: 15\nTotal: 115\nPer person: 57.5",
+    "known_answer": false
+  },
+  {
+    "id": "age-calculator",
+    "status": "passed",
+    "sample_output": "Age: 0 years",
+    "known_answer": false
+  },
+  {
+    "id": "date-difference",
+    "status": "passed",
+    "sample_output": "Difference: 0 days",
+    "known_answer": false
+  },
+  {
+    "id": "time-zone-meeting-planner",
+    "status": "passed",
+    "sample_output": "UTC: Tuesday, September 1, 2026 at 10:00 AM\nAsia/Riyadh: Tuesday, September 1, 2026 at 1:00 PM",
+    "known_answer": false
+  },
+  {
+    "id": "password-generator",
+    "status": "passed",
+    "sample_output": "AzDTCqXiZjBspH%A",
+    "known_answer": false
+  },
+  {
+    "id": "light-background-cleanup",
+    "status": "not_tested",
+    "reason": "requires real browser canvas or timer"
+  },
+  {
+    "id": "citation-formatter",
+    "status": "passed",
+    "sample_output": "Example (10). Example. Example.",
+    "known_answer": false
+  },
+  {
+    "id": "grade-needed-calculator",
+    "status": "passed",
+    "sample_output": "Required score on remaining 40%: 100%",
+    "known_answer": false
+  },
+  {
+    "id": "deadline-countdown",
+    "status": "passed",
+    "sample_output": "1 day(s), 3 hour(s) remaining",
+    "known_answer": false
+  },
+  {
+    "id": "exam-score-target",
+    "status": "passed",
+    "sample_output": "Correct answers needed: 40 of 50",
+    "known_answer": false
+  },
+  {
+    "id": "course-workload-estimator",
+    "status": "passed",
+    "sample_output": "Suggested study time: 6 hours/week\nEstimated term study time: 90 hours",
+    "known_answer": false
+  },
+  {
+    "id": "quiz-question-shuffler",
+    "status": "passed",
+    "sample_output": "1. Example",
+    "known_answer": false
+  },
+  {
+    "id": "note-outline-organizer",
+    "status": "passed",
+    "sample_output": "1. Example",
+    "known_answer": false
+  },
+  {
+    "id": "bibliography-alphabetizer",
+    "status": "passed",
+    "sample_output": "Example",
+    "known_answer": false
+  },
+  {
+    "id": "letter-grade-converter",
+    "status": "passed",
+    "sample_output": "Letter grade: B+",
+    "known_answer": false
+  },
+  {
+    "id": "reading-list-planner",
+    "status": "passed",
+    "sample_output": "Read 26 page(s) per day for 7 days.",
+    "known_answer": false
+  },
+  {
+    "id": "paragraph-counter",
+    "status": "passed",
+    "sample_output": "Paragraphs: 1\nSentences: 0",
+    "known_answer": false
+  },
+  {
+    "id": "study-goal-checklist",
+    "status": "passed",
+    "sample_output": "[ ] Example",
+    "known_answer": false
+  },
+  {
+    "id": "attendance-rate-calculator",
+    "status": "passed",
+    "sample_output": "Attendance rate: 85.71%",
+    "known_answer": false
+  },
+  {
+    "id": "grade-scale-builder",
+    "status": "passed",
+    "sample_output": "A: 90-100\nB: 80-89\nC: 70-79",
+    "known_answer": false
+  },
+  {
+    "id": "question-order-randomizer",
+    "status": "passed",
+    "sample_output": "1. Example",
+    "known_answer": false
+  },
+  {
+    "id": "exit-ticket-builder",
+    "status": "passed",
+    "sample_output": "Exit Ticket: Example\n1. What is one key idea you learned?\n2. What question do you still have?\n3. Apply Example in one example.",
+    "known_answer": false
+  },
+  {
+    "id": "parent-message-template",
+    "status": "passed",
+    "sample_output": "Hello,\n\nI wanted to share a positive update about Example. Example.\n\nKind regards,",
+    "known_answer": false
+  },
+  {
+    "id": "syllabus-date-planner",
+    "status": "passed",
+    "sample_output": "Unit 1: weeks 1-2\nUnit 2: weeks 3-4\nUnit 3: weeks 5-6\nUnit 4: weeks 7-8\nUnit 5: weeks 9-10\nUnit 6: weeks 11-12\nUnit 7: weeks 13-14\nUnit 8: weeks 15-16",
+    "known_answer": false
+  },
+  {
+    "id": "duplicate-name-checker",
+    "status": "passed",
+    "sample_output": "No duplicate names found.",
+    "known_answer": false
+  },
+  {
+    "id": "reading-level-estimator",
+    "status": "passed",
+    "sample_output": "Approximate Flesch-Kincaid grade: 20.2",
+    "known_answer": false
+  },
+  {
+    "id": "participation-tracker",
+    "status": "passed",
+    "sample_output": "Alice: 2\nBob: 3\n\nTotal participation marks: 5",
+    "known_answer": false
+  },
+  {
+    "id": "standards-checklist-builder",
+    "status": "passed",
+    "sample_output": "[ ] Example",
+    "known_answer": false
+  },
+  {
+    "id": "quiz-time-estimator",
+    "status": "passed",
+    "sample_output": "Suggested quiz time: 30 minutes",
+    "known_answer": false
+  },
+  {
+    "id": "class-list-numberer",
+    "status": "passed",
+    "sample_output": "1. Example",
+    "known_answer": false
+  },
+  {
+    "id": "url-parser",
+    "status": "passed",
+    "sample_output": "{\n  \"protocol\": \"https:\",\n  \"host\": \"example.com\",\n  \"pathname\": \"/path\",\n  \"query\": {\n    \"x\": \"1\"\n  },\n  \"hash\": \"\"\n}",
+    "known_answer": false
+  },
+  {
+    "id": "regex-tester",
+    "status": "passed",
+    "sample_output": "No matches.",
+    "known_answer": false
+  },
+  {
+    "id": "http-status-lookup",
+    "status": "passed",
+    "sample_output": "404: Not Found",
+    "known_answer": false
+  },
+  {
+    "id": "css-unit-converter",
+    "status": "passed",
+    "sample_output": "32px = 2rem",
+    "known_answer": false
+  },
+  {
+    "id": "text-diff",
+    "status": "passed",
+    "sample_output": "No line differences.",
+    "known_answer": false
+  },
+  {
+    "id": "slug-generator",
+    "status": "passed",
+    "sample_output": "example",
+    "known_answer": false
+  },
+  {
+    "id": "mime-type-lookup",
+    "status": "passed",
+    "sample_output": "application/json",
+    "known_answer": false
+  },
+  {
+    "id": "ipv4-converter",
+    "status": "passed",
+    "sample_output": "3232235777",
+    "known_answer": false
+  },
+  {
+    "id": "line-ending-converter",
+    "status": "passed",
+    "sample_output": "Example",
+    "known_answer": false
+  },
+  {
+    "id": "html-tag-stripper",
+    "status": "passed",
+    "sample_output": "DOMParser is not defined",
+    "known_answer": false
+  },
+  {
+    "id": "case-converter",
+    "status": "passed",
+    "sample_output": "example",
+    "known_answer": false
+  },
+  {
+    "id": "duplicate-line-remover",
+    "status": "passed",
+    "sample_output": "Example",
+    "known_answer": false
+  },
+  {
+    "id": "discount-calculator",
+    "status": "passed",
+    "sample_output": "Discount: 20\nFinal price: 80",
+    "known_answer": false
+  },
+  {
+    "id": "commission-calculator",
+    "status": "passed",
+    "sample_output": "Commission: 250",
+    "known_answer": false
+  },
+  {
+    "id": "roi-calculator",
+    "status": "passed",
+    "sample_output": "ROI: 25%\nNet gain: 250",
+    "known_answer": false
+  },
+  {
+    "id": "cash-flow-summary",
+    "status": "passed",
+    "sample_output": "Incoming: 1,200\nOutgoing: 400\nNet cash flow: 800",
+    "known_answer": false
+  },
+  {
+    "id": "business-days-calculator",
+    "status": "passed",
+    "sample_output": "Business days: 1",
+    "known_answer": false
+  },
+  {
+    "id": "meeting-agenda-builder",
+    "status": "passed",
+    "sample_output": "Example\n1. Example",
+    "known_answer": false
+  },
+  {
+    "id": "purchase-order-total",
+    "status": "passed",
+    "sample_output": "Paper: 4 x 5.5 = 22\n\nTotal: 22",
+    "known_answer": false
+  },
+  {
+    "id": "straight-line-depreciation",
+    "status": "passed",
+    "sample_output": "Annual depreciation: 1,800",
+    "known_answer": false
+  },
+  {
+    "id": "installment-calculator",
+    "status": "passed",
+    "sample_output": "Each installment: 100",
+    "known_answer": false
+  },
+  {
+    "id": "inventory-reorder-point",
+    "status": "passed",
+    "sample_output": "Reorder point: 104 units",
+    "known_answer": false
+  },
+  {
+    "id": "invoice-number-generator",
+    "status": "passed",
+    "sample_output": "INV-20260901-0001",
+    "known_answer": false
+  },
+  {
+    "id": "overtime-pay-calculator",
+    "status": "passed",
+    "sample_output": "Regular pay: 800\nOvertime pay: 150\nTotal pay: 950",
+    "known_answer": false
+  },
+  {
+    "id": "bmi-calculator",
+    "status": "passed",
+    "sample_output": "BMI: 22.86\nCategory: Healthy range",
+    "known_answer": false
+  },
+  {
+    "id": "temperature-converter",
+    "status": "passed",
+    "sample_output": "0 C = 32 F",
+    "known_answer": true
+  },
+  {
+    "id": "pace-calculator",
+    "status": "passed",
+    "sample_output": "Pace: 6:00 min/km",
+    "known_answer": false
+  },
+  {
+    "id": "fuel-cost-calculator",
+    "status": "passed",
+    "sample_output": "Fuel needed: 20 L\nEstimated cost: 40",
+    "known_answer": false
+  },
+  {
+    "id": "loan-payment-estimator",
+    "status": "passed",
+    "sample_output": "Estimated monthly payment: 304.22\nEstimated total paid: 10,951.9",
+    "known_answer": false
+  },
+  {
+    "id": "random-decision-picker",
+    "status": "passed",
+    "sample_output": "Selected: Example",
+    "known_answer": false
+  },
+  {
+    "id": "grocery-list-organizer",
+    "status": "passed",
+    "sample_output": "Example",
+    "known_answer": false
+  },
+  {
+    "id": "chore-splitter",
+    "status": "passed",
+    "sample_output": "Example: Example",
+    "known_answer": false
+  },
+  {
+    "id": "sleep-time-planner",
+    "status": "passed",
+    "sample_output": "6 cycles: 09:45 PM\n5 cycles: 11:15 PM\n4 cycles: 12:45 AM",
+    "known_answer": false
+  },
+  {
+    "id": "water-intake-estimator",
+    "status": "passed",
+    "sample_output": "Approximate daily water: 2.31 L",
+    "known_answer": false
+  },
+  {
+    "id": "random-number-generator",
+    "status": "passed",
+    "sample_output": "100",
+    "known_answer": false
+  },
+  {
+    "id": "text-cleaner",
+    "status": "passed",
+    "sample_output": "Example",
+    "known_answer": false
+  }
+]

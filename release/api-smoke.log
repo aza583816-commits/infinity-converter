@@ -1,0 +1,326 @@
+warning: The `fitz` API is deprecated and will be removed in future. Use `import pymupdf` instead.
+2026-09-13 14:45:19,397 INFO converters.engine conversion_completed tool=pdf-merge engine=pymupdf+pypdf duration_ms=17 input_bytes=7571306 output_bytes=7571185 batch_total=2 batch_succeeded=2
+2026-09-13 14:45:19,451 INFO converters.engine conversion_completed tool=pdf-split engine=pymupdf+pypdf duration_ms=38 input_bytes=3785653 output_bytes=54167 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:19,483 INFO converters.engine conversion_completed tool=pdf-extract-pages engine=pymupdf+pypdf duration_ms=13 input_bytes=3785653 output_bytes=3785115 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:19,535 INFO converters.engine conversion_completed tool=pdf-delete-pages engine=pymupdf+pypdf duration_ms=23 input_bytes=3785653 output_bytes=3785115 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:19,585 INFO converters.engine conversion_completed tool=pdf-rotate engine=pymupdf+pypdf duration_ms=17 input_bytes=3785653 output_bytes=3785747 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:19,646 INFO converters.engine conversion_completed tool=pdf-compress engine=pymupdf+pypdf duration_ms=22 input_bytes=3785653 output_bytes=53021 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:19,876 INFO converters.engine conversion_completed tool=pdf-to-jpg engine=pymupdf+pypdf duration_ms=211 input_bytes=3785653 output_bytes=80976 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:20,016 INFO converters.engine conversion_completed tool=pdf-to-png engine=pymupdf+pypdf duration_ms=110 input_bytes=3785653 output_bytes=71973 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:20,069 INFO converters.engine conversion_completed tool=image-to-pdf engine=pillow duration_ms=44 input_bytes=114590 output_bytes=134213 batch_total=2 batch_succeeded=2
+2026-09-13 14:45:20,092 INFO converters.engine conversion_completed tool=pdf-to-text engine=pymupdf+pypdf duration_ms=8 input_bytes=3785653 output_bytes=264 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:20,134 INFO converters.engine conversion_completed tool=pdf-to-html engine=pymupdf+pypdf duration_ms=26 input_bytes=3785653 output_bytes=70800 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:20,166 INFO converters.engine conversion_completed tool=pdf-metadata engine=pymupdf+pypdf duration_ms=1 input_bytes=3785653 output_bytes=56 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:20,204 INFO converters.engine conversion_completed tool=pdf-booklet engine=pymupdf+pypdf duration_ms=22 input_bytes=3785653 output_bytes=54246 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:20,245 INFO converters.engine conversion_completed tool=lms-pdf-size-optimizer engine=stdlib duration_ms=21 input_bytes=3785653 output_bytes=24425 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:20,259 INFO converters.engine conversion_completed tool=assignment-cover-page engine=pymupdf duration_ms=8 input_bytes=0 output_bytes=3387 batch_total=0 batch_succeeded=0
+2026-09-13 14:45:20,699 INFO converters.engine conversion_completed tool=omr-bubble-sheet engine=pymupdf duration_ms=438 input_bytes=0 output_bytes=81055 batch_total=0 batch_succeeded=0
+2026-09-13 14:45:20,761 INFO converters.engine conversion_completed tool=pdf-reorder-pages engine=pymupdf+pypdf duration_ms=14 input_bytes=3785653 output_bytes=3785744 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:20,797 INFO converters.engine conversion_completed tool=pdf-rotate-selected engine=pymupdf+pypdf duration_ms=15 input_bytes=3785653 output_bytes=3785745 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:20,829 INFO converters.engine conversion_completed tool=pdf-page-numbers engine=pymupdf+pypdf duration_ms=21 input_bytes=3785653 output_bytes=54012 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:20,862 INFO converters.engine conversion_completed tool=pdf-watermark-text engine=pymupdf+pypdf duration_ms=23 input_bytes=3785653 output_bytes=53802 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:20,916 INFO converters.engine conversion_completed tool=pdf-grayscale engine=pymupdf+pypdf duration_ms=41 input_bytes=3785653 output_bytes=40841 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:20,963 INFO converters.engine conversion_completed tool=pdf-remove-blank-pages engine=pymupdf+pypdf duration_ms=24 input_bytes=3785653 output_bytes=53496 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:21,015 INFO converters.engine conversion_completed tool=pdf-crop-margins engine=pymupdf+pypdf duration_ms=20 input_bytes=3785653 output_bytes=53577 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:21,068 INFO converters.engine conversion_completed tool=pdf-poster-split engine=pymupdf+pypdf duration_ms=26 input_bytes=3785653 output_bytes=58162 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:21,106 INFO converters.engine conversion_completed tool=pdf-contact-sheet engine=pymupdf+pypdf duration_ms=23 input_bytes=3785653 output_bytes=54651 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:21,156 INFO converters.engine conversion_completed tool=pdf-password-protect engine=pymupdf+pypdf duration_ms=21 input_bytes=3785653 output_bytes=3786154 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:21,189 INFO converters.engine conversion_completed tool=pdf-to-docx engine=pymupdf+pypdf duration_ms=21 input_bytes=3785653 output_bytes=36688 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:21,220 INFO converters.engine conversion_completed tool=pdf-to-markdown engine=pymupdf+pypdf duration_ms=5 input_bytes=3785653 output_bytes=295 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:21,283 INFO converters.engine conversion_completed tool=pdf-compare engine=pymupdf+pypdf duration_ms=7 input_bytes=7571306 output_bytes=51 batch_total=2 batch_succeeded=2
+2026-09-13 14:45:21,317 INFO converters.engine conversion_completed tool=pdf-repair engine=pymupdf+pypdf duration_ms=20 input_bytes=3785653 output_bytes=53021 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:21,364 INFO converters.engine conversion_completed tool=pdf-image-extract engine=pymupdf+pypdf duration_ms=23 input_bytes=3785653 output_bytes=45810 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:21,377 INFO converters.engine conversion_completed tool=pdf-links-report engine=pymupdf+pypdf duration_ms=1 input_bytes=3785653 output_bytes=121 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:21,389 INFO converters.engine conversion_completed tool=pdf-annotations-report engine=pymupdf+pypdf duration_ms=1 input_bytes=3785653 output_bytes=23 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:21,411 INFO converters.engine conversion_completed tool=pdf-page-size-report engine=pymupdf+pypdf duration_ms=1 input_bytes=3785653 output_bytes=439 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:21,485 INFO converters.engine conversion_completed tool=pdf-redact engine=pymupdf+pypdf duration_ms=25 input_bytes=3785653 output_bytes=53226 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:21,491 INFO converters.engine conversion_completed tool=pdf-unlock engine=pymupdf+pypdf duration_ms=2 input_bytes=828 output_bytes=502 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:21,515 INFO converters.engine conversion_completed tool=image-to-jpg engine=pillow duration_ms=21 input_bytes=57295 output_bytes=69181 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:21,675 INFO converters.engine conversion_completed tool=image-to-png engine=pillow duration_ms=157 input_bytes=106206 output_bytes=122429 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:21,767 INFO converters.engine conversion_completed tool=image-to-webp engine=pillow duration_ms=89 input_bytes=57295 output_bytes=32038 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:21,791 INFO converters.engine conversion_completed tool=image-resize engine=pillow duration_ms=20 input_bytes=57295 output_bytes=69181 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:21,814 INFO converters.engine conversion_completed tool=image-compress engine=pillow duration_ms=20 input_bytes=57295 output_bytes=47621 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:21,841 INFO converters.engine conversion_completed tool=image-rotate engine=pillow duration_ms=23 input_bytes=57295 output_bytes=68137 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:21,975 INFO converters.engine conversion_completed tool=social-media-image-resizer engine=pillow duration_ms=131 input_bytes=57295 output_bytes=101707 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:22,013 INFO converters.engine conversion_completed tool=quote-social-graphic engine=pillow duration_ms=35 input_bytes=0 output_bytes=13749 batch_total=0 batch_succeeded=0
+2026-09-13 14:45:22,118 INFO converters.engine conversion_completed tool=image-crop engine=pillow duration_ms=101 input_bytes=57295 output_bytes=55506 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:22,225 INFO converters.engine conversion_completed tool=image-flip engine=pillow duration_ms=103 input_bytes=57295 output_bytes=55594 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:22,318 INFO converters.engine conversion_completed tool=image-grayscale engine=pillow duration_ms=89 input_bytes=57295 output_bytes=27274 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:22,463 INFO converters.engine conversion_completed tool=image-sharpen engine=pillow duration_ms=141 input_bytes=57295 output_bytes=35337 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:22,492 INFO converters.engine conversion_completed tool=image-auto-contrast engine=pillow duration_ms=26 input_bytes=57295 output_bytes=69181 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:22,514 INFO converters.engine conversion_completed tool=image-sepia engine=pillow duration_ms=18 input_bytes=57295 output_bytes=82339 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:22,957 INFO converters.engine conversion_completed tool=image-strip-metadata engine=pillow duration_ms=440 input_bytes=57295 output_bytes=55506 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:23,189 INFO converters.engine conversion_completed tool=image-favicon-pack engine=pillow duration_ms=228 input_bytes=57295 output_bytes=59335 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:23,221 INFO converters.engine conversion_completed tool=image-contact-sheet engine=pillow duration_ms=28 input_bytes=57295 output_bytes=26549 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:23,321 INFO converters.engine conversion_completed tool=image-set-dpi engine=pillow duration_ms=97 input_bytes=57295 output_bytes=55527 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:23,518 INFO converters.engine conversion_completed tool=image-upscale engine=pillow duration_ms=193 input_bytes=57295 output_bytes=295946 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:23,617 INFO converters.engine conversion_completed tool=image-blur engine=pillow duration_ms=96 input_bytes=57295 output_bytes=110022 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:23,653 INFO converters.engine conversion_completed tool=image-pixelate engine=pillow duration_ms=32 input_bytes=57295 output_bytes=7613 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:23,703 INFO converters.engine conversion_completed tool=image-invert engine=pillow duration_ms=47 input_bytes=57295 output_bytes=62950 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:23,742 INFO converters.engine conversion_completed tool=image-posterize engine=pillow duration_ms=36 input_bytes=57295 output_bytes=31694 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:23,812 INFO converters.engine conversion_completed tool=image-color-palette engine=pillow duration_ms=66 input_bytes=57295 output_bytes=969 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:23,860 INFO converters.engine conversion_completed tool=image-watermark engine=pillow duration_ms=45 input_bytes=57295 output_bytes=66445 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:24,179 INFO converters.engine conversion_completed tool=image-background-cleaner engine=pillow duration_ms=315 input_bytes=57295 output_bytes=66204 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:24,218 INFO converters.engine conversion_completed tool=image-auto-orient engine=pillow duration_ms=35 input_bytes=57295 output_bytes=57295 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:24,266 INFO converters.engine conversion_completed tool=image-round-corners engine=pillow duration_ms=45 input_bytes=57295 output_bytes=64719 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:24,272 WARNING converters.engine conversion_failed tool=word-to-pdf engine=libreoffice duration_ms=1 input_bytes=36787 error=ValueError
+2026-09-13 14:45:24,275 WARNING converters.engine conversion_failed tool=excel-to-pdf engine=libreoffice duration_ms=1 input_bytes=4876 error=ValueError
+2026-09-13 14:45:24,279 WARNING converters.engine conversion_failed tool=ppt-to-pdf engine=libreoffice duration_ms=1 input_bytes=28252 error=ValueError
+2026-09-13 14:45:24,281 WARNING converters.engine conversion_failed tool=txt-to-pdf engine=libreoffice duration_ms=1 input_bytes=61 error=ValueError
+2026-09-13 14:45:24,284 WARNING converters.engine conversion_failed tool=html-to-pdf engine=libreoffice duration_ms=1 input_bytes=111 error=ValueError
+2026-09-13 14:45:24,304 INFO converters.engine conversion_completed tool=markdown-to-html engine=markdown duration_ms=18 input_bytes=28 output_bytes=292 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:24,308 WARNING converters.engine conversion_failed tool=markdown-to-pdf engine=libreoffice duration_ms=1 input_bytes=28 error=ValueError
+2026-09-13 14:45:24,318 INFO converters.engine conversion_completed tool=csv-to-xlsx engine=openpyxl duration_ms=8 input_bytes=29 output_bytes=4871 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:24,320 WARNING converters.engine conversion_failed tool=csv-to-pdf engine=libreoffice duration_ms=1 input_bytes=29 error=ValueError
+2026-09-13 14:45:24,330 INFO converters.engine conversion_completed tool=bulk-certificate-maker engine=pymupdf duration_ms=8 input_bytes=31 output_bytes=2259 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:24,333 INFO converters.engine conversion_completed tool=csv-merge-deduplicate engine=office-libraries duration_ms=0 input_bytes=58 output_bytes=32 batch_total=2 batch_succeeded=2
+2026-09-13 14:45:24,335 INFO converters.engine conversion_completed tool=lms-question-bank-formatter engine=stdlib duration_ms=0 input_bytes=53 output_bytes=75 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:24,344 INFO converters.engine conversion_completed tool=docx-to-text engine=office-libraries duration_ms=6 input_bytes=36787 output_bytes=68 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:24,356 INFO converters.engine conversion_completed tool=docx-to-html engine=office-libraries duration_ms=8 input_bytes=36787 output_bytes=260 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:24,361 INFO converters.engine conversion_completed tool=xlsx-to-csv engine=office-libraries duration_ms=3 input_bytes=4876 output_bytes=32 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:24,366 INFO converters.engine conversion_completed tool=xlsx-to-json engine=office-libraries duration_ms=2 input_bytes=4876 output_bytes=127 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:24,373 INFO converters.engine conversion_completed tool=pptx-to-text engine=office-libraries duration_ms=3 input_bytes=28252 output_bytes=52 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:24,376 INFO converters.engine conversion_completed tool=csv-to-json engine=office-libraries duration_ms=0 input_bytes=29 output_bytes=98 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:24,378 INFO converters.engine conversion_completed tool=json-to-csv engine=office-libraries duration_ms=0 input_bytes=57 output_bytes=32 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:24,388 INFO converters.engine conversion_completed tool=json-to-xlsx engine=office-libraries duration_ms=8 input_bytes=57 output_bytes=4876 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:24,391 INFO converters.engine conversion_completed tool=xml-to-json engine=office-libraries duration_ms=0 input_bytes=42 output_bytes=116 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:24,393 INFO converters.engine conversion_completed tool=text-to-json engine=stdlib duration_ms=0 input_bytes=61 output_bytes=141 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:24,403 INFO converters.engine conversion_completed tool=docx-to-markdown engine=office-libraries duration_ms=6 input_bytes=36787 output_bytes=51 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:24,411 INFO converters.engine conversion_completed tool=docx-table-to-csv engine=office-libraries duration_ms=5 input_bytes=36787 output_bytes=23 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:24,419 INFO converters.engine conversion_completed tool=xlsx-to-html engine=office-libraries duration_ms=5 input_bytes=4876 output_bytes=195 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:24,425 INFO converters.engine conversion_completed tool=xlsx-summary engine=office-libraries duration_ms=2 input_bytes=4876 output_bytes=93 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:24,427 INFO converters.engine conversion_completed tool=csv-to-markdown engine=office-libraries duration_ms=0 input_bytes=29 output_bytes=61 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:24,434 INFO converters.engine conversion_completed tool=csv-statistics engine=office-libraries duration_ms=5 input_bytes=29 output_bytes=267 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:24,437 INFO converters.engine conversion_completed tool=json-to-html engine=office-libraries duration_ms=0 input_bytes=57 output_bytes=261 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:24,439 INFO converters.engine conversion_completed tool=html-to-text engine=office-libraries duration_ms=0 input_bytes=111 output_bytes=21 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:24,441 INFO converters.engine conversion_completed tool=markdown-to-text engine=office-libraries duration_ms=0 input_bytes=28 output_bytes=22 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:24,448 INFO converters.engine conversion_completed tool=pptx-to-markdown engine=office-libraries duration_ms=4 input_bytes=28252 output_bytes=51 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:25,471 INFO converters.engine conversion_completed tool=pdf-ocr engine=tesseract+pymupdf duration_ms=1010 input_bytes=3785653 output_bytes=451 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:25,804 INFO converters.engine conversion_completed tool=image-ocr engine=tesseract+pymupdf duration_ms=329 input_bytes=57295 output_bytes=127 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:26,177 INFO converters.engine conversion_completed tool=ocr-image-to-pdf engine=tesseract+pymupdf duration_ms=369 input_bytes=57295 output_bytes=52413 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:27,418 INFO converters.engine conversion_completed tool=ocr-pdf-to-searchable engine=tesseract+pymupdf duration_ms=1231 input_bytes=3785653 output_bytes=123682 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:27,673 INFO converters.engine conversion_completed tool=ocr-image-to-json engine=tesseract+pymupdf duration_ms=247 input_bytes=57295 output_bytes=2379 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:28,429 INFO converters.engine conversion_completed tool=ocr-pdf-to-json engine=tesseract+pymupdf duration_ms=745 input_bytes=3785653 output_bytes=571 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:29,158 INFO converters.engine conversion_completed tool=ocr-pdf-page-texts engine=tesseract+pymupdf duration_ms=717 input_bytes=3785653 output_bytes=632 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:29,438 INFO converters.engine conversion_completed tool=ocr-image-numbers engine=tesseract+pymupdf duration_ms=277 input_bytes=57295 output_bytes=22 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:29,707 INFO converters.engine conversion_completed tool=ocr-image-emails engine=tesseract+pymupdf duration_ms=265 input_bytes=57295 output_bytes=17 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:29,950 INFO converters.engine conversion_completed tool=ocr-image-urls engine=tesseract+pymupdf duration_ms=238 input_bytes=57295 output_bytes=20 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:30,215 INFO converters.engine conversion_completed tool=ocr-image-table-csv engine=tesseract+pymupdf duration_ms=261 input_bytes=57295 output_bytes=127 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:30,480 INFO converters.engine conversion_completed tool=ocr-image-clean-text engine=tesseract+pymupdf duration_ms=261 input_bytes=57295 output_bytes=128 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:30,749 INFO converters.engine conversion_completed tool=ocr-image-to-html engine=tesseract+pymupdf duration_ms=263 input_bytes=57295 output_bytes=181 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:31,013 INFO converters.engine conversion_completed tool=ocr-image-to-markdown engine=tesseract+pymupdf duration_ms=257 input_bytes=57295 output_bytes=142 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:31,985 INFO converters.engine conversion_completed tool=ocr-pdf-to-markdown engine=tesseract+pymupdf duration_ms=955 input_bytes=3785653 output_bytes=428 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:32,864 INFO converters.engine conversion_completed tool=ocr-pdf-to-csv engine=tesseract+pymupdf duration_ms=868 input_bytes=3785653 output_bytes=415 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:33,117 INFO converters.engine conversion_completed tool=ocr-image-to-csv engine=tesseract+pymupdf duration_ms=249 input_bytes=57295 output_bytes=159 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:33,372 INFO converters.engine conversion_completed tool=ocr-receipt-fields engine=tesseract+pymupdf duration_ms=251 input_bytes=57295 output_bytes=90 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:33,613 INFO converters.engine conversion_completed tool=ocr-invoice-fields engine=tesseract+pymupdf duration_ms=238 input_bytes=57295 output_bytes=206 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:33,859 INFO converters.engine conversion_completed tool=ocr-text-deduplicate engine=tesseract+pymupdf duration_ms=242 input_bytes=57295 output_bytes=124 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,153 INFO converters.engine conversion_completed tool=ocr-entities engine=tesseract+pymupdf duration_ms=290 input_bytes=57295 output_bytes=118 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,383 INFO converters.engine conversion_completed tool=ocr-language-report engine=tesseract+pymupdf duration_ms=225 input_bytes=57295 output_bytes=69 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,469 INFO converters.engine conversion_completed tool=zip-create engine=python-archive duration_ms=58 input_bytes=7571306 output_bytes=106536 batch_total=2 batch_succeeded=2
+2026-09-13 14:45:34,475 INFO converters.engine conversion_completed tool=zip-extract engine=python-archive duration_ms=1 input_bytes=329 output_bytes=301 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,496 INFO converters.engine conversion_completed tool=tar-create engine=python-archive duration_ms=4 input_bytes=7571306 output_bytes=7577600 batch_total=2 batch_succeeded=2
+2026-09-13 14:45:34,504 INFO converters.engine conversion_completed tool=tar-extract engine=python-archive duration_ms=1 input_bytes=10240 output_bytes=167 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,507 INFO converters.engine conversion_completed tool=gzip-compress engine=python-archive duration_ms=1 input_bytes=29 output_bytes=54 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,510 INFO converters.engine conversion_completed tool=gzip-decompress engine=python-archive duration_ms=0 input_bytes=76 output_bytes=61 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,514 INFO converters.engine conversion_completed tool=zip-list engine=python-archive duration_ms=1 input_bytes=329 output_bytes=374 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,520 INFO converters.engine conversion_completed tool=zip-integrity engine=python-archive duration_ms=0 input_bytes=329 output_bytes=116 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,524 INFO converters.engine conversion_completed tool=zip-flatten engine=python-archive duration_ms=1 input_bytes=329 output_bytes=301 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,527 INFO converters.engine conversion_completed tool=tar-list engine=python-archive duration_ms=1 input_bytes=10240 output_bytes=105 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,530 INFO converters.engine conversion_completed tool=gzip-info engine=python-archive duration_ms=0 input_bytes=76 output_bytes=86 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,534 INFO converters.engine conversion_completed tool=zip-to-tar engine=python-archive duration_ms=1 input_bytes=329 output_bytes=10240 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,538 INFO converters.engine conversion_completed tool=bzip2-compress engine=python-archive duration_ms=1 input_bytes=29 output_bytes=71 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,541 INFO converters.engine conversion_completed tool=bzip2-decompress engine=python-archive duration_ms=0 input_bytes=93 output_bytes=61 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,565 INFO converters.engine conversion_completed tool=xz-compress engine=python-archive duration_ms=21 input_bytes=29 output_bytes=88 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,568 INFO converters.engine conversion_completed tool=xz-decompress engine=python-archive duration_ms=0 input_bytes=116 output_bytes=61 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,571 INFO converters.engine conversion_completed tool=tar-gzip-create engine=python-archive duration_ms=1 input_bytes=122 output_bytes=278 batch_total=2 batch_succeeded=2
+2026-09-13 14:45:34,575 INFO converters.engine conversion_completed tool=tar-gzip-extract engine=python-archive duration_ms=1 input_bytes=237 output_bytes=167 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,577 INFO converters.engine conversion_completed tool=zip-duplicate-report engine=python-archive duration_ms=1 input_bytes=329 output_bytes=38 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,580 INFO converters.engine conversion_completed tool=tar-integrity engine=python-archive duration_ms=1 input_bytes=237 output_bytes=35 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,584 INFO converters.engine conversion_completed tool=tar-bzip2-create engine=python-archive duration_ms=1 input_bytes=122 output_bytes=283 batch_total=2 batch_succeeded=2
+2026-09-13 14:45:34,587 INFO converters.engine conversion_completed tool=tar-bzip2-extract engine=python-archive duration_ms=1 input_bytes=237 output_bytes=167 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,604 INFO converters.engine conversion_completed tool=file-hash engine=hashlib duration_ms=8 input_bytes=3785653 output_bytes=179 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,616 INFO converters.engine conversion_completed tool=file-info engine=hashlib duration_ms=0 input_bytes=3785653 output_bytes=129 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,628 INFO converters.engine conversion_completed tool=file-mime-report engine=hashlib duration_ms=1 input_bytes=3785653 output_bytes=231 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,631 INFO converters.engine conversion_completed tool=text-statistics engine=stdlib duration_ms=1 input_bytes=29 output_bytes=124 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,634 INFO converters.engine conversion_completed tool=text-clean engine=stdlib duration_ms=0 input_bytes=28 output_bytes=28 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,636 INFO converters.engine conversion_completed tool=text-deduplicate engine=stdlib duration_ms=0 input_bytes=29 output_bytes=29 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,638 INFO converters.engine conversion_completed tool=text-sort engine=stdlib duration_ms=0 input_bytes=29 output_bytes=29 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,647 INFO converters.engine conversion_completed tool=filename-normalizer engine=stdlib duration_ms=0 input_bytes=3785653 output_bytes=112 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,650 INFO converters.engine conversion_completed tool=csv-validator engine=office-libraries duration_ms=0 input_bytes=29 output_bytes=72 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,652 INFO converters.engine conversion_completed tool=json-validator engine=office-libraries duration_ms=0 input_bytes=57 output_bytes=58 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,656 INFO converters.engine conversion_completed tool=number-list-analyzer engine=stdlib duration_ms=2 input_bytes=61 output_bytes=107 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,659 INFO converters.engine conversion_completed tool=text-to-base64 engine=stdlib duration_ms=1 input_bytes=61 output_bytes=85 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,661 INFO converters.engine conversion_completed tool=base64-decode engine=stdlib duration_ms=0 input_bytes=20 output_bytes=14 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,664 INFO converters.engine conversion_completed tool=url-encode engine=stdlib duration_ms=0 input_bytes=61 output_bytes=79 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,666 INFO converters.engine conversion_completed tool=url-decode engine=stdlib duration_ms=0 input_bytes=61 output_bytes=61 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,668 INFO converters.engine conversion_completed tool=json-minify engine=office-libraries duration_ms=0 input_bytes=57 output_bytes=57 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,671 INFO converters.engine conversion_completed tool=text-diff engine=stdlib duration_ms=0 input_bytes=58 output_bytes=47 batch_total=2 batch_succeeded=2
+2026-09-13 14:45:34,674 INFO converters.engine conversion_completed tool=checksum-compare engine=hashlib duration_ms=0 input_bytes=122 output_bytes=182 batch_total=2 batch_succeeded=2
+2026-09-13 14:45:34,676 INFO converters.engine conversion_completed tool=uuid-list-generator engine=stdlib duration_ms=0 input_bytes=0 output_bytes=370 batch_total=0 batch_succeeded=0
+2026-09-13 14:45:34,710 INFO converters.engine conversion_completed tool=regex-extract engine=stdlib duration_ms=33 input_bytes=29 output_bytes=21 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,714 INFO converters.engine conversion_completed tool=file-extension-report engine=hashlib duration_ms=0 input_bytes=61 output_bytes=149 batch_total=1 batch_succeeded=1
+2026-09-13 14:45:34,716 INFO converters.engine conversion_completed tool=hex-encode engine=stdlib duration_ms=0 input_bytes=61 output_bytes=122 batch_total=1 batch_succeeded=1
+API PASS pdf-merge
+API PASS pdf-split
+API PASS pdf-extract-pages
+API PASS pdf-delete-pages
+API PASS pdf-rotate
+API PASS pdf-compress
+API PASS pdf-to-jpg
+API PASS pdf-to-png
+API PASS image-to-pdf
+API PASS pdf-to-text
+API PASS pdf-to-html
+API PASS pdf-metadata
+API PASS pdf-booklet
+API PASS lms-pdf-size-optimizer
+API PASS assignment-cover-page
+API PASS omr-bubble-sheet
+API PASS pdf-reorder-pages
+API PASS pdf-rotate-selected
+API PASS pdf-page-numbers
+API PASS pdf-watermark-text
+API PASS pdf-grayscale
+API PASS pdf-remove-blank-pages
+API PASS pdf-crop-margins
+API PASS pdf-poster-split
+API PASS pdf-contact-sheet
+API PASS pdf-password-protect
+API PASS pdf-to-docx
+API PASS pdf-to-markdown
+API PASS pdf-compare
+API PASS pdf-repair
+API PASS pdf-image-extract
+API PASS pdf-links-report
+API PASS pdf-annotations-report
+API PASS pdf-page-size-report
+API PASS pdf-redact
+API PASS pdf-unlock
+API PASS image-to-jpg
+API PASS image-to-png
+API PASS image-to-webp
+API PASS image-resize
+API PASS image-compress
+API PASS image-rotate
+API PASS social-media-image-resizer
+API PASS quote-social-graphic
+API PASS image-crop
+API PASS image-flip
+API PASS image-grayscale
+API PASS image-sharpen
+API PASS image-auto-contrast
+API PASS image-sepia
+API PASS image-strip-metadata
+API PASS image-favicon-pack
+API PASS image-contact-sheet
+API PASS image-set-dpi
+API PASS image-upscale
+API PASS image-blur
+API PASS image-pixelate
+API PASS image-invert
+API PASS image-posterize
+API PASS image-color-palette
+API PASS image-watermark
+API PASS image-background-cleaner
+API PASS image-auto-orient
+API PASS image-round-corners
+API FAIL word-to-pdf: AssertionError: HTTP 400
+API FAIL excel-to-pdf: AssertionError: HTTP 400
+API FAIL ppt-to-pdf: AssertionError: HTTP 400
+API FAIL txt-to-pdf: AssertionError: HTTP 400
+API FAIL html-to-pdf: AssertionError: HTTP 400
+API PASS markdown-to-html
+API FAIL markdown-to-pdf: AssertionError: HTTP 400
+API PASS csv-to-xlsx
+API FAIL csv-to-pdf: AssertionError: HTTP 400
+API PASS bulk-certificate-maker
+API PASS csv-merge-deduplicate
+API PASS lms-question-bank-formatter
+API PASS docx-to-text
+API PASS docx-to-html
+API PASS xlsx-to-csv
+API PASS xlsx-to-json
+API PASS pptx-to-text
+API PASS csv-to-json
+API PASS json-to-csv
+API PASS json-to-xlsx
+API PASS xml-to-json
+API PASS text-to-json
+API PASS docx-to-markdown
+API PASS docx-table-to-csv
+API PASS xlsx-to-html
+API PASS xlsx-summary
+API PASS csv-to-markdown
+API PASS csv-statistics
+API PASS json-to-html
+API PASS html-to-text
+API PASS markdown-to-text
+API PASS pptx-to-markdown
+API PASS pdf-ocr
+API PASS image-ocr
+API PASS ocr-image-to-pdf
+API PASS ocr-pdf-to-searchable
+API PASS ocr-image-to-json
+API PASS ocr-pdf-to-json
+API PASS ocr-pdf-page-texts
+API PASS ocr-image-numbers
+API PASS ocr-image-emails
+API PASS ocr-image-urls
+API PASS ocr-image-table-csv
+API PASS ocr-image-clean-text
+API PASS ocr-image-to-html
+API PASS ocr-image-to-markdown
+API PASS ocr-pdf-to-markdown
+API PASS ocr-pdf-to-csv
+API PASS ocr-image-to-csv
+API PASS ocr-receipt-fields
+API PASS ocr-invoice-fields
+API PASS ocr-text-deduplicate
+API PASS ocr-entities
+API PASS ocr-language-report
+API PASS zip-create
+API PASS zip-extract
+API PASS tar-create
+API PASS tar-extract
+API PASS gzip-compress
+API PASS gzip-decompress
+API PASS zip-list
+API PASS zip-integrity
+API PASS zip-flatten
+API PASS tar-list
+API PASS gzip-info
+API PASS zip-to-tar
+API PASS bzip2-compress
+API PASS bzip2-decompress
+API PASS xz-compress
+API PASS xz-decompress
+API PASS tar-gzip-create
+API PASS tar-gzip-extract
+API PASS zip-duplicate-report
+API PASS tar-integrity
+API PASS tar-bzip2-create
+API PASS tar-bzip2-extract
+API PASS file-hash
+API PASS file-info
+API PASS file-mime-report
+API PASS text-statistics
+API PASS text-clean
+API PASS text-deduplicate
+API PASS text-sort
+API PASS filename-normalizer
+API PASS csv-validator
+API PASS json-validator
+API PASS number-list-analyzer
+API PASS text-to-base64
+API PASS base64-decode
+API PASS url-encode
+API PASS url-decode
+API PASS json-minify
+API PASS text-diff
+API PASS checksum-compare
+API PASS uuid-list-generator
+API PASS regex-extract
+API PASS file-extension-report
+API PASS hex-encode
+API RESULT 155/162

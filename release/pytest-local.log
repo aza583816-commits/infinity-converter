@@ -1,0 +1,55 @@
+...........................................sss.......................... [ 41%]
+........................................................................ [ 82%]
+...........FF.F................                                          [100%]
+=================================== FAILURES ===================================
+_______________________________ test_txt_to_pdf ________________________________
+
+client = <FlaskClient <Flask 'app_factory'>>
+
+    def test_txt_to_pdf(client):
+        response = post(client, "txt-to-pdf", single=upload("note.txt", "Hello Infinity\nArabic: اختبار".encode("utf-8")))
+>       assert response.status_code == 200
+E       assert 400 == 200
+E        +  where 400 = <WrapperTestResponse streamed [400 BAD REQUEST]>.status_code
+
+tests/test_stage2_tools.py:221: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  converters.engine:engine.py:166 conversion_failed tool=txt-to-pdf engine=libreoffice duration_ms=1 input_bytes=35 error=ValueError
+________________________ test_markdown_to_html_and_pdf _________________________
+
+client = <FlaskClient <Flask 'app_factory'>>
+
+    def test_markdown_to_html_and_pdf(client):
+        md = b"# Title\n\nSome **bold** text."
+        response = post(client, "markdown-to-html", single=upload("note.md", md))
+        assert response.status_code == 200
+        assert b"<h1>" in response.data or b"<h1 " in response.data
+    
+        response = post(client, "markdown-to-pdf", single=upload("note.md", md))
+>       assert response.status_code == 200
+E       assert 400 == 200
+E        +  where 400 = <WrapperTestResponse streamed [400 BAD REQUEST]>.status_code
+
+tests/test_stage2_tools.py:232: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  converters.engine:engine.py:166 conversion_failed tool=markdown-to-pdf engine=libreoffice duration_ms=2 input_bytes=28 error=ValueError
+_______________________________ test_csv_to_pdf ________________________________
+
+client = <FlaskClient <Flask 'app_factory'>>
+
+    def test_csv_to_pdf(client):
+        csv_bytes = "name,age\nAli,30\n".encode("utf-8")
+        response = post(client, "csv-to-pdf", single=upload("data.csv", csv_bytes))
+>       assert response.status_code == 200
+E       assert 400 == 200
+E        +  where 400 = <WrapperTestResponse streamed [400 BAD REQUEST]>.status_code
+
+tests/test_stage2_tools.py:246: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  converters.engine:engine.py:166 conversion_failed tool=csv-to-pdf engine=libreoffice duration_ms=1 input_bytes=16 error=ValueError
+- generated xml file: /workspace/scratch/f8b3506d1972/verification/final-local/pytest.xml -
+=========================== short test summary info ============================
+FAILED tests/test_stage2_tools.py::test_txt_to_pdf - assert 400 == 200
+FAILED tests/test_stage2_tools.py::test_markdown_to_html_and_pdf - assert 400...
+FAILED tests/test_stage2_tools.py::test_csv_to_pdf - assert 400 == 200
+3 failed, 169 passed, 3 skipped in 10.64s

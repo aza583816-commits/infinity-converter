@@ -140,6 +140,7 @@ def account():
         abort(404)
     return render_template(
         "account.html",
+        csrf_token=csrf_token(),
         user=g.current_user,
         plan=get_effective_plan(g.current_user["id"]),
         subscription=get_latest_subscription_for_user(g.current_user["id"]),
@@ -407,7 +408,7 @@ def sitemap():
     for url in urls:
         base = f"{settings.public_base_url}{url}"
         body += f"<url><loc>{base}</loc><lastmod>2026-09-13</lastmod>"
-        body += f'<xhtml:link rel="alternate" hreflang="ar" href="{base}"/>'
+        body += f'<xhtml:link rel="alternate" hreflang="ar" href="{base}?lang=ar"/>'
         body += f'<xhtml:link rel="alternate" hreflang="en" href="{base}?lang=en"/>'
         body += f'<xhtml:link rel="alternate" hreflang="x-default" href="{base}"/>'
         body += "</url>"

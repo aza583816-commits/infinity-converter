@@ -1,3 +1,21 @@
+# Current candidate: 7.2.1
+
+The active review is `work/production-hardening`, based on verified upstream
+commit `00ae9b35`. Read [current release notes](RELEASE_NOTES_7.2.1.md) and
+[current audit](FINAL_AUDIT_7.2.1.md) before deployment. Earlier reports below
+are historical and do not certify this candidate.
+
+Verified implementation CI: **175 pytest tests passed**, **162/162 engine operations passed**, and **162/162 HTTP operation paths passed**, including genuine legacy DOC conversion and Arabic OCR. See `release/CI_RESULTS.md`.
+
+Production gates remain mandatory:
+
+```sh
+docker build --progress=plain -t infinity-verified .
+docker run --rm --network none infinity-verified python scripts/full_operation_smoke.py
+docker run --rm --network none infinity-verified python scripts/api_operation_smoke.py
+node tests/browser-calculations.cjs
+```
+
 # Infinity Converter
 
 Infinity Converter is a Flask 3 file-conversion service deployed on Railway. The frontend is Arabic/English with RTL/LTR support, while conversion remains behind the `/api/v2` API.

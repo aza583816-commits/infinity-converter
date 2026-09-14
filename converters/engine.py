@@ -175,6 +175,7 @@ class ConversionEngine:
     def _run_single(operation: Operation, safe_inputs, output_dir, param, timeout, max_pdf_pages, options, workspace):
         outputs: list[tuple[Path, str, str]] = []
         failures: list[tuple[str, str]] = []
+        succeeded_inputs = 0
 
         for index, safe_input in enumerate(safe_inputs):
             item_dir = output_dir / f"item-{index}"
@@ -183,9 +184,17 @@ class ConversionEngine:
                 produced = operation.handler(
                     safe_input, item_dir, param, timeout, max_pdf_pages, options
                 )
+                if not produced:
+                    raise ValueError("تعذر إنتاج ملف لهذا الإدخال.")
+                item_outputs = []
                 for path, mime in produced:
                     _artifact_guard(path, mime, workspace)
-                    outputs.append((Path(path), mime, safe_input["filename"]))
+                    if not operation.force_zip:
+                        from core.tooling import TOOLS
+                        _declared_output_guard(Path(path), mime, TOOLS[operation.id])
+                    item_outputs.append((Path(path), mime, safe_input["filename"]))
+                outputs.extend(item_outputs)
+                succeeded_inputs += 1
             except Exception as exc:
                 # Batch tools isolate a bad item without disclosing internal
                 # exception text. User-caused validation errors remain useful.
@@ -195,7 +204,8 @@ class ConversionEngine:
         if not outputs:
             raise ValueError(failures[0][1] if failures else "تعذر إنتاج أي ملف.")
 
-        if len(outputs) == 1 and not failures and not operation.force_zip:
+        already_packaged = len(outputs) == 1 and outputs[0][1] == "application/zip"
+        if len(outputs) == 1 and not failures and (not operation.force_zip or already_packaged):
             path, mime, _source_name = outputs[0]
             details = _artifact_guard(path, mime, workspace)
             return path, mime, details, 1, 1, []
@@ -209,7 +219,7 @@ class ConversionEngine:
 
         if failures:
             report = {
-                "succeeded": len(outputs),
+                "succeeded": succeeded_inputs,
                 "failed": [{"file": name, "error": message} for name, message in failures],
             }
             report_path = output_dir / "batch-report.json"
@@ -220,5 +230,5 @@ class ConversionEngine:
         zip_path = output_dir / "InfinityConverter-Batch.zip"
         archive.create_zip(entries, zip_path)
         details = _artifact_guard(zip_path, "application/zip", workspace)
-        total = len(outputs) + len(failures)
-        return zip_path, "application/zip", details, total, len(outputs), [name for name, _ in failures]
+        total = len(safe_inputs)
+        return zip_path, "application/zip", details, total, succeeded_inputs, [name for name, _ in failures]

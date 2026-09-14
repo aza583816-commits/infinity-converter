@@ -250,7 +250,7 @@ if (sampleButton) sampleButton.addEventListener("click", async () => {
       field.dispatchEvent(new Event("input", { bubbles: true }));
       field.dispatchEvent(new Event("change", { bubbles: true }));
     });
-    dropzone?.scrollIntoView({ behavior: "smooth", block: "center" });
+    dropzone?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
   } catch (error) {
     if (intelligence) { intelligence.hidden = false; intelligence.textContent = error.message || String(error); }
   } finally {
@@ -259,6 +259,14 @@ if (sampleButton) sampleButton.addEventListener("click", async () => {
   }
 });
 
+let resultObjectUrl = null;
+const releaseResult = () => {
+  if (resultObjectUrl) URL.revokeObjectURL(resultObjectUrl);
+  resultObjectUrl = null;
+  const download = document.getElementById('download-again');
+  if (download) { download.hidden = true; download.removeAttribute('href'); }
+};
+window.addEventListener('pagehide', releaseResult);
 const resultPanel = $("#result-panel");
 function setResultState(state, message = "") {
   if (!resultPanel) return;
@@ -273,6 +281,8 @@ function setResultState(state, message = "") {
 }
 if (form) form.addEventListener("submit", async (event) => {
   event.preventDefault();
+  if (form.getAttribute("aria-busy") === "true") return;
+  releaseResult();
   const status = $("#status");
   const result = $("#result");
   const metrics = $("#result-metrics");
@@ -339,7 +349,11 @@ if (form) form.addEventListener("submit", async (event) => {
     document.body.append(anchor);
     anchor.click();
     anchor.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 3000);
+    resultObjectUrl = url;
+    const downloadAgain = document.getElementById('download-again');
+    if (downloadAgain) {
+      downloadAgain.href = url; downloadAgain.download = filename; downloadAgain.hidden = false;
+    }
 
     const batchTotal = Number(response.headers.get("X-Batch-Total") || 0);
     const batchFailed = Number(response.headers.get("X-Batch-Failed") || 0);
@@ -611,7 +625,7 @@ if (browserWorkspace) {
   const output = $('#browser-output');
   const download = $('#browser-download');
   const value = (key) => $(`#browser-${key}`)?.value.trim() || '';
-  const number = (key) => Number(value(key));
+  const number = (key) => { const raw = value(key); const parsed = Number(raw); if (!raw || !Number.isFinite(parsed)) throw new Error('Enter a valid number.'); return parsed; };
   const lines = (key) => value(key).split('\n').map((item) => item.trim()).filter(Boolean);
   const fixed = (amount) => Number(amount).toLocaleString(undefined, { maximumFractionDigits: 2 });
   const requirePositive = (amount, label = 'Value') => { if (!Number.isFinite(amount) || amount <= 0) throw new Error(`${label} must be greater than zero.`); return amount; };
@@ -654,9 +668,9 @@ if (browserWorkspace) {
   async function runBrowserTool() {
     if (timerState.interval) { clearInterval(timerState.interval); timerState.interval = null; }
     if (download) download.hidden = true;
-    if (toolId === 'gpa-calculator') { const courses = parsePairs('courses'); const totals = courses.reduce((sum, [grade, credits]) => { const points = { 'A+': 4, A: 4, 'A-': 3.7, 'B+': 3.3, B: 3, 'B-': 2.7, 'C+': 2.3, C: 2, 'C-': 1.7, D: 1, F: 0 }[grade.toUpperCase()]; const hours = Number(credits); if (points === undefined || !hours) throw new Error('Use grades such as A, B+, C and positive credits.'); return [sum[0] + points * hours, sum[1] + hours]; }, [0, 0]); return `GPA: ${(totals[0] / totals[1]).toFixed(2)}\nCredits: ${totals[1]}`; }
-    if (toolId === 'weighted-grade-calculator') { const pairs = parsePairs('items'); const totalWeight = pairs.reduce((sum, [, weight]) => sum + Number(weight), 0); const result = pairs.reduce((sum, [grade, weight]) => sum + Number(grade) * Number(weight), 0) / totalWeight; return `Weighted grade: ${fixed(result)}%\nTotal weight: ${fixed(totalWeight)}%`; }
-    if (toolId === 'study-session-planner') { const minutes = requirePositive(number('minutes'), 'Minutes'); const topics = requirePositive(number('topics'), 'Topics'); const block = Math.floor(minutes / topics); return Array.from({ length: topics }, (_, index) => `Topic ${index + 1}: ${block} minutes${index < topics - 1 ? '\nBreak: 5 minutes' : ''}`).join('\n'); }
+    if (toolId === 'gpa-calculator') { const courses = parsePairs('courses'); if (!courses.length) throw new Error('Enter at least one course.'); const totals = courses.reduce((sum, [grade, credits]) => { const points = { 'A+': 4, A: 4, 'A-': 3.7, 'B+': 3.3, B: 3, 'B-': 2.7, 'C+': 2.3, C: 2, 'C-': 1.7, D: 1, F: 0 }[grade.toUpperCase()]; const hours = Number(credits); if (points === undefined || !Number.isFinite(hours) || hours <= 0) throw new Error('Use grades such as A, B+, C and positive credits.'); return [sum[0] + points * hours, sum[1] + hours]; }, [0, 0]); return `GPA: ${(totals[0] / totals[1]).toFixed(2)}\nCredits: ${totals[1]}`; }
+    if (toolId === 'weighted-grade-calculator') { const pairs = parsePairs('items'); if (!pairs.length || pairs.some(([grade, weight]) => !Number.isFinite(Number(grade)) || !Number.isFinite(Number(weight)) || Number(weight) <= 0)) throw new Error('Enter grades with positive weights.'); const totalWeight = pairs.reduce((sum, [, weight]) => sum + Number(weight), 0); const result = pairs.reduce((sum, [grade, weight]) => sum + Number(grade) * Number(weight), 0) / totalWeight; return `Weighted grade: ${fixed(result)}%\nTotal weight: ${fixed(totalWeight)}%`; }
+    if (toolId === 'study-session-planner') { const minutes = requirePositive(number('minutes'), 'Minutes'); const topics = requirePositive(number('topics'), 'Topics'); if (!Number.isInteger(topics) || topics > 100 || minutes <= (topics - 1) * 5) throw new Error('Choose fewer topics or allow more study time.'); const block = Math.floor((minutes - (topics - 1) * 5) / topics); return Array.from({ length: topics }, (_, index) => `Topic ${index + 1}: ${block} minutes${index < topics - 1 ? '\nBreak: 5 minutes' : ''}`).join('\n'); }
     if (toolId === 'focus-timer') { let remaining = Math.round(requirePositive(number('minutes'), 'Minutes') * 60); const render = () => { output.value = `Focus time remaining: ${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}`; }; render(); timerState.interval = setInterval(() => { remaining -= 1; render(); if (remaining <= 0) { clearInterval(timerState.interval); timerState.interval = null; output.value = 'Focus session complete.'; } }, 1000); return null; }
     if (toolId === 'flashcard-maker') { return lines('cards').map((card, index) => { const [question, answer] = card.split('|').map((part) => part.trim()); if (!question || !answer) throw new Error('Use Question | answer on each line.'); return `${index + 1}. Q: ${question}\n   A: ${answer}`; }).join('\n\n'); }
     if (toolId === 'presentation-outline-builder') { const topic = value('topic'); const points = lines('points'); if (!topic || !points.length) throw new Error('Enter a topic and at least one key point.'); return [`1. ${topic}`, '2. Context and goal', ...points.map((point, index) => `${index + 3}. ${point}`), `${points.length + 3}. Summary and next steps`].join('\n'); }
@@ -739,7 +753,7 @@ if (browserWorkspace) {
     if (toolId === 'password-generator') { const length = Math.min(128, Math.max(8, Math.round(number('length')))); const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%&*?'; const random = crypto.getRandomValues(new Uint32Array(length)); return Array.from(random, (item) => chars[item % chars.length]).join(''); }
     if (toolId === 'bmi-calculator') { const height = requirePositive(number('height'), 'Height') / 100; const bmi = requirePositive(number('weight'), 'Weight') / height ** 2; return `BMI: ${fixed(bmi)}\nCategory: ${bmi < 18.5 ? 'Underweight' : bmi < 25 ? 'Healthy range' : bmi < 30 ? 'Overweight' : 'Obesity range'}`; }
     if (toolId === 'temperature-converter') { const source = value('from'); const target = value('to'); let celsius = number('value'); if (source === 'f') celsius = (celsius - 32) * 5 / 9; if (source === 'k') celsius -= 273.15; const result = target === 'f' ? celsius * 9 / 5 + 32 : target === 'k' ? celsius + 273.15 : celsius; return `${fixed(number('value'))} ${source.toUpperCase()} = ${fixed(result)} ${target.toUpperCase()}`; }
-    if (toolId === 'pace-calculator') { const minutes = requirePositive(number('minutes'), 'Time'); const distance = requirePositive(number('distance'), 'Distance'); const pace = minutes / distance; return `Pace: ${Math.floor(pace)}:${String(Math.round((pace % 1) * 60)).padStart(2, '0')} min/km`; }
+    if (toolId === 'pace-calculator') { const minutes = requirePositive(number('minutes'), 'Time'); const distance = requirePositive(number('distance'), 'Distance'); const seconds = Math.round(minutes / distance * 60); return `Pace: ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')} min/km`; }
     if (toolId === 'fuel-cost-calculator') { const liters = requirePositive(number('distance'), 'Distance') * requirePositive(number('efficiency'), 'Fuel use') / 100; return `Fuel needed: ${fixed(liters)} L\nEstimated cost: ${fixed(liters * number('price'))}`; }
     if (toolId === 'loan-payment-estimator') { const months = requirePositive(number('months'), 'Months'); const monthlyRate = number('rate') / 1200; const payment = monthlyRate ? number('principal') * monthlyRate / (1 - (1 + monthlyRate) ** -months) : number('principal') / months; return `Estimated monthly payment: ${fixed(payment)}\nEstimated total paid: ${fixed(payment * months)}`; }
     if (toolId === 'random-decision-picker') { const choices = lines('choices'); if (!choices.length) throw new Error('Enter at least one choice.'); return `Selected: ${choices[crypto.getRandomValues(new Uint32Array(1))[0] % choices.length]}`; }
@@ -780,7 +794,7 @@ if (browserWorkspace) {
     if (!form) return {};
     const settings = {};
     form.querySelectorAll('[name]').forEach((field) => {
-      if (!field.name || ['files', 'tool'].includes(field.name) || field.type === 'file') return;
+      if (!field.name || !['select-one', 'number', 'range'].includes(field.type)) return;
       const value = String(field.value || '').slice(0, 300);
       if (value) settings[field.name] = value;
     });
@@ -792,9 +806,9 @@ if (browserWorkspace) {
     tool: toolContext && toolContext.id ? toolContext : undefined,
     files: safeSelectedFiles(),
     smart_file: runtime.smartFile || undefined,
-    settings: currentSettings(),
+    settings: {},
     result: runtime.lastResult || undefined,
-    error: runtime.lastError || undefined,
+    error: runtime.lastError ? { present: true } : undefined,
     privacy: { file_contents_attached: false, filenames_attached: false },
   });
 

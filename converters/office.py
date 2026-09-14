@@ -31,11 +31,29 @@ def _reject_remote_html_resources(source: Path) -> None:
         text = source.read_text(encoding="utf-8", errors="strict")
     except UnicodeError as exc:
         raise ValueError("ملف HTML يجب أن يكون UTF-8 صالحًا.") from exc
+    from html.parser import HTMLParser
+    import html
+
+    class ResourceGuard(HTMLParser):
+        def handle_starttag(self, tag, attrs):
+            if tag in {"base", "object", "embed", "iframe", "script", "link"}:
+                raise ValueError("HTML يحتوي على موارد نشطة أو خارجية غير مدعومة.")
+            for key, value in attrs:
+                if key in {"src", "poster", "background", "data", "srcset"}:
+                    if not value or not value.strip().lower().startswith("data:image/") or key == "srcset":
+                        raise ValueError("لحماية الخصوصية، موارد HTML يجب أن تكون صورًا مضمنة فقط.")
+        handle_startendtag = handle_starttag
+
+    ResourceGuard(convert_charrefs=True).feed(text)
+    # Reject CSS resource syntax, including escapes/comments which can disguise
+    # url()/@import. Plain styles and embedded images remain supported.
+    styles = re.findall(r"<style\b[^>]*>(.*?)</style\s*>|\bstyle\s*=\s*['\"](.*?)['\"]", text, re.I | re.S)
+    for pair in styles:
+        css = html.unescape(" ".join(pair)).lower()
+        if any(token in css for token in ("url", "@import", "\\", "/*")):
+            raise ValueError("موارد CSS الخارجية غير مدعومة.")
     if any(pattern.search(text) for pattern in _REMOTE_HTML_PATTERNS):
-        raise ValueError(
-            "لأسباب الخصوصية والأمان، HTML الذي يعتمد على صور أو CSS خارجية غير مدعوم. "
-            "استخدم موارد مضمنة داخل الملف."
-        )
+        raise ValueError("موارد HTML الخارجية غير مدعومة.")
 
 
 def _run_libreoffice(cmd: list[str], *, timeout: int, env: dict[str, str]) -> None:
@@ -78,22 +96,31 @@ def office_to_pdf(source: Path, output_dir: Path, timeout: int) -> Path:
     home.mkdir(parents=True, mode=0o700)
     tmp.mkdir(parents=True, mode=0o700)
 
-    env = os.environ.copy()
+    # The renderer does not need database credentials, AI keys or billing keys.
+    user_profile = profile / "user"
+    user_profile.mkdir(mode=0o700)
+    (user_profile / "registrymodifications.xcu").write_text(
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<oor:items xmlns:oor="http://openoffice.org/2001/registry">'
+        '<item oor:path="/org.openoffice.Office.Common/Security/Scripting">'
+        '<prop oor:name="MacroSecurityLevel" oor:op="fuse"><value>3</value></prop>'
+        '</item></oor:items>', encoding="utf-8")
+    env = {name: os.environ[name] for name in ("PATH", "LANG", "LC_ALL", "TZ") if name in os.environ}
     env.update({
         "HOME": str(home),
         "TMPDIR": str(tmp),
         "SAL_DISABLE_OPENCL": "1",
         "SAL_USE_VCLPLUGIN": "svp",
-        # Block network fetches from document/HTML renderers. A malformed or
-        # remote-linked document must never turn the conversion worker into an
-        # SSRF client. Local conversion does not need HTTP/HTTPS/FTP egress.
+        # Defense in depth for proxy-aware fetches, NOT a network sandbox.
+        # Production should isolate renderer egress at the worker/network layer.
         "http_proxy": "http://127.0.0.1:9",
         "https_proxy": "http://127.0.0.1:9",
         "ftp_proxy": "http://127.0.0.1:9",
         "HTTP_PROXY": "http://127.0.0.1:9",
         "HTTPS_PROXY": "http://127.0.0.1:9",
         "FTP_PROXY": "http://127.0.0.1:9",
-        "NO_PROXY": "localhost,127.0.0.1",
+        "NO_PROXY": "",
+        "no_proxy": "",
     })
 
     cmd = [
