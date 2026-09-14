@@ -35,11 +35,28 @@ def test_api_responses_are_private_and_not_search_indexable():
     assert response.headers["X-Robots-Tag"] == "noindex, nofollow, noarchive"
 
 
+def test_liveness_and_readiness_are_separate_and_versioned():
+    app = create_app()
+    app.config.update(TESTING=True)
+    with app.test_client() as client:
+        live = client.get("/api/v2/livez")
+        ready = client.get("/api/v2/readyz")
+    assert live.status_code == 200
+    assert live.get_json() == {"status": "ok", "version": settings.app_version}
+    assert ready.status_code == 200
+    payload = ready.get_json()
+    assert payload["version"] == settings.app_version
+    assert payload["status"] == "ok"
+    assert payload["limits"]["max_concurrent_office"] == settings.max_concurrent_office
+    assert payload["limits"]["max_concurrent_ocr"] == settings.max_concurrent_ocr
+
+
 def test_shared_shell_exposes_keyboard_and_screen_reader_guards():
     app = create_app()
     app.config.update(TESTING=True)
     with app.test_client() as client:
-        html = client.get("/?lang=en").get_data(as_text=True)
+        response = client.get("/?lang=en")
+        html = response.get_data(as_text=True)
     assert '/static/css/a11y.css?v=' in html
     assert 'class="skip-link"' in html
     assert 'id="main-content" tabindex="-1"' in html
@@ -47,3 +64,5 @@ def test_shared_shell_exposes_keyboard_and_screen_reader_guards():
     assert 'aria-autocomplete="list"' in html
     assert 'aria-label="Search results"' in html
     assert 'aria-live="polite"' in html
+    assert "Accept-Language" in response.headers.get("Vary", "")
+    assert "Cookie" in response.headers.get("Vary", "")
