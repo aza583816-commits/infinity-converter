@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import logging
-import threading
 import time
 from pathlib import Path
 
@@ -12,11 +11,9 @@ from converters.contracts import ConversionBusyError, ConversionResult, Operatio
 from converters.operations import get_operation
 from converters.legacy_handlers import COMBINE_HANDLERS, SINGLE_HANDLERS  # compatibility exports
 from converters.validation import MIME_BY_EXTENSION, OutputValidationError, validate_output
+from core.admission import AdmissionToken, acquire_slot
 
 logger = logging.getLogger(__name__)
-CONVERSION_LIMIT = threading.BoundedSemaphore(settings.max_concurrent_conversions)
-OFFICE_LIMIT = threading.BoundedSemaphore(settings.max_concurrent_office)
-OCR_LIMIT = threading.BoundedSemaphore(settings.max_concurrent_ocr)
 _UNSAFE_NAME_CHARS = '\\/:*?"<>|'
 
 
@@ -29,14 +26,30 @@ def workload_class(operation: Operation) -> str:
     return "default"
 
 
-def _acquire_workload_limit(operation: Operation, timeout: int):
+def _acquire_required_slot(name: str, slots: int, timeout: int, message: str) -> AdmissionToken:
+    token = acquire_slot(name, slots, timeout)
+    if token is None:
+        raise ConversionBusyError(message)
+    return token
+
+
+def _acquire_workload_limit(operation: Operation, timeout: int) -> AdmissionToken | None:
     kind = workload_class(operation)
-    semaphore = OFFICE_LIMIT if kind == "office" else OCR_LIMIT if kind == "ocr" else None
-    if semaphore is None:
-        return None
-    if not semaphore.acquire(timeout=timeout):
-        raise ConversionBusyError("هذا النوع من التحويلات مشغول حاليًا. حاول مرة أخرى بعد قليل.")
-    return semaphore
+    if kind == "office":
+        return _acquire_required_slot(
+            "office",
+            settings.max_concurrent_office,
+            timeout,
+            "هذا النوع من التحويلات مشغول حاليًا. حاول مرة أخرى بعد قليل.",
+        )
+    if kind == "ocr":
+        return _acquire_required_slot(
+            "ocr",
+            settings.max_concurrent_ocr,
+            timeout,
+            "هذا النوع من التحويلات مشغول حاليًا. حاول مرة أخرى بعد قليل.",
+        )
+    return None
 
 
 def _safe_stem(filename: str) -> str:
@@ -111,9 +124,15 @@ class ConversionEngine:
             raise ValueError("هذه الأداة لم تُوصل بمحرك التحويل بعد.")
         if workspace.path is None or workspace.output_dir is None:
             raise RuntimeError("مساحة المعالجة غير مهيأة.")
-        if not CONVERSION_LIMIT.acquire(timeout=timeout):
-            raise ConversionBusyError("عدد عمليات التحويل الحالية تجاوز الحد المؤقت.")
 
+        # This gate is process-shared on Linux, so multiplying Gunicorn web
+        # workers does not accidentally multiply expensive conversion capacity.
+        conversion_slot = _acquire_required_slot(
+            "conversion",
+            settings.max_concurrent_conversions,
+            timeout,
+            "عدد عمليات التحويل الحالية تجاوز الحد المؤقت.",
+        )
         workload_limit = None
         started = time.perf_counter()
         options = options or {}
@@ -173,7 +192,7 @@ class ConversionEngine:
         finally:
             if workload_limit is not None:
                 workload_limit.release()
-            CONVERSION_LIMIT.release()
+            conversion_slot.release()
 
     @staticmethod
     def _run_single(operation: Operation, safe_inputs, output_dir, param, timeout, max_pdf_pages, options, workspace):
