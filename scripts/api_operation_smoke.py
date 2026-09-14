@@ -11,8 +11,23 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
+from pypdf import PdfReader
+
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
+
+
+def verify_download_semantics(tool_id: str, body: bytes) -> None:
+    """Verify security-sensitive properties on the exact HTTP download bytes."""
+    if tool_id == 'pdf-password-protect':
+        reader = PdfReader(io.BytesIO(body), strict=False)
+        assert reader.is_encrypted, 'HTTP password-protect download is not encrypted'
+        assert reader.decrypt('secret'), 'HTTP password-protect download rejects requested password'
+        assert len(reader.pages) >= 1, 'HTTP password-protect download has no pages after decryption'
+    elif tool_id == 'pdf-unlock':
+        reader = PdfReader(io.BytesIO(body), strict=False)
+        assert not reader.is_encrypted, 'HTTP unlock download is still encrypted'
+        assert len(reader.pages) >= 1, 'HTTP unlock download has no pages'
 
 
 def run():
@@ -52,6 +67,7 @@ def run():
                         assert body and response.headers.get('Content-Disposition', '').startswith('attachment;')
                         assert response.headers.get('X-Conversion-Engine')
                         assert response.headers.get('Cache-Control') == 'no-store, private'
+                        verify_download_semantics(tool.id, body)
                     finally:
                         response.close()
                     assert not any(root.exists() for root in roots), 'workspace leaked after streaming close'
