@@ -48,8 +48,8 @@ WORKFLOWS: dict[str, WorkflowRecipe] = {
         id="web-ready-image",
         name_ar="صورة جاهزة للويب",
         name_en="Web-ready image",
-        description_ar="حوّل الصورة إلى JPG ثم اضغطها وأزل بياناتها الوصفية.",
-        description_en="Convert an image to JPG, compress it, then strip metadata.",
+        description_ar="حوّل الصورة إلى JPG ثم اضغطها بالإعداد الآمن الافتراضي وأزل بياناتها الوصفية.",
+        description_en="Convert an image to JPG, compress it with the safe default, then strip metadata.",
         steps=("image-to-jpg", "image-compress", "image-strip-metadata"),
         icon="IMG",
     ),
@@ -96,10 +96,15 @@ def validate_workflow_registry() -> None:
             tool = get_tool(tool_id)
             if tool is None:
                 raise RuntimeError(f"Workflow {recipe.id} references missing tool {tool_id}")
-            if tool.fields or tool.param_field:
+            if tool.param_field and not tool.param_default:
                 raise RuntimeError(
-                    f"Workflow {recipe.id} step {tool_id} requires interactive options and cannot run unattended"
+                    f"Workflow {recipe.id} step {tool_id} needs a parameter with no safe default"
                 )
+            for field in tool.fields:
+                if field.required and not field.default:
+                    raise RuntimeError(
+                        f"Workflow {recipe.id} step {tool_id} needs field {field.id} with no safe default"
+                    )
             if index == 0:
                 continue
             previous = get_tool(recipe.steps[index - 1])
