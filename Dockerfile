@@ -18,6 +18,7 @@ RUN apt-get update && \
         tesseract-ocr-eng \
         fonts-noto-core \
         ca-certificates \
+        util-linux \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --create-home --uid 10001 --shell /usr/sbin/nologin appuser
 
