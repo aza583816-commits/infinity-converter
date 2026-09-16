@@ -10,6 +10,7 @@ import urllib.request
 
 from flask import Blueprint, jsonify, request
 
+from core.ai_budget import consume_enhanced_ai_budget
 from core.discovery import unified_index
 from core.intelligence import catalog_prompt, fallback_plan, sanitize_context
 from core.limiter import limiter
@@ -77,6 +78,12 @@ def _call_gemini(prompt: str, system: str = "", max_tokens: int = 1800) -> str:
     key, model = _gemini_config()
     if not key:
         raise RuntimeError("Enhanced Infinity AI is not configured.")
+
+    allowed, used, limit = consume_enhanced_ai_budget()
+    if not allowed:
+        logger.warning("Enhanced AI daily cost fuse reached used=%s limit=%s", used, limit)
+        raise RuntimeError("Enhanced Infinity AI daily budget reached; Smart Core remains available.")
+
     body = {
         "contents": [{"role": "user", "parts": [{"text": prompt}]}],
         "generationConfig": {
