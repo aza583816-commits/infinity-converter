@@ -9,23 +9,45 @@ permissions:
 jobs:
   production:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
       - name: JavaScript syntax and browser calculation gates
         run: |
           node --check static/js/app.js
           node --check static/js/smart-flow.js
+          node --check static/js/workflows.js
+          node --check static/js/trust-badges.js
+          node --check static/js/vitals.js
           node --check static/sw.js
           python scripts/export_browser_catalog.py /tmp/browser-catalog.json
           node scripts/browser_tool_smoke.cjs /tmp/browser-catalog.json
           node tests/browser-calculations.cjs
+      - name: Audit Python dependencies and produce reproducibility evidence
+        run: |
+          python -m pip install --disable-pip-version-check pip-audit pip-tools
+          pip-audit -r requirements.txt
+          pip-audit -r requirements.txt -f cyclonedx-json -o sbom.cdx.json
+          pip-compile --resolver=backtracking --generate-hashes --output-file=requirements.lock requirements.txt
+      - name: Upload dependency lock and SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-supply-chain-${{ github.sha }}
+          path: |
+            requirements.lock
+            sbom.cdx.json
+          retention-days: 30
       - name: Enforce shared mobile asset performance budgets
         run: python scripts/performance_budget.py
       - name: Build Python 3.11 production image with preflight and all tests
         run: docker build --progress=plain -t infinity-verified .
       - name: Verify installed Python dependency consistency
         run: docker run --rm --network none infinity-verified python -m pip check
+      - name: Verify native renderer limiter exists in production image
+        run: docker run --rm --network none infinity-verified sh -c 'command -v prlimit >/dev/null && prlimit --version'
       - name: Every registered operation through the real engine
         run: docker run --rm --network none infinity-verified python scripts/full_operation_smoke.py
       - name: Every registered operation through the HTTP API
