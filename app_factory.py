@@ -27,6 +27,9 @@ from api.routes import api_bp
 from api.pages import pages_bp
 from api.paddle import paddle_bp
 from api.ai import ai_bp
+from api.legacy import legacy_bp
+from api.workflows import workflow_bp
+from api.telemetry import telemetry_bp
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 
@@ -153,7 +156,7 @@ def create_app() -> Flask:
         connect_src = "connect-src 'self' https://*.paddle.com"
         frame_src = "frame-src https://*.paddle.com"
         if adsense_enabled:
-            script_src = f"script-src 'nonce-{nonce}' 'strict-dynamic' https: http:"
+            script_src = f"script-src 'nonce-{nonce}' 'strict-dynamic' https:"
             connect_src += " https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net"
             frame_src += " https://googleads.g.doubleclick.net"
             base_uri = "base-uri 'none'"
@@ -213,6 +216,10 @@ def create_app() -> Flask:
     def not_found(_error):
         return render_template("error.html", code=404), 404
 
+    @app.errorhandler(410)
+    def gone(_error):
+        return render_template("error.html", code=410), 410
+
     @app.errorhandler(500)
     def server_error(_error):
         return render_template("error.html", code=500), 500
@@ -220,6 +227,9 @@ def create_app() -> Flask:
     app.register_blueprint(api_bp, url_prefix="/api/v2")
     app.register_blueprint(paddle_bp)
     app.register_blueprint(ai_bp, url_prefix="/api/v2/ai")
+    app.register_blueprint(telemetry_bp)
+    app.register_blueprint(workflow_bp)
+    app.register_blueprint(legacy_bp)
     app.register_blueprint(pages_bp)
 
     return app
