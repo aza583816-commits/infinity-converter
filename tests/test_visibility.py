@@ -24,6 +24,17 @@ def test_pricing_is_hidden_by_default_and_not_in_sitemap(hidden_client):
     assert b"<loc>https://infinityconverter.com/pricing</loc>" not in sitemap.data
 
 
+def test_sitemap_lists_only_self_canonical_language_urls(hidden_client):
+    sitemap = hidden_client.get("/sitemap.xml")
+    assert sitemap.status_code == 200
+    assert b"<loc>https://infinityconverter.com/?lang=en</loc>" in sitemap.data
+    assert b"<loc>https://infinityconverter.com/?lang=ar</loc>" in sitemap.data
+    assert b"<loc>https://infinityconverter.com/tools/merge-pdf?lang=en</loc>" in sitemap.data
+    assert b"<loc>https://infinityconverter.com/tools/merge-pdf?lang=ar</loc>" in sitemap.data
+    assert b"<loc>https://infinityconverter.com/</loc>" not in sitemap.data
+    assert b"<loc>https://infinityconverter.com/tools/merge-pdf</loc>" not in sitemap.data
+
+
 def test_auth_and_billing_can_be_reenabled_without_removing_code(monkeypatch, tmp_path):
     monkeypatch.setenv("DATABASE_URL", f"sqlite:///{tmp_path / 'accounts.db'}")
     monkeypatch.setenv("PUBLIC_AUTH_ENABLED", "1")
