@@ -13,6 +13,7 @@ updates:
         patterns:
           - "Flask*"
           - "gunicorn"
+          - "redis"
           - "psycopg*"
       document-engines:
         patterns:
