@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from flask import Blueprint, abort, redirect, request
 
-from core.tooling import TOOLS, _meta_for, get_tool, tool_url
+from core.tooling import TOOLS, _meta_for, get_developer_tool, get_tool, tool_url
 from core.browser_tools import get_browser_tool
 
 legacy_bp = Blueprint("legacy", __name__)
@@ -61,6 +61,8 @@ def _canonical_for_slug(slug: str) -> str | None:
             return tool_url(candidate)
     if get_browser_tool(slug):
         return f"/browser-tools/{slug}"
+    if get_developer_tool(slug):
+        return f"/developer-tools/{slug}"
     return LEGACY_REDIRECTS.get(f"/{slug}")
 
 
