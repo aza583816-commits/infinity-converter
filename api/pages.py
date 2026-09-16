@@ -422,11 +422,17 @@ def sitemap():
     )
     for url in urls:
         base = f"{settings.public_base_url}{url}"
-        body += f"<url><loc>{base}</loc><lastmod>2026-09-13</lastmod>"
-        body += f'<xhtml:link rel="alternate" hreflang="ar" href="{base}?lang=ar"/>'
-        body += f'<xhtml:link rel="alternate" hreflang="en" href="{base}?lang=en"/>'
-        body += f'<xhtml:link rel="alternate" hreflang="x-default" href="{base}"/>'
-        body += "</url>"
+        ar_url = f"{base}?lang=ar"
+        en_url = f"{base}?lang=en"
+        alternates = (
+            f'<xhtml:link rel="alternate" hreflang="ar" href="{ar_url}"/>'
+            f'<xhtml:link rel="alternate" hreflang="en" href="{en_url}"/>'
+            f'<xhtml:link rel="alternate" hreflang="x-default" href="{base}"/>'
+        )
+        for canonical_url in (ar_url, en_url):
+            body += f"<url><loc>{canonical_url}</loc><lastmod>2026-09-16</lastmod>"
+            body += alternates
+            body += "</url>"
     body += "</urlset>"
     response = make_response(body)
     response.headers["Content-Type"] = "application/xml; charset=utf-8"
