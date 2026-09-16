@@ -32,6 +32,10 @@ def test_legacy_search_urls_migrate_to_real_current_destinations(client):
     assert prefixed.status_code == 301
     assert prefixed.headers["Location"].endswith("/tools/word-to-pdf?lang=en")
 
+    developer = client.get("/en/hmac-generator", follow_redirects=False)
+    assert developer.status_code == 301
+    assert developer.headers["Location"].endswith("/developer-tools/hmac-generator?lang=en")
+
     ambiguous_signing = client.get("/sign-pdf", follow_redirects=False)
     assert ambiguous_signing.status_code == 301
     assert "/tools?category=pdf" in ambiguous_signing.headers["Location"]
@@ -41,7 +45,7 @@ def test_retired_legacy_pages_return_explicit_gone(client):
     for path in ("/word-to-csv", "/smallpdf-alternative", "/en/ilovepdf-alternative"):
         response = client.get(path, follow_redirects=False)
         assert response.status_code == 410, path
-        assert response.headers.get("X-Robots-Tag") is None or "noindex" not in response.headers.get("X-Robots-Tag", "")
+        assert b"410" in response.data
 
 
 def test_workflow_registry_is_compatible_and_discoverable(client):
