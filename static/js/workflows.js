@@ -11,6 +11,13 @@
   const isEnglish = document.documentElement.lang === "en";
   let objectUrl = "";
 
+  const requestedRecipe = new URLSearchParams(location.search).get("recipe");
+  if (requestedRecipe && /^[a-z0-9-]{1,80}$/.test(requestedRecipe)) {
+    const target = [...form.querySelectorAll('input[name="workflow"]')]
+      .find((input) => input.value === requestedRecipe);
+    if (target) target.checked = true;
+  }
+
   const text = isEnglish ? {
     running: "Running verified workflow…",
     done: "Completed",
