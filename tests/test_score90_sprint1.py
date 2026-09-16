@@ -69,8 +69,9 @@ def test_liveness_and_readiness_are_separate_and_versioned():
     payload = ready.get_json()
     assert payload["version"] == settings.app_version
     assert payload["status"] == "ok"
-    assert payload["limits"]["max_concurrent_office"] == settings.max_concurrent_office
-    assert payload["limits"]["max_concurrent_ocr"] == settings.max_concurrent_ocr
+    assert "limits" not in payload
+    assert set(payload["architecture"]) == {"healthy", "tools", "operations"}
+    assert payload["architecture"]["healthy"] is True
     railway = open("railway.toml", encoding="utf-8").read()
     assert 'healthcheckPath = "/api/v2/readyz"' in railway
 

@@ -70,20 +70,16 @@ def too_many_requests(_):
 
 def _runtime_health_payload() -> tuple[dict, bool]:
     coverage = runtime_coverage()
+    # Public probes expose only coarse readiness metadata. Detailed registry and
+    # capacity information stays server-side so health endpoints are not a free
+    # reconnaissance surface for attackers.
     payload = {
         "status": "ok" if coverage.healthy else "degraded",
         "version": settings.app_version,
-        "tools": len(list_tools()),
-        "architecture": coverage.as_dict(),
-        "limits": {
-            "max_file_mb": settings.max_file_mb,
-            "max_batch_files": settings.max_batch_files,
-            "max_pdf_pages": settings.max_pdf_pages,
-            "max_output_mb": settings.max_output_mb,
-            "max_concurrent_conversions": settings.max_concurrent_conversions,
-            "max_concurrent_office": settings.max_concurrent_office,
-            "max_concurrent_ocr": settings.max_concurrent_ocr,
-            "max_image_pixels": settings.max_image_pixels,
+        "architecture": {
+            "healthy": coverage.healthy,
+            "tools": coverage.tools,
+            "operations": coverage.operations,
         },
     }
     return payload, coverage.healthy
@@ -107,9 +103,14 @@ def healthz():
 
 @api_bp.get("/tools")
 def tools():
+    coverage = runtime_coverage()
     return jsonify({
         "version": settings.app_version,
-        "runtime": runtime_coverage().as_dict(),
+        "runtime": {
+            "healthy": coverage.healthy,
+            "tools": coverage.tools,
+            "operations": coverage.operations,
+        },
         "tools": list_tools(),
     })
 
