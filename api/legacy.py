@@ -26,7 +26,10 @@ LEGACY_REDIRECTS = {
     "/protect-pdf": "/tools/pdf-password-protect",
     "/redact-pdf": "/tools/pdf-redact",
     "/remove-pdf-pages": "/tools/delete-pdf-pages",
-    "/sign-pdf": "/tools/pdf-signature-stamp",
+    # The old signing page promised a capability that is not represented by one
+    # equivalent current tool, so route users to the PDF collection rather than
+    # inventing a signing tool or soft-404ing to the homepage.
+    "/sign-pdf": "/tools?category=pdf",
     "/unlock-pdf": "/tools/pdf-unlock",
     "/watermark-pdf": "/tools/pdf-watermark-text",
     "/arabic-proofreader": "/collections/students",
@@ -36,13 +39,16 @@ LEGACY_REDIRECTS = {
     "/unit-converter": "/browser-tools/unit-converter",
 }
 
-# Old pages whose promise is not represented by one equivalent current tool.
-# A 410 makes the removal explicit to crawlers instead of creating a misleading
-# redirect or a soft 404.
+# Old pages whose promise is not represented by one equivalent current surface.
+# A 410 makes removal explicit to crawlers instead of creating a misleading
+# redirect. Comparison/alternative landing pages are also retired until we have
+# current, independently maintained editorial content for them.
 LEGACY_GONE = {
     "/word-to-csv",
     "/csv-to-word",
     "/ink-saver-pdf",
+    "/ilovepdf-alternative",
+    "/smallpdf-alternative",
 }
 
 
@@ -59,27 +65,28 @@ def _canonical_for_slug(slug: str) -> str | None:
 
 
 def _with_lang(target: str, lang: str) -> str:
-    if "?" in target:
-        return f"{target}&lang={lang}"
-    return f"{target}?lang={lang}"
+    separator = "&" if "?" in target else "?"
+    return f"{target}{separator}lang={lang}"
 
 
 @legacy_bp.get("/en/<path:legacy_path>")
 def legacy_en(legacy_path: str):
-    target = _canonical_for_slug(legacy_path.strip("/"))
+    clean = legacy_path.strip("/")
+    target = _canonical_for_slug(clean)
     if target:
         return redirect(_with_lang(target, "en"), code=301)
-    if f"/{legacy_path.strip('/')}" in LEGACY_GONE:
+    if f"/{clean}" in LEGACY_GONE:
         abort(410)
     abort(404)
 
 
 @legacy_bp.get("/ar/<path:legacy_path>")
 def legacy_ar(legacy_path: str):
-    target = _canonical_for_slug(legacy_path.strip("/"))
+    clean = legacy_path.strip("/")
+    target = _canonical_for_slug(clean)
     if target:
         return redirect(_with_lang(target, "ar"), code=301)
-    if f"/{legacy_path.strip('/')}" in LEGACY_GONE:
+    if f"/{clean}" in LEGACY_GONE:
         abort(410)
     abort(404)
 
@@ -95,6 +102,6 @@ def _legacy_exact_view():
     abort(404)
 
 
-for index, path in enumerate(sorted(LEGACY_REDIRECTS | {item: item for item in LEGACY_GONE})):
+for index, path in enumerate(sorted(set(LEGACY_REDIRECTS) | LEGACY_GONE)):
     # Static rules outrank the generic one-segment page route in api.pages.
     legacy_bp.add_url_rule(path, endpoint=f"legacy_exact_{index}", view_func=_legacy_exact_view, methods=["GET"])
