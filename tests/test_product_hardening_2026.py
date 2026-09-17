@@ -112,9 +112,11 @@ def test_libreoffice_command_gets_os_resource_limits(monkeypatch):
     assert wrapped[-2:] == ["libreoffice", "--headless"]
 
 
-def test_shared_shell_loads_privacy_minimal_rum_and_trust_layers(client):
+def test_shared_shell_loads_privacy_minimal_rum_trust_and_tool_context(client):
     response = client.get("/tools/word-to-pdf?lang=en")
     html = response.get_data(as_text=True)
     assert "/static/js/vitals.js?v=" in html
     assert "/static/js/trust-badges.js?v=" in html
+    assert 'id="tool-ai-context"' in html
+    assert '"id": "word-to-pdf"' in html or '"id":"word-to-pdf"' in html
     assert "AI file access" not in html  # injected by JS, not fabricated server-side data
