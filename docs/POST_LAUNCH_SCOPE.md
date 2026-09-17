@@ -1,0 +1,1 @@
+Post-launch cleanup scope: deprecation cleanup, regression coverage, and explicit separation between verified live controls and external controls that still require account-side or infrastructure activation.
