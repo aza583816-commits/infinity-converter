@@ -3,8 +3,9 @@ import re
 
 from app_factory import create_app
 from core.browser_tools import BROWSER_TOOLS
-from core.discovery import BROWSER_PREFIX, catalog_counts, command_palette_catalog, unified_catalog
+from core.discovery import BROWSER_PREFIX, WORKFLOW_PREFIX, catalog_counts, command_palette_catalog, unified_catalog
 from core.tooling import TOOLS
+from core.workflows import WORKFLOWS
 
 
 def test_unified_catalog_covers_all_public_tool_surfaces_with_unique_ids():
@@ -13,6 +14,9 @@ def test_unified_catalog_covers_all_public_tool_surfaces_with_unique_ids():
     assert counts == {
         "converter": len(TOOLS),
         "browser": len(BROWSER_TOOLS),
+        "workflow": len(WORKFLOWS),
+        # Workflows orchestrate existing tools and intentionally do not inflate
+        # the historical public-tool total used by existing API/marketing guards.
         "total": len(TOOLS) + len(BROWSER_TOOLS),
     }
     assert len(catalog) == counts["total"]
@@ -32,12 +36,14 @@ def test_browser_ids_are_namespaced_to_avoid_server_collisions():
     assert len({item["id"] for item in matching}) == 2
 
 
-def test_quick_jump_catalog_includes_converter_and_browser_tools():
+def test_quick_jump_catalog_includes_tools_and_curated_workflows():
     entries = command_palette_catalog()
-    assert len(entries) == len(TOOLS) + len(BROWSER_TOOLS)
+    expected = len(TOOLS) + len(BROWSER_TOOLS) + len(WORKFLOWS)
+    assert len(entries) == expected
     assert len({item["id"] for item in entries}) == len(entries)
     assert any(item["href"] == "/tools/compress-pdf" for item in entries)
     assert any(item["href"] == "/browser-tools/vat-calculator" for item in entries)
+    assert any(item["id"] == f"{WORKFLOW_PREFIX}web-ready-image" for item in entries)
 
 
 def test_shared_shell_embeds_the_complete_quick_jump_catalog():
@@ -52,5 +58,6 @@ def test_shared_shell_embeds_the_complete_quick_jump_catalog():
     )
     assert match
     payload = json.loads(match.group(1))
-    assert len(payload) == len(TOOLS) + len(BROWSER_TOOLS)
+    assert len(payload) == len(TOOLS) + len(BROWSER_TOOLS) + len(WORKFLOWS)
     assert any(item["id"] == "browser:vat-calculator" for item in payload)
+    assert any(item["id"] == "workflow:web-ready-image" for item in payload)
