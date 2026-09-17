@@ -1,0 +1,2 @@
+# Test/build-only dependencies. Production runtime installs requirements.txt only.
+pytest==9.0.3
