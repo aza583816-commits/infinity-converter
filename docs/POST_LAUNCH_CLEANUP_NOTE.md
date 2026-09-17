@@ -1,0 +1,1 @@
+This cleanup release intentionally avoids paid infrastructure changes. It removes a Pillow deprecation in the metadata-strip path, adds regression coverage, and records which external controls still require live account or infrastructure activation.
