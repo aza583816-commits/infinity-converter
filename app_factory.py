@@ -1,9 +1,12 @@
 import os
 import json
+import re
 import secrets
 import uuid
 import logging
-from flask import Flask, current_app, g, request, session, render_template
+from urllib.parse import urlsplit
+
+from flask import Flask, current_app, g, request, session, render_template, redirect
 from flask_compress import Compress
 from flask_cors import CORS
 
@@ -33,6 +36,55 @@ from api.telemetry import telemetry_bp
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 
+_SAFE_REQUEST_ID = re.compile(r"^[A-Za-z0-9._:-]{1,80}$")
+_SITEMAP_LASTMOD = "2026-09-17"
+
+
+def _same_origin_referrer_target() -> str:
+    """Return a safe local redirect target derived from Referer, or `/`.
+
+    The language switch historically trusted Referer verbatim. Browsers normally
+    send a same-site value here, but Referer is still an attacker-controlled HTTP
+    header and must never become an open redirect.
+    """
+    referrer = (request.referrer or "").strip()
+    if not referrer:
+        return "/"
+    try:
+        parsed = urlsplit(referrer)
+    except ValueError:
+        return "/"
+
+    # Relative paths are acceptable as long as they cannot be protocol-relative.
+    if not parsed.scheme and not parsed.netloc:
+        if not parsed.path.startswith("/") or parsed.path.startswith("//"):
+            return "/"
+    else:
+        if parsed.scheme not in {"http", "https"} or parsed.netloc != request.host:
+            return "/"
+
+    target = parsed.path or "/"
+    if not target.startswith("/") or target.startswith("//"):
+        return "/"
+    if parsed.query:
+        target += f"?{parsed.query}"
+    return target
+
+
+def _workflows_sitemap_entries() -> str:
+    base = f"{settings.public_base_url}/workflows"
+    ar_url = f"{base}?lang=ar"
+    en_url = f"{base}?lang=en"
+    alternates = (
+        f'<xhtml:link rel="alternate" hreflang="ar" href="{ar_url}"/>'
+        f'<xhtml:link rel="alternate" hreflang="en" href="{en_url}"/>'
+        f'<xhtml:link rel="alternate" hreflang="x-default" href="{base}"/>'
+    )
+    return "".join(
+        f"<url><loc>{url}</loc><lastmod>{_SITEMAP_LASTMOD}</lastmod>{alternates}</url>"
+        for url in (ar_url, en_url)
+    )
+
 
 def create_app() -> Flask:
     app = Flask(
@@ -60,7 +112,8 @@ def create_app() -> Flask:
 
     @app.before_request
     def resolve_locale():
-        g.request_id = request.headers.get("X-Request-ID", "")[:80] or uuid.uuid4().hex
+        supplied_request_id = (request.headers.get("X-Request-ID") or "").strip()
+        g.request_id = supplied_request_id if _SAFE_REQUEST_ID.fullmatch(supplied_request_id) else uuid.uuid4().hex
         g.request_started = __import__("time").perf_counter()
         g.csp_nonce = secrets.token_urlsafe(18)
         lang, is_explicit = resolve_language(request)
@@ -69,6 +122,23 @@ def create_app() -> Flask:
         g.current_user = get_user(session.get("user_id"))
         if session.get("user_id") and not g.current_user:
             session.clear()
+
+        # Intercept the language route before the legacy handler can trust a raw
+        # Referer. This preserves the current page for normal users while making
+        # an externally supplied Referer incapable of causing an open redirect.
+        if request.path.startswith("/set-language/"):
+            requested_lang = request.path.rsplit("/", 1)[-1]
+            if requested_lang in SUPPORTED_LANGUAGES:
+                response = redirect(_same_origin_referrer_target())
+                response.set_cookie(
+                    LANGUAGE_COOKIE,
+                    requested_lang,
+                    max_age=31536000,
+                    httponly=True,
+                    samesite="Lax",
+                    secure=not settings.debug,
+                )
+                return response
 
     @app.context_processor
     def inject_i18n():
@@ -201,11 +271,22 @@ def create_app() -> Flask:
             response.vary.add("Accept-Language")
             response.vary.add("Cookie")
 
+        # Add the public workflow landing page to the canonical bilingual
+        # sitemap without indexing the API execution endpoint itself.
+        if request.path == "/sitemap.xml" and response.status_code == 200:
+            body = response.get_data(as_text=True)
+            if "/workflows?lang=" not in body and "</urlset>" in body:
+                body = body.replace("</urlset>", _workflows_sitemap_entries() + "</urlset>")
+                response.set_data(body)
+                response.headers["Content-Length"] = str(len(response.get_data()))
+                response.headers["Cache-Control"] = "public, max-age=900"
+
         if getattr(g, "lang_is_explicit", False):
             response.set_cookie(
                 LANGUAGE_COOKIE,
                 g.lang,
                 max_age=31536000,
+                httponly=True,
                 samesite="Lax",
                 secure=not settings.debug,
             )
