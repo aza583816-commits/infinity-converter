@@ -95,9 +95,9 @@ def create_app() -> Flask:
     )
 
     # Railway terminates TLS and forwards requests through one trusted proxy hop.
-    # Trusting exactly one hop makes Flask-Limiter key on the real client address
-    # and restores the original HTTPS scheme without trusting arbitrary chains.
-    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+    # Trust only the client-address and scheme headers needed by rate limiting and
+    # secure URL handling; Host remains Flask's normal validated request host.
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
 
     app.config.update(
         SECRET_KEY=os.getenv("SECRET_KEY", secrets.token_hex(32)),
