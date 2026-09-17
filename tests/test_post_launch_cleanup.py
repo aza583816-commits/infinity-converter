@@ -16,4 +16,5 @@ def test_strip_metadata_preserves_pixels_and_size(tmp_path: Path):
     with Image.open(output) as cleaned:
         assert cleaned.size == (3, 2)
         assert cleaned.mode == "RGB"
-        assert list(cleaned.getdata()) == [(12, 34, 56)] * 6
+        pixels = [cleaned.getpixel((x, y)) for y in range(cleaned.height) for x in range(cleaned.width)]
+        assert pixels == [(12, 34, 56)] * 6
