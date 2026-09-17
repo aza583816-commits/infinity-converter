@@ -49,6 +49,11 @@ LEGACY_GONE = {
     "/ink-saver-pdf",
     "/ilovepdf-alternative",
     "/smallpdf-alternative",
+    # These developer pages existed in older indexed builds but are not present
+    # in the current developer registry. Explicitly retire them instead of
+    # leaving crawlers on generic 404s or inventing an unrelated replacement.
+    "/hmac-generator",
+    "/css-js-minifier",
 }
 
 
