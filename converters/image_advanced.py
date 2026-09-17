@@ -81,7 +81,11 @@ def sepia(source: Path, output: Path):
 
 def strip_metadata(source: Path, output: Path):
     with Image.open(source) as img:
-        data = list(img.getdata())
+        # Pillow 12 deprecates Image.getdata(); use the new flattened-data API
+        # when available while retaining compatibility with older supported
+        # Pillow releases.
+        getter = getattr(img, 'get_flattened_data', None)
+        data = list(getter() if getter is not None else img.getdata())
         clean = Image.new(img.mode, img.size)
         clean.putdata(data)
         _save_like(clean, output, img.format)
