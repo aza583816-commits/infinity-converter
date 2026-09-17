@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Workflows' if lang == 'en' else 'مسارات العمل' }} | Infinity Converter{% endblock %}
+{% block description %}{{ 'Run curated multi-step file workflows with validation between every step.' if lang == 'en' else 'نفّذ مسارات ملفات متعددة الخطوات مع تحقق أمني بين كل خطوة.' }}{% endblock %}
+{% block content %}
+<div class="page-wrap workflows-page">
+  <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/">{{ t('common.home') }}</a><span>/</span><strong>{{ 'Workflows' if lang == 'en' else 'مسارات العمل' }}</strong></nav>
+
+  <section class="tool-hero reveal-on-scroll">
+    <div class="tool-hero-main"><span class="kicker">INFINITY FLOW</span><h1>{{ 'One upload. Several verified steps.' if lang == 'en' else 'رفع واحد. عدة خطوات متحققة.' }}</h1><p>{{ 'Choose a curated recipe. Infinity re-validates the output before each next tool, keeps every step inside temporary workspaces, and returns only the final artifact.' if lang == 'en' else 'اختر مسارًا جاهزًا. يعيد Infinity التحقق من الناتج قبل كل أداة تالية، ويحفظ كل خطوة داخل مساحات مؤقتة، ثم يعيد لك الملف النهائي فقط.' }}</p></div>
+  </section>
+
+  <section class="processing-card reveal-on-scroll" aria-labelledby="flow-trust-title">
+    <div class="processing-head"><div><span class="kicker">SAFE CHAINING</span><h2 id="flow-trust-title">{{ 'The next step never trusts the previous step blindly.' if lang == 'en' else 'الخطوة التالية لا تثق بالناتج السابق بشكل أعمى.' }}</h2></div><a class="text-button" href="/trust">{{ 'Trust center' if lang == 'en' else 'مركز الثقة' }} ↗</a></div>
+    <div class="processing-grid">
+      <article><span>01</span><strong>{{ 'Validate upload' if lang == 'en' else 'تحقق من الملف' }}</strong><p>{{ 'Signature, structure, size and parser checks run before the first engine.' if lang == 'en' else 'فحص التوقيع والبنية والحجم والمحلل قبل أول محرك.' }}</p></article>
+      <article><span>02</span><strong>{{ 'Validate every handoff' if lang == 'en' else 'تحقق عند كل انتقال' }}</strong><p>{{ 'Intermediate output is treated as untrusted input and validated again.' if lang == 'en' else 'كل ناتج وسيط يعامل كملف غير موثوق ويُفحص من جديد.' }}</p></article>
+      <article><span>03</span><strong>{{ 'Temporary workspaces' if lang == 'en' else 'مساحات مؤقتة' }}</strong><p>{{ 'Previous step scratch data is cleaned after the next step safely receives the artifact.' if lang == 'en' else 'تنظف بيانات الخطوة السابقة بعد أن تستلم الخطوة التالية الملف بأمان.' }}</p></article>
+      <article><span>04</span><strong>{{ 'No automatic AI file access' if lang == 'en' else 'لا وصول تلقائي للذكاء للملف' }}</strong><p>{{ 'Workflow files are not attached to Infinity Intelligence automatically.' if lang == 'en' else 'ملفات المسار لا تُرفق تلقائيًا مع Infinity Intelligence.' }}</p></article>
+    </div>
+  </section>
+
+  <section class="converter-panel reveal-on-scroll" aria-labelledby="workflow-runner-title">
+    <div class="panel-heading"><div><span class="kicker">RECIPE RUNNER</span><h2 id="workflow-runner-title">{{ 'Choose a workflow' if lang == 'en' else 'اختر مسار العمل' }}</h2></div><span id="workflow-status" class="status" role="status">{{ t('common.status_ready') }}</span></div>
+    <form id="workflow-form">
+      <div class="workflow-grid" id="workflow-grid">
+        {% for workflow in workflows %}
+        <label class="workflow-card" data-workflow-card>
+          <input type="radio" name="workflow" value="{{ workflow.id }}"{% if loop.first %} checked{% endif %}>
+          <span class="tool-icon large" aria-hidden="true">{{ workflow.icon }}</span>
+          <strong>{{ workflow.name_en if lang == 'en' else workflow.name_ar }}</strong>
+          <p>{{ workflow.description_en if lang == 'en' else workflow.description_ar }}</p>
+          <ol>
+            {% for step in workflow.steps %}<li>{{ step.name_en if lang == 'en' else step.name_ar }}</li>{% endfor %}
+          </ol>
+        </label>
+        {% endfor %}
+      </div>
+      <label class="dropzone" for="workflow-file"><span class="upload-symbol" aria-hidden="true">↑</span><strong>{{ 'Choose the starting file' if lang == 'en' else 'اختر ملف البداية' }}</strong><span>{{ 'The selected recipe will verify compatibility before processing.' if lang == 'en' else 'المسار المختار سيتحقق من توافق الملف قبل المعالجة.' }}</span><input id="workflow-file" name="file" type="file" required></label>
+      <div class="panel-actions"><button class="primary" type="submit">{{ 'Run workflow' if lang == 'en' else 'تشغيل المسار' }} <span aria-hidden="true">→</span></button></div>
+      <div id="workflow-progress" class="conversion-progress" hidden aria-live="polite"><span></span><p>{{ 'Running verified steps…' if lang == 'en' else 'جاري تنفيذ الخطوات المتحققة…' }}</p></div>
+    </form>
+    <div id="workflow-result" class="result-panel" hidden tabindex="-1"><div class="result-icon" aria-hidden="true">✓</div><div class="result-copy"><strong>{{ 'Workflow completed' if lang == 'en' else 'اكتمل المسار' }}</strong><p id="workflow-result-text"></p><a id="workflow-download" class="primary" hidden>{{ 'Download final file' if lang == 'en' else 'تنزيل الملف النهائي' }}</a></div></div>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+<script nonce="{{ csp_nonce }}" src="/static/js/workflows.js?v={{ app_version }}" defer></script>
+{% endblock %}

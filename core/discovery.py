@@ -6,6 +6,7 @@ from core.browser_tools import BROWSER_TOOLS
 from core.tooling import TOOLS, _meta_for
 
 BROWSER_PREFIX = "browser:"
+WORKFLOW_PREFIX = "workflow:"
 
 _COLLECTION_LABELS = {
     "students": ("الطلاب", "Students"),
@@ -81,7 +82,7 @@ def unified_index() -> dict[str, dict[str, Any]]:
 
 def command_palette_catalog() -> list[dict[str, Any]]:
     """Compact unified catalog used by Quick Jump in the shared shell."""
-    return [
+    items = [
         {
             "id": item["id"],
             "name_ar": item["name_ar"],
@@ -95,11 +96,30 @@ def command_palette_catalog() -> list[dict[str, Any]]:
         }
         for item in unified_catalog()
     ]
+    # Import lazily to avoid making the converter catalog depend on workflow UI.
+    from core.workflows import public_workflows
+    for workflow in public_workflows():
+        items.append({
+            "id": f"{WORKFLOW_PREFIX}{workflow['id']}",
+            "name_ar": workflow["name_ar"],
+            "name_en": workflow["name_en"],
+            "category_ar": "مسار عمل",
+            "category_en": "Workflow",
+            "href": f"/workflows?recipe={workflow['id']}",
+            "icon": workflow["icon"],
+            "input_ext": workflow["steps"][0]["input_ext"],
+            "kind": "workflow",
+        })
+    return items
 
 
 def catalog_counts() -> dict[str, int]:
+    from core.workflows import WORKFLOWS
     return {
         "converter": len(TOOLS),
         "browser": len(BROWSER_TOOLS),
+        "workflow": len(WORKFLOWS),
+        # Preserve the historical tool count contract: workflows orchestrate
+        # existing tools and are not counted as new converter surfaces.
         "total": len(TOOLS) + len(BROWSER_TOOLS),
     }

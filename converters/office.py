@@ -56,8 +56,34 @@ def _reject_remote_html_resources(source: Path) -> None:
         raise ValueError("موارد HTML الخارجية غير مدعومة.")
 
 
+def _bounded_native_command(cmd: list[str], timeout: int) -> list[str]:
+    """Wrap a native renderer with OS rlimits when prlimit is available.
+
+    CPU time complements the wall-clock timeout; file-size and descriptor limits
+    reduce blast radius if a malformed document drives abnormal renderer output.
+    Full outbound-network denial still belongs at the dedicated worker layer.
+    """
+    prlimit = shutil.which("prlimit")
+    if not prlimit:
+        return cmd
+    cpu_seconds = max(30, min(int(timeout), 180))
+    # PDF tools currently cap output well below this; leave headroom for
+    # LibreOffice temporary/output bookkeeping while preventing runaway files.
+    file_size_bytes = 512 * 1024 * 1024
+    return [
+        prlimit,
+        f"--cpu={cpu_seconds}:{cpu_seconds}",
+        f"--fsize={file_size_bytes}:{file_size_bytes}",
+        "--nofile=128:128",
+        "--core=0:0",
+        "--",
+        *cmd,
+    ]
+
+
 def _run_libreoffice(cmd: list[str], *, timeout: int, env: dict[str, str]) -> None:
     """Run LibreOffice in its own process group so timeouts kill child workers too."""
+    cmd = _bounded_native_command(cmd, timeout)
     try:
         process = subprocess.Popen(
             cmd,

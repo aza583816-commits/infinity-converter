@@ -1,9 +1,12 @@
-const CACHE = 'infinity-static-v7.2.3';
+const CACHE = 'infinity-static-v7.2.3-product-hardening';
 const STATIC_ASSETS = [
   '/static/css/app.css?v=7.2.3',
   '/static/css/a11y.css?v=7.2.3',
   '/static/js/app.js?v=7.2.3',
   '/static/js/smart-flow.js?v=7.2.3',
+  '/static/js/workflows.js?v=7.2.3',
+  '/static/js/trust-badges.js?v=7.2.3',
+  '/static/js/vitals.js?v=7.2.3',
   '/static/icon-192.png?v=7.2.3',
   '/static/icon-512.png?v=7.2.3',
   '/manifest.json?v=7.2.3'

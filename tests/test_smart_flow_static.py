@@ -7,10 +7,14 @@ def read(path: str) -> str:
     return (ROOT / path).read_text(encoding="utf-8")
 
 
-def test_tool_page_loads_smart_flow_as_a_versioned_tool_only_module():
+def test_tool_page_loads_smart_flow_after_inheriting_global_scripts():
     template = read("templates/tool.html")
+    base = read("templates/base.html")
     assert '/static/js/smart-flow.js?v={{ app_version }}' in template
-    assert '/static/js/app.js?v={{ app_version }}' in template
+    assert '{{ super() }}' in template
+    assert '/static/js/app.js?v={{ app_version }}' in base
+    assert '/static/js/vitals.js?v={{ app_version }}' in base
+    assert '/static/js/trust-badges.js?v={{ app_version }}' in base
 
 
 def test_smart_flow_keeps_handoff_private_bounded_and_expiring():
