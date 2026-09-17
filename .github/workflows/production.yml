@@ -43,7 +43,17 @@ jobs:
       - name: Enforce shared mobile asset performance budgets
         run: python scripts/performance_budget.py
       - name: Build Python 3.11 production image with preflight and all tests
-        run: docker build --progress=plain -t infinity-verified .
+        shell: bash
+        run: |
+          set -o pipefail
+          docker build --progress=plain -t infinity-verified . 2>&1 | tee docker-build.log
+      - name: Upload Docker build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-build-${{ github.sha }}
+          path: docker-build.log
+          retention-days: 7
       - name: Verify installed Python dependency consistency
         run: docker run --rm --network none infinity-verified python -m pip check
       - name: Verify native renderer limiter exists in production image
