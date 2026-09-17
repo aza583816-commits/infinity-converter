@@ -9,6 +9,7 @@ from urllib.parse import urlsplit
 from flask import Flask, current_app, g, request, session, render_template, redirect
 from flask_compress import Compress
 from flask_cors import CORS
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from config.settings import adsense_client_id, settings
 from core.limiter import limiter
@@ -92,6 +93,11 @@ def create_app() -> Flask:
         static_folder="static",
         template_folder="templates",
     )
+
+    # Railway terminates TLS and forwards requests through one trusted proxy hop.
+    # Trusting exactly one hop makes Flask-Limiter key on the real client address
+    # and restores the original HTTPS scheme without trusting arbitrary chains.
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
     app.config.update(
         SECRET_KEY=os.getenv("SECRET_KEY", secrets.token_hex(32)),
