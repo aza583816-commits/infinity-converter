@@ -75,4 +75,4 @@
   'description': tool_description, 'category': tool.category, 'input_ext': tool.input_ext|list,
   'output_ext': tool.output_ext, 'max_files': tool.max_files, 'url': '/tools/' ~ tool_slug
 }|tojson }}</script>
-{% block scripts %}<script nonce="{{ csp_nonce }}" src="/static/js/app.js?v={{ app_version }}" defer></script><script nonce="{{ csp_nonce }}" src="/static/js/smart-flow.js?v={{ app_version }}" defer></script>{% endblock %}
+{% block scripts %}{{ super() }}<script nonce="{{ csp_nonce }}" src="/static/js/smart-flow.js?v={{ app_version }}" defer></script>{% endblock %}
