@@ -46,6 +46,16 @@
     <div id="workspace-recommendation-grid" class="workflow-grid"></div>
   </section>
 
+  <section class="section-block reveal-on-scroll" aria-labelledby="workspace-audiences-title">
+    <div class="v7-section-heading"><div><span class="kicker">GOAL-BASED COLLECTIONS</span><h2 id="workspace-audiences-title">{{ 'Start from your job, not a file format.' if lang == 'en' else 'ابدأ من مهمتك، مو من صيغة الملف.' }}</h2><p>{{ 'Curated paths for study, business, creation and technical work.' if lang == 'en' else 'مسارات مرتبة للدراسة والأعمال وصناعة المحتوى والعمل التقني.' }}</p></div></div>
+    <div class="audience-grid">
+      <a class="audience-card" href="/collections/students"><span>STUDY</span><strong>{{ 'Students' if lang == 'en' else 'الطلاب' }}</strong><p>{{ 'OCR, assignments, PDFs, notes and study utilities.' if lang == 'en' else 'OCR والواجبات وPDF والملاحظات وأدوات الدراسة.' }}</p></a>
+      <a class="audience-card" href="/collections/business"><span>WORK</span><strong>{{ 'Business' if lang == 'en' else 'الأعمال' }}</strong><p>{{ 'Documents, data cleanup, reports and everyday business utilities.' if lang == 'en' else 'مستندات وتنظيف بيانات وتقارير وأدوات أعمال يومية.' }}</p></a>
+      <a class="audience-card" href="/collections/creators"><span>CREATE</span><strong>{{ 'Creators' if lang == 'en' else 'صناع المحتوى' }}</strong><p>{{ 'Images, exports, optimization and publishing-ready assets.' if lang == 'en' else 'صور وتصدير وتحسين وملفات جاهزة للنشر.' }}</p></a>
+      <a class="audience-card" href="/collections/developers"><span>DEV</span><strong>{{ 'Developers' if lang == 'en' else 'المطورون' }}</strong><p>{{ 'Text, data, encoders, parsers and local browser tools.' if lang == 'en' else 'نصوص وبيانات وترميزات ومحللات وأدوات محلية.' }}</p></a>
+    </div>
+  </section>
+
   <section class="processing-card reveal-on-scroll">
     <div class="processing-head"><div><span class="kicker">PRIVACY BY DESIGN</span><h2>{{ 'Inspection and AI are separate on purpose.' if lang == 'en' else 'الفحص والذكاء منفصلان عن قصد.' }}</h2></div><a class="text-button" href="/trust">{{ 'Trust center' if lang == 'en' else 'مركز الثقة' }} ↗</a></div>
     <div class="processing-grid">
