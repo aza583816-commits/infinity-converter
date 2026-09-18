@@ -244,7 +244,7 @@
 
   function contentDispositionFilename(response) {
     const header = response.headers.get("content-disposition") || "";
-    const utf = header.match(/filename\\*=UTF-8''([^;]+)/i);
+    const utf = header.match(/filename\*=UTF-8''([^;]+)/i);
     if (utf) {
       try { return decodeURIComponent(utf[1]); } catch (_) {}
     }
