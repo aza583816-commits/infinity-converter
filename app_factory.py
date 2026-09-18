@@ -14,12 +14,14 @@ from core.tooling import PREMIUM_TOOL_IDS, TOOLS
 from core.discovery import catalog_counts, command_palette_catalog
 from core.editorial_score90 import install as install_score90_editorial
 from core.editorial_score95_runtime import install as install_score95_editorial
+from core.blog_v8 import install as install_v8_blog
 
 # Install implementation-reviewed content before pages import the canonical
 # editorial registry. Search/AdSense eligibility therefore remains tied to pages
 # checked against the real converter behavior, not to catalog size alone.
 install_score90_editorial()
 install_score95_editorial()
+install_v8_blog()
 from core.editorial import reviewed_tool_ids
 from i18n import LANGUAGE_COOKIE, SUPPORTED_LANGUAGES, resolve_language, translator
 from i18n.translations import INFO_CONTENT, TRANSLATIONS
