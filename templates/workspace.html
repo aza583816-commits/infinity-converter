@@ -24,10 +24,16 @@
         <span class="upload-symbol" aria-hidden="true">↑</span>
         <strong>{{ 'Choose a file to inspect' if lang == 'en' else 'اختر ملفًا للفحص' }}</strong>
         <span>{{ 'Validation happens before recommendations are shown.' if lang == 'en' else 'يتم التحقق من الملف قبل عرض الاقتراحات.' }}</span>
-        <input id="workspace-file" name="file" type="file" required>
+        <input id="workspace-file" name="file" type="file" multiple required>
       </label>
       <div class="panel-actions"><button class="primary" type="submit">{{ 'Inspect file' if lang == 'en' else 'افحص الملف' }} <span aria-hidden="true">✦</span></button></div>
     </form>
+
+    <section id="workspace-project-board" class="personal-card" hidden aria-labelledby="workspace-project-title">
+      <div><strong id="workspace-project-title">{{ 'Project board' if lang == 'en' else 'لوحة المشروع' }}</strong><span id="workspace-project-count"></span></div>
+      <p>{{ 'Inspect several files together. Only safe technical metadata is kept in this page session.' if lang == 'en' else 'افحص عدة ملفات معًا. لا يبقى في جلسة الصفحة إلا البيانات التقنية الآمنة.' }}</p>
+      <div id="workspace-project-files" class="quick-list"></div>
+    </section>
 
     <div id="workspace-inspector-result" class="result-panel" hidden tabindex="-1">
       <div class="result-icon" aria-hidden="true">∞</div>
@@ -37,6 +43,11 @@
         <div id="workspace-file-facts" class="tool-chips"></div>
       </div>
     </div>
+  </section>
+
+  <section id="workspace-recents" class="section-block reveal-on-scroll" hidden aria-labelledby="workspace-recents-title">
+    <div class="v7-section-heading"><div><span class="kicker">LOCAL RECENTS</span><h2 id="workspace-recents-title">{{ 'Recent file types on this device.' if lang == 'en' else 'أنواع الملفات الأخيرة على هذا الجهاز.' }}</h2><p>{{ 'Only type, size and time are stored locally — never file names or contents.' if lang == 'en' else 'يُحفظ محليًا النوع والحجم والوقت فقط — بدون أسماء الملفات أو محتواها.' }}</p></div><button id="workspace-clear-recents" class="secondary" type="button">{{ 'Clear' if lang == 'en' else 'مسح' }}</button></div>
+    <div id="workspace-recent-list" class="quick-list"></div>
   </section>
 
   <section id="workspace-recommendations" class="section-block reveal-on-scroll" hidden aria-labelledby="workspace-recommendations-title">
