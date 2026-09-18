@@ -299,7 +299,9 @@
   });
 
   loadPreset?.addEventListener("click", async () => {
-    const index = Number(savedPreset?.value);
+    const rawIndex = savedPreset?.value || "";
+    if (!/^\\d+$/.test(rawIndex)) return;
+    const index = Number(rawIndex);
     const presets = safePresetRead();
     if (!Number.isInteger(index) || index < 0 || index >= presets.length) return;
     const preset = presets[index];
@@ -326,7 +328,9 @@
   });
 
   deletePreset?.addEventListener("click", () => {
-    const index = Number(savedPreset?.value);
+    const rawIndex = savedPreset?.value || "";
+    if (!/^\\d+$/.test(rawIndex)) return;
+    const index = Number(rawIndex);
     const presets = safePresetRead();
     if (!Number.isInteger(index) || index < 0 || index >= presets.length) return;
     presets.splice(index, 1);
@@ -423,13 +427,13 @@
     ".doc": {
       balanced: ["word-to-pdf", "pdf-compress"],
       smallest: ["word-to-pdf", "pdf-compress"],
-      editable: ["word-to-pdf"],
+      editable: [],
       clean: ["word-to-pdf"],
     },
     ".docx": {
       balanced: ["word-to-pdf", "pdf-compress"],
       smallest: ["word-to-pdf", "pdf-compress"],
-      editable: ["word-to-pdf"],
+      editable: ["docx-to-text"],
       clean: ["word-to-pdf"],
     },
     ".png": {
@@ -465,14 +469,14 @@
     ".pptx": {
       balanced: ["ppt-to-pdf", "pdf-compress"],
       smallest: ["ppt-to-pdf", "pdf-compress"],
-      editable: ["ppt-to-pdf"],
+      editable: [],
       clean: ["ppt-to-pdf"],
     },
     ".zip": {
       balanced: ["zip-integrity"],
-      smallest: ["zip-integrity"],
+      smallest: [],
       editable: ["zip-list"],
-      clean: ["zip-integrity"],
+      clean: ["zip-flatten"],
     },
   };
 
