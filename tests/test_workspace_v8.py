@@ -118,3 +118,48 @@ def test_infinity_8_knowledge_clusters_are_installed_and_indexable():
 
     sitemap = client.get("/sitemap.xml").get_data(as_text=True)
     assert "/blog/safe-multi-step-file-workflows" in sitemap
+
+
+def test_workspace_queue_recovery_templates_and_private_events():
+    root = Path(__file__).parents[1]
+    template = (root / "templates" / "workspace.html").read_text(encoding="utf-8")
+    script = (root / "static" / "js" / "workspace.js").read_text(encoding="utf-8")
+    telemetry = (root / "api" / "telemetry.py").read_text(encoding="utf-8")
+
+    for marker in (
+        "workspace-run-queue",
+        "workspace-queue-list",
+        "workspace-session-recovery",
+        "workspace-restore-session",
+        "data-workspace-template",
+    ):
+        assert marker in template
+
+    for marker in (
+        "SESSION_KEY",
+        "runQueueItem",
+        "workspace_queue_run",
+        "workspace_template_apply",
+        "/api/v2/events",
+    ):
+        assert marker in script
+
+    assert "_ALLOWED_EVENTS" in telemetry
+    assert "filenames" in telemetry
+    assert "free text" in telemetry
+
+
+def test_product_event_endpoint_is_strictly_allowlisted():
+    client = create_app().test_client()
+
+    ok = client.post("/api/v2/events", json={
+        "event": "workspace_inspect",
+        "path": "/workspace",
+        "filename": "must-not-be-used.pdf",
+        "prompt": "must-not-be-used",
+    })
+    assert ok.status_code == 202
+    assert ok.get_json()["status"] == "accepted"
+
+    bad = client.post("/api/v2/events", json={"event": "arbitrary_event", "path": "/workspace"})
+    assert bad.status_code == 400
