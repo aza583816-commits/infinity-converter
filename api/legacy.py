@@ -14,7 +14,7 @@ legacy_bp = Blueprint("legacy", __name__)
 LEGACY_REDIRECTS = {
     "/compress-image": "/tools/compress-image",
     "/compress-pdf-target": "/tools/compress-pdf",
-    "/excel-to-json": "/tools/excel-to-json",
+    "/excel-to-json": "/tools/xlsx-to-json",
     "/extract-pdf-images": "/tools/pdf-to-jpg",
     "/image-to-jpg": "/tools/image-to-jpg",
     "/image-to-png": "/tools/image-to-png",
@@ -34,6 +34,8 @@ LEGACY_REDIRECTS = {
     "/watermark-pdf": "/tools/pdf-watermark-text",
     "/arabic-proofreader": "/collections/students",
     "/clean-study-sheet": "/collections/students",
+    "/word-to-csv": "/tools?category=office",
+    "/csv-to-word": "/tools?category=office",
     "/html-entity": "/browser-tools/html-entity-converter",
     "/text-counter": "/browser-tools/text-counter",
     "/unit-converter": "/browser-tools/unit-converter",
@@ -44,8 +46,6 @@ LEGACY_REDIRECTS = {
 # redirect. Comparison/alternative landing pages are also retired until we have
 # current, independently maintained editorial content for them.
 LEGACY_GONE = {
-    "/word-to-csv",
-    "/csv-to-word",
     "/ink-saver-pdf",
     "/ilovepdf-alternative",
     "/smallpdf-alternative",
