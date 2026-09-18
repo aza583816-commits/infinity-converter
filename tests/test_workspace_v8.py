@@ -37,6 +37,9 @@ def test_workspace_recommendations_are_catalog_grounded():
     assert "VISUAL WORKFLOW BUILDER" in (Path(__file__).parents[1] / "templates" / "workspace.html").read_text(encoding="utf-8")
     assert "builderCatalog" in script
     assert "PROFILE_STEPS" in script
+    assert "beforeinstallprompt" in script
+    assert "PRESETS_KEY" in script
+    assert "workspace-save-preset" in (Path(__file__).parents[1] / "templates" / "workspace.html").read_text(encoding="utf-8")
 
 
 def test_workspace_is_in_primary_navigation():
