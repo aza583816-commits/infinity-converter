@@ -11,6 +11,12 @@
   const facts = document.getElementById("workspace-file-facts");
   const recommendations = document.getElementById("workspace-recommendations");
   const grid = document.getElementById("workspace-recommendation-grid");
+  const projectBoard = document.getElementById("workspace-project-board");
+  const projectFiles = document.getElementById("workspace-project-files");
+  const projectCount = document.getElementById("workspace-project-count");
+  const recents = document.getElementById("workspace-recents");
+  const recentList = document.getElementById("workspace-recent-list");
+  const clearRecents = document.getElementById("workspace-clear-recents");
   const en = document.documentElement.lang === "en";
   let catalogPromise = null;
 
@@ -18,7 +24,7 @@
     inspecting: "Inspecting safely…",
     ready: "Ready",
     failed: "Could not inspect this file.",
-    invalid: "Choose a file first.",
+    invalid: "Choose at least one file first.",
     safe: "The file passed Infinity's inspection checks.",
     type: "Type",
     size: "Size",
@@ -31,7 +37,7 @@
     inspecting: "جاري الفحص بأمان…",
     ready: "جاهز",
     failed: "تعذر فحص هذا الملف.",
-    invalid: "اختر ملفًا أولًا.",
+    invalid: "اختر ملفًا واحدًا على الأقل.",
     safe: "الملف اجتاز فحوصات Infinity.",
     type: "النوع",
     size: "الحجم",
@@ -81,6 +87,49 @@
       ["tool", "zip-extract", "Extract archive", "فك الضغط", "Inspect and extract a safe archive.", "افحص وفك أرشيف آمن."]
     ]
   };
+
+  const RECENTS_KEY = "infinity_workspace_recents_v1";
+
+  function safeRecentRead() {
+    try {
+      const value = JSON.parse(localStorage.getItem(RECENTS_KEY) || "[]");
+      return Array.isArray(value) ? value.slice(0, 8) : [];
+    } catch (_) { return []; }
+  }
+
+  function renderRecents() {
+    if (!recentList || !recents) return;
+    const items = safeRecentRead();
+    recentList.replaceChildren();
+    items.forEach((item) => {
+      const row = document.createElement("span");
+      row.className = "text-button";
+      const when = item.at ? new Date(item.at).toLocaleString([], { dateStyle: "short", timeStyle: "short" }) : "";
+      row.textContent = `${String(item.extension || "file").toUpperCase()} · ${bytes(item.size_bytes || 0)}${when ? " · " + when : ""}`;
+      recentList.append(row);
+    });
+    recents.hidden = !items.length;
+  }
+
+  function rememberRecent(data, fallbackSize) {
+    const item = {
+      extension: String(data.extension || "").slice(0, 16),
+      size_bytes: Number(data.size || fallbackSize || 0),
+      pages: Number(data.pages || 0),
+      at: Date.now(),
+    };
+    try {
+      const existing = safeRecentRead();
+      localStorage.setItem(RECENTS_KEY, JSON.stringify([item, ...existing].slice(0, 8)));
+    } catch (_) {}
+    renderRecents();
+  }
+
+  clearRecents?.addEventListener("click", () => {
+    try { localStorage.removeItem(RECENTS_KEY); } catch (_) {}
+    renderRecents();
+  });
+  renderRecents();
 
   async function catalogIndex() {
     if (!catalogPromise) {
@@ -161,51 +210,80 @@
     recommendations.hidden = false;
   }
 
+  async function inspectOne(file) {
+    const body = new FormData();
+    body.set("file", file, file.name);
+    const response = await fetch("/api/v2/inspect", { method: "POST", body, credentials: "same-origin" });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data?.error || copy.failed);
+    return data;
+  }
+
+  function addProjectRow(file, data, error = "") {
+    if (!projectFiles) return;
+    const row = document.createElement("span");
+    row.className = "text-button";
+    row.textContent = error
+      ? `${file.name} · ${error}`
+      : `${file.name} · ${String(data.extension || "").toUpperCase()} · ${bytes(data.size || file.size)}${data.pages ? " · " + data.pages + " " + copy.pages : ""}`;
+    projectFiles.append(row);
+  }
+
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    const file = fileInput?.files?.[0];
-    if (!file) { status.textContent = copy.invalid; return; }
+    const files = [...(fileInput?.files || [])].slice(0, 6);
+    if (!files.length) { status.textContent = copy.invalid; return; }
 
     status.textContent = copy.inspecting;
     result.hidden = true;
     recommendations.hidden = true;
     facts.replaceChildren();
+    projectFiles?.replaceChildren();
+    if (projectBoard) projectBoard.hidden = false;
+    if (projectCount) projectCount.textContent = `${files.length}/6`;
 
-    const body = new FormData();
-    body.set("file", file, file.name);
+    let firstSuccess = null;
+    for (const file of files) {
+      try {
+        const data = await inspectOne(file);
+        addProjectRow(file, data);
+        rememberRecent(data, file.size);
+        if (!firstSuccess) firstSuccess = { file, data };
+      } catch (error) {
+        addProjectRow(file, {}, error?.message || copy.failed);
+      }
+    }
+
+    if (!firstSuccess) {
+      status.textContent = copy.failed;
+      return;
+    }
+
+    const { file, data } = firstSuccess;
+    label.textContent = files.length > 1
+      ? (en ? `${files.length} files inspected · primary: ${file.name}` : `تم فحص ${files.length} ملفات · الأساسي: ${file.name}`)
+      : file.name;
+    summary.textContent = copy.safe;
+    addFact(`${copy.type}: ${data.extension || file.name.slice(file.name.lastIndexOf(".")) || "—"}`);
+    addFact(`${copy.size}: ${bytes(data.size || file.size)}`);
+    if (data.pages) addFact(`${copy.pages}: ${data.pages}`);
+    if (typeof data.encrypted === "boolean") addFact(`${copy.encrypted}: ${data.encrypted ? copy.yes : copy.no}`);
+    result.hidden = false;
+    result.focus({ preventScroll: false });
 
     try {
-      const response = await fetch("/api/v2/inspect", { method: "POST", body, credentials: "same-origin" });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data?.error || copy.failed);
-
-      label.textContent = file.name;
-      summary.textContent = copy.safe;
-      addFact(`${copy.type}: ${data.extension || file.name.slice(file.name.lastIndexOf(".")) || "—"}`);
-      addFact(`${copy.size}: ${bytes(data.size || file.size)}`);
-      if (data.pages) addFact(`${copy.pages}: ${data.pages}`);
-      if (typeof data.encrypted === "boolean") addFact(`${copy.encrypted}: ${data.encrypted ? copy.yes : copy.no}`);
-      result.hidden = false;
-      result.focus({ preventScroll: false });
-      try {
-        sessionStorage.setItem("infinity_safe_file_context", JSON.stringify({
-          at: Date.now(),
-          extension: data.extension || "",
-          mime: data.mime || file.type || "",
-          size_bytes: Number(data.size || file.size || 0),
-          pages: Number(data.pages || 0),
-          encrypted: Boolean(data.encrypted),
-          safe: Boolean(data.safe),
-        }));
-      } catch (_) {}
-      await renderRecommendations(data.extension || "");
-      status.textContent = copy.ready;
-    } catch (error) {
-      status.textContent = copy.failed;
-      summary.textContent = error?.message || copy.failed;
-      label.textContent = file.name;
-      result.hidden = false;
-      result.focus({ preventScroll: false });
-    }
+      sessionStorage.setItem("infinity_safe_file_context", JSON.stringify({
+        at: Date.now(),
+        extension: data.extension || "",
+        mime: data.mime || file.type || "",
+        size_bytes: Number(data.size || file.size || 0),
+        pages: Number(data.pages || 0),
+        encrypted: Boolean(data.encrypted),
+        safe: Boolean(data.safe),
+        project_file_count: files.length,
+      }));
+    } catch (_) {}
+    await renderRecommendations(data.extension || "");
+    status.textContent = copy.ready;
   });
 })();
