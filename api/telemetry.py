@@ -82,3 +82,24 @@ def collect_product_event():
     response = jsonify(status="accepted")
     response.headers["Cache-Control"] = "no-store, private"
     return response, 202
+
+
+@telemetry_bp.post("/api/v2/events")
+@limiter.limit("60 per minute")
+def collect_product_event():
+    """Record a tiny allowlisted product event with no user/file/content fields."""
+    payload = request.get_json(silent=True) or {}
+    event = str(payload.get("event") or "").strip().lower()
+    if event not in _ALLOWED_EVENTS:
+        return jsonify(error="invalid event"), 400
+
+    path = str(payload.get("path") or "/").split("?", 1)[0]
+    if not _SAFE_PATH.fullmatch(path):
+        path = "/"
+
+    # Deliberately ignore every other client field. This endpoint never logs
+    # filenames, file types/sizes, prompts, IDs, account data, or free text.
+    current_app.logger.info("product_event event=%s path=%s", event, path)
+    response = jsonify(status="accepted")
+    response.headers["Cache-Control"] = "no-store, private"
+    return response, 202
