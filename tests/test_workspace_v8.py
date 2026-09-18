@@ -163,3 +163,26 @@ def test_product_event_endpoint_is_strictly_allowlisted():
 
     bad = client.post("/api/v2/events", json={"event": "arbitrary_event", "path": "/workspace"})
     assert bad.status_code == 400
+
+
+def test_all_reviewed_indexed_tools_have_depth_faq_and_internal_links():
+    from core.editorial import reviewed_tool_ids
+    from core.tooling import get_tool, tool_url
+
+    client = create_app().test_client()
+    reviewed = reviewed_tool_ids()
+    assert len(reviewed) >= 30
+
+    for tool_id in reviewed:
+        tool = get_tool(tool_id)
+        assert tool is not None
+        response = client.get(tool_url(tool) + "?lang=en")
+        assert response.status_code == 200
+        html = response.get_data(as_text=True)
+        assert 'name="robots" content="noindex,follow"' not in html
+        assert "PROCESSING TRANSPARENCY" in html
+        assert "PRACTICAL CONTEXT" in html
+        assert "FAQPage" in html
+        assert 'class="related-tools"' in html
+        if tool.input_required:
+            assert 'id="load-sample"' in html
