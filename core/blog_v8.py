@@ -391,7 +391,99 @@ for _post in V8_BLOG_POSTS:
     _post["paragraph_en"].extend(paragraph for _, paragraph in _extra["en"])
 
 
+_V8_SUPPLEMENTS = {
+    "PDF": {
+        "ar": [
+            ("اختبر المسار على نسخة قبل الملف المهم", "ملفات PDF قد تحتوي خطوطًا مضمنة وروابط وتعليقات وطبقات نص وصورًا بخصائص مختلفة. قبل اعتماد أي تحويل على مستند رسمي، استخدم نسخة أو ملفًا تجريبيًا، ثم قارن الصفحات الحرجة بصريًا ووظيفيًا. راقب ترتيب الصفحات والبحث داخل النص والروابط والأرقام الصغيرة، واحتفظ بالأصل حتى تتأكد أن الناتج يخدم هدفك بدل أن يكون مجرد ملف يفتح بدون خطأ."),
+            ("اختر الخطوة التالية حسب الهدف النهائي", "ليس كل PDF يحتاج سلسلة طويلة من المعالجة. إذا كان هدفك المشاركة فقد يكفي الضغط، وإذا كان الهدف التعديل فقد يكون Word أنسب، وإذا كانت الصفحات صورًا فـOCR هو البداية المنطقية. تقليل عدد الخطوات يحافظ على الجودة ويقلل فرص تغيّر التخطيط، لذلك اجعل كل خطوة مرتبطة بسبب واضح يمكن التحقق منه بعد التنزيل."),
+        ],
+        "en": [
+            ("Test the workflow on a copy before the important document", "PDF files can contain embedded fonts, links, annotations, searchable text layers, raster images, and document-level metadata that behave differently across conversion engines. Before committing a formal document to a workflow, use a copy or representative sample and compare critical pages visually and functionally. Check page order, text selection and search, important links, small numbers, and the first and last pages. Keep the source until the output has been reviewed for the exact purpose you care about, rather than treating a successful download as proof that every document feature survived."),
+            ("Choose the next step from the final outcome, not from habit", "A PDF does not automatically need a long chain of operations. If the goal is sharing, compression may be enough. If the goal is editing, an editable document path can be more appropriate. If pages are scans, OCR is usually the meaningful first step. Fewer justified transformations generally reduce layout drift and unnecessary recompression, so each additional action should have a concrete reason and a simple check you can perform after the result is produced."),
+        ],
+    },
+    "OCR": {
+        "ar": [
+            ("جودة الإدخال أهم من كثرة الإعدادات", "نجاح OCR يعتمد بدرجة كبيرة على وضوح الحروف واستقامة الصفحة والتباين وحجم النص. إذا كانت الصفحة مائلة أو مظلمة أو مضغوطة بقوة، فغالبًا لن يعالج اختيار إعدادات أكثر مشكلة المصدر. جرّب صفحة صعبة أولًا، وحسّن المسح أو الصورة عند الحاجة، ثم شغّل الملف الطويل بعد أن تتأكد من مستوى دقة مناسب للأسماء والأرقام والعناوين."),
+            ("راجع الحقول الحساسة يدويًا", "التعرف البصري احتمال وليس نسخًا حرفيًا مضمونًا، لذلك يجب مراجعة أرقام الهويات والفواتير والتواريخ والأسماء والمبالغ قبل استخدامها في قرار أو مستند رسمي. استخدم النص الناتج لتسريع العمل والبحث، لكن احتفظ بالصورة أو PDF الأصلي كمرجع بصري يمكن الرجوع إليه عند الشك في أي كلمة أو رقم."),
+        ],
+        "en": [
+            ("Input quality matters more than adding more settings", "OCR accuracy is strongly influenced by character clarity, page alignment, contrast, resolution, and text size. A skewed, dark, blurred, or aggressively compressed page will usually remain difficult even if you keep changing options. Test one challenging page first, improve the scan when needed, and only then process a long document. Names, small numbers, table cells, and mixed Arabic/English text are useful stress cases because they reveal recognition weaknesses earlier than a clean headline does."),
+            ("Review sensitive fields manually", "Optical recognition is probabilistic rather than a guaranteed character-for-character copy. Identity numbers, invoice totals, dates, names, account references, and other sensitive fields should be checked against the original page before they are used in a formal workflow. Treat OCR text as a productivity layer for search and editing, while retaining the original scan or PDF as the visual source of truth whenever a word or number is uncertain."),
+        ],
+    },
+    "Privacy": {
+        "ar": [
+            ("افصل بين المحتوى والبيانات المصاحبة", "الخصوصية لا تتعلق فقط بمحتوى الملف الظاهر. بعض الصيغ تحمل بيانات وصفية أو معلومات تقنية، بينما قد تحتوي الصورة نفسها على معلومات حساسة داخل البكسلات. نظف البيانات غير اللازمة عندما يكون ذلك مناسبًا، لكن راجع أيضًا ما يظهر فعليًا في المستند أو الصورة، لأن إزالة metadata لا تخفي اسمًا أو عنوانًا أو شاشة ظاهرة داخل المحتوى."),
+            ("قلل البيانات التي تنتقل بين الخطوات", "المسار الأفضل يرسل فقط ما تحتاجه العملية التالية. الأدوات المحلية في المتصفح مفيدة عندما تكفي، والمعالجة الخادمية تكون مناسبة عندما تحتاج محركات مثل OCR أو LibreOffice. في الحالتين، لا تجعل الراحة سببًا لإرسال محتوى أو أسماء ملفات إلى خدمة ذكاء اصطناعي ما لم تكن المهمة تحتاج ذلك فعلًا ويكون السلوك واضحًا للمستخدم."),
+        ],
+        "en": [
+            ("Separate visible content from attached metadata", "Privacy is not limited to what a document visibly shows. Some formats carry metadata and technical properties, while an image can also reveal sensitive information directly in its pixels. Remove unnecessary metadata when that matches the sharing goal, but inspect the visible content as well. Stripping EXIF cannot hide an address, badge, screen, document, face, or other detail that is already part of the image itself."),
+            ("Minimize what moves between processing steps", "A good workflow passes only what the next operation actually needs. Browser-local utilities are useful when a task can stay on the device, while server processing is reasonable for engines such as OCR or office rendering that are not practical in every browser. In either case, convenience should not silently expand data sharing. File contents or filenames should not be forwarded to an AI provider unless the task genuinely requires it and the behavior is explicit."),
+        ],
+    },
+    "Data": {
+        "ar": [
+            ("تحقق من البنية وليس فقط من عدد الصفوف", "عند تحويل CSV أو Excel أو JSON، قد تبدو النتيجة ناجحة بينما تكون الفواصل أو الترميزات أو أنواع القيم قد تغيّرت. راجع أسماء الأعمدة وعددها، ثم افحص صفوفًا من البداية والوسط والنهاية. انتبه للأرقام التي تحتوي أصفارًا في البداية والتواريخ والنصوص الطويلة والقيم التي تشبه الصيغ، لأنها أكثر الحالات التي تكشف اختلافات مهمة بين الصيغ."),
+            ("حدد ما الذي لا تستطيع الصيغة حفظه", "كل صيغة بيانات لها قدرات مختلفة. CSV لا يحمل أوراقًا متعددة أو تنسيق خلايا أو مخططات، وJSON لا يفرض مخططًا جدوليًا واحدًا تلقائيًا. قبل التحويل، حدد هل تحتاج البيانات الخام فقط أم تحتاج البنية والتنسيق أيضًا. هذه الخطوة البسيطة تمنع توقع ناتج لا تستطيع الصيغة المستهدفة تمثيله أصلًا."),
+        ],
+        "en": [
+            ("Validate structure, not only row count", "A CSV, spreadsheet, or JSON conversion can finish successfully while delimiters, encodings, inferred types, or nested structures still deserve review. Check column names and counts, then inspect records from the beginning, middle, and end. Leading-zero identifiers, dates, long text, quoted delimiters, and formula-looking values are especially useful test cases because they expose differences that a simple file-open check may miss."),
+            ("Know what the destination format cannot preserve", "Data formats have different capabilities. CSV does not carry multiple worksheets, cell styling, formulas, charts, or rich workbook metadata, while JSON can represent nesting that a flat table cannot express without a mapping rule. Before converting, decide whether you need only the raw values or also the source structure and presentation. That decision prevents expectations that the destination format is technically unable to satisfy."),
+        ],
+    },
+    "Developers": {
+        "ar": [
+            ("استخدم الأدوات المحلية للبيانات القصيرة عندما تكفي", "تحويل النصوص والترميزات وتحليل URL ومقارنة الأسطر وحساب القيم يمكن أن يتم مباشرة في المتصفح بدون رفع ملف. هذا يقلل زمن الانتظار ويجعل حدود الخصوصية أوضح. مع ذلك، لا تفترض أن نتيجة الواجهة أصبحت ملفًا خادميًا تلقائيًا؛ إذا احتجت استخدامها في خطوة أخرى فاحفظها أو انقلها بالطريقة التي توضحها الأداة."),
+            ("تحقق من الترميز والحدود قبل الاعتماد على الناتج", "الأدوات النصية تتعامل مع مدخلات قد تحتوي Unicode أو أسطرًا طويلة أو رموزًا خاصة. اختبر حالة طبيعية وحالة حدودية قبل استخدامها في سكربت أو نظام إنتاجي. وإذا كانت النتيجة ستدخل إلى نظام حساس، راجعها كمعلومة مولدة بواسطة أداة مساعدة وليس كبديل عن التحقق الذي يفرضه التطبيق أو الـAPI المستهدف."),
+        ],
+        "en": [
+            ("Keep short text and developer utilities local when possible", "Text transformations, encoders, URL parsing, line comparison, and small calculations can often run entirely in the browser without uploading a file. That reduces latency and makes the privacy boundary easier to understand. A browser result, however, is not automatically a server-side file artifact. If another workflow needs it, explicitly save or transfer the output using the mechanism the tool provides rather than assuming an invisible handoff occurred."),
+            ("Check encoding and edge cases before relying on generated output", "Developer utilities frequently receive Unicode text, long lines, delimiters, escape sequences, or unusual symbols. Test both a normal input and at least one edge case before using the result in a script or production system. When an output will enter a security-sensitive or strongly validated API, treat it as helper-generated data and still apply the validation required by the destination application instead of assuming the utility replaces that boundary."),
+        ],
+    },
+    "Images": {
+        "ar": [
+            ("قارن الأبعاد والصيغة والخلفية بعد التحويل", "تحويل الصورة لا يعني تحسينها تلقائيًا. بعض الصيغ تحافظ على الشفافية وأخرى لا تفعل، وبعضها أفضل للصور الفوتوغرافية بينما يناسب PNG الرسومات والحواف الحادة. بعد التنفيذ راجع الأبعاد وحجم الملف وشفافية الخلفية والألوان، خصوصًا إذا كانت الصورة ستدخل موقعًا أو عرضًا أو طباعة تحتاج مواصفات محددة."),
+            ("احتفظ بالأصل قبل أي ضغط أو إعادة ترميز", "الضغط والتحويل المتكرر قد يراكم فقدًا مرئيًا في الصور ذات الترميز الخاسر. استخدم الأصل كمصدر رئيسي وأنشئ منه نسخًا مخصصة للويب أو المشاركة أو الأرشفة بدل تحويل نسخة مضغوطة مرارًا. هذا يعطيك مرونة أكبر إذا احتجت جودة أعلى أو صيغة مختلفة لاحقًا."),
+        ],
+        "en": [
+            ("Compare dimensions, format behavior, and background after conversion", "Changing an image format does not automatically improve the source. Some formats support transparency while others do not, and photographic content often has different size trade-offs from logos or line art. After processing, verify pixel dimensions, file size, background transparency, color appearance, and orientation. This matters especially when the asset is headed to a website, presentation, print workflow, or platform with strict upload requirements."),
+            ("Keep the original before compression or repeated re-encoding", "Repeated conversion of lossy images can accumulate visible degradation. Keep the original as the master source and create separate derivatives for web delivery, sharing, thumbnails, or archival needs instead of repeatedly converting an already-compressed copy. Starting from the best available source preserves flexibility when you later need a different format, a larger export, or a less aggressive quality setting."),
+        ],
+    },
+    "Security": {
+        "ar": [
+            ("عامل كل ناتج وسيط كمدخل جديد غير موثوق", "في المسارات متعددة الخطوات لا يكفي التحقق من الملف الأول فقط. قد ينتج المحرك ملفًا جديدًا ببنية مختلفة أو امتداد مختلف، لذلك يجب فحص الناتج قبل تمريره إلى الأداة التالية. هذا يقلل مساحة الخطأ ويمنع افتراض أن نجاح خطوة واحدة يضمن سلامة كل ما يليها."),
+            ("ضع حدودًا للوقت والحجم والموارد", "المعالجة الآمنة لا تعتمد فقط على فحص الامتداد. الملفات الكبيرة أو المعقدة قد تستهلك وقتًا وذاكرة وعمليات خارجية، لذلك تساعد حدود الصفحات والحجم والمهلة والتزامن على إبقاء الخدمة مستقرة. هذه الحدود قد ترفض بعض الحالات الثقيلة عمدًا، وهو سلوك أفضل من السماح لطلب واحد باستهلاك موارد الخدمة بلا سقف."),
+        ],
+        "en": [
+            ("Treat every intermediate artifact as new untrusted input", "A multi-step workflow should not validate only the first upload and then blindly trust everything produced afterward. Each engine can create a different container, extension, or internal structure, so the output should cross the same type, size, structure, and parser boundaries before it becomes input to the next operation. Revalidation reduces the blast radius of an unexpected converter result and keeps the security model consistent across the whole chain."),
+            ("Bound time, size, and processing resources", "Safe file processing is not only about checking an extension. Large or intentionally complex inputs can consume CPU, memory, temporary storage, and external renderer processes. Page limits, upload and output limits, wall-clock timeouts, concurrency controls, and native process restrictions help keep the service predictable. Some unusually heavy files may be rejected by design, which is preferable to allowing a single request to consume unbounded shared resources."),
+        ],
+    },
+}
+
+
+def _complete_v8_posts() -> None:
+    for post in V8_BLOG_POSTS:
+        supplement = _V8_SUPPLEMENTS.get(post.get("category_en"), _V8_SUPPLEMENTS["Security"])
+        while len(post["sections"]) < 6:
+            index = len(post["sections"]) - 4
+            index = 0 if index < 0 else min(index, 1)
+            ar_title, ar_body = supplement["ar"][index]
+            en_title, en_body = supplement["en"][index]
+            post["sections"].append((ar_title, ar_body))
+            post["section_en"].append(en_title)
+            post["paragraph_en"].append(en_body)
+        if post.get("tool") in {"/workflows", "/collections/developers"}:
+            post["tool"] = "/tools"
+
+
+
+
 def install() -> None:
+    _complete_v8_posts()
     from core import blog
 
     existing = {post["slug"] for post in blog.BLOG_POSTS}
