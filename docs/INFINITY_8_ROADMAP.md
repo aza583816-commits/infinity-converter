@@ -29,7 +29,7 @@ indexing strategy.
 ## Phase C — richer orchestration
 
 - [x] Visual workflow builder over the real compatible converter graph.
-- [ ] Branching/retry rules for compatible steps.
+- [x] Project-queue retry/continue rules are implemented. In-chain conditional branching stays deliberately excluded from 8.0 so server execution remains deterministic and re-validatable.
 - [x] Quality profiles (Balanced, Smallest, Editable first, Clean & safe) with compatibility filtering.
 - [x] Deterministic client/server compatibility preflight before a dynamic chain executes.
 - [x] Browser-tool steps remain local and are rejected from server file handoffs.
@@ -38,8 +38,7 @@ indexing strategy.
 
 - [x] Maintain a manually reviewed hero-tool set above the 30-page target (36+ reviewed converter pages).
 - [x] Expand topic clusters across PDF, OCR, data/Office, images, privacy, security, and workflow verification (24 bilingual guides total).
-- [ ] Every indexed tool page needs implementation-specific guidance, examples,
-      FAQs, internal links and relevant workflows.
+- [x] Every reviewed/indexed converter page is release-gated for processing transparency, implementation-specific guidance, FAQ structured data, safe samples where uploads are required, and internal related-tool links.
 - [x] Keep thin utility surfaces noindex until they meet the quality bar.
 - [ ] Validate canonical/hreflang/sitemap changes in live Search Console after release.
 
