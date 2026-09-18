@@ -207,6 +207,57 @@ def startup_routes():
             if "pagead2.googlesyndication.com/pagead/js/adsbygoogle.js" not in home:
                 raise RuntimeError("AdSense content-page loader guard did not allow homepage")
 
+            workspace = client.get("/workspace?lang=en")
+            workspace_html = workspace.get_data(as_text=True)
+            if workspace.status_code != 200:
+                raise RuntimeError("Infinity 8 workspace route failed")
+            for marker in ("INFINITY 8", 'id="workspace-inspector-form"', "VISUAL WORKFLOW BUILDER"):
+                if marker not in workspace_html:
+                    raise RuntimeError(f"Infinity 8 workspace is missing {marker}")
+            if 'name="robots" content="noindex,follow"' not in workspace_html:
+                raise RuntimeError("Infinity 8 workspace must remain noindex")
+            if "pagead2.googlesyndication.com/pagead/js/adsbygoogle.js" in workspace_html:
+                raise RuntimeError("Infinity 8 workspace must not load AdSense serving script")
+
+            discovery_response = client.get("/api/v2/discovery")
+            discovery_payload = discovery_response.get_json(silent=True) or {}
+            counts = discovery_payload.get("counts") or {}
+            discovery_items = discovery_payload.get("items") or []
+            if discovery_response.status_code != 200:
+                raise RuntimeError("Infinity 8 unified discovery API failed")
+            if counts.get("converter") != 162 or counts.get("browser", 0) < 100:
+                raise RuntimeError(f"Infinity 8 discovery count drift: {counts}")
+            if counts.get("total") != counts.get("converter", 0) + counts.get("browser", 0):
+                raise RuntimeError("Infinity 8 discovery total does not match converter + browser counts")
+            discovery_ids = {item.get("id") for item in discovery_items if isinstance(item, dict)}
+            if "pdf-compress" not in discovery_ids or not any(
+                isinstance(tool_id, str) and tool_id.startswith("browser:") for tool_id in discovery_ids
+            ):
+                raise RuntimeError("Infinity 8 unified discovery namespaces are incomplete")
+            if not any(item.get("id") == "pdf-compress" and item.get("workflow_safe") for item in discovery_items):
+                raise RuntimeError("Infinity 8 discovery workflow-safe metadata is missing")
+
+            smart_sample = ROOT / "static" / "samples" / "sample-image.png"
+            smart_workflow = client.post(
+                "/api/v2/workflows/execute",
+                data={
+                    "steps": json.dumps(["image-to-jpg", "image-compress"]),
+                    "file": (io.BytesIO(smart_sample.read_bytes()), "workspace-preflight.png"),
+                },
+                content_type="multipart/form-data",
+                buffered=True,
+            )
+            if smart_workflow.status_code != 200:
+                detail = smart_workflow.get_json(silent=True) or smart_workflow.get_data(as_text=True)[:300]
+                raise RuntimeError(f"Infinity 8 dynamic workflow smoke failed: {smart_workflow.status_code} {detail}")
+            if smart_workflow.headers.get("X-Workflow-ID") != "smart-plan":
+                raise RuntimeError("Infinity 8 dynamic workflow ID header missing")
+            if smart_workflow.headers.get("X-Workflow-Completed") != "image-to-jpg,image-compress":
+                raise RuntimeError("Infinity 8 dynamic workflow completion header mismatch")
+            if smart_workflow.mimetype != "image/jpeg" or not smart_workflow.get_data():
+                raise RuntimeError("Infinity 8 dynamic workflow output validation failed")
+            smart_workflow.close()
+
             assistant = client.get("/assistant")
             assistant_html = assistant.get_data(as_text=True)
             if assistant.status_code != 200 or "INFINITY INTELLIGENCE" not in assistant_html:
@@ -305,6 +356,8 @@ def startup_routes():
                 raise RuntimeError("thin utility surfaces must stay out of sitemap")
             if "/blog/word-to-pdf-without-losing-formatting" not in sitemap:
                 raise RuntimeError("Knowledge Center article missing from sitemap")
+            if "/blog/safe-multi-step-file-workflows" not in sitemap:
+                raise RuntimeError("Infinity 8 Knowledge Center article missing from sitemap")
             if "/trust" not in sitemap or "/editorial" not in sitemap:
                 raise RuntimeError("trust/editorial publisher pages missing from sitemap")
             indexed_tool_urls = [line for line in sitemap.split("<url>") if "/tools/" in line]
