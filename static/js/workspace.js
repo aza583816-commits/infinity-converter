@@ -29,12 +29,20 @@
   const loadPreset = document.getElementById("workspace-load-preset");
   const deletePreset = document.getElementById("workspace-delete-preset");
   const installApp = document.getElementById("workspace-install-app");
+  const recovery = document.getElementById("workspace-session-recovery");
+  const restoreSession = document.getElementById("workspace-restore-session");
+  const discardSession = document.getElementById("workspace-discard-session");
+  const runQueue = document.getElementById("workspace-run-queue");
+  const clearQueue = document.getElementById("workspace-clear-queue");
+  const queueList = document.getElementById("workspace-queue-list");
   const en = document.documentElement.lang === "en";
   let catalogPromise = null;
   let builderCatalogPromise = null;
   let builderFile = null;
   let builderExt = "";
   let builderSteps = [];
+  let projectEntries = [];
+  let pendingRestore = null;
 
   const copy = en ? {
     inspecting: "Inspecting safely…",
@@ -106,6 +114,7 @@
 
   const RECENTS_KEY = "infinity_workspace_recents_v1";
   const PRESETS_KEY = "infinity_workspace_presets_v1";
+  const SESSION_KEY = "infinity_workspace_session_v1";
   let deferredInstallPrompt = null;
 
   window.addEventListener("beforeinstallprompt", (event) => {
@@ -127,6 +136,54 @@
     if (installApp) installApp.hidden = true;
   });
 
+
+  function safeSessionRead() {
+    try {
+      const value = JSON.parse(sessionStorage.getItem(SESSION_KEY) || "null");
+      if (!value || typeof value !== "object") return null;
+      if (Date.now() - Number(value.at || 0) > 6 * 60 * 60 * 1000) return null;
+      if (!/^\.[a-z0-9]{1,10}$/.test(String(value.extension || ""))) return null;
+      if (!Array.isArray(value.steps) || value.steps.length > 4) return null;
+      if (!value.steps.every((step) => typeof step === "string" && /^[a-z0-9:-]{1,80}$/.test(step))) return null;
+      return value;
+    } catch (_) { return null; }
+  }
+
+  function persistSessionPlan() {
+    if (!builderExt) return;
+    try {
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+        at: Date.now(),
+        extension: builderExt,
+        steps: builderSteps.map((step) => step.id),
+      }));
+    } catch (_) {}
+  }
+
+  function renderSessionRecovery() {
+    if (!recovery) return;
+    const saved = safeSessionRead();
+    recovery.hidden = !saved;
+    if (saved) pendingRestore = saved;
+  }
+
+  restoreSession?.addEventListener("click", () => {
+    const saved = safeSessionRead();
+    if (!saved) { renderSessionRecovery(); return; }
+    pendingRestore = saved;
+    if (fileInput) fileInput.focus();
+    if (status) status.textContent = en
+      ? `Plan ready to restore for ${saved.extension.toUpperCase()}. Re-select the file.`
+      : `الخطة جاهزة لنوع ${saved.extension.toUpperCase()}. اختر الملف من جديد.`;
+  });
+
+  discardSession?.addEventListener("click", () => {
+    try { sessionStorage.removeItem(SESSION_KEY); } catch (_) {}
+    pendingRestore = null;
+    renderSessionRecovery();
+  });
+
+  renderSessionRecovery();
 
   function safeRecentRead() {
     try {
@@ -412,6 +469,8 @@
 
     if (builderAddStep) builderAddStep.disabled = !compatible.length || builderSteps.length >= 4;
     if (builderRun) builderRun.disabled = !builderFile || !builderSteps.length;
+    if (runQueue) runQueue.disabled = !builderSteps.length || !projectEntries.some((entry) => entry?.data?.safe);
+    persistSessionPlan();
     if (builderStatus) builderStatus.textContent = en
       ? (builderSteps.length + "/4 steps · current " + (currentExt || "—"))
       : (builderSteps.length + "/4 خطوات · الحالي " + (currentExt || "—"));
@@ -479,6 +538,60 @@
       clean: ["zip-flatten"],
     },
   };
+
+  const TEMPLATE_STEPS = {
+    student: {
+      ".pdf": ["pdf-compress"],
+      ".doc": ["word-to-pdf", "pdf-compress"],
+      ".docx": ["word-to-pdf", "pdf-compress"],
+      ".png": ["image-to-pdf", "pdf-compress"],
+      ".jpg": ["image-to-pdf", "pdf-compress"],
+      ".jpeg": ["image-to-pdf", "pdf-compress"],
+    },
+    business: {
+      ".pdf": ["pdf-repair", "pdf-compress"],
+      ".doc": ["word-to-pdf", "pdf-compress"],
+      ".docx": ["word-to-pdf", "pdf-compress"],
+      ".xlsx": ["excel-to-pdf", "pdf-compress"],
+      ".pptx": ["ppt-to-pdf", "pdf-compress"],
+    },
+    creator: {
+      ".png": ["image-to-jpg", "image-compress", "image-strip-metadata"],
+      ".jpg": ["image-compress", "image-strip-metadata"],
+      ".jpeg": ["image-compress", "image-strip-metadata"],
+      ".webp": ["image-to-jpg", "image-compress", "image-strip-metadata"],
+    },
+  };
+
+  async function applyStepIds(ids) {
+    const catalog = await builderCatalog();
+    const byId = new Map(catalog.map((item) => [item.id, item]));
+    const next = [];
+    let current = builderExt;
+    for (const id of ids || []) {
+      const item = byId.get(id);
+      if (!item || !acceptsExtension(item, current) || next.some((step) => step.id === item.id)) break;
+      next.push(item);
+      current = item.output_ext;
+      if (next.length >= 4) break;
+    }
+    builderSteps = next;
+    await renderBuilder();
+    return next.length === (ids || []).length;
+  }
+
+  document.querySelectorAll("[data-workspace-template]").forEach((button) => button.addEventListener("click", async () => {
+    const template = button.dataset.workspaceTemplate || "";
+    const ids = TEMPLATE_STEPS[template]?.[builderExt] || [];
+    if (!ids.length) {
+      if (builderStatus) builderStatus.textContent = en ? "This template does not match the selected file type." : "هذا القالب لا يناسب نوع الملف المختار.";
+      return;
+    }
+    document.querySelectorAll("[data-workspace-template]").forEach((item) => item.classList.toggle("is-active", item === button));
+    document.querySelectorAll("[data-workspace-profile]").forEach((item) => item.classList.remove("is-active"));
+    const complete = await applyStepIds(ids);
+    if (!complete && builderStatus) builderStatus.textContent = en ? "Template was shortened to the safe compatible steps." : "تم تقصير القالب إلى الخطوات الآمنة المتوافقة.";
+  }));
 
   async function applyProfile(profile) {
     document.querySelectorAll("[data-workspace-profile]").forEach((button) => {
@@ -577,6 +690,101 @@
     projectFiles.append(row);
   }
 
+  function chainAcceptsExtension(extension) {
+    if (!builderSteps.length) return false;
+    return acceptsExtension(builderSteps[0], String(extension || "").toLowerCase());
+  }
+
+  function renderQueue() {
+    if (!queueList) return;
+    queueList.replaceChildren();
+    projectEntries.forEach((entry, index) => {
+      const row = document.createElement("div");
+      row.className = "personal-card";
+      const head = document.createElement("div");
+      const name = document.createElement("strong");
+      name.textContent = entry.file.name;
+      const badge = document.createElement("span");
+      badge.textContent = entry.status || (en ? "Ready" : "جاهز");
+      head.append(name, badge);
+      const detail = document.createElement("p");
+      detail.textContent = entry.error
+        ? entry.error
+        : `${String(entry.data?.extension || "").toUpperCase()} · ${bytes(entry.data?.size || entry.file.size)}`;
+      row.append(head, detail);
+      if (entry.status === "failed" || entry.status === "skipped") {
+        const retry = document.createElement("button");
+        retry.type = "button";
+        retry.className = "secondary";
+        retry.textContent = en ? "Retry" : "إعادة المحاولة";
+        retry.addEventListener("click", () => runQueueItem(index));
+        row.append(retry);
+      }
+      queueList.append(row);
+    });
+  }
+
+  async function runQueueItem(index) {
+    const entry = projectEntries[index];
+    if (!entry || !entry.data?.safe || !builderSteps.length) return;
+    if (!chainAcceptsExtension(entry.data.extension)) {
+      entry.status = "skipped";
+      entry.error = en ? "Current workflow does not accept this file type." : "المسار الحالي لا يقبل نوع هذا الملف.";
+      renderQueue();
+      return;
+    }
+    entry.status = "running";
+    entry.error = "";
+    renderQueue();
+    try {
+      const body = new FormData();
+      body.set("file", entry.file, entry.file.name);
+      body.set("steps", JSON.stringify(builderSteps.map((item) => item.id)));
+      const response = await fetch("/api/v2/workflows/execute", { method: "POST", body, credentials: "same-origin" });
+      if (!response.ok) {
+        let message = en ? "Workflow failed." : "تعذر تنفيذ المسار.";
+        try {
+          const payload = await response.json();
+          if (payload?.error) message = payload.error;
+        } catch (_) {}
+        throw new Error(message);
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = contentDispositionFilename(response);
+      document.body.append(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
+      entry.status = "done";
+      entry.error = "";
+    } catch (error) {
+      entry.status = "failed";
+      entry.error = error?.message || (en ? "Workflow failed." : "تعذر تنفيذ المسار.");
+    }
+    renderQueue();
+  }
+
+  runQueue?.addEventListener("click", async () => {
+    if (!builderSteps.length || !projectEntries.length) return;
+    runQueue.disabled = true;
+    for (let index = 0; index < projectEntries.length; index += 1) {
+      await runQueueItem(index);
+    }
+    runQueue.disabled = false;
+  });
+
+  clearQueue?.addEventListener("click", () => {
+    projectEntries = [];
+    projectFiles?.replaceChildren();
+    queueList?.replaceChildren();
+    if (projectBoard) projectBoard.hidden = true;
+    if (projectCount) projectCount.textContent = "";
+    if (runQueue) runQueue.disabled = true;
+  });
+
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const files = [...(fileInput?.files || [])].slice(0, 6);
@@ -591,16 +799,21 @@
     if (projectCount) projectCount.textContent = `${files.length}/6`;
 
     let firstSuccess = null;
+    projectEntries = [];
     for (const file of files) {
       try {
         const data = await inspectOne(file);
         addProjectRow(file, data);
         rememberRecent(data, file.size);
+        projectEntries.push({ file, data, status: en ? "Ready" : "جاهز", error: "" });
         if (!firstSuccess) firstSuccess = { file, data };
       } catch (error) {
-        addProjectRow(file, {}, error?.message || copy.failed);
+        const message = error?.message || copy.failed;
+        addProjectRow(file, {}, message);
+        projectEntries.push({ file, data: {}, status: "failed", error: message });
       }
     }
+    renderQueue();
 
     if (!firstSuccess) {
       status.textContent = copy.failed;
@@ -612,7 +825,18 @@
     builderExt = String(data.extension || "").toLowerCase();
     builderSteps = [];
     if (builder) builder.hidden = false;
-    await applyProfile("balanced");
+    if (pendingRestore && pendingRestore.extension === builderExt && pendingRestore.steps?.length) {
+      const restored = await applyStepIds(pendingRestore.steps);
+      if (restored) {
+        if (builderStatus) builderStatus.textContent = en ? "Restored previous safe plan ✓" : "تم استعادة الخطة الآمنة السابقة ✓";
+        pendingRestore = null;
+        if (recovery) recovery.hidden = true;
+      } else {
+        await applyProfile("balanced");
+      }
+    } else {
+      await applyProfile("balanced");
+    }
     label.textContent = files.length > 1
       ? (en ? `${files.length} files inspected · primary: ${file.name}` : `تم فحص ${files.length} ملفات · الأساسي: ${file.name}`)
       : file.name;
