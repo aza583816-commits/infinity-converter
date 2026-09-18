@@ -1,13 +1,15 @@
-# Current release: 7.2.3
+# Current release candidate: 8.0.0
 
-This release continues the latest verified `main` history; it does not recreate
-the project or roll back the modular handler, Smart Flow, resilience, editorial,
-security, accessibility, and performance work already merged. Read
-[current release notes](RELEASE_NOTES_7.2.3.md) and the final 7.2.3 audit before
-deployment. Earlier reports below are historical evidence only.
+Infinity 8 continues directly from the verified 7.2.3 production line. It adds a
+goal-first Smart Workspace, safe file inspection, a unified converter/browser
+catalog, executable catalog-grounded workflows, a visual workflow builder,
+local-only workspace recents, multi-file inspection, and new bilingual knowledge
+clusters without removing the existing 162-operation converter architecture.
 
-Exact 7.2.3 validation evidence is recorded in `FINAL_AUDIT_7.2.3.md` after the
-production-image and live deployment gates complete.
+Read [Infinity 8 release notes](RELEASE_NOTES_8.0.0.md) and
+[the Infinity 8 roadmap](docs/INFINITY_8_ROADMAP.md). The release is not considered
+production-complete until the production-image CI, exhaustive operation/API smoke,
+Railway deployment, readiness probe, and live workspace checks are all green.
 
 Production gates remain mandatory:
 
@@ -30,8 +32,8 @@ Infinity Converter is a Flask 3 file-conversion service deployed on Railway. The
 - Public authentication and billing are **hidden by default**, but their code paths are retained for a future launch.
 - Canonical `/tools/<slug>` URLs; legacy `/tool/<id>` URLs redirect to the canonical page.
 - Category links can deep-link into filtered tool listings.
-- **15 original bilingual Knowledge Center guides** are the main editorial layer, with article structured data and relevant tool links.
-- Search indexing is intentionally quality-first: the sitemap focuses on core content plus **21 manually reviewed converter pages**, while the full 162-tool catalog remains available to users.
+- **24 original bilingual Knowledge Center guides** are the main editorial layer, with article structured data and relevant tool links.
+- Search indexing is intentionally quality-first: the sitemap focuses on core content plus **36+ manually reviewed converter pages**, while the full 162-tool catalog remains available to users.
 - AdSense serving is restricted to content-rich, indexable pages; verification metadata remains available without serving ads on thin/error/navigation-only surfaces.
 
 ## Tool architecture
@@ -74,7 +76,7 @@ When disabled, public `/login`, `/register`, `/account`, and `/pricing` routes r
 
 ## Deployment
 
-Railway is the production platform. `railway.toml` uses the Dockerfile builder and `/api/v2/healthz` as the health check. The current synchronous API is protected by bounded concurrency and subprocess/request timeouts; a future durable queue can be added behind the same conversion boundary.
+Railway is the production platform. `railway.toml` uses the Dockerfile builder and `/api/v2/readyz` as the health check. The current synchronous API is protected by bounded concurrency and subprocess/request timeouts; a future durable queue can be added behind the same conversion boundary.
 
 ## 7.2.0 Production Cohesion
 
