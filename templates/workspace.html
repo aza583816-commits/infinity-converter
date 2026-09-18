@@ -112,6 +112,29 @@
     <p class="sample-note">{{ 'Maximum four converter steps. Tools that need interactive required settings are excluded from the builder.' if lang == 'en' else 'الحد الأقصى أربع خطوات تحويل. الأدوات التي تحتاج إعدادات إلزامية تفاعلية لا تظهر في هذا المنشئ.' }}</p>
   </section>
 
+  <section id="workspace-queue" class="converter-panel reveal-on-scroll" hidden aria-labelledby="workspace-queue-title">
+    <div class="panel-heading">
+      <div><span class="kicker">MULTI-FILE QUEUE</span><h2 id="workspace-queue-title">{{ 'Run the same verified plan across several compatible files.' if lang == 'en' else 'شغّل نفس المسار المتحقق على عدة ملفات متوافقة.' }}</h2></div>
+      <span id="workspace-queue-status" class="status" role="status">{{ 'Ready' if lang == 'en' else 'جاهز' }}</span>
+    </div>
+    <p>{{ 'Files stay in this browser session. Each item has its own progress and retry state; file bytes are never written to server history.' if lang == 'en' else 'الملفات تبقى في جلسة المتصفح. لكل ملف حالة تقدم وإعادة محاولة مستقلة، ولا تُكتب بيانات الملف في سجل خادمي.' }}</p>
+    <div id="workspace-queue-list" class="quick-list"></div>
+    <div class="panel-actions">
+      <button id="workspace-queue-run" class="primary" type="button">{{ 'Run compatible files' if lang == 'en' else 'شغّل الملفات المتوافقة' }} ✦</button>
+      <button id="workspace-queue-retry" class="secondary" type="button">{{ 'Retry failed' if lang == 'en' else 'أعد الفاشلة' }}</button>
+    </div>
+  </section>
+
+  <section class="section-block reveal-on-scroll" aria-labelledby="workspace-templates-title">
+    <div class="v7-section-heading"><div><span class="kicker">READY TEMPLATES</span><h2 id="workspace-templates-title">{{ 'Start from a practical outcome.' if lang == 'en' else 'ابدأ من نتيجة عملية جاهزة.' }}</h2><p>{{ 'Templates only select safe workflow profiles. They do not bypass compatibility checks.' if lang == 'en' else 'القوالب تختار مسارات آمنة فقط، ولا تتجاوز فحوصات التوافق.' }}</p></div></div>
+    <div class="audience-grid">
+      <button class="audience-card" type="button" data-workspace-template="student"><span>STUDY</span><strong>{{ 'Student submission' if lang == 'en' else 'تسليم طالب' }}</strong><p>{{ 'Prefer a share-ready, smaller result for LMS uploads.' if lang == 'en' else 'يفضل نسخة جاهزة للمشاركة وأخف للمنصات التعليمية.' }}</p></button>
+      <button class="audience-card" type="button" data-workspace-template="business"><span>WORK</span><strong>{{ 'Business sharing' if lang == 'en' else 'مشاركة أعمال' }}</strong><p>{{ 'Favor clean, portable output for reports and documents.' if lang == 'en' else 'يفضل ناتجًا نظيفًا وقابلًا للمشاركة للتقارير والمستندات.' }}</p></button>
+      <button class="audience-card" type="button" data-workspace-template="creator"><span>CREATE</span><strong>{{ 'Web publishing' if lang == 'en' else 'نشر للويب' }}</strong><p>{{ 'Optimize images for sharing and remove common metadata.' if lang == 'en' else 'حسّن الصور للمشاركة وأزل البيانات الوصفية الشائعة.' }}</p></button>
+      <button class="audience-card" type="button" data-workspace-template="archive"><span>SAFE</span><strong>{{ 'Clean archive copy' if lang == 'en' else 'نسخة أرشيف نظيفة' }}</strong><p>{{ 'Prefer integrity and cleanup before the next action.' if lang == 'en' else 'يفضل التحقق والتنظيف قبل الخطوة التالية.' }}</p></button>
+    </div>
+  </section>
+
   <section class="section-block reveal-on-scroll" aria-labelledby="workspace-audiences-title">
     <div class="v7-section-heading"><div><span class="kicker">GOAL-BASED COLLECTIONS</span><h2 id="workspace-audiences-title">{{ 'Start from your job, not a file format.' if lang == 'en' else 'ابدأ من مهمتك، مو من صيغة الملف.' }}</h2><p>{{ 'Curated paths for study, business, creation and technical work.' if lang == 'en' else 'مسارات مرتبة للدراسة والأعمال وصناعة المحتوى والعمل التقني.' }}</p></div></div>
     <div class="audience-grid">
