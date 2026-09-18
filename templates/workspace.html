@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Infinity Workspace — Smart File Inspector | Infinity Converter' if lang == 'en' else 'Infinity Workspace — فاحص الملفات الذكي | Infinity Converter' }}{% endblock %}
+{% block description %}{{ 'Inspect a file safely, understand what it is, and jump into the best Infinity workflow without uploading it to AI.' if lang == 'en' else 'افحص ملفك بأمان، افهم نوعه، وانتقل إلى أفضل مسار في Infinity بدون إرسال الملف للذكاء الاصطناعي.' }}{% endblock %}
+{% block content %}
+<div class="page-wrap workflows-page" id="infinity-workspace">
+  <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/">{{ t('common.home') }}</a><span>/</span><strong>Infinity Workspace</strong></nav>
+
+  <section class="tool-hero reveal-on-scroll">
+    <div class="tool-hero-main">
+      <span class="kicker">INFINITY 8 · SMART WORKSPACE</span>
+      <h1>{{ 'Drop a file. Understand it. Choose the right path.' if lang == 'en' else 'ارفع ملفًا. افهمه. وخذ المسار الصح.' }}</h1>
+      <p>{{ 'Infinity inspects only technical file metadata and structure first. It does not attach file contents to Infinity Intelligence automatically.' if lang == 'en' else 'يفحص Infinity البيانات التقنية والبنية أولًا فقط، ولا يرسل محتوى الملف تلقائيًا إلى Infinity Intelligence.' }}</p>
+      <div class="panel-actions"><button id="workspace-install-app" class="secondary" type="button" hidden>{{ 'Install Infinity app' if lang == 'en' else 'ثبّت تطبيق Infinity' }} ↘</button></div>
+    </div>
+  </section>
+
+  <section class="converter-panel reveal-on-scroll" aria-labelledby="workspace-inspector-title">
+    <div class="panel-heading">
+      <div><span class="kicker">FILE INSPECTOR</span><h2 id="workspace-inspector-title">{{ 'Start with the file, not the tool name.' if lang == 'en' else 'ابدأ بالملف، مو باسم الأداة.' }}</h2></div>
+      <span id="workspace-status" class="status" role="status">{{ t('common.status_ready') }}</span>
+    </div>
+
+    <form id="workspace-inspector-form">
+      <label class="dropzone" for="workspace-file">
+        <span class="upload-symbol" aria-hidden="true">↑</span>
+        <strong>{{ 'Choose a file to inspect' if lang == 'en' else 'اختر ملفًا للفحص' }}</strong>
+        <span>{{ 'Validation happens before recommendations are shown.' if lang == 'en' else 'يتم التحقق من الملف قبل عرض الاقتراحات.' }}</span>
+        <input id="workspace-file" name="file" type="file" multiple required>
+      </label>
+      <div class="panel-actions"><button class="primary" type="submit">{{ 'Inspect file' if lang == 'en' else 'افحص الملف' }} <span aria-hidden="true">✦</span></button></div>
+    </form>
+
+    <section id="workspace-session-recovery" class="personal-card" hidden aria-labelledby="workspace-session-recovery-title">
+      <div><strong id="workspace-session-recovery-title">{{ 'Restore last workspace plan' if lang == 'en' else 'استعد آخر خطة عمل' }}</strong><span>↻</span></div>
+      <p id="workspace-session-recovery-copy">{{ 'Infinity can restore the last safe workflow plan after a reload. File bytes are never stored; you will re-select the file.' if lang == 'en' else 'يقدر Infinity يستعيد آخر خطة آمنة بعد تحديث الصفحة. لا تُحفظ بايتات الملف؛ ستختار الملف من جديد.' }}</p>
+      <div class="panel-actions"><button id="workspace-restore-session" class="secondary" type="button">{{ 'Restore plan' if lang == 'en' else 'استعادة الخطة' }}</button><button id="workspace-discard-session" class="secondary" type="button">{{ 'Discard' if lang == 'en' else 'تجاهل' }}</button></div>
+    </section>
+
+    <section id="workspace-project-board" class="personal-card" hidden aria-labelledby="workspace-project-title">
+      <div><strong id="workspace-project-title">{{ 'Project board' if lang == 'en' else 'لوحة المشروع' }}</strong><span id="workspace-project-count"></span></div>
+      <p>{{ 'Inspect several files together, then run the current verified workflow across compatible files one by one. Failed items can be retried without restarting the whole queue.' if lang == 'en' else 'افحص عدة ملفات معًا، ثم شغّل المسار المتحقق الحالي على الملفات المتوافقة واحدًا واحدًا. تقدر تعيد محاولة الملف الفاشل بدون إعادة الطابور كامل.' }}</p>
+      <div id="workspace-project-files" class="quick-list"></div>
+      <div class="panel-actions"><button id="workspace-run-queue" class="primary" type="button" disabled>{{ 'Run queue' if lang == 'en' else 'شغّل الطابور' }} ✦</button><button id="workspace-clear-queue" class="secondary" type="button">{{ 'Clear queue' if lang == 'en' else 'مسح الطابور' }}</button></div>
+      <div id="workspace-queue-list" class="quick-list" aria-live="polite"></div>
+    </section>
+
+    <div id="workspace-inspector-result" class="result-panel" hidden tabindex="-1">
+      <div class="result-icon" aria-hidden="true">∞</div>
+      <div class="result-copy">
+        <strong id="workspace-file-label"></strong>
+        <p id="workspace-file-summary"></p>
+        <div id="workspace-file-facts" class="tool-chips"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="workspace-recents" class="section-block reveal-on-scroll" hidden aria-labelledby="workspace-recents-title">
+    <div class="v7-section-heading"><div><span class="kicker">LOCAL RECENTS</span><h2 id="workspace-recents-title">{{ 'Recent file types on this device.' if lang == 'en' else 'أنواع الملفات الأخيرة على هذا الجهاز.' }}</h2><p>{{ 'Only type, size and time are stored locally — never file names or contents.' if lang == 'en' else 'يُحفظ محليًا النوع والحجم والوقت فقط — بدون أسماء الملفات أو محتواها.' }}</p></div><button id="workspace-clear-recents" class="secondary" type="button">{{ 'Clear' if lang == 'en' else 'مسح' }}</button></div>
+    <div id="workspace-recent-list" class="quick-list"></div>
+  </section>
+
+  <section id="workspace-recommendations" class="section-block reveal-on-scroll" hidden aria-labelledby="workspace-recommendations-title">
+    <div class="v7-section-heading">
+      <div><span class="kicker">RECOMMENDED NEXT MOVES</span><h2 id="workspace-recommendations-title">{{ 'Infinity matched your file to useful actions.' if lang == 'en' else 'Infinity طابق ملفك مع أفضل الخطوات المفيدة.' }}</h2><p>{{ 'These suggestions come from the real converter and workflow catalog, not invented AI actions.' if lang == 'en' else 'هذه الاقتراحات من كتالوج الأدوات والمسارات الفعلي، وليست إجراءات مخترعة من الذكاء.' }}</p></div>
+    </div>
+    <div id="workspace-recommendation-grid" class="workflow-grid"></div>
+  </section>
+
+  <section id="workspace-builder" class="converter-panel reveal-on-scroll" hidden aria-labelledby="workspace-builder-title">
+    <div class="panel-heading">
+      <div><span class="kicker">VISUAL WORKFLOW BUILDER</span><h2 id="workspace-builder-title">{{ 'Build a verified chain from real Infinity tools.' if lang == 'en' else 'ابنِ مسارًا متحققًا من أدوات Infinity الحقيقية.' }}</h2></div>
+      <span id="workspace-builder-status" class="status" role="status">{{ 'Ready' if lang == 'en' else 'جاهز' }}</span>
+    </div>
+    <p>{{ 'Every next step is filtered by the previous output type. The server validates the same chain again before processing.' if lang == 'en' else 'كل خطوة تالية تُرشح حسب نوع ناتج الخطوة السابقة، والخادم يعيد التحقق من المسار نفسه قبل التنفيذ.' }}</p>
+
+    <div class="processing-card">
+      <div class="processing-head"><div><span class="kicker">QUICK TEMPLATES</span><h3>{{ 'Ready-made goal presets' if lang == 'en' else 'قوالب أهداف جاهزة' }}</h3></div></div>
+      <div class="v7-ai-mode-row">
+        <button type="button" data-workspace-template="student">{{ 'Student submission' if lang == 'en' else 'تسليم طالب' }}</button>
+        <button type="button" data-workspace-template="business">{{ 'Business share' if lang == 'en' else 'مشاركة أعمال' }}</button>
+        <button type="button" data-workspace-template="creator">{{ 'Creator web asset' if lang == 'en' else 'ملف منشئ للويب' }}</button>
+      </div>
+      <p class="sample-note">{{ 'Templates are filtered against the selected file type and the real workflow-safe catalog before they can run.' if lang == 'en' else 'تتم مطابقة القالب مع نوع الملف والكتالوج الآمن الحقيقي قبل السماح بالتنفيذ.' }}</p>
+    </div>
+
+    <div class="v7-ai-mode-row" aria-label="{{ 'Quality profile' if lang == 'en' else 'ملف الجودة' }}">
+      <button type="button" class="is-active" data-workspace-profile="balanced">{{ 'Balanced' if lang == 'en' else 'متوازن' }}</button>
+      <button type="button" data-workspace-profile="smallest">{{ 'Smallest' if lang == 'en' else 'أصغر حجم' }}</button>
+      <button type="button" data-workspace-profile="editable">{{ 'Editable first' if lang == 'en' else 'قابل للتعديل' }}</button>
+      <button type="button" data-workspace-profile="clean">{{ 'Clean & safe' if lang == 'en' else 'نظيف وآمن' }}</button>
+    </div>
+
+    <div class="processing-card">
+      <div class="processing-head"><div><span class="kicker">PIPELINE</span><h3>{{ 'Selected steps' if lang == 'en' else 'الخطوات المختارة' }}</h3></div><button id="workspace-builder-reset" class="secondary" type="button">{{ 'Reset' if lang == 'en' else 'إعادة' }}</button></div>
+      <div id="workspace-builder-steps" class="quick-list" aria-live="polite"></div>
+    </div>
+
+    <label class="param-field" for="workspace-next-tool">
+      {{ 'Compatible next tool' if lang == 'en' else 'الأداة التالية المتوافقة' }}
+      <select id="workspace-next-tool"></select>
+    </label>
+    <div class="panel-actions">
+      <button id="workspace-add-step" class="secondary" type="button">{{ 'Add step' if lang == 'en' else 'أضف خطوة' }}</button>
+      <button id="workspace-save-preset" class="secondary" type="button">{{ 'Save preset locally' if lang == 'en' else 'احفظ المسار محليًا' }}</button>
+      <button id="workspace-run-builder" class="primary" type="button">{{ 'Run workflow' if lang == 'en' else 'شغّل المسار' }} ✦</button>
+    </div>
+    <div class="panel-actions">
+      <label class="param-field" for="workspace-saved-preset">{{ 'Saved local presets' if lang == 'en' else 'المسارات المحلية المحفوظة' }}<select id="workspace-saved-preset"><option value="">{{ 'No saved preset selected' if lang == 'en' else 'لا يوجد مسار محدد' }}</option></select></label>
+      <button id="workspace-load-preset" class="secondary" type="button">{{ 'Load' if lang == 'en' else 'تحميل' }}</button>
+      <button id="workspace-delete-preset" class="secondary" type="button">{{ 'Delete' if lang == 'en' else 'حذف' }}</button>
+    </div>
+    <p class="sample-note">{{ 'Maximum four converter steps. Tools that need interactive required settings are excluded from the builder.' if lang == 'en' else 'الحد الأقصى أربع خطوات تحويل. الأدوات التي تحتاج إعدادات إلزامية تفاعلية لا تظهر في هذا المنشئ.' }}</p>
+  </section>
+
+  <section class="section-block reveal-on-scroll" aria-labelledby="workspace-audiences-title">
+    <div class="v7-section-heading"><div><span class="kicker">GOAL-BASED COLLECTIONS</span><h2 id="workspace-audiences-title">{{ 'Start from your job, not a file format.' if lang == 'en' else 'ابدأ من مهمتك، مو من صيغة الملف.' }}</h2><p>{{ 'Curated paths for study, business, creation and technical work.' if lang == 'en' else 'مسارات مرتبة للدراسة والأعمال وصناعة المحتوى والعمل التقني.' }}</p></div></div>
+    <div class="audience-grid">
+      <a class="audience-card" href="/collections/students"><span>STUDY</span><strong>{{ 'Students' if lang == 'en' else 'الطلاب' }}</strong><p>{{ 'OCR, assignments, PDFs, notes and study utilities.' if lang == 'en' else 'OCR والواجبات وPDF والملاحظات وأدوات الدراسة.' }}</p></a>
+      <a class="audience-card" href="/collections/business"><span>WORK</span><strong>{{ 'Business' if lang == 'en' else 'الأعمال' }}</strong><p>{{ 'Documents, data cleanup, reports and everyday business utilities.' if lang == 'en' else 'مستندات وتنظيف بيانات وتقارير وأدوات أعمال يومية.' }}</p></a>
+      <a class="audience-card" href="/collections/creators"><span>CREATE</span><strong>{{ 'Creators' if lang == 'en' else 'صناع المحتوى' }}</strong><p>{{ 'Images, exports, optimization and publishing-ready assets.' if lang == 'en' else 'صور وتصدير وتحسين وملفات جاهزة للنشر.' }}</p></a>
+      <a class="audience-card" href="/collections/developers"><span>DEV</span><strong>{{ 'Developers' if lang == 'en' else 'المطورون' }}</strong><p>{{ 'Text, data, encoders, parsers and local browser tools.' if lang == 'en' else 'نصوص وبيانات وترميزات ومحللات وأدوات محلية.' }}</p></a>
+    </div>
+  </section>
+
+  <section class="processing-card reveal-on-scroll">
+    <div class="processing-head"><div><span class="kicker">PRIVACY BY DESIGN</span><h2>{{ 'Inspection and AI are separate on purpose.' if lang == 'en' else 'الفحص والذكاء منفصلان عن قصد.' }}</h2></div><a class="text-button" href="/trust">{{ 'Trust center' if lang == 'en' else 'مركز الثقة' }} ↗</a></div>
+    <div class="processing-grid">
+      <article><span>01</span><strong>{{ 'Validate first' if lang == 'en' else 'تحقق أولًا' }}</strong><p>{{ 'Extension, signature, parser and structural checks run before recommendations.' if lang == 'en' else 'يتم فحص الامتداد والتوقيع والمحلل والبنية قبل الاقتراحات.' }}</p></article>
+      <article><span>02</span><strong>{{ 'No automatic AI upload' if lang == 'en' else 'لا رفع تلقائي للذكاء' }}</strong><p>{{ 'The assistant receives only the safe context you choose to share.' if lang == 'en' else 'المساعد يستقبل فقط السياق الآمن الذي تختار مشاركته.' }}</p></article>
+      <article><span>03</span><strong>{{ 'Real catalog grounding' if lang == 'en' else 'اقتراحات من الكتالوج الحقيقي' }}</strong><p>{{ 'Every recommended action points to a real Infinity tool or executable workflow.' if lang == 'en' else 'كل اقتراح يرتبط بأداة أو مسار تنفيذي حقيقي في Infinity.' }}</p></article>
+      <article><span>04</span><strong>{{ 'Temporary processing' if lang == 'en' else 'معالجة مؤقتة' }}</strong><p>{{ 'Conversions continue to use temporary isolated workspaces and no-store responses.' if lang == 'en' else 'التحويلات تستمر بمساحات مؤقتة مع استجابات no-store.' }}</p></article>
+    </div>
+  </section>
+
+  <section class="v7-final-cta reveal-on-scroll">
+    <span class="v7-ai-orb">∞</span>
+    <div><small>INFINITY INTELLIGENCE</small><h2>{{ 'Need a custom path?' if lang == 'en' else 'تبي مسار مخصص؟' }}</h2><p>{{ 'Describe the outcome and let Infinity Intelligence map it to the unified catalog.' if lang == 'en' else 'اوصف النتيجة التي تريدها وخلي Infinity Intelligence يربطها بالكتالوج الموحد.' }}</p></div>
+    <div class="v7-final-actions"><a class="primary" href="/assistant">{{ 'Ask Infinity' if lang == 'en' else 'اسأل Infinity' }} ✦</a><a class="secondary" href="/workflows">{{ 'Browse workflows' if lang == 'en' else 'تصفح المسارات' }}</a></div>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+<script nonce="{{ csp_nonce }}" src="/static/js/workspace.js?v={{ app_version }}" defer></script>
+{% endblock %}

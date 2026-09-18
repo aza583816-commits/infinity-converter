@@ -819,6 +819,20 @@ if (browserWorkspace) {
 (() => {
   const ar = document.documentElement.lang === 'ar';
   const runtime = window.InfinityRuntimeContext = window.InfinityRuntimeContext || { lastResult: null, lastError: null, smartFile: null };
+  try {
+    const raw = sessionStorage.getItem('infinity_safe_file_context');
+    const parsed = raw ? JSON.parse(raw) : null;
+    if (parsed && Date.now() - Number(parsed.at || 0) < 30 * 60 * 1000) {
+      runtime.smartFile = {
+        extension: String(parsed.extension || '').slice(0, 16),
+        mime: String(parsed.mime || '').slice(0, 120),
+        size_bytes: Number(parsed.size_bytes || 0),
+        pages: Number(parsed.pages || 0),
+        encrypted: Boolean(parsed.encrypted),
+        safe: Boolean(parsed.safe),
+      };
+    }
+  } catch (_) {}
   const history = [];
 
   const parseJSONNode = (id) => {
@@ -863,6 +877,42 @@ if (browserWorkspace) {
     node.textContent = value || '';
     return node;
   };
+  const workflowFilename = (response) => {
+    const header = response.headers.get('content-disposition') || '';
+    const utf = header.match(/filename\*=UTF-8''([^;]+)/i);
+    if (utf) { try { return decodeURIComponent(utf[1]); } catch (_) {} }
+    const plain = header.match(/filename="?([^";]+)"?/i);
+    return plain ? plain[1] : 'Infinity-Result';
+  };
+  const executeSmartPlan = async (data, button) => {
+    const steps = Array.isArray(data.steps) ? data.steps.filter((step) => step?.kind === 'converter').map((step) => step.tool_id) : [];
+    if (!steps.length || steps.length !== data.steps.length) return;
+    const picker = document.createElement('input');
+    picker.type = 'file'; picker.hidden = true; document.body.append(picker);
+    picker.addEventListener('change', async () => {
+      const file = picker.files?.[0]; picker.remove(); if (!file) return;
+      const original = button.textContent; button.disabled = true; button.textContent = ar ? 'جاري تنفيذ المسار…' : 'Running workflow…';
+      try {
+        const body = new FormData(); body.set('file', file, file.name); body.set('steps', JSON.stringify(steps));
+        const response = await fetch('/api/v2/workflows/execute', { method: 'POST', body, credentials: 'same-origin' });
+        if (!response.ok) {
+          let message = ar ? 'تعذر تنفيذ المسار.' : 'Could not run this workflow.';
+          try { const payload = await response.json(); if (payload?.error) message = payload.error; } catch (_) {}
+          throw new Error(message);
+        }
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a'); link.href = url; link.download = workflowFilename(response); document.body.append(link); link.click(); link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 30000);
+        button.textContent = ar ? 'تم التنفيذ والتنزيل ✓' : 'Completed & downloaded ✓';
+      } catch (error) {
+        button.textContent = error?.message || (ar ? 'تعذر التنفيذ' : 'Execution failed');
+      } finally {
+        setTimeout(() => { button.disabled = false; button.textContent = original; }, 3500);
+      }
+    }, { once: true });
+    picker.click();
+  };
   const renderPlan = (container, data) => {
     container.replaceChildren();
     container.classList.add('v7-ai-render');
@@ -887,6 +937,12 @@ if (browserWorkspace) {
         steps.append(row);
       });
       container.append(steps);
+      if (data.steps.every((step) => step?.kind === 'converter')) {
+        const run = text('button', 'primary v8-run-plan', ar ? 'نفّذ هذا المسار على ملف ✦' : 'Run this workflow on a file ✦');
+        run.type = 'button';
+        run.addEventListener('click', () => executeSmartPlan(data, run));
+        container.append(run);
+      }
     }
     if (Array.isArray(data.tips) && data.tips.length) {
       const tips = text('div', 'v7-ai-tips', '');

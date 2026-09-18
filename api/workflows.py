@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
+from types import SimpleNamespace
 
 from flask import Blueprint, current_app, g, jsonify, render_template, request, send_file
 from werkzeug.wsgi import ClosingIterator
@@ -57,6 +59,42 @@ def _accepts(tool, extension: str) -> bool:
     return extension.lower() in allowed or "*" in allowed or ".*" in allowed
 
 
+def _dynamic_recipe(raw_steps: str):
+    """Validate an AI-proposed converter chain against the real server registry.
+
+    Only existing converter tools with safe non-interactive defaults can enter
+    this execution path. Compatibility is checked between every handoff.
+    """
+    if len(raw_steps or "") > 2000:
+        raise ValueError("خطة Infinity أطول من الحد المسموح.")
+    try:
+        steps = json.loads(raw_steps or "[]")
+    except json.JSONDecodeError as exc:
+        raise ValueError("خطة Infinity غير صالحة.") from exc
+    if not isinstance(steps, list) or not 1 <= len(steps) <= 4:
+        raise ValueError("خطة Infinity يجب أن تحتوي من خطوة إلى أربع خطوات.")
+    normalized: list[str] = []
+    previous = None
+    for raw in steps:
+        tool_id = str(raw or "").strip()
+        if not tool_id or tool_id.startswith("browser:"):
+            raise ValueError("الخطة تحتوي على خطوة غير قابلة للتنفيذ على الملفات.")
+        if tool_id in normalized:
+            raise ValueError("الخطة لا تسمح بتكرار الأداة نفسها.")
+        tool = get_tool(tool_id)
+        if tool is None or not tool.input_required:
+            raise ValueError("الخطة تشير إلى أداة غير قابلة للتنفيذ على ملف.")
+        _defaults_for(tool)
+        if previous is not None:
+            produced = (previous.output_ext or "").lower()
+            accepted = {value.lower() for value in tool.input_ext}
+            if produced not in accepted and "*" not in accepted and ".*" not in accepted:
+                raise ValueError("خطوات الخطة غير متوافقة مع بعضها.")
+        normalized.append(tool.id)
+        previous = tool
+    return SimpleNamespace(id="smart-plan", steps=tuple(normalized))
+
+
 def _entitled(recipe, current_user, plan: str, auth_enabled: bool) -> tuple[bool, int, str | None]:
     if not auth_enabled:
         return True, 200, None
@@ -83,9 +121,16 @@ def workflow_catalog():
 @workflow_bp.post("/api/v2/workflows/execute")
 @limiter.limit("3 per minute")
 def execute_workflow():
-    recipe = get_workflow((request.form.get("workflow") or "").strip())
-    if recipe is None:
-        return jsonify(error="مسار العمل غير موجود."), 404
+    workflow_id = (request.form.get("workflow") or "").strip()
+    if workflow_id:
+        recipe = get_workflow(workflow_id)
+        if recipe is None:
+            return jsonify(error="مسار العمل غير موجود."), 404
+    else:
+        try:
+            recipe = _dynamic_recipe(request.form.get("steps") or "")
+        except ValueError as exc:
+            return jsonify(error=str(exc)), 400
 
     uploaded = request.files.get("file")
     if uploaded is None:
