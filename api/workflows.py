@@ -65,6 +65,8 @@ def _dynamic_recipe(raw_steps: str):
     Only existing converter tools with safe non-interactive defaults can enter
     this execution path. Compatibility is checked between every handoff.
     """
+    if len(raw_steps or "") > 2000:
+        raise ValueError("خطة Infinity أطول من الحد المسموح.")
     try:
         steps = json.loads(raw_steps or "[]")
     except json.JSONDecodeError as exc:
@@ -77,9 +79,11 @@ def _dynamic_recipe(raw_steps: str):
         tool_id = str(raw or "").strip()
         if not tool_id or tool_id.startswith("browser:"):
             raise ValueError("الخطة تحتوي على خطوة غير قابلة للتنفيذ على الملفات.")
+        if tool_id in normalized:
+            raise ValueError("الخطة لا تسمح بتكرار الأداة نفسها.")
         tool = get_tool(tool_id)
-        if tool is None:
-            raise ValueError("الخطة تشير إلى أداة غير متاحة.")
+        if tool is None or not tool.input_required:
+            raise ValueError("الخطة تشير إلى أداة غير قابلة للتنفيذ على ملف.")
         _defaults_for(tool)
         if previous is not None:
             produced = (previous.output_ext or "").lower()
