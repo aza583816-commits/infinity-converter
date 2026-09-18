@@ -24,6 +24,11 @@
   const builderAddStep = document.getElementById("workspace-add-step");
   const builderReset = document.getElementById("workspace-builder-reset");
   const builderRun = document.getElementById("workspace-run-builder");
+  const savePreset = document.getElementById("workspace-save-preset");
+  const savedPreset = document.getElementById("workspace-saved-preset");
+  const loadPreset = document.getElementById("workspace-load-preset");
+  const deletePreset = document.getElementById("workspace-delete-preset");
+  const installApp = document.getElementById("workspace-install-app");
   const en = document.documentElement.lang === "en";
   let catalogPromise = null;
   let builderCatalogPromise = null;
@@ -100,6 +105,28 @@
   };
 
   const RECENTS_KEY = "infinity_workspace_recents_v1";
+  const PRESETS_KEY = "infinity_workspace_presets_v1";
+  let deferredInstallPrompt = null;
+
+  window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+    if (installApp) installApp.hidden = false;
+  });
+
+  installApp?.addEventListener("click", async () => {
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    try { await deferredInstallPrompt.userChoice; } catch (_) {}
+    deferredInstallPrompt = null;
+    installApp.hidden = true;
+  });
+
+  window.addEventListener("appinstalled", () => {
+    deferredInstallPrompt = null;
+    if (installApp) installApp.hidden = true;
+  });
+
 
   function safeRecentRead() {
     try {
@@ -221,6 +248,93 @@
     recommendations.hidden = false;
   }
 
+
+  function safePresetRead() {
+    try {
+      const value = JSON.parse(localStorage.getItem(PRESETS_KEY) || "[]");
+      if (!Array.isArray(value)) return [];
+      return value.slice(0, 10).filter((item) =>
+        item && typeof item === "object" &&
+        typeof item.extension === "string" &&
+        Array.isArray(item.steps) &&
+        item.steps.length >= 1 && item.steps.length <= 4 &&
+        item.steps.every((step) => typeof step === "string" && /^[a-z0-9:-]{1,80}$/.test(step))
+      );
+    } catch (_) { return []; }
+  }
+
+  function renderSavedPresets() {
+    if (!savedPreset) return;
+    const current = savedPreset.value;
+    savedPreset.replaceChildren();
+    const empty = document.createElement("option");
+    empty.value = "";
+    empty.textContent = en ? "No saved preset selected" : "لا يوجد مسار محدد";
+    savedPreset.append(empty);
+    safePresetRead().forEach((item, index) => {
+      const option = document.createElement("option");
+      option.value = String(index);
+      const names = item.steps.join(" → ");
+      option.textContent = (item.extension || "file").toUpperCase() + " · " + names;
+      savedPreset.append(option);
+    });
+    if ([...savedPreset.options].some((option) => option.value === current)) savedPreset.value = current;
+  }
+
+  savePreset?.addEventListener("click", () => {
+    if (!builderExt || !builderSteps.length) return;
+    const item = {
+      extension: builderExt,
+      steps: builderSteps.map((step) => step.id),
+      at: Date.now(),
+    };
+    try {
+      const existing = safePresetRead().filter((preset) =>
+        !(preset.extension === item.extension && JSON.stringify(preset.steps) === JSON.stringify(item.steps))
+      );
+      localStorage.setItem(PRESETS_KEY, JSON.stringify([item, ...existing].slice(0, 10)));
+    } catch (_) {}
+    renderSavedPresets();
+    if (builderStatus) builderStatus.textContent = en ? "Preset saved on this device ✓" : "تم حفظ المسار على هذا الجهاز ✓";
+  });
+
+  loadPreset?.addEventListener("click", async () => {
+    const index = Number(savedPreset?.value);
+    const presets = safePresetRead();
+    if (!Number.isInteger(index) || index < 0 || index >= presets.length) return;
+    const preset = presets[index];
+    if (preset.extension !== builderExt) {
+      if (builderStatus) builderStatus.textContent = en ? "This preset starts with a different file type." : "هذا المسار يبدأ بنوع ملف مختلف.";
+      return;
+    }
+    const catalog = await builderCatalog();
+    const byId = new Map(catalog.map((item) => [item.id, item]));
+    const next = [];
+    let current = builderExt;
+    for (const id of preset.steps) {
+      const item = byId.get(id);
+      if (!item || !acceptsExtension(item, current)) {
+        if (builderStatus) builderStatus.textContent = en ? "Saved preset is no longer compatible." : "المسار المحفوظ لم يعد متوافقًا.";
+        return;
+      }
+      next.push(item);
+      current = item.output_ext;
+    }
+    builderSteps = next;
+    document.querySelectorAll("[data-workspace-profile]").forEach((button) => button.classList.remove("is-active"));
+    await renderBuilder();
+  });
+
+  deletePreset?.addEventListener("click", () => {
+    const index = Number(savedPreset?.value);
+    const presets = safePresetRead();
+    if (!Number.isInteger(index) || index < 0 || index >= presets.length) return;
+    presets.splice(index, 1);
+    try { localStorage.setItem(PRESETS_KEY, JSON.stringify(presets)); } catch (_) {}
+    renderSavedPresets();
+  });
+
+  renderSavedPresets();
 
   async function builderCatalog() {
     if (!builderCatalogPromise) {
