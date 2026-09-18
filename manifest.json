@@ -7,7 +7,7 @@
   "orientation": "portrait",
   "background_color": "#071712",
   "theme_color": "#071712",
-  "description": "Free PDF, document, image, OCR, archive, and utility tools with a smart AI workflow assistant.",
+  "description": "Free PDF, document, image, OCR, archive, and utility tools with a Smart Workspace and AI workflow assistant.",
   "icons": [
     {
       "src": "/static/icon-192.png",
@@ -22,7 +22,7 @@
       "purpose": "any maskable"
     }
   ],
-  "version": "7.2.3",
+  "version": "8.0.0",
   "display_override": [
     "window-controls-overlay",
     "standalone",
