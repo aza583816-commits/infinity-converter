@@ -819,6 +819,20 @@ if (browserWorkspace) {
 (() => {
   const ar = document.documentElement.lang === 'ar';
   const runtime = window.InfinityRuntimeContext = window.InfinityRuntimeContext || { lastResult: null, lastError: null, smartFile: null };
+  try {
+    const raw = sessionStorage.getItem('infinity_safe_file_context');
+    const parsed = raw ? JSON.parse(raw) : null;
+    if (parsed && Date.now() - Number(parsed.at || 0) < 30 * 60 * 1000) {
+      runtime.smartFile = {
+        extension: String(parsed.extension || '').slice(0, 16),
+        mime: String(parsed.mime || '').slice(0, 120),
+        size_bytes: Number(parsed.size_bytes || 0),
+        pages: Number(parsed.pages || 0),
+        encrypted: Boolean(parsed.encrypted),
+        safe: Boolean(parsed.safe),
+      };
+    }
+  } catch (_) {}
   const history = [];
 
   const parseJSONNode = (id) => {
