@@ -43,7 +43,6 @@ def test_legacy_search_urls_migrate_to_real_current_destinations(client):
 
 def test_retired_legacy_pages_return_explicit_gone(client):
     for path in (
-        "/word-to-csv",
         "/smallpdf-alternative",
         "/en/ilovepdf-alternative",
         "/en/hmac-generator",
@@ -120,3 +119,10 @@ def test_shared_shell_loads_privacy_minimal_rum_trust_and_tool_context(client):
     assert 'id="tool-ai-context"' in html
     assert '"id": "word-to-pdf"' in html or '"id":"word-to-pdf"' in html
     assert "AI file access" not in html  # injected by JS, not fabricated server-side data
+
+
+def test_search_console_office_legacy_urls_redirect_instead_of_gone(client):
+    for path in ("/word-to-csv", "/csv-to-word"):
+        response = client.get(path, follow_redirects=False)
+        assert response.status_code == 301
+        assert "/tools?category=office" in response.headers["Location"]

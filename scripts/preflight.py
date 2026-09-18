@@ -361,8 +361,8 @@ def startup_routes():
             if "/trust" not in sitemap or "/editorial" not in sitemap:
                 raise RuntimeError("trust/editorial publisher pages missing from sitemap")
             indexed_tool_urls = [line for line in sitemap.split("<url>") if "/tools/" in line]
-            if len(indexed_tool_urls) != len(TOOL_EDITORIAL) * 2:
-                raise RuntimeError("bilingual sitemap reviewed-tool count does not match editorial review set")
+            if len(indexed_tool_urls) != len(TOOL_EDITORIAL) * 3:
+                raise RuntimeError("x-default + bilingual sitemap reviewed-tool count does not match editorial review set")
             print(f"AdSense/search quality + {settings.app_version} experience guards OK")
             real_conversion("pdf-merge", ("sample-a.pdf", "sample-b.pdf"))
             real_conversion("image-to-png", ("sample-image.jpg",))
