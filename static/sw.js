@@ -1,16 +1,16 @@
-const CACHE = 'infinity-static-v7.2.3-product-hardening';
+const CACHE = 'infinity-static-v8.0.0-smart-workspace';
 const STATIC_ASSETS = [
-  '/static/css/app.css?v=7.2.3',
-  '/static/css/a11y.css?v=7.2.3',
-  '/static/js/app.js?v=7.2.3',
-  '/static/js/smart-flow.js?v=7.2.3',
-  '/static/js/workflows.js?v=7.2.3',
-  '/static/js/workspace.js?v=7.2.3',
-  '/static/js/trust-badges.js?v=7.2.3',
-  '/static/js/vitals.js?v=7.2.3',
-  '/static/icon-192.png?v=7.2.3',
-  '/static/icon-512.png?v=7.2.3',
-  '/manifest.json?v=7.2.3'
+  '/static/css/app.css?v=8.0.0',
+  '/static/css/a11y.css?v=8.0.0',
+  '/static/js/app.js?v=8.0.0',
+  '/static/js/smart-flow.js?v=8.0.0',
+  '/static/js/workflows.js?v=8.0.0',
+  '/static/js/workspace.js?v=8.0.0',
+  '/static/js/trust-badges.js?v=8.0.0',
+  '/static/js/vitals.js?v=8.0.0',
+  '/static/icon-192.png?v=8.0.0',
+  '/static/icon-512.png?v=8.0.0',
+  '/manifest.json?v=8.0.0'
 ];
 
 self.addEventListener('install', (event) => {
