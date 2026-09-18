@@ -19,6 +19,10 @@ replace the converter architecture or restore an old snapshot.
 - Re-validates every intermediate artifact before it enters the next step.
 - Adds local-only recent file-type memory. Names and contents are not persisted.
 - Adds a multi-file project board for inspection within the current page session.
+- Adds a multi-file processing queue with per-file status, continue-on-error behavior, and retry without restarting the full batch.
+- Adds safe session-plan recovery using only extension + workflow tool IDs; file bytes are never persisted and must be re-selected after reload.
+- Adds goal templates for student submissions, business sharing, and creator web assets, all compatibility-filtered before execution.
+- Adds strict allowlisted product-event telemetry for Workspace actions; only event name and safe path are logged, while filenames, prompts, file metadata, account data, and free text are ignored.
 - Promotes Students, Business, Creators, and Developers as goal-based collections.
 - Adds nine new bilingual Knowledge Center guides, bringing the current editorial
   guide set to 24.
