@@ -20,6 +20,7 @@ jobs:
           node --check static/js/app.js
           node --check static/js/smart-flow.js
           node --check static/js/workflows.js
+          node --check static/js/workspace.js
           node --check static/js/trust-badges.js
           node --check static/js/vitals.js
           node --check static/sw.js
