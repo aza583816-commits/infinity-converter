@@ -66,18 +66,18 @@ def test_invalid_tools_category_falls_back_to_all():
     assert all(" hidden" not in tag for tag in tags)
 
 
-def test_723_version_and_worker_cache_are_consistent():
+def test_800_version_and_worker_cache_are_consistent():
     from config.settings import settings
 
-    assert settings.app_version == "7.2.3"
-    assert 'APP_VERSION=7.2.3' in read('.env.example')
-    assert '"version": "7.2.3"' in read('manifest.json')
+    assert settings.app_version == "8.0.0"
+    assert 'APP_VERSION=8.0.0' in read('.env.example')
+    assert '"version": "8.0.0"' in read('manifest.json')
     worker = read('static/sw.js')
-    assert "infinity-static-v7.2.3" in worker
+    assert "infinity-static-v8.0.0" in worker
     for asset in (
-        "/static/css/app.css?v=7.2.3",
-        "/static/css/a11y.css?v=7.2.3",
-        "/static/js/app.js?v=7.2.3",
-        "/static/js/smart-flow.js?v=7.2.3",
+        "/static/css/app.css?v=8.0.0",
+        "/static/css/a11y.css?v=8.0.0",
+        "/static/js/app.js?v=8.0.0",
+        "/static/js/smart-flow.js?v=8.0.0",
     ):
         assert asset in worker
