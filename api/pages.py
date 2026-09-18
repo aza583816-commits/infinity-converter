@@ -219,6 +219,12 @@ def assistant_page():
     return render_template("assistant.html", page_noindex=True)
 
 
+@pages_bp.get("/workspace")
+def workspace_page():
+    """Goal-first Infinity 8 workspace. Interactive surface stays out of the quality sitemap."""
+    return render_template("workspace.html", page_noindex=True)
+
+
 @pages_bp.get("/pricing")
 def pricing_page():
     if not _billing_public():
