@@ -233,7 +233,7 @@ V8_BLOG_POSTS = [
         "category_ar": "الأمان",
         "category_en": "Security",
         "minutes": 7,
-        "tool": "/workflows",
+        "tool": "/tools",
         "tool_label_ar": "افتح مسارات Infinity",
         "tool_label_en": "Open Infinity Workflows",
         "sections": [
@@ -264,7 +264,7 @@ V8_BLOG_POSTS = [
         "category_ar": "الخصوصية",
         "category_en": "Privacy",
         "minutes": 6,
-        "tool": "/collections/developers",
+        "tool": "/tools",
         "tool_label_ar": "تصفح الأدوات المحلية",
         "tool_label_en": "Browse Local Tools",
         "sections": [
@@ -287,6 +287,108 @@ V8_BLOG_POSTS = [
         ],
     },
 ]
+
+
+_V8_DEPTH = {
+    "repair-pdf-before-converting": {
+        "ar": [
+            ("قارن النسختين بمؤشرات واضحة", "لا تكتفِ بانطباع عام بعد الإصلاح. قارن عدد الصفحات، حجم الملف، قابلية البحث، الروابط، الصور، وأي حقول أو تعليقات مهمة بين الأصل والناتج. إذا كان المستند رسميًا أو أكاديميًا، افتح صفحات متباعدة بدل فحص أول صفحتين فقط، وسجل أي اختلاف قبل أن تعتمد النسخة الجديدة أو ترسلها لشخص آخر."),
+            ("لا تجعل الإصلاح خطوة تلقائية لكل PDF", "الملف السليم لا يحتاج بالضرورة إلى إعادة كتابة قبل كل تحويل. كل معالجة إضافية تعني تغييرًا جديدًا يجب مراجعته. استخدم الإصلاح عندما توجد علامة فعلية مثل فشل القراءة أو أخطاء بنيوية أو اختلاف بين البرامج، ثم انتقل إلى التحويل أو الضغط بعد التحقق من النسخة الناتجة."),
+        ],
+        "en": [
+            ("Compare the original and repaired copies with concrete checks", "Do not rely on a general visual impression after repair. Compare page count, file size, search behavior, links, images, and any important annotations or form fields between the source and the new copy. For academic, legal, or operational documents, inspect pages from the beginning, middle, and end and record any meaningful difference before treating the repaired file as the new working version."),
+            ("Do not make repair an automatic step for every PDF", "A healthy PDF does not need to be rewritten before every conversion. Each extra processing step creates another output that should be verified, and unnecessary rewriting can remove or normalize features you actually wanted to keep. Use repair when there is evidence of structural trouble, then proceed to compression or conversion only after the repaired copy passes the checks that matter for your task."),
+        ],
+    },
+    "searchable-pdf-vs-ocr-text": {
+        "ar": [
+            ("حدد كيف ستستخدم الناتج بعد OCR", "إذا كان الهدف أرشفة مستند ممسوح والرجوع إلى شكله الأصلي، فطبقة البحث داخل PDF عادة أوضح. أما إذا كنت ستنقل النص إلى محرر أو نظام بحث أو قاعدة بيانات، فقد يكون TXT أبسط. القرار الصحيح يعتمد على الخطوة التالية، وليس على اسم الصيغة وحده."),
+            ("قيّم الدقة على محتوى يشبه ملفك الحقيقي", "جودة OCR تتأثر باللغة والدقة والميلان والجداول وجودة المسح. اختبر أسماء وأرقامًا وعناوين من ملفك نفسه، ثم قارن النص بصريًا. إذا كانت الأخطاء كثيرة، حسّن المصدر أو قسم المهمة بدل إنتاج مئات الصفحات ثم اكتشاف أن الناتج يحتاج مراجعة شاملة."),
+        ],
+        "en": [
+            ("Choose the output based on what happens after OCR", "If the purpose is archiving a scanned document while preserving its original visual appearance, a searchable PDF is usually the clearer choice. If the next step is editing, indexing, importing into another system, or running text analysis, plain OCR text may be simpler. The right answer depends on the downstream task, not on which format sounds more advanced."),
+            ("Measure recognition quality on content that resembles the real document", "OCR accuracy changes with language, resolution, skew, tables, handwriting, and scan quality. Test names, dates, numbers, and dense paragraphs from the actual material and compare the recognized text with the page image. When errors are frequent, improve the source or split the workflow before processing hundreds of pages that would later require expensive manual review."),
+        ],
+    },
+    "remove-image-metadata-before-sharing": {
+        "ar": [
+            ("افصل بين نسخة الأرشيف ونسخة المشاركة", "أفضل ممارسة بسيطة هي الاحتفاظ بالأصل كما هو وإنشاء نسخة مخصصة للنشر أو الإرسال. بهذه الطريقة لا تخسر تاريخًا أو إعدادات قد تحتاجها لاحقًا، وفي الوقت نفسه تقلل البيانات غير الضرورية في النسخة التي تخرج خارج جهازك أو فريقك."),
+            ("افحص أكثر من EXIF عند الحساسية العالية", "الخصوصية لا تتوقف على metadata. اسم الملف، محتوى الصورة المرئي، النصوص الموجودة داخل لقطة الشاشة، والمعلومات في الخلفية قد تكشف أكثر من إعدادات الكاميرا. قبل مشاركة مادة حساسة، راجع الصورة بصريًا وغيّر الاسم عند الحاجة بدل الاعتماد على إزالة EXIF وحدها."),
+        ],
+        "en": [
+            ("Separate the archival original from the sharing copy", "A practical pattern is to keep the original image intact and create a dedicated copy for publishing or sending. That preserves capture history and technical information that may still be useful later while reducing unnecessary metadata in the version that leaves your device or organization. It also makes it easier to verify that privacy cleaning did not become an irreversible edit to your only source file."),
+            ("Look beyond EXIF when the image is sensitive", "Privacy is not limited to metadata. The filename, visible text in a screenshot, a badge in the background, location details inside the pixels, or an embedded document can reveal more than camera settings do. Before sharing sensitive material, review the image visually and rename the sharing copy when appropriate instead of treating EXIF removal as a complete redaction or anonymization process."),
+        ],
+    },
+    "xlsx-to-csv-without-surprises": {
+        "ar": [
+            ("اختبر الأرقام والتواريخ والقيم الفارغة", "CSV لا يحمل تعريفات أنواع غنية مثل المصنف. بعض البرامج قد تفسر التاريخ أو الفاصلة العشرية أو الأصفار في بداية المعرف بطريقة مختلفة. افتح الناتج في البرنامج الذي سيستهلكه فعلًا، وراجع أعمدة حساسة مثل الأكواد والتواريخ والمبالغ قبل الاعتماد على الملف."),
+            ("احتفظ بالمصنف كمصدر مرجعي", "إذا كان Excel يحتوي صيغًا أو أوراقًا متعددة أو تنسيقًا مهمًا، لا تجعل CSV النسخة الوحيدة. استخدمه كصيغة تبادل بيانات، واحتفظ بالمصنف للمراجعة والرجوع إلى السياق الأصلي. هذا يفصل بين ملف التشغيل البسيط وملف المصدر الغني بالمعلومات."),
+        ],
+        "en": [
+            ("Test numbers, dates, leading zeros, and empty values", "CSV does not carry the rich type definitions of a workbook, so receiving software may interpret dates, decimal separators, empty cells, or identifiers with leading zeros differently. Open the exported file in the application that will actually consume it and inspect sensitive columns such as account codes, dates, quantities, and currency before assuming that a technically valid CSV preserved the intended meaning."),
+            ("Keep the workbook as the reference source", "If the Excel file contains formulas, multiple sheets, charts, comments, or formatting that explains the data, do not let the CSV become the only copy. Treat CSV as an exchange format and retain the workbook for context and verification. This separation gives downstream systems a simple table while preserving a richer source that can resolve questions when a row or value later looks ambiguous."),
+        ],
+    },
+    "csv-to-json-for-apis": {
+        "ar": [
+            ("حدد بنية JSON التي يحتاجها المستهلك", "تحويل كل صف إلى object مناسب في حالات كثيرة، لكنه ليس الشكل الوحيد الممكن. بعض APIs تتوقع حقولًا متداخلة أو أسماء محددة أو مصفوفات داخل السجل. راجع العقد أو schema أولًا، ثم تأكد أن الناتج يطابق البنية المطلوبة بدل إرسال JSON صحيح نحويًا لكنه غير متوافق."),
+            ("تحقق من القيم الخاصة قبل الإرسال", "الفراغ وnull وtrue وfalse والأرقام الكبيرة قد تحتاج معالجة واضحة. لا تفترض أن كل نص يجب تحويله تلقائيًا إلى رقم أو boolean. اختبر عينة تحتوي الحالات الطرفية، ثم مرر الناتج عبر validator أو بيئة تجريبية قبل استخدامه في تكامل إنتاجي."),
+        ],
+        "en": [
+            ("Match the JSON shape to the consumer's contract", "Turning every row into one flat object is useful in many cases, but it is not the only valid JSON structure. An API may require nested objects, specific property names, arrays, or a wrapper object around the records. Read the receiving schema first and verify that the generated output matches that contract instead of sending JSON that is syntactically valid but structurally incompatible."),
+            ("Handle special values deliberately before sending data", "Blank cells, nulls, booleans, very large numbers, and identifiers can all be misinterpreted if conversion relies on automatic guessing. Do not assume every numeric-looking string should become a number. Build a sample containing edge cases, validate the resulting JSON with the target schema or a staging endpoint, and only then scale the process to the full dataset used by production systems."),
+        ],
+    },
+    "favicon-pack-from-one-image": {
+        "ar": [
+            ("بسّط الرمز قبل تصغيره", "إذا كان الشعار يحتوي ظلالًا دقيقة أو نصًا صغيرًا أو أكثر من عنصر، أنشئ نسخة مبسطة للأيقونة بدل استخدام نفس التصميم حرفيًا. الهدف أن يظل الرمز مميزًا عند المقاسات الصغيرة، وليس أن يحمل كل تفاصيل الهوية الموجودة في النسخة الكبيرة."),
+            ("تحقق من HTML والـmanifest بعد إنشاء الملفات", "نجاح توليد الصور لا يعني أن المتصفح سيستخدمها تلقائيًا. راجع روابط icon وapple-touch-icon وmanifest، وتأكد أن المسارات والمقاسات تطابق الملفات الفعلية. بعدها اختبر تبويب المتصفح، الاختصار على الهاتف، وأي وضع PWA تستخدمه."),
+        ],
+        "en": [
+            ("Simplify the mark before shrinking it", "If the source logo contains fine shadows, tiny lettering, gradients, or several competing elements, create a simplified icon version instead of scaling the full brand artwork literally. The goal is recognizability at tiny sizes, not preservation of every detail that works on a large banner. A deliberate small-size mark usually looks sharper and more intentional than an automatically reduced complex logo."),
+            ("Verify the HTML and manifest references after generation", "Generating the image files is only part of the job. Check the favicon, apple-touch-icon, and web-app manifest references and make sure paths and declared sizes match the files you actually deployed. Then test a normal browser tab, a mobile home-screen shortcut, and any installed PWA experience you support, because each surface may select a different icon from the generated pack."),
+        ],
+    },
+    "reorder-and-number-pdf-pages": {
+        "ar": [
+            ("راجع الروابط والفهارس بعد تغيير الترتيب", "إذا كان المستند يحتوي فهرسًا أو إشارات مثل راجع الصفحة 12، فإن إعادة الترتيب قد تجعل هذه المراجع قديمة حتى لو أضفت أرقامًا جديدة بصريًا. افحص الروابط الداخلية والمراجع المهمة، وحدّث المحتوى المصدر إذا كانت الأرقام جزءًا من النص نفسه."),
+            ("اختر موضع الترقيم على صفحات مختلفة", "جرّب الرقم على صفحة نصية وصفحة تحتوي صورة أو تذييلًا مزدحمًا. الموضع المناسب في صفحة قد يغطي عنصرًا في أخرى. بعد اختيار المكان، مر سريعًا على عدة صفحات وتأكد أن الرقم واضح ولا يتداخل مع المحتوى أو علامات الطباعة."),
+        ],
+        "en": [
+            ("Recheck links, tables of contents, and written page references", "If the document contains a table of contents, internal links, or text such as 'see page 12,' reordering can make those references stale even after you add a fresh visible page number. Inspect important navigation and update the source document when the page number is part of the written content itself. A visually correct footer number does not automatically repair semantic references inside the document."),
+            ("Test numbering position on different page designs", "Place the number on a text-heavy page, an image-heavy page, and a page with a busy header or footer before applying the choice to the whole document. A position that looks clean on one page may cover content on another. After numbering, scan several pages at normal viewing size and confirm that the number remains legible without interfering with text, crop marks, or existing footer elements."),
+        ],
+    },
+    "safe-multi-step-file-workflows": {
+        "ar": [
+            ("اجعل الفشل واضحًا وقابلًا لإعادة المحاولة", "المسار الجيد لا يخفي الخطوة التي فشلت. يجب أن يعرف المستخدم هل المشكلة في التحقق أو التحويل أو الناتج، وأن يتمكن من إعادة المحاولة بدون افتراض أن الخطوات السابقة نجحت بشكل سليم. الوضوح هنا مهم للثقة بقدر أهمية نجاح المسار نفسه."),
+            ("لا تجعل الأتمتة تلغي المراجعة النهائية", "حتى المسار المتحقق تقنيًا قد ينتج ملفًا يحتاج فحصًا بصريًا أو وظيفيًا. افتح الناتج النهائي، قارن الحجم وعدد الصفحات أو قابلية البحث حسب المهمة، واحتفظ بالأصل عندما تكون النتيجة مهمة. الأتمتة تقلل العمل اليدوي لكنها لا تلغي التحقق المناسب."),
+        ],
+        "en": [
+            ("Make failures visible and retryable", "A trustworthy workflow should not hide which stage failed. The user should be able to distinguish validation failure from conversion failure or rejected output, and retry without being told that earlier steps succeeded when that was never verified. Clear failure boundaries also make support and debugging easier because the system can explain what was attempted without exposing private file contents or silently skipping a broken step."),
+            ("Automation should not remove the final quality check", "A chain can be technically valid and still produce an output that deserves visual or functional review. Open the final artifact, compare page count, size, searchability, or image quality according to the task, and retain the source when the result matters. Automation reduces repetitive work; it does not replace the human check needed to confirm that the final document still serves its intended purpose."),
+        ],
+    },
+    "browser-local-tools-and-privacy": {
+        "ar": [
+            ("اعرف ما الذي يبقى محليًا فعلًا", "كلمة محلي يجب أن تعني أن المهمة تنفذ في المتصفح بدون إرسال البيانات إلى endpoint خادمي. افحص وصف الأداة وسلوك الشبكة إذا كانت الخصوصية حساسة، وميز بين أداة حساب محلية وبين ميزة تستدعي AI أو خدمة خارجية حتى لو كانت الواجهة نفسها داخل المتصفح."),
+            ("استخدم المعالجة المحلية للبيانات القصيرة والمباشرة", "النصوص البسيطة والحسابات والتحويلات الصغيرة مناسبة جدًا للمتصفح، لكنها ليست بديلًا دائمًا لمحركات الملفات الثقيلة. اختر المسار المحلي عندما ينجز المهمة كاملة، وانتقل للخادم فقط عندما تحتاج قدرة لا يستطيع المتصفح توفيرها بموثوقية أو أداء مناسب."),
+        ],
+        "en": [
+            ("Know what 'local' actually means in the product", "A browser-local tool should complete its task without sending the entered data to a server endpoint. When privacy is important, read the tool description and, if necessary, inspect network behavior so you can distinguish an offline calculation from a feature that calls an AI provider or another service even though both appear inside the same web interface. The processing boundary should be understandable rather than implied."),
+            ("Use local processing for short, self-contained tasks", "Text cleanup, small calculations, parsing, formatting, and deterministic transformations are strong browser-local use cases because the browser can finish the job without heavy external engines. Local execution is not automatically the best choice for large document rendering or OCR. Choose it when it fully solves the task, and use temporary server processing only when the required capability cannot be delivered reliably on the device."),
+        ],
+    },
+}
+
+for _post in V8_BLOG_POSTS:
+    _extra = _V8_DEPTH.get(_post["slug"])
+    if not _extra:
+        continue
+    _post["sections"].extend(_extra["ar"])
+    _post["section_en"].extend(title for title, _ in _extra["en"])
+    _post["paragraph_en"].extend(paragraph for _, paragraph in _extra["en"])
 
 
 def install() -> None:
