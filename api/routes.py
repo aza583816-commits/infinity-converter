@@ -12,6 +12,7 @@ from config.settings import settings
 from core.limiter import limiter
 from core.accounts import PLAN_LIMITS, consume_credit, get_effective_plan
 from core.tooling import PREMIUM_TOOL_IDS, get_tool, list_tools
+from core.discovery import catalog_counts, unified_catalog
 from core.tooling.runtime import runtime_coverage
 from core.storage import TempWorkspace
 from security.file_guard import validate_upload
@@ -113,6 +114,29 @@ def tools():
         },
         "tools": list_tools(),
     })
+
+
+@api_bp.get("/discovery")
+@limiter.limit("60 per minute")
+def discovery():
+    """Public, non-secret catalog for the Infinity 8 workspace and search surfaces."""
+    items = []
+    for item in unified_catalog():
+        items.append({
+            "id": item["id"],
+            "raw_id": item["raw_id"],
+            "kind": item["kind"],
+            "url": item["url"],
+            "name_ar": item["name_ar"],
+            "name_en": item["name_en"],
+            "description_ar": item["description_ar"],
+            "description_en": item["description_en"],
+            "input_ext": item["input_ext"],
+            "output_ext": item["output_ext"],
+            "category": item["category"],
+            "icon": item["icon"],
+        })
+    return jsonify({"version": settings.app_version, "counts": catalog_counts(), "items": items})
 
 
 @api_bp.post("/inspect")
