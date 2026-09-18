@@ -12,6 +12,7 @@
   const recommendations = document.getElementById("workspace-recommendations");
   const grid = document.getElementById("workspace-recommendation-grid");
   const en = document.documentElement.lang === "en";
+  let catalogPromise = null;
 
   const copy = en ? {
     inspecting: "Inspecting safely…",
@@ -81,6 +82,23 @@
     ]
   };
 
+  async function catalogIndex() {
+    if (!catalogPromise) {
+      catalogPromise = fetch("/api/v2/discovery", { credentials: "same-origin" })
+        .then((response) => response.ok ? response.json() : Promise.reject(new Error("catalog unavailable")))
+        .then((payload) => {
+          const map = new Map();
+          for (const item of payload.items || []) {
+            map.set(item.id, item);
+            if (item.raw_id && !map.has(item.raw_id)) map.set(item.raw_id, item);
+          }
+          return map;
+        })
+        .catch(() => new Map());
+    }
+    return catalogPromise;
+  }
+
   function bytes(value) {
     const n = Number(value || 0);
     if (!Number.isFinite(n) || n <= 0) return "";
@@ -95,11 +113,11 @@
     facts.append(span);
   }
 
-  function card(item) {
+  function card(item, catalogItem = null) {
     const [kind, id, titleEn, titleAr, descEn, descAr] = item;
     const a = document.createElement("a");
     a.className = "workflow-card";
-    a.href = kind === "workflow" ? `/workflows?recipe=${encodeURIComponent(id)}` : `/tools/${id}`;
+    a.href = kind === "workflow" ? `/workflows?recipe=${encodeURIComponent(id)}` : (catalogItem?.url || "/tools");
     const icon = document.createElement("span");
     icon.className = "tool-icon large";
     icon.setAttribute("aria-hidden", "true");
@@ -115,8 +133,9 @@
     return a;
   }
 
-  function renderRecommendations(ext) {
+  async function renderRecommendations(ext) {
     grid.replaceChildren();
+    const catalog = await catalogIndex();
     const items = known[String(ext || "").toLowerCase()] || [
       ["tool", "tools", "Browse compatible tools", "تصفح الأدوات المتوافقة", "Use the complete Infinity catalog to choose the next action.", "استخدم كتالوج Infinity الكامل لاختيار الخطوة التالية."]
     ];
@@ -125,9 +144,19 @@
         const a = card(["tool", "tools", item[2], item[3], item[4], item[5]]);
         a.href = "/tools";
         grid.append(a);
-      } else {
-        grid.append(card(item));
+        continue;
       }
+      if (item[0] === "workflow") {
+        grid.append(card(item));
+        continue;
+      }
+      const actual = catalog.get(item[1]);
+      if (actual) grid.append(card(item, actual));
+    }
+    if (!grid.children.length) {
+      const fallback = card(["tool", "tools", "Browse compatible tools", "تصفح الأدوات المتوافقة", "Use the complete Infinity catalog to choose the next action.", "استخدم كتالوج Infinity الكامل لاختيار الخطوة التالية."]);
+      fallback.href = "/tools";
+      grid.append(fallback);
     }
     recommendations.hidden = false;
   }
@@ -158,7 +187,7 @@
       if (typeof data.encrypted === "boolean") addFact(`${copy.encrypted}: ${data.encrypted ? copy.yes : copy.no}`);
       result.hidden = false;
       result.focus({ preventScroll: false });
-      renderRecommendations(data.extension || "");
+      await renderRecommendations(data.extension || "");
       status.textContent = copy.ready;
     } catch (error) {
       status.textContent = copy.failed;
