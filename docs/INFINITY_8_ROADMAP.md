@@ -20,28 +20,27 @@ indexing strategy.
 
 ## Phase B — project workspace
 
-- [ ] Local-first project board for multiple files with file handles/metadata kept on-device
-      where browser capabilities allow.
+- [x] Local-first multi-file inspection board with safe metadata kept in the current page session.
 - [ ] Multi-file queue with explicit per-file actions, progress and retry.
-- [ ] Reusable workflow presets stored locally by default.
+- [x] Reusable workflow presets stored locally by default (extension + tool IDs only).
 - [ ] Session recovery that never stores uploaded file bytes in server history.
 - [ ] Optional account-backed project sync only after auth/storage retention UX is ready.
 
 ## Phase C — richer orchestration
 
-- [ ] Visual workflow builder over the real operation graph.
+- [x] Visual workflow builder over the real compatible converter graph.
 - [ ] Branching/retry rules for compatible steps.
-- [ ] Quality profiles (smallest, balanced, preserve-layout, editable-first).
-- [ ] Deterministic preflight explaining why a chain is executable before upload.
-- [ ] Browser-tool steps remain local and must never be faked as server file handoffs.
+- [x] Quality profiles (Balanced, Smallest, Editable first, Clean & safe) with compatibility filtering.
+- [x] Deterministic client/server compatibility preflight before a dynamic chain executes.
+- [x] Browser-tool steps remain local and are rejected from server file handoffs.
 
 ## Phase D — search and content authority
 
-- [ ] Expand the manually reviewed hero-tool set gradually from 21 toward 30–40.
-- [ ] Build topic clusters around PDF, OCR, Office, images, privacy and verification.
+- [x] Maintain a manually reviewed hero-tool set above the 30-page target (36+ reviewed converter pages).
+- [x] Expand topic clusters across PDF, OCR, data/Office, images, privacy, security, and workflow verification (24 bilingual guides total).
 - [ ] Every indexed tool page needs implementation-specific guidance, examples,
       FAQs, internal links and relevant workflows.
-- [ ] Keep thin utility surfaces noindex until they meet the quality bar.
+- [x] Keep thin utility surfaces noindex until they meet the quality bar.
 - [ ] Validate canonical/hreflang/sitemap changes in live Search Console after release.
 
 ## Phase E — infrastructure hardening
@@ -57,8 +56,8 @@ considered complete merely because application code supports them.
 
 ## Phase F — product growth
 
-- [ ] Installable PWA onboarding and offline-first browser utilities.
-- [ ] Privacy-preserving local recents/favorites expanded into workspace shortcuts.
+- [x] Installable PWA onboarding on Workspace; existing static-only service worker remains conservative.
+- [x] Privacy-preserving local recents and reusable local workflow presets in Workspace.
 - [ ] Template collections for student submissions, business documents and creator exports.
 - [ ] Usage analytics limited to product events; never file contents.
 - [ ] Turn on public accounts/billing only when account, retention, support and checkout UX
