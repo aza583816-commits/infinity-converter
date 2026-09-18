@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Infinity Workspace — Smart File Inspector | Infinity Converter' if lang == 'en' else 'Infinity Workspace — فاحص الملفات الذكي | Infinity Converter' }}{% endblock %}
+{% block description %}{{ 'Inspect a file safely, understand what it is, and jump into the best Infinity workflow without uploading it to AI.' if lang == 'en' else 'افحص ملفك بأمان، افهم نوعه، وانتقل إلى أفضل مسار في Infinity بدون إرسال الملف للذكاء الاصطناعي.' }}{% endblock %}
+{% block content %}
+<div class="page-wrap workflows-page" id="infinity-workspace">
+  <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/">{{ t('common.home') }}</a><span>/</span><strong>Infinity Workspace</strong></nav>
+
+  <section class="tool-hero reveal-on-scroll">
+    <div class="tool-hero-main">
+      <span class="kicker">INFINITY 8 · SMART WORKSPACE</span>
+      <h1>{{ 'Drop a file. Understand it. Choose the right path.' if lang == 'en' else 'ارفع ملفًا. افهمه. وخذ المسار الصح.' }}</h1>
+      <p>{{ 'Infinity inspects only technical file metadata and structure first. It does not attach file contents to Infinity Intelligence automatically.' if lang == 'en' else 'يفحص Infinity البيانات التقنية والبنية أولًا فقط، ولا يرسل محتوى الملف تلقائيًا إلى Infinity Intelligence.' }}</p>
+    </div>
+  </section>
+
+  <section class="converter-panel reveal-on-scroll" aria-labelledby="workspace-inspector-title">
+    <div class="panel-heading">
+      <div><span class="kicker">FILE INSPECTOR</span><h2 id="workspace-inspector-title">{{ 'Start with the file, not the tool name.' if lang == 'en' else 'ابدأ بالملف، مو باسم الأداة.' }}</h2></div>
+      <span id="workspace-status" class="status" role="status">{{ t('common.status_ready') }}</span>
+    </div>
+
+    <form id="workspace-inspector-form">
+      <label class="dropzone" for="workspace-file">
+        <span class="upload-symbol" aria-hidden="true">↑</span>
+        <strong>{{ 'Choose a file to inspect' if lang == 'en' else 'اختر ملفًا للفحص' }}</strong>
+        <span>{{ 'Validation happens before recommendations are shown.' if lang == 'en' else 'يتم التحقق من الملف قبل عرض الاقتراحات.' }}</span>
+        <input id="workspace-file" name="file" type="file" required>
+      </label>
+      <div class="panel-actions"><button class="primary" type="submit">{{ 'Inspect file' if lang == 'en' else 'افحص الملف' }} <span aria-hidden="true">✦</span></button></div>
+    </form>
+
+    <div id="workspace-inspector-result" class="result-panel" hidden tabindex="-1">
+      <div class="result-icon" aria-hidden="true">∞</div>
+      <div class="result-copy">
+        <strong id="workspace-file-label"></strong>
+        <p id="workspace-file-summary"></p>
+        <div id="workspace-file-facts" class="tool-chips"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="workspace-recommendations" class="section-block reveal-on-scroll" hidden aria-labelledby="workspace-recommendations-title">
+    <div class="v7-section-heading">
+      <div><span class="kicker">RECOMMENDED NEXT MOVES</span><h2 id="workspace-recommendations-title">{{ 'Infinity matched your file to useful actions.' if lang == 'en' else 'Infinity طابق ملفك مع أفضل الخطوات المفيدة.' }}</h2><p>{{ 'These suggestions come from the real converter and workflow catalog, not invented AI actions.' if lang == 'en' else 'هذه الاقتراحات من كتالوج الأدوات والمسارات الفعلي، وليست إجراءات مخترعة من الذكاء.' }}</p></div>
+    </div>
+    <div id="workspace-recommendation-grid" class="workflow-grid"></div>
+  </section>
+
+  <section class="processing-card reveal-on-scroll">
+    <div class="processing-head"><div><span class="kicker">PRIVACY BY DESIGN</span><h2>{{ 'Inspection and AI are separate on purpose.' if lang == 'en' else 'الفحص والذكاء منفصلان عن قصد.' }}</h2></div><a class="text-button" href="/trust">{{ 'Trust center' if lang == 'en' else 'مركز الثقة' }} ↗</a></div>
+    <div class="processing-grid">
+      <article><span>01</span><strong>{{ 'Validate first' if lang == 'en' else 'تحقق أولًا' }}</strong><p>{{ 'Extension, signature, parser and structural checks run before recommendations.' if lang == 'en' else 'يتم فحص الامتداد والتوقيع والمحلل والبنية قبل الاقتراحات.' }}</p></article>
+      <article><span>02</span><strong>{{ 'No automatic AI upload' if lang == 'en' else 'لا رفع تلقائي للذكاء' }}</strong><p>{{ 'The assistant receives only the safe context you choose to share.' if lang == 'en' else 'المساعد يستقبل فقط السياق الآمن الذي تختار مشاركته.' }}</p></article>
+      <article><span>03</span><strong>{{ 'Real catalog grounding' if lang == 'en' else 'اقتراحات من الكتالوج الحقيقي' }}</strong><p>{{ 'Every recommended action points to a real Infinity tool or executable workflow.' if lang == 'en' else 'كل اقتراح يرتبط بأداة أو مسار تنفيذي حقيقي في Infinity.' }}</p></article>
+      <article><span>04</span><strong>{{ 'Temporary processing' if lang == 'en' else 'معالجة مؤقتة' }}</strong><p>{{ 'Conversions continue to use temporary isolated workspaces and no-store responses.' if lang == 'en' else 'التحويلات تستمر بمساحات مؤقتة مع استجابات no-store.' }}</p></article>
+    </div>
+  </section>
+
+  <section class="v7-final-cta reveal-on-scroll">
+    <span class="v7-ai-orb">∞</span>
+    <div><small>INFINITY INTELLIGENCE</small><h2>{{ 'Need a custom path?' if lang == 'en' else 'تبي مسار مخصص؟' }}</h2><p>{{ 'Describe the outcome and let Infinity Intelligence map it to the unified catalog.' if lang == 'en' else 'اوصف النتيجة التي تريدها وخلي Infinity Intelligence يربطها بالكتالوج الموحد.' }}</p></div>
+    <div class="v7-final-actions"><a class="primary" href="/assistant">{{ 'Ask Infinity' if lang == 'en' else 'اسأل Infinity' }} ✦</a><a class="secondary" href="/workflows">{{ 'Browse workflows' if lang == 'en' else 'تصفح المسارات' }}</a></div>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+<script nonce="{{ csp_nonce }}" src="/static/js/workspace.js?v={{ app_version }}" defer></script>
+{% endblock %}
