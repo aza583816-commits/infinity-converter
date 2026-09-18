@@ -6,7 +6,8 @@
   <title>{% block title %}{{ t('meta.default_title') }}{% endblock %}</title>
   <meta name="description" content="{% block description %}{{ t('meta.default_description') }}{% endblock %}">
   {% set noindex_page = (page_noindex|default(false)) or (code is defined) %}
-  {% set canonical_suffix = '?lang=en' if lang == 'en' else '?lang=ar' %}
+  {% set explicit_lang = request.args.get('lang') if request.args.get('lang') in ('ar', 'en') else '' %}
+  {% set canonical_suffix = ('?lang=' ~ explicit_lang) if explicit_lang else '' %}
   {% set language_target = request.path ~ ('?lang=ar' if lang == 'en' else '?lang=en') %}
   <link rel="canonical" href="{{ public_base_url }}{{ request.path }}{{ canonical_suffix }}">
   <meta name="robots" content="{{ 'noindex,follow' if noindex_page else 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1' }}">
