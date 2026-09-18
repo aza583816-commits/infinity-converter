@@ -21,9 +21,9 @@ indexing strategy.
 ## Phase B — project workspace
 
 - [x] Local-first multi-file inspection board with safe metadata kept in the current page session.
-- [ ] Multi-file queue with explicit per-file actions, progress and retry.
+- [x] Multi-file queue with explicit per-file status, sequential progress and per-item retry.
 - [x] Reusable workflow presets stored locally by default (extension + tool IDs only).
-- [ ] Session recovery that never stores uploaded file bytes in server history.
+- [x] Session recovery for extension + safe tool IDs only; users explicitly re-select files because file bytes are never persisted.
 - [ ] Optional account-backed project sync only after auth/storage retention UX is ready.
 
 ## Phase C — richer orchestration
@@ -51,15 +51,15 @@ considered complete merely because application code supports them.
 - [ ] Shared Redis for global request-rate limits and global AI budget before horizontal scaling.
 - [ ] Dedicated renderer/OCR worker with infrastructure-level outbound-network denial.
 - [ ] Uniform disposable-worker CPU/memory budgets for heavy native/parser paths.
-- [ ] Crash-recovery/TTL sweep validation for abandoned temporary workspaces.
+- [x] Crash-recovery/TTL sweep for abandoned temporary workspaces, with path/prefix/age guards and throttled cleanup.
 - [ ] Continue SBOM, dependency audit and exact production-image evidence.
 
 ## Phase F — product growth
 
 - [x] Installable PWA onboarding on Workspace; existing static-only service worker remains conservative.
 - [x] Privacy-preserving local recents and reusable local workflow presets in Workspace.
-- [ ] Template collections for student submissions, business documents and creator exports.
-- [ ] Usage analytics limited to product events; never file contents.
+- [x] Outcome templates for student submissions, business sharing and creator web publishing, all filtered through the same compatibility graph.
+- [x] Allowlisted product-event telemetry that logs event + safe path only and ignores all free-form/file/account fields.
 - [ ] Turn on public accounts/billing only when account, retention, support and checkout UX
       are ready; existing hidden code remains disabled until then.
 
