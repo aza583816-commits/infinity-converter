@@ -187,6 +187,17 @@
       if (typeof data.encrypted === "boolean") addFact(`${copy.encrypted}: ${data.encrypted ? copy.yes : copy.no}`);
       result.hidden = false;
       result.focus({ preventScroll: false });
+      try {
+        sessionStorage.setItem("infinity_safe_file_context", JSON.stringify({
+          at: Date.now(),
+          extension: data.extension || "",
+          mime: data.mime || file.type || "",
+          size_bytes: Number(data.size || file.size || 0),
+          pages: Number(data.pages || 0),
+          encrypted: Boolean(data.encrypted),
+          safe: Boolean(data.safe),
+        }));
+      } catch (_) {}
       await renderRecommendations(data.extension || "");
       status.textContent = copy.ready;
     } catch (error) {
