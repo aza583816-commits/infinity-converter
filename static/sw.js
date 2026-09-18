@@ -5,6 +5,7 @@ const STATIC_ASSETS = [
   '/static/js/app.js?v=7.2.3',
   '/static/js/smart-flow.js?v=7.2.3',
   '/static/js/workflows.js?v=7.2.3',
+  '/static/js/workspace.js?v=7.2.3',
   '/static/js/trust-badges.js?v=7.2.3',
   '/static/js/vitals.js?v=7.2.3',
   '/static/icon-192.png?v=7.2.3',
