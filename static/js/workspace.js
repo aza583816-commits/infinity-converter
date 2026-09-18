@@ -44,6 +44,18 @@
   let projectEntries = [];
   let pendingRestore = null;
 
+  function emitEvent(event) {
+    try {
+      fetch("/api/v2/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        keepalive: true,
+        body: JSON.stringify({ event, path: location.pathname }),
+      }).catch(() => {});
+    } catch (_) {}
+  }
+
   const copy = en ? {
     inspecting: "Inspecting safely…",
     ready: "Ready",
@@ -129,6 +141,7 @@
     try { await deferredInstallPrompt.userChoice; } catch (_) {}
     deferredInstallPrompt = null;
     installApp.hidden = true;
+    emitEvent("workspace_install");
   });
 
   window.addEventListener("appinstalled", () => {
@@ -352,6 +365,7 @@
       localStorage.setItem(PRESETS_KEY, JSON.stringify([item, ...existing].slice(0, 10)));
     } catch (_) {}
     renderSavedPresets();
+    emitEvent("workspace_preset_save");
     if (builderStatus) builderStatus.textContent = en ? "Preset saved on this device ✓" : "تم حفظ المسار على هذا الجهاز ✓";
   });
 
@@ -590,6 +604,7 @@
     document.querySelectorAll("[data-workspace-template]").forEach((item) => item.classList.toggle("is-active", item === button));
     document.querySelectorAll("[data-workspace-profile]").forEach((item) => item.classList.remove("is-active"));
     const complete = await applyStepIds(ids);
+    emitEvent("workspace_template_apply");
     if (!complete && builderStatus) builderStatus.textContent = en ? "Template was shortened to the safe compatible steps." : "تم تقصير القالب إلى الخطوات الآمنة المتوافقة.";
   }));
 
@@ -663,6 +678,7 @@
       link.remove();
       setTimeout(() => URL.revokeObjectURL(url), 30000);
       if (builderStatus) builderStatus.textContent = en ? "Completed ✓" : "اكتمل ✓";
+      emitEvent("workspace_workflow_run");
     } catch (error) {
       if (builderStatus) builderStatus.textContent = error?.message || (en ? "Workflow failed." : "تعذر تنفيذ المسار.");
     } finally {
@@ -770,6 +786,7 @@
   runQueue?.addEventListener("click", async () => {
     if (!builderSteps.length || !projectEntries.length) return;
     runQueue.disabled = true;
+    emitEvent("workspace_queue_run");
     for (let index = 0; index < projectEntries.length; index += 1) {
       await runQueueItem(index);
     }
@@ -819,6 +836,7 @@
       status.textContent = copy.failed;
       return;
     }
+    emitEvent("workspace_inspect");
 
     const { file, data } = firstSuccess;
     builderFile = file;
