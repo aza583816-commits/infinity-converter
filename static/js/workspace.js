@@ -177,7 +177,6 @@
     if (!recovery) return;
     const saved = safeSessionRead();
     recovery.hidden = !saved;
-    if (saved) pendingRestore = saved;
   }
 
   restoreSession?.addEventListener("click", () => {
