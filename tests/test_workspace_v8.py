@@ -1,7 +1,10 @@
 from pathlib import Path
 
+from app_factory import create_app
 
-def test_workspace_route_renders(client):
+
+def test_workspace_route_renders():
+    client = create_app().test_client()
     response = client.get("/workspace?lang=en")
     assert response.status_code == 200
     body = response.get_data(as_text=True)
@@ -11,7 +14,8 @@ def test_workspace_route_renders(client):
     assert 'name="robots" content="noindex,follow"' in body
 
 
-def test_unified_discovery_exposes_both_tool_namespaces(client):
+def test_unified_discovery_exposes_both_tool_namespaces():
+    client = create_app().test_client()
     response = client.get("/api/v2/discovery")
     assert response.status_code == 200
     payload = response.get_json()
