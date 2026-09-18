@@ -122,6 +122,15 @@ def discovery():
     """Public, non-secret catalog for the Infinity 8 workspace and search surfaces."""
     items = []
     for item in unified_catalog():
+        workflow_safe = False
+        input_required = bool(item.get("input_required", False))
+        if item["kind"] == "converter":
+            tool = get_tool(item["raw_id"])
+            if tool is not None and tool.input_required:
+                workflow_safe = (
+                    (not tool.param_field or bool(tool.param_default))
+                    and all((not field.required) or bool(field.default) for field in tool.fields)
+                )
         items.append({
             "id": item["id"],
             "raw_id": item["raw_id"],
@@ -135,6 +144,8 @@ def discovery():
             "output_ext": item["output_ext"],
             "category": item["category"],
             "icon": item["icon"],
+            "input_required": input_required,
+            "workflow_safe": workflow_safe,
         })
     return jsonify({"version": settings.app_version, "counts": catalog_counts(), "items": items})
 
