@@ -300,7 +300,7 @@
 
   loadPreset?.addEventListener("click", async () => {
     const rawIndex = savedPreset?.value || "";
-    if (!/^\\d+$/.test(rawIndex)) return;
+    if (!/^\d+$/.test(rawIndex)) return;
     const index = Number(rawIndex);
     const presets = safePresetRead();
     if (!Number.isInteger(index) || index < 0 || index >= presets.length) return;
@@ -329,7 +329,7 @@
 
   deletePreset?.addEventListener("click", () => {
     const rawIndex = savedPreset?.value || "";
-    if (!/^\\d+$/.test(rawIndex)) return;
+    if (!/^\d+$/.test(rawIndex)) return;
     const index = Number(rawIndex);
     const presets = safePresetRead();
     if (!Number.isInteger(index) || index < 0 || index >= presets.length) return;
