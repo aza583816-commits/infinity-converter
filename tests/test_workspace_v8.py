@@ -1,3 +1,5 @@
+import io
+import json
 from pathlib import Path
 
 from app_factory import create_app
@@ -32,6 +34,9 @@ def test_workspace_recommendations_are_catalog_grounded():
     assert "/api/v2/inspect" in script
     assert "/api/v2/discovery" in script
     assert "catalogIndex" in script
+    assert "VISUAL WORKFLOW BUILDER" in (Path(__file__).parents[1] / "templates" / "workspace.html").read_text(encoding="utf-8")
+    assert "builderCatalog" in script
+    assert "PROFILE_STEPS" in script
 
 
 def test_workspace_is_in_primary_navigation():
@@ -47,3 +52,48 @@ def test_smart_plan_execution_is_catalog_bounded():
     assert 'len(steps) <= 4' in workflows
     assert "executeSmartPlan" in app_js
     assert "/api/v2/workflows/execute" in app_js
+
+
+def test_dynamic_workspace_chain_executes_real_converters():
+    root = Path(__file__).parents[1]
+    sample = (root / "static" / "samples" / "sample-image.png").read_bytes()
+    client = create_app().test_client()
+    response = client.post(
+        "/api/v2/workflows/execute",
+        data={
+            "steps": json.dumps(["image-to-jpg", "image-compress"]),
+            "file": (io.BytesIO(sample), "workspace-sample.png"),
+        },
+        content_type="multipart/form-data",
+    )
+    assert response.status_code == 200
+    assert response.headers["X-Workflow-ID"] == "smart-plan"
+    assert response.headers["X-Workflow-Completed"] == "image-to-jpg,image-compress"
+    assert response.mimetype == "image/jpeg"
+    assert len(response.data) > 100
+
+
+def test_dynamic_workspace_chain_rejects_browser_and_duplicate_steps():
+    root = Path(__file__).parents[1]
+    sample = (root / "static" / "samples" / "sample-image.png").read_bytes()
+    client = create_app().test_client()
+
+    browser = client.post(
+        "/api/v2/workflows/execute",
+        data={
+            "steps": json.dumps(["browser:text-diff"]),
+            "file": (io.BytesIO(sample), "workspace-sample.png"),
+        },
+        content_type="multipart/form-data",
+    )
+    assert browser.status_code == 400
+
+    duplicate = client.post(
+        "/api/v2/workflows/execute",
+        data={
+            "steps": json.dumps(["image-compress", "image-compress"]),
+            "file": (io.BytesIO(sample), "workspace-sample.png"),
+        },
+        content_type="multipart/form-data",
+    )
+    assert duplicate.status_code == 400
