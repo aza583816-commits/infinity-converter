@@ -17,8 +17,19 @@
   const recents = document.getElementById("workspace-recents");
   const recentList = document.getElementById("workspace-recent-list");
   const clearRecents = document.getElementById("workspace-clear-recents");
+  const builder = document.getElementById("workspace-builder");
+  const builderStatus = document.getElementById("workspace-builder-status");
+  const builderStepsNode = document.getElementById("workspace-builder-steps");
+  const builderNextTool = document.getElementById("workspace-next-tool");
+  const builderAddStep = document.getElementById("workspace-add-step");
+  const builderReset = document.getElementById("workspace-builder-reset");
+  const builderRun = document.getElementById("workspace-run-builder");
   const en = document.documentElement.lang === "en";
   let catalogPromise = null;
+  let builderCatalogPromise = null;
+  let builderFile = null;
+  let builderExt = "";
+  let builderSteps = [];
 
   const copy = en ? {
     inspecting: "Inspecting safely…",
@@ -210,6 +221,225 @@
     recommendations.hidden = false;
   }
 
+
+  async function builderCatalog() {
+    if (!builderCatalogPromise) {
+      builderCatalogPromise = fetch("/api/v2/discovery", { credentials: "same-origin" })
+        .then((response) => response.ok ? response.json() : Promise.reject(new Error("catalog unavailable")))
+        .then((payload) => (payload.items || []).filter((item) => item.kind === "converter" && item.workflow_safe))
+        .catch(() => []);
+    }
+    return builderCatalogPromise;
+  }
+
+  function acceptsExtension(item, extension) {
+    const accepted = (item?.input_ext || []).map((value) => String(value).toLowerCase());
+    const ext = String(extension || "").toLowerCase();
+    return accepted.includes(ext) || accepted.includes("*") || accepted.includes(".*");
+  }
+
+  function stepLabel(item) {
+    return en ? item.name_en : item.name_ar;
+  }
+
+  function contentDispositionFilename(response) {
+    const header = response.headers.get("content-disposition") || "";
+    const utf = header.match(/filename\\*=UTF-8''([^;]+)/i);
+    if (utf) {
+      try { return decodeURIComponent(utf[1]); } catch (_) {}
+    }
+    const plain = header.match(/filename="?([^";]+)"?/i);
+    return plain ? plain[1] : "Infinity-Workflow-Result";
+  }
+
+  async function renderBuilder() {
+    if (!builder || !builderNextTool || !builderStepsNode) return;
+    const catalog = await builderCatalog();
+    const currentExt = builderSteps.length ? builderSteps[builderSteps.length - 1].output_ext : builderExt;
+
+    builderStepsNode.replaceChildren();
+    if (!builderSteps.length) {
+      const empty = document.createElement("span");
+      empty.className = "text-button";
+      empty.textContent = (en ? "Start: " : "البداية: ") + (builderExt || "—");
+      builderStepsNode.append(empty);
+    } else {
+      builderSteps.forEach((item, index) => {
+        const chip = document.createElement("span");
+        chip.className = "text-button";
+        chip.textContent = String(index + 1).padStart(2, "0") + " · " + stepLabel(item) + " · " + (item.output_ext || "—");
+        builderStepsNode.append(chip);
+      });
+    }
+
+    builderNextTool.replaceChildren();
+    const compatible = builderSteps.length >= 4 ? [] : catalog
+      .filter((item) => acceptsExtension(item, currentExt))
+      .filter((item) => !builderSteps.some((step) => step.id === item.id))
+      .sort((left, right) => stepLabel(left).localeCompare(stepLabel(right)));
+
+    if (!compatible.length) {
+      const option = document.createElement("option");
+      option.value = "";
+      option.textContent = en ? "No compatible safe next step" : "لا توجد خطوة آمنة متوافقة";
+      builderNextTool.append(option);
+    } else {
+      compatible.forEach((item) => {
+        const option = document.createElement("option");
+        option.value = item.id;
+        option.textContent = stepLabel(item) + " → " + (item.output_ext || "—");
+        builderNextTool.append(option);
+      });
+    }
+
+    if (builderAddStep) builderAddStep.disabled = !compatible.length || builderSteps.length >= 4;
+    if (builderRun) builderRun.disabled = !builderFile || !builderSteps.length;
+    if (builderStatus) builderStatus.textContent = en
+      ? (builderSteps.length + "/4 steps · current " + (currentExt || "—"))
+      : (builderSteps.length + "/4 خطوات · الحالي " + (currentExt || "—"));
+  }
+
+  const PROFILE_STEPS = {
+    ".pdf": {
+      balanced: ["pdf-repair", "pdf-compress"],
+      smallest: ["pdf-compress"],
+      editable: ["pdf-to-docx"],
+      clean: ["pdf-repair"],
+    },
+    ".doc": {
+      balanced: ["word-to-pdf", "pdf-compress"],
+      smallest: ["word-to-pdf", "pdf-compress"],
+      editable: ["word-to-pdf"],
+      clean: ["word-to-pdf"],
+    },
+    ".docx": {
+      balanced: ["word-to-pdf", "pdf-compress"],
+      smallest: ["word-to-pdf", "pdf-compress"],
+      editable: ["word-to-pdf"],
+      clean: ["word-to-pdf"],
+    },
+    ".png": {
+      balanced: ["image-to-jpg", "image-compress", "image-strip-metadata"],
+      smallest: ["image-to-jpg", "image-compress"],
+      editable: ["image-ocr"],
+      clean: ["image-strip-metadata"],
+    },
+    ".jpg": {
+      balanced: ["image-compress", "image-strip-metadata"],
+      smallest: ["image-compress"],
+      editable: ["image-ocr"],
+      clean: ["image-strip-metadata"],
+    },
+    ".jpeg": {
+      balanced: ["image-compress", "image-strip-metadata"],
+      smallest: ["image-compress"],
+      editable: ["image-ocr"],
+      clean: ["image-strip-metadata"],
+    },
+    ".webp": {
+      balanced: ["image-to-jpg", "image-compress", "image-strip-metadata"],
+      smallest: ["image-to-jpg", "image-compress"],
+      editable: ["image-ocr"],
+      clean: ["image-strip-metadata"],
+    },
+    ".xlsx": {
+      balanced: ["excel-to-pdf", "pdf-compress"],
+      smallest: ["excel-to-pdf", "pdf-compress"],
+      editable: ["xlsx-to-csv"],
+      clean: ["xlsx-to-csv"],
+    },
+    ".pptx": {
+      balanced: ["ppt-to-pdf", "pdf-compress"],
+      smallest: ["ppt-to-pdf", "pdf-compress"],
+      editable: ["ppt-to-pdf"],
+      clean: ["ppt-to-pdf"],
+    },
+    ".zip": {
+      balanced: ["zip-integrity"],
+      smallest: ["zip-integrity"],
+      editable: ["zip-list"],
+      clean: ["zip-integrity"],
+    },
+  };
+
+  async function applyProfile(profile) {
+    document.querySelectorAll("[data-workspace-profile]").forEach((button) => {
+      button.classList.toggle("is-active", button.dataset.workspaceProfile === profile);
+    });
+    const catalog = await builderCatalog();
+    const byId = new Map(catalog.map((item) => [item.id, item]));
+    const requested = PROFILE_STEPS[builderExt]?.[profile] || [];
+    const next = [];
+    let current = builderExt;
+    for (const id of requested) {
+      const item = byId.get(id);
+      if (!item || !acceptsExtension(item, current)) break;
+      next.push(item);
+      current = item.output_ext;
+      if (next.length >= 4) break;
+    }
+    builderSteps = next;
+    await renderBuilder();
+  }
+
+  builderAddStep?.addEventListener("click", async () => {
+    const id = builderNextTool?.value || "";
+    if (!id || builderSteps.length >= 4) return;
+    const catalog = await builderCatalog();
+    const item = catalog.find((candidate) => candidate.id === id);
+    if (!item) return;
+    const current = builderSteps.length ? builderSteps[builderSteps.length - 1].output_ext : builderExt;
+    if (!acceptsExtension(item, current)) return;
+    builderSteps.push(item);
+    await renderBuilder();
+  });
+
+  builderReset?.addEventListener("click", async () => {
+    builderSteps = [];
+    document.querySelectorAll("[data-workspace-profile]").forEach((button) => button.classList.remove("is-active"));
+    await renderBuilder();
+  });
+
+  document.querySelectorAll("[data-workspace-profile]").forEach((button) => button.addEventListener("click", () => {
+    applyProfile(button.dataset.workspaceProfile || "balanced");
+  }));
+
+  builderRun?.addEventListener("click", async () => {
+    if (!builderFile || !builderSteps.length) return;
+    const original = builderRun.textContent;
+    builderRun.disabled = true;
+    if (builderStatus) builderStatus.textContent = en ? "Running verified workflow…" : "جاري تنفيذ المسار المتحقق…";
+    try {
+      const body = new FormData();
+      body.set("file", builderFile, builderFile.name);
+      body.set("steps", JSON.stringify(builderSteps.map((item) => item.id)));
+      const response = await fetch("/api/v2/workflows/execute", { method: "POST", body, credentials: "same-origin" });
+      if (!response.ok) {
+        let message = en ? "Workflow failed." : "تعذر تنفيذ المسار.";
+        try {
+          const payload = await response.json();
+          if (payload?.error) message = payload.error;
+        } catch (_) {}
+        throw new Error(message);
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = contentDispositionFilename(response);
+      document.body.append(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
+      if (builderStatus) builderStatus.textContent = en ? "Completed ✓" : "اكتمل ✓";
+    } catch (error) {
+      if (builderStatus) builderStatus.textContent = error?.message || (en ? "Workflow failed." : "تعذر تنفيذ المسار.");
+    } finally {
+      builderRun.textContent = original;
+      builderRun.disabled = false;
+    }
+  });
+
   async function inspectOne(file) {
     const body = new FormData();
     body.set("file", file, file.name);
@@ -260,6 +490,11 @@
     }
 
     const { file, data } = firstSuccess;
+    builderFile = file;
+    builderExt = String(data.extension || "").toLowerCase();
+    builderSteps = [];
+    if (builder) builder.hidden = false;
+    await applyProfile("balanced");
     label.textContent = files.length > 1
       ? (en ? `${files.length} files inspected · primary: ${file.name}` : `تم فحص ${files.length} ملفات · الأساسي: ${file.name}`)
       : file.name;
