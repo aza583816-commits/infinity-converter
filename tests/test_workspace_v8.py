@@ -97,3 +97,21 @@ def test_dynamic_workspace_chain_rejects_browser_and_duplicate_steps():
         content_type="multipart/form-data",
     )
     assert duplicate.status_code == 400
+
+
+def test_infinity_8_knowledge_clusters_are_installed_and_indexable():
+    from core.blog import BLOG_POSTS
+
+    slugs = [post["slug"] for post in BLOG_POSTS]
+    assert len(slugs) >= 24
+    assert len(slugs) == len(set(slugs))
+    assert "safe-multi-step-file-workflows" in slugs
+    assert "browser-local-tools-and-privacy" in slugs
+
+    client = create_app().test_client()
+    article = client.get("/blog/safe-multi-step-file-workflows?lang=en")
+    assert article.status_code == 200
+    assert "AI can suggest; the server still verifies" in article.get_data(as_text=True)
+
+    sitemap = client.get("/sitemap.xml").get_data(as_text=True)
+    assert "/blog/safe-multi-step-file-workflows" in sitemap
