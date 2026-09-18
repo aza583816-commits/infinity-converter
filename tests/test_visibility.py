@@ -33,7 +33,6 @@ def test_sitemap_lists_x_default_and_self_canonical_language_urls(hidden_client)
     assert b"<loc>https://infinityconverter.com/tools/merge-pdf</loc>" in sitemap.data
     assert b"<loc>https://infinityconverter.com/tools/merge-pdf?lang=en</loc>" in sitemap.data
     assert b"<loc>https://infinityconverter.com/tools/merge-pdf?lang=ar</loc>" in sitemap.data
-    assert b"<loc>https://infinityconverter.com/tools/merge-pdf</loc>" not in sitemap.data
 
 
 def test_auth_and_billing_can_be_reenabled_without_removing_code(monkeypatch, tmp_path):
