@@ -10,6 +10,18 @@ from core.limiter import limiter
 telemetry_bp = Blueprint("telemetry", __name__)
 
 _ALLOWED_METRICS = {"LCP", "CLS", "INP", "TTFB", "FCP"}
+_ALLOWED_PRODUCT_EVENTS = {
+    "workspace_open",
+    "workspace_inspect",
+    "workspace_builder_run",
+    "workspace_builder_success",
+    "workspace_builder_failure",
+    "workspace_preset_save",
+    "workspace_queue_run",
+    "workspace_queue_success",
+    "workspace_queue_failure",
+    "workspace_install_prompt",
+}
 _SAFE_PATH = re.compile(r"^/[A-Za-z0-9_./-]{0,200}$")
 
 
@@ -45,6 +57,28 @@ def collect_vital():
         path,
         device,
     )
+    response = jsonify(status="accepted")
+    response.headers["Cache-Control"] = "no-store, private"
+    return response, 202
+
+
+@telemetry_bp.post("/api/v2/product-event")
+@limiter.limit("120 per minute")
+def collect_product_event():
+    """Record a tiny allowlisted product event without user/file identifiers.
+
+    The endpoint intentionally rejects arbitrary properties so filenames, file
+    contents, prompts, emails, account IDs, and other user data cannot be sent.
+    """
+    payload = request.get_json(silent=True) or {}
+    event = str(payload.get("event") or "").strip().lower()
+    if event not in _ALLOWED_PRODUCT_EVENTS:
+        return jsonify(error="invalid event"), 400
+
+    path = str(payload.get("path") or "/").split("?", 1)[0]
+    if not _SAFE_PATH.fullmatch(path):
+        path = "/"
+    current_app.logger.info("product_event event=%s path=%s", event, path)
     response = jsonify(status="accepted")
     response.headers["Cache-Control"] = "no-store, private"
     return response, 202
