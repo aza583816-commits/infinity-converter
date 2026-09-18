@@ -57,6 +57,36 @@
     <div id="workspace-recommendation-grid" class="workflow-grid"></div>
   </section>
 
+  <section id="workspace-builder" class="converter-panel reveal-on-scroll" hidden aria-labelledby="workspace-builder-title">
+    <div class="panel-heading">
+      <div><span class="kicker">VISUAL WORKFLOW BUILDER</span><h2 id="workspace-builder-title">{{ 'Build a verified chain from real Infinity tools.' if lang == 'en' else 'ابنِ مسارًا متحققًا من أدوات Infinity الحقيقية.' }}</h2></div>
+      <span id="workspace-builder-status" class="status" role="status">{{ 'Ready' if lang == 'en' else 'جاهز' }}</span>
+    </div>
+    <p>{{ 'Every next step is filtered by the previous output type. The server validates the same chain again before processing.' if lang == 'en' else 'كل خطوة تالية تُرشح حسب نوع ناتج الخطوة السابقة، والخادم يعيد التحقق من المسار نفسه قبل التنفيذ.' }}</p>
+
+    <div class="v7-ai-mode-row" aria-label="{{ 'Quality profile' if lang == 'en' else 'ملف الجودة' }}">
+      <button type="button" class="is-active" data-workspace-profile="balanced">{{ 'Balanced' if lang == 'en' else 'متوازن' }}</button>
+      <button type="button" data-workspace-profile="smallest">{{ 'Smallest' if lang == 'en' else 'أصغر حجم' }}</button>
+      <button type="button" data-workspace-profile="editable">{{ 'Editable first' if lang == 'en' else 'قابل للتعديل' }}</button>
+      <button type="button" data-workspace-profile="clean">{{ 'Clean & safe' if lang == 'en' else 'نظيف وآمن' }}</button>
+    </div>
+
+    <div class="processing-card">
+      <div class="processing-head"><div><span class="kicker">PIPELINE</span><h3>{{ 'Selected steps' if lang == 'en' else 'الخطوات المختارة' }}</h3></div><button id="workspace-builder-reset" class="secondary" type="button">{{ 'Reset' if lang == 'en' else 'إعادة' }}</button></div>
+      <div id="workspace-builder-steps" class="quick-list" aria-live="polite"></div>
+    </div>
+
+    <label class="param-field" for="workspace-next-tool">
+      {{ 'Compatible next tool' if lang == 'en' else 'الأداة التالية المتوافقة' }}
+      <select id="workspace-next-tool"></select>
+    </label>
+    <div class="panel-actions">
+      <button id="workspace-add-step" class="secondary" type="button">{{ 'Add step' if lang == 'en' else 'أضف خطوة' }}</button>
+      <button id="workspace-run-builder" class="primary" type="button">{{ 'Run workflow' if lang == 'en' else 'شغّل المسار' }} ✦</button>
+    </div>
+    <p class="sample-note">{{ 'Maximum four converter steps. Tools that need interactive required settings are excluded from the builder.' if lang == 'en' else 'الحد الأقصى أربع خطوات تحويل. الأدوات التي تحتاج إعدادات إلزامية تفاعلية لا تظهر في هذا المنشئ.' }}</p>
+  </section>
+
   <section class="section-block reveal-on-scroll" aria-labelledby="workspace-audiences-title">
     <div class="v7-section-heading"><div><span class="kicker">GOAL-BASED COLLECTIONS</span><h2 id="workspace-audiences-title">{{ 'Start from your job, not a file format.' if lang == 'en' else 'ابدأ من مهمتك، مو من صيغة الملف.' }}</h2><p>{{ 'Curated paths for study, business, creation and technical work.' if lang == 'en' else 'مسارات مرتبة للدراسة والأعمال وصناعة المحتوى والعمل التقني.' }}</p></div></div>
     <div class="audience-grid">
