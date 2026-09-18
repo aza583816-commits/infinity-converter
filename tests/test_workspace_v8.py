@@ -33,3 +33,13 @@ def test_workspace_recommendations_are_catalog_grounded():
 def test_workspace_is_in_primary_navigation():
     base = (Path(__file__).parents[1] / "templates" / "base.html").read_text(encoding="utf-8")
     assert 'href="/workspace"' in base
+
+
+def test_smart_plan_execution_is_catalog_bounded():
+    workflows = (Path(__file__).parents[1] / "api" / "workflows.py").read_text(encoding="utf-8")
+    app_js = (Path(__file__).parents[1] / "static" / "js" / "app.js").read_text(encoding="utf-8")
+    assert "def _dynamic_recipe" in workflows
+    assert 'tool_id.startswith("browser:")' in workflows
+    assert 'len(steps) <= 4' in workflows
+    assert "executeSmartPlan" in app_js
+    assert "/api/v2/workflows/execute" in app_js
