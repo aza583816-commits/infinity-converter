@@ -35,3 +35,12 @@ def test_retired_office_urls_keep_search_equity_with_useful_redirects():
         response = client.get(path, follow_redirects=False)
         assert response.status_code == 301
         assert "/tools?category=office" in response.headers["Location"]
+
+
+def test_sitemap_includes_x_default_bare_urls_and_language_variants():
+    client = create_app().test_client()
+    xml = client.get("/sitemap.xml").get_data(as_text=True)
+    assert "<loc>https://infinityconverter.com/</loc>" in xml
+    assert "<loc>https://infinityconverter.com/?lang=ar</loc>" in xml
+    assert "<loc>https://infinityconverter.com/?lang=en</loc>" in xml
+    assert 'hreflang="x-default" href="https://infinityconverter.com/"' in xml
