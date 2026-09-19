@@ -67,3 +67,13 @@ def test_scanned_pdf_ocr_keeps_two_pages_and_page_labels(tmp_path):
     first, second = result.split("--- صفحة 2 ---", 1)
     assert "101" in first and "202" in second
     assert "SAFETY" in first.upper() and "PHYSICS" in second.upper()
+
+
+def test_scanned_blank_pdf_does_not_return_page_headers_as_success(tmp_path):
+    source, output = tmp_path / "blank.pdf", tmp_path / "blank.txt"
+    with pymupdf.open() as pdf:
+        pdf.new_page(width=595, height=842)
+        pdf.save(str(source))
+    with pytest.raises(ValueError, match="OCR|التعرف"):
+        ocr_pdf(source, output, lang="en", max_pages=1, dpi=200)
+    assert not output.exists()
