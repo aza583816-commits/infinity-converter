@@ -108,7 +108,9 @@ def _assert_table_columns_and_rows(page):
         for label in labels:
             regions = page.search_for(label)
             assert regions, f"Table cell {label!r} is missing in rendered PDF"
-            rect = regions[0]
+            # Title text may also contain the word "Course". The table is
+            # below the heading, so select its last occurrence on this page.
+            rect = regions[-1]
             assert rect.x0 >= -1 and rect.y0 >= -1, f"Table cell {label!r} starts off-page"
             assert rect.x1 <= page.rect.width + 1 and rect.y1 <= page.rect.height + 1, (
                 f"Table cell {label!r} is clipped by page boundary"
@@ -118,7 +120,7 @@ def _assert_table_columns_and_rows(page):
             f"Table columns are no longer ordered on the page: {labels}"
         )
         assert max(rect.y0 for rect in bounds) - min(rect.y0 for rect in bounds) < 24, (
-            f"Table cells have slipped into separate visual rows: {labels}"
+            f"Table cells have slipped into separate visual rows: {labels}; bounds={bounds!r}"
         )
 
 
