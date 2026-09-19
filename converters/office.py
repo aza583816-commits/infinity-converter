@@ -15,6 +15,8 @@ except ImportError:  # Optional at import time; requirements install it in produ
     markdown_lib = None
 from openpyxl import Workbook
 
+from config.settings import settings
+
 
 _REMOTE_HTML_PATTERNS = (
     re.compile(r"\b(?:src|poster)\s*=\s*['\"]\s*(?:https?|ftp|file):", re.I),
