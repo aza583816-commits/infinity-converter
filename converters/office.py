@@ -214,10 +214,23 @@ def _render_html_story_fallback(source: Path, output: Path) -> None:
     import pymupdf
 
     html_source = source.read_text(encoding="utf-8")
-    story = pymupdf.Story(
-        html_source,
-        user_css="h1,h2,h3,h4,h5,h6 { font-family: Courier, monospace; }",
-    )
+    # Native fallback fonts can corrupt Arabic glyph mapping (for example,
+    # producing Ǆ/ǂ characters instead of an Arabic title). Embed an Arabic-
+    # capable font with a correct PDF Unicode map and a bundled font archive.
+    font_root = Path("/usr/share/fonts/truetype/noto")
+    font_file = font_root / "NotoSansArabic-Regular.ttf"
+    if font_file.is_file():
+        css = (
+            "@font-face{font-family:InfinityArabic;"
+            "src:url(NotoSansArabic-Regular.ttf)}"
+            "*{font-family:InfinityArabic,sans-serif}"
+            "h1{font-size:24pt;font-weight:bold}"
+        )
+        font_archive = pymupdf.Archive(str(font_root))
+    else:
+        css = "h1{font-size:24pt;font-weight:bold}"
+        font_archive = None
+    story = pymupdf.Story(html_source, user_css=css, archive=font_archive)
     temporary = output.with_name(output.stem + "-story.pdf")
     writer = pymupdf.DocumentWriter(str(temporary))
     page = pymupdf.Rect(0, 0, 595, 842)
