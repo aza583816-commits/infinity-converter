@@ -134,7 +134,7 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
     if tool_id == "number-list-analyzer":
         raw = source.read_text(encoding="utf-8")
         values = []
-        for tok in re.split(r"[\\s,;|]+", raw.strip()):
+        for tok in re.split(r"[\s,;|]+", raw.strip()):
             try:
                 values.append(float(tok))
             except ValueError:
@@ -151,11 +151,11 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
     if tool_id == "text-diff":
         raw = source.read_text(encoding="utf-8")
         text = output.read_text(encoding="utf-8")
-        assert text == "No differences found. The files are identical.\\n" and raw
+        assert text == "No differences found. The files are identical.\n" and raw
         return "two byte-identical source inputs produce explicitly empty semantic diff"
     if tool_id == "regex-extract":
         raw = source.read_text(encoding="utf-8")
-        matches = sorted(set(m.group(0) for m in re.finditer(r"\\b[A-Za-z]+\\b", raw, re.I)))
+        matches = sorted(set(m.group(0) for m in re.finditer(r"\b[A-Za-z]+\b", raw, re.I)))
         assert output.read_text(encoding="utf-8").splitlines() == matches
         return "every source regex match extracted exactly once and in correct sorted order"
     raise AssertionError("Registered source-aware oracle missing branch")
