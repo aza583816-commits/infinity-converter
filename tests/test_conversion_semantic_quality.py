@@ -56,7 +56,11 @@ def test_pdf_extract_delete_and_split_preserve_selected_content(tmp_path):
 def test_transparent_png_to_jpg_uses_white_background_and_retains_dimensions(tmp_path):
     source, output = tmp_path / "transparent.png", tmp_path / "result.jpg"
     image = Image.new("RGBA", (60, 40), (255, 0, 0, 0))
-    image.putpixel((20, 20), (255, 0, 0, 255))
+    # JPEG chroma subsampling can wash out a single colored pixel. A solid
+    # patch represents an actual visible foreground region in a user image.
+    for x in range(12, 29):
+        for y in range(12, 29):
+            image.putpixel((x, y), (255, 0, 0, 255))
     image.save(source)
     images.convert_image(source, output, "JPEG")
     with Image.open(output) as actual:
