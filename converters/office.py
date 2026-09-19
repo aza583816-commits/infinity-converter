@@ -110,9 +110,44 @@ def _run_libreoffice(cmd: list[str], *, timeout: int, env: dict[str, str]) -> No
         raise RuntimeError("فشل محرك Office في تحويل الملف.")
 
 
+def _html_pdf_heading_fallback(source: Path, output_dir: Path) -> Path:
+    """Render heading text as styled paragraphs for LibreOffice Writer/Web.
+
+    Some lean LibreOffice installs produce an empty page in place of an HTML
+    heading while still converting the rest of the text. A print-only copy
+    keeps heading text visible without modifying the uploaded document.
+    The independently checked PDF output must still include source headings.
+    """
+    import re
+
+    html_text = source.read_text(encoding="utf-8")
+    if not re.search(r"<h[1-6]\\b", html_text, flags=re.I):
+        return source
+
+    def open_heading(match):
+        level = int(match.group(1))
+        attributes = match.group(2)
+        size = {1: 24, 2: 20, 3: 17, 4: 15, 5: 13, 6: 12}[level]
+        # Preserve existing style/class/id attributes while applying a
+        # print-visible bold heading to the PDF-rendering copy only.
+        return f'<p{attributes} style="font-size:{size}pt;font-weight:bold">'
+
+    adapted = re.sub(r"<h([1-6])\\b([^>]*)>", open_heading, html_text, flags=re.I)
+    adapted = re.sub(r"</h[1-6]\\s*>", "</p>", adapted, flags=re.I)
+    if adapted == html_text:
+        return source
+    copy = output_dir / f"{source.stem}-pdf-headings.html"
+    copy.write_text(adapted, encoding="utf-8")
+    return copy
+
+
 def office_to_pdf(source: Path, output_dir: Path, timeout: int) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
     _reject_remote_html_resources(source)
+    render_source = (
+        _html_pdf_heading_fallback(source, output_dir)
+        if source.suffix.lower() in {".html", ".htm"} else source
+    )
 
     # A private LibreOffice profile prevents cross-request state leakage and
     # avoids sharing locks/extensions/preferences between concurrent users.
@@ -164,7 +199,7 @@ def office_to_pdf(source: Path, output_dir: Path, timeout: int) -> Path:
         # content checks in the independent acceptance suite.
         "--convert-to", "pdf:writer_pdf_Export" if source.suffix.lower() in {".html", ".htm"} else "pdf",
         "--outdir", str(output_dir),
-        str(source),
+        str(render_source),
     ]
 
     try:
@@ -172,7 +207,7 @@ def office_to_pdf(source: Path, output_dir: Path, timeout: int) -> Path:
     finally:
         shutil.rmtree(profile, ignore_errors=True)
 
-    produced = output_dir / f"{source.stem}.pdf"
+    produced = output_dir / f"{render_source.stem}.pdf"
     if not produced.exists() or produced.stat().st_size == 0:
         raise RuntimeError("لم يُنتج LibreOffice ملف PDF صالحًا.")
     return produced
