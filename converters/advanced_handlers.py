@@ -156,6 +156,8 @@ def utility(safe_input, output_dir, param, timeout, max_pdf_pages, tool_id, opti
     out = output_dir / filename
     if tool_id == "text-sort":
         func(safe_input["path"], out, options.get("descending", "0"))
+    elif tool_id in {"file-mime-report", "filename-normalizer"}:
+        func(safe_input["path"], out, safe_input["filename"])
     else:
         func(safe_input["path"], out)
     return [(out, mime)]
