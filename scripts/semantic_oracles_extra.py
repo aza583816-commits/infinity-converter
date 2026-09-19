@@ -131,13 +131,19 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
         assert all(a.count("INFINITY") > b.count("INFINITY") for a, b in zip(after, before))
         return "requested watermark appears on every page while original text and count survive"
     if tool_id == "pdf-image-extract":
-        with zipfile.ZipFile(output) as z:
-            image_names = [n for n in z.namelist() if n.lower().endswith((".png", ".jpg", ".jpeg"))]
-            assert image_names
-            with Image.open(io.BytesIO(z.read(image_names[0]))) as extracted, Image.open(fixture / "image.png") as original:
-                assert extracted.size == original.size
-                assert _image_error(extracted, original) <= 1
-        return "embedded source raster independently recovered pixel-exactly from PDF archive"
+        with pymupdf.open(source) as pdf, zipfile.ZipFile(output) as z:
+            original_images = [(page_number, number, pdf.extract_image(info[0])["image"])
+                               for page_number, page in enumerate(pdf, 1)
+                               for number, info in enumerate(page.get_images(full=True), 1)]
+            output_images = [name for name in z.namelist()
+                             if name.lower().endswith((".png", ".jpg", ".jpeg"))]
+            assert len(original_images) == len(output_images) and original_images
+            for (page_number, number, original_bytes), filename in zip(original_images, sorted(output_images)):
+                with Image.open(io.BytesIO(original_bytes)) as before, Image.open(io.BytesIO(z.read(filename))) as after:
+                    assert after.size == before.size
+                    assert _image_error(after, before) <= 1
+                assert filename.endswith(f"page-{page_number}-image-{number}.png")
+        return "every embedded source raster independently recovered pixel-exactly from PDF archive"
     if tool_id == "pdf-remove-blank-pages":
         before, after = _pdf_texts(source), _pdf_texts(output)
         assert before and after == before and all(s.strip() for s in before)
@@ -146,8 +152,11 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
         with pymupdf.open(source) as before, pymupdf.open(output) as after:
             assert len(after) == 1
             text = after[0].get_text()
-            assert all(f"Page {i}" in text for i in range(1, len(before) + 1))
-        return "single contact sheet includes visible text from every original page"
+            assert all(line in text for page in before
+                       for line in page.get_text("text").splitlines() if line.strip())
+            numbers = [word[4] for word in after[0].get_text("words") if word[4].isdigit()]
+            assert all(str(i) in numbers for i in range(1, len(before) + 1))
+        return "single contact sheet retains every original page text and numbered thumbnail in source order"
     if tool_id == "pdf-poster-split":
         with pymupdf.open(source) as before, pymupdf.open(output) as after:
             assert len(after) == len(before) * 4
