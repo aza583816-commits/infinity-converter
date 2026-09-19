@@ -159,8 +159,8 @@ def independent_oracle(tool_id: str, source: Path | None, output: Path, fixture:
         assert actual==expected
         return "first sheet values retain their row and column boundaries"
     if tool_id=="text-clean":
-        source_lines=source.read_text(encoding="utf-8").replace("\\r\\n","\\n").replace("\\r","\\n").splitlines()
-        expected="\\n".join(" ".join(line.split()) for line in source_lines).strip()+"\\n"
+        source_lines=source.read_text(encoding="utf-8").replace("\r\n","\n").replace("\r","\n").splitlines()
+        expected="\n".join(" ".join(line.split()) for line in source_lines).strip()+"\n"
         actual=output.read_text(encoding="utf-8")
         assert actual==expected, (expected, actual)
         return "whitespace normalized without losing or reordering original tokens"
