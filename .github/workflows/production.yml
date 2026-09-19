@@ -121,3 +121,23 @@ jobs:
             echo "HTTP QUALITY MATRIX: profile=$profile"
             docker run --rm --network none -e IC_TEST_FIXTURE_PROFILE="$profile" infinity-verified python scripts/api_output_input_matrix.py
           done
+      - name: Block release until every tool has an independent output oracle
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = Path("semantic-audit/report.json")
+          if not report.is_file():
+              raise SystemExit("BLOCK RELEASE: independent output report was not created")
+          result = json.loads(report.read_text(encoding="utf-8"))
+          total = result.get("total", 0)
+          verified = result.get("semantic_verified", 0)
+          failures = result.get("semantic_failures", [])
+          uncovered = result.get("unverified", [])
+          print(f"Independent output oracle coverage: {verified}/{total}; failures={len(failures)}; uncovered={len(uncovered)}")
+          if not total or verified != total or uncovered or failures or not result.get("quality_complete", False):
+              print("BLOCK RELEASE: engine/API/browser smoke successes cannot certify output semantics.")
+              print("Missing independent oracles:", ", ".join(uncovered))
+              raise SystemExit(1)
+          PY
