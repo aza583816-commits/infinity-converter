@@ -129,7 +129,8 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
         assert data["filename"] == source.name
         assert data["extension"] == source.suffix.lower()
         assert data["stem"] == source.stem
-        assert data["mime"] == mimetypes.guess_type(source.name)[0]
+        expected_mime = mimetypes.guess_type(source.name)[0]
+        assert data["mime"] == expected_mime, (data, source.name, expected_mime)
         return "filename, exact extension, stem and MIME independently match source"
     if tool_id == "number-list-analyzer":
         raw = source.read_text(encoding="utf-8")
