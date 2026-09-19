@@ -31,6 +31,7 @@ from security.file_guard import validate_upload
 from converters.engine import ConversionEngine
 from scripts import full_operation_smoke as smoke
 from scripts.output_input_matrix import diversify
+from scripts.semantic_oracles_extra import ORACLE_IDS, oracle as extra_oracle
 
 PDF_TEXT = "INFINITY CONVERTER"
 IMG_IDS = {"image-to-jpg", "image-to-png", "image-to-webp"}
@@ -54,6 +55,9 @@ def downloaded_payload(path: Path) -> Path:
 def independent_oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> str | None:
     """Return a description of a verified source-to-output property or None."""
     output = downloaded_payload(output)
+    checked = extra_oracle(tool_id, source, output, fixture)
+    if checked is not None:
+        return checked
     if tool_id == "pdf-merge":
         with pymupdf.open(str(output)) as pdf:
             assert len(pdf) == 6
@@ -229,7 +233,7 @@ def run():
                 "text-clean","docx-to-text","pptx-to-text","word-to-pdf",
                 "pdf-to-text","zip-create","gzip-compress","gzip-decompress",
                 "bzip2-compress","xz-compress","json-minify","uuid-list-generator",
-            } | IMG_IDS | PDF_KEEP:
+            } | IMG_IDS | PDF_KEEP | ORACLE_IDS:
                 unverified.append(tool.id)
                 continue
             with TempWorkspace() as workspace:
@@ -243,9 +247,18 @@ def run():
                             up=smoke.Upload(original.name,original.read_bytes())
                             inputs.append(validate_upload(up,max_bytes=settings.max_file_bytes,inspect_only=False,
                                 workspace=workspace.path,max_pdf_pages=settings.max_pdf_pages))
+                    requested_param = smoke.param_for(tool)
+                    if tool.id == "pdf-reorder-pages":
+                        with pymupdf.open(original) as source_pdf:
+                            total_pages = len(source_pdf)
+                        requested_param = ",".join(map(str, [total_pages, *range(1, total_pages)]))
+                    elif tool.id == "image-resize":
+                        requested_param = "500"
+                    elif tool.id == "image-crop":
+                        requested_param = "0,0,100,100"
                     result=engine.convert(tool=tool,safe_inputs=inputs,workspace=workspace,
                         timeout=min(settings.subprocess_timeout,90),max_pdf_pages=settings.max_pdf_pages,
-                        param=smoke.param_for(tool),options=smoke.options_for(tool))
+                        param=requested_param,options=smoke.options_for(tool))
                     assertion=independent_oracle(tool.id,original,result.path,fixture)
                     if assertion is None: raise AssertionError("No independent quality assertion assigned")
                     verified[tool.id]=assertion
