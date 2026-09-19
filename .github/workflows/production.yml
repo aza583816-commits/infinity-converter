@@ -98,6 +98,9 @@ jobs:
           path: site-e2e-report.json
           if-no-files-found: ignore
           retention-days: 14
+      - name: Independent source-to-output semantic audit with explicit coverage report
+        run: |
+          docker run --rm --network none infinity-verified python scripts/semantic_output_audit.py
       - name: Every registered operation through the HTTP API
         run: docker run --rm --network none infinity-verified python scripts/api_operation_smoke.py
       - name: Every registered HTTP operation with two additional complex input profiles
