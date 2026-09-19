@@ -62,15 +62,16 @@ def diversify(base: Path, profile: str) -> None:
     workbook.save(base / "sheet.xlsx")
 
     (base / "data.csv").write_text(
-        'name,code,note\\n'
-        '"اسم، عربي",00123,"contains, comma"\\n'
-        '"Line break",00999,"line one\\nline two"\\n',
+        'name,code,note\n'
+        '"اسم، عربي",00123,"contains, comma"\n'
+        '"Line break",00999,"line one\nline two"\n',
         encoding="utf-8",
     )
     (base / "data.json").write_text(
-        '[{"name":"اسم، عربي","code":"00123","note":"A & B"},'
-        '{"name":"Line break","code":"00999","note":"line one\\nline two"}]',
-        encoding="utf-8",
+        __import__("json").dumps([
+            {"name": "اسم، عربي", "code": "00123", "note": "A & B"},
+            {"name": "Line break", "code": "00999", "note": "line one\nline two"},
+        ], ensure_ascii=False), encoding="utf-8",
     )
     (base / "data.xml").write_text(
         '<root><item name="Arabic">سلامة</item><item name="English">Safety &amp; Fire</item></root>',
@@ -82,12 +83,12 @@ def diversify(base: Path, profile: str) -> None:
         encoding="utf-8",
     )
     (base / "notes.md").write_text(
-        '# Infinity / السلامة\\n\\n| Name | Code |\\n|---|---|\\n| Arabic | 00123 |\\n',
+        '# Infinity / السلامة\n\n| Name | Code |\n|---|---|\n| Arabic | 00123 |\n',
         encoding="utf-8",
     )
     (base / "text.txt").write_text(
-        '10\\n20\\n30\\nHello Infinity\\ntest@example.com\\nhttps://example.com\\n'
-        'Arabic السلامة 00123\\nHELLO Infinity\\n',
+        '10\n20\n30\nHello Infinity\ntest@example.com\nhttps://example.com\n'
+        'Arabic السلامة 00123\nHELLO Infinity\n',
         encoding="utf-8",
     )
 
