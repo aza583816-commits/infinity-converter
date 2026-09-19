@@ -31,6 +31,8 @@ def test_missing_heading_falls_back_to_independent_pdf_renderer(
     with pymupdf.open(result) as document:
         text = unicodedata.normalize("NFKC", " ".join(page.get_text("text") for page in document))
         assert len(document) == 1
-        assert "Infinity" in text
-        assert "Hello world" in text
+        import unicodedata
+        normalized = unicodedata.normalize("NFKC", text)
+        assert "Infinity" in normalized
+        assert "Hello world" in normalized
     assert source.read_text(encoding="utf-8") == original_html
