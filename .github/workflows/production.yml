@@ -127,13 +127,65 @@ jobs:
             echo "HTTP QUALITY MATRIX: profile=$profile"
             docker run --rm --network none -e IC_TEST_FIXTURE_PROFILE="$profile" infinity-verified python scripts/api_output_input_matrix.py
           done
+      # Both follow-up rounds run only after the entire ordinary quality matrix
+      # passed. They are intentionally not smoke-only or file-existence checks.
+      - name: Follow-up verification 1 - dense independent source-to-output corpus
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for name in ("report", "mixed"):
+              p = Path("semantic-audit") / f"{name}.json"
+              if not p.is_file():
+                  raise SystemExit(f"Initial quality gate missing: {p}")
+              r = json.loads(p.read_text(encoding="utf-8"))
+              if (not r.get("total") or r.get("semantic_verified") != r["total"]
+                      or r.get("unverified") or r.get("semantic_failures")
+                      or not r.get("quality_complete")):
+                  raise SystemExit(f"Initial {name} corpus is not quality-approved")
+          PY
+          docker run --rm --network none -v "$PWD/semantic-audit:/quality-report" \
+            -e IC_TEST_FIXTURE_PROFILE=dense \
+            -e IC_SEMANTIC_REPORT=/quality-report/dense.json \
+            infinity-verified python scripts/semantic_output_audit.py
+      - name: Follow-up verification 2 - fresh isolated release candidate replay
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Repeat semantic assertions in fresh containers rather than reusing
+          # the original outputs or reports. Check actual API results and the
+          # independent real-browser calculations again as a separate pass.
+          for profile in baseline mixed dense; do
+            echo "RELEASE CANDIDATE independent full-output replay: $profile"
+            env_args=()
+            if [ "$profile" != baseline ]; then
+              env_args=(-e "IC_TEST_FIXTURE_PROFILE=$profile")
+            fi
+            docker run --rm --network none -v "$PWD/semantic-audit:/quality-report" \
+              "${env_args[@]}" -e "IC_SEMANTIC_REPORT=/quality-report/rc-$profile.json" \
+              infinity-verified python scripts/semantic_output_audit.py
+          done
+          docker run --rm --network none infinity-verified python scripts/api_operation_smoke.py
+          node scripts/browser_real_quality.cjs
+      - name: Upload final independent verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: final-quality-replay-${{ github.sha }}
+          path: semantic-audit/*.json
+          if-no-files-found: ignore
+          retention-days: 30
       - name: Block release until every tool has an independent output oracle
         if: always()
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
-          for profile in ("report", "mixed"):
+          approved = ("report", "mixed", "dense", "rc-baseline", "rc-mixed", "rc-dense")
+          expected_ids = None
+          for profile in approved:
               report = Path("semantic-audit") / f"{profile}.json"
               if not report.is_file():
                   raise SystemExit(f"BLOCK RELEASE: missing independent semantic report for {profile}")
@@ -143,6 +195,10 @@ jobs:
               failures = result.get("semantic_failures", [])
               uncovered = result.get("unverified", [])
               print(f"{profile} independent output oracles: {verified}/{total}; failures={len(failures)}; uncovered={len(uncovered)}")
+              ids = set(result.get("verifications", {}))
+              if len(ids) != total or (expected_ids is not None and ids != expected_ids):
+                  raise SystemExit(f"BLOCK RELEASE: missing, duplicate, or inconsistent tool IDs in {profile}")
+              expected_ids = ids
               if not total or verified != total or uncovered or failures or not result.get("quality_complete", False):
                   print("BLOCK RELEASE: engine/API/browser smoke success cannot certify actual output semantics.")
                   print("Missing independent oracles:", ", ".join(uncovered))
