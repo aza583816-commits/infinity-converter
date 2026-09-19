@@ -74,3 +74,9 @@ jobs:
           done
       - name: Every registered operation through the HTTP API
         run: docker run --rm --network none infinity-verified python scripts/api_operation_smoke.py
+      - name: Every registered HTTP operation with two additional complex input profiles
+        run: |
+          for profile in mixed dense; do
+            echo "HTTP QUALITY MATRIX: profile=$profile"
+            docker run --rm --network none -e IC_TEST_FIXTURE_PROFILE="$profile" infinity-verified python scripts/api_output_input_matrix.py
+          done
