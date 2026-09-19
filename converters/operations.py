@@ -43,6 +43,8 @@ UTILITY_ADVANCED_IDS = {
 
 
 def engine_name_for(tool_id: str) -> str:
+    if tool_id == "pdf-to-docx":
+        return "pdf2docx+pymupdf"
     if tool_id in {"assignment-cover-page", "omr-bubble-sheet", "bulk-certificate-maker"}:
         return "pymupdf"
     if tool_id in {"social-media-image-resizer", "quote-social-graphic"}:

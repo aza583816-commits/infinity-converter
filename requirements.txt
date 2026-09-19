@@ -8,6 +8,8 @@ psycopg[binary]>=3.2,<4
 
 pypdf[crypto]>=6,<7
 PyMuPDF==1.28.2
+# Editable PDF-to-Word conversion reconstructs page geometry, tables and images.
+pdf2docx==0.5.8
 Pillow>=11,<13
 pillow-heif>=1.1,<2
 

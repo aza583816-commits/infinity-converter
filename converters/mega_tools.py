@@ -37,17 +37,46 @@ def _pdf_doc(path: Path):
 
 
 def pdf_to_docx(source: Path, output: Path):
-    doc = Document()
+    """Reconstruct editable PDF layouts instead of dumping each page into one paragraph.
+
+    A PDF has no native Word table/paragraph structure, so exact editability and
+    pixel-perfect page fidelity cannot both be guaranteed. pdf2docx reconstructs
+    positioned text, tables, images and page geometry; if it cannot convert a
+    document we report failure rather than returning a visibly broken DOCX.
+    """
+    from pdf2docx import Converter
+
     pdf = _pdf_doc(source)
     try:
-        for i, page in enumerate(pdf):
-            if i:
-                doc.add_page_break()
-            text = page.get_text("text").strip()
-            doc.add_paragraph(text or "")
+        if pdf.is_encrypted or pdf.needs_pass:
+            raise ValueError("ملف PDF محمي؛ أزل الحماية قبل تحويله إلى Word.")
+        if pdf.page_count == 0:
+            raise ValueError("ملف PDF لا يحتوي على صفحات.")
+        if pdf.page_count > settings.max_pdf_pages:
+            raise ValueError("عدد صفحات PDF يتجاوز الحد المسموح.")
+        # A completely scanned document needs OCR. Do not return a blank
+        # success or claim that scanned handwriting is editable Word text.
+        if not any(page.get_text("text").strip() for page in pdf):
+            raise ValueError("المستند صورة ممسوحة ضوئيًا؛ استخدم OCR أولًا قبل تحويله إلى Word قابل للتعديل.")
     finally:
         pdf.close()
-    doc.save(output)
+
+    converter = Converter(str(source))
+    try:
+        converter.convert(str(output), start=0, end=None, multi_processing=False)
+    except Exception as exc:
+        output.unlink(missing_ok=True)
+        raise ValueError("تعذّر إعادة بناء تنسيق PDF داخل Word. جرّب مستندًا آخر أو راجع بنية الملف.") from exc
+    finally:
+        converter.close()
+
+    try:
+        result = Document(str(output))
+        if not output.is_file() or output.stat().st_size == 0 or not (result.paragraphs or result.tables):
+            raise ValueError("لم ينتج مستند Word صالح.")
+    except Exception as exc:
+        output.unlink(missing_ok=True)
+        raise ValueError("فشل التحقق من ملف Word الناتج.") from exc
 
 
 def pdf_to_markdown(source: Path, output: Path):
