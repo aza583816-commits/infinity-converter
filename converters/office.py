@@ -274,6 +274,55 @@ def _html_pdf_heading_fallback(source: Path, output_dir: Path) -> Path:
     return copy
 
 
+def _source_pdf_text_fragments(source: Path) -> list[str]:
+    """Independent expected text from a small plain text / CSV source."""
+    if source.suffix.lower() == ".txt":
+        return [line.strip() for line in source.read_text(encoding="utf-8").splitlines()
+                if line.strip()]
+    if source.suffix.lower() == ".csv":
+        with source.open(encoding="utf-8-sig", newline="") as file:
+            return [cell for row in csv.reader(file) for cell in row if cell.strip()]
+    return []
+
+
+def _pdf_has_text_fragments(output: Path, fragments: list[str]) -> bool:
+    import pymupdf
+    import unicodedata
+
+    with pymupdf.open(output) as document:
+        actual = " ".join(
+            unicodedata.normalize("NFKC", page.get_text("text"))
+            for page in document
+        )
+    actual = " ".join(actual.split())
+    return all(" ".join(fragment.split()) in actual for fragment in fragments)
+
+
+def _printable_text_html(source: Path, output_dir: Path) -> Path:
+    """Generate bounded, escaped local HTML without loading external resources."""
+    import html
+
+    temporary = output_dir / f"{source.stem}-source-print.html"
+    if source.suffix.lower() == ".txt":
+        text = html.escape(source.read_text(encoding="utf-8"))
+        body = '<pre style="white-space:pre-wrap">' + text + "</pre>"
+    else:
+        with source.open(encoding="utf-8-sig", newline="") as file:
+            rows = list(csv.reader(file))
+        body = "<table border='1'>" + "".join(
+            "<tr>" + "".join(
+                "<td>" + html.escape(cell).replace("\\r\\n", "\\n")
+                .replace("\\r", "\\n").replace("\\n", "<br/>") + "</td>"
+                for cell in row
+            ) + "</tr>" for row in rows
+        ) + "</table>"
+    temporary.write_text(
+        '<!doctype html><html><head><meta charset="utf-8"></head>'
+        "<body>" + body + "</body></html>", encoding="utf-8"
+    )
+    return temporary
+
+
 def office_to_pdf(source: Path, output_dir: Path, timeout: int) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
     _reject_remote_html_resources(source)
@@ -352,6 +401,15 @@ def office_to_pdf(source: Path, output_dir: Path, timeout: int) -> Path:
             _render_html_story_fallback(source, produced)
             if not _pdf_contains_headings(produced, headings):
                 raise ValueError("تعذر الحفاظ على عناوين HTML في ملف PDF الناتج.")
+    elif source.suffix.lower() in {".txt", ".csv"} and source.stat().st_size <= 128 * 1024:
+        fragments = _source_pdf_text_fragments(source)
+        if fragments and not _pdf_has_text_fragments(produced, fragments):
+            # Writer may silently omit Arabic text / split quoted CSV cells.
+            # Re-render the escaped original with a Unicode-capable font.
+            prepared = _printable_text_html(source, output_dir)
+            _render_html_story_fallback(prepared, produced)
+            if not _pdf_has_text_fragments(produced, fragments):
+                raise ValueError("تعذر الحفاظ على كامل النص الأصلي في ملف PDF الناتج.")
     return produced
 
 
