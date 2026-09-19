@@ -75,18 +75,21 @@ def independent_oracle(tool_id: str, source: Path | None, output: Path, fixture:
     if checked is not None:
         return checked
     if tool_id == "pdf-merge":
-        with pymupdf.open(str(output)) as pdf:
-            assert len(pdf) == 6
-            assert all(PDF_TEXT in p.get_text() for p in pdf)
-        return "merged six pages without losing source page text"
+        with pymupdf.open(str(source)) as original, pymupdf.open(str(output)) as pdf:
+            expected = [p.get_text("text") for p in original]
+            actual = [p.get_text("text") for p in pdf]
+            assert len(expected) >= 3 and actual == expected + expected
+        return "merged both entire input PDFs in source page order with exact extractable text"
     if tool_id == "pdf-extract-pages":
         with pymupdf.open(str(output)) as pdf:
             assert len(pdf) == 2 and "Page 1" in pdf[0].get_text() and "Page 2" in pdf[1].get_text()
         return "requested page count, original order and text"
     if tool_id == "pdf-delete-pages":
-        with pymupdf.open(str(output)) as pdf:
-            assert len(pdf) == 2 and "Page 3" not in " ".join(p.get_text() for p in pdf)
-        return "removed requested page while preserving others"
+        with pymupdf.open(str(source)) as original, pymupdf.open(str(output)) as pdf:
+            expected = [p.get_text("text") for p in original]
+            assert len(expected) >= 3
+            assert [p.get_text("text") for p in pdf] == expected[:2] + expected[3:]
+        return "deleted exactly requested third page while preserving every other source page and text"
     if tool_id == "pdf-to-docx":
         doc = Document(str(output))
         extracted = " ".join([p.text for p in doc.paragraphs] + [c.text for t in doc.tables for row in t.rows for c in row.cells])
