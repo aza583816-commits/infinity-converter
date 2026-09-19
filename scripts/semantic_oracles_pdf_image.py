@@ -90,6 +90,14 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
             assert "Quality" in recognized and "verification" in recognized.lower(), recognized
         return "requested quote is visibly rendered and read back independently by OCR"
     assert source is not None
+    if tool_id == "image-color-palette":
+        report = json.loads(output.read_text(encoding="utf-8"))
+        colors = report["colors"]
+        with Image.open(source) as original:
+            assert colors and len(colors) <= 8
+            assert sum(row["pixels"] for row in colors) == original.width * original.height
+            assert all(row["hex"] == "#%02x%02x%02x" % tuple(row["rgb"]) for row in colors)
+        return "palette frequencies total source pixels and each reported RGB maps to its hex code"
     with Image.open(source) as opened, Image.open(output) as result:
         original = ImageOps.exif_transpose(opened).convert("RGB")
         if tool_id == "image-sharpen":
