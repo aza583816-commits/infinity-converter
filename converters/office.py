@@ -121,7 +121,7 @@ def _html_pdf_heading_fallback(source: Path, output_dir: Path) -> Path:
     import re
 
     html_text = source.read_text(encoding="utf-8")
-    if not re.search(r"<h[1-6]\\b", html_text, flags=re.I):
+    if not re.search(r"<h[1-6]\b", html_text, flags=re.I):
         return source
 
     def open_heading(match):
@@ -132,8 +132,8 @@ def _html_pdf_heading_fallback(source: Path, output_dir: Path) -> Path:
         # print-visible bold heading to the PDF-rendering copy only.
         return f'<p{attributes} style="font-size:{size}pt;font-weight:bold">'
 
-    adapted = re.sub(r"<h([1-6])\\b([^>]*)>", open_heading, html_text, flags=re.I)
-    adapted = re.sub(r"</h[1-6]\\s*>", "</p>", adapted, flags=re.I)
+    adapted = re.sub(r"<h([1-6])\b([^>]*)>", open_heading, html_text, flags=re.I)
+    adapted = re.sub(r"</h[1-6]\s*>", "</p>", adapted, flags=re.I)
     if adapted == html_text:
         return source
     copy = output_dir / f"{source.stem}-pdf-headings.html"
