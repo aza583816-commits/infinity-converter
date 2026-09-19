@@ -35,6 +35,19 @@ def _has_marker(text: str, *, page: int | None = None):
         assert re.search(r"\bPAGE\s*"+str(page)+r"\b", simplified), simplified[:500]
 
 
+def _has_pdf_source_marker(text: str, source_pdf: pymupdf.Document, page_number: int):
+    """Verify the heading actually printed on this input page, not a hardcoded 3-page fixture."""
+    original = " ".join(source_pdf[page_number - 1].get_text("text").upper().split())
+    normalized = " ".join(text.upper().split())
+    if "INFINITY CONVERTER" in original:
+        _has_marker(text, page=page_number)
+    elif "LANDSCAPE PAGE FOUR" in original:
+        assert "LANDSCAPE PAGE FOUR" in normalized, normalized[:500]
+    else:
+        expected = f"EXTRA PAGE {page_number}"
+        assert expected in original and expected in normalized, (expected, normalized[:500])
+
+
 def _has_invoice(text: str):
     assert re.search(r"\bINVOICE\s*12345\b", text.upper()), text[:500]
 
@@ -51,10 +64,11 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
     if tool_id == "pdf-ocr":
         text = output.read_text(encoding="utf-8")
         with pymupdf.open(source) as original:
-            assert len(original) == 3
+            assert len(original) >= 3
             assert text.count("--- صفحة ") == len(original)
             for page in range(1, len(original)+1):
-                _has_marker(text.split(f"--- صفحة {page} ---",1)[1].split("--- صفحة",1)[0], page=page)
+                recognized = text.split(f"--- صفحة {page} ---",1)[1].split("--- صفحة",1)[0]
+                _has_pdf_source_marker(recognized, original, page)
         return "each original PDF page yields its numbered heading in real OCR text"
     if tool_id in {"ocr-image-to-pdf", "ocr-pdf-to-searchable"}:
         with pymupdf.open(output) as pdf:
@@ -66,7 +80,11 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
                     assert len(pdf) == 1 and abs(pdf[0].rect.width/pdf[0].rect.height-opened.width/opened.height)<.01
             for page_no, page in enumerate(pdf, 1):
                 assert page.get_images(full=True), "OCR PDF lost the original visual background"
-                _has_marker(page.get_text("text"), page=page_no if tool_id == "ocr-pdf-to-searchable" else None)
+                if tool_id == "ocr-pdf-to-searchable":
+                    with pymupdf.open(source) as original:
+                        _has_pdf_source_marker(page.get_text("text"), original, page_no)
+                else:
+                    _has_marker(page.get_text("text"))
         return "actual source image/pages remain visible in PDF while a selectable OCR text layer is present"
     if tool_id == "ocr-image-to-json":
         data = json.loads(output.read_text(encoding="utf-8"))
@@ -86,14 +104,14 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
             assert len(data["pages"]) == len(pdf)
             for i, item in enumerate(data["pages"], 1):
                 assert item["page"] == i
-                _has_marker(item["text"],page=i)
+                _has_pdf_source_marker(item["text"], pdf, i)
         return "all PDF pages ordered in JSON, each with its independently known page marker"
     if tool_id == "ocr-pdf-page-texts":
         with pymupdf.open(source) as original, zipfile.ZipFile(output) as archive:
             names = sorted(n for n in archive.namelist() if n.endswith(".txt"))
             assert len(names) == len(original)
             for i,name in enumerate(names,1):
-                _has_marker(archive.read(name).decode("utf-8"),page=i)
+                _has_pdf_source_marker(archive.read(name).decode("utf-8"), original, i)
         return "one separate OCR TXT per original PDF page, with correct known page marker"
     if tool_id == "ocr-image-numbers":
         values = output.read_text(encoding="utf-8").splitlines()
@@ -140,7 +158,7 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
             for i in range(1,len(pdf)+1):
                 assert f"## Page {i}" in result
                 section = result.split(f"## Page {i}",1)[1].split("## Page",1)[0]
-                _has_marker(section,page=i)
+                _has_pdf_source_marker(section, pdf, i)
         return "Markdown sections preserve every independently known source PDF page heading"
     if tool_id == "ocr-pdf-to-csv":
         with output.open(encoding="utf-8",newline="") as f:
@@ -149,7 +167,7 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
             assert len(data)==len(pdf)
             for i,row in enumerate(data,1):
                 assert row["page"] == str(i)
-                _has_marker(row["text"],page=i)
+                _has_pdf_source_marker(row["text"], pdf, i)
         return "CSV includes exactly one numbered text row for each original PDF page"
     if tool_id == "ocr-image-to-csv":
         with output.open(encoding="utf-8",newline="") as f:
