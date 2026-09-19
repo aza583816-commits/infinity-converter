@@ -193,9 +193,10 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
                 return (value.replace("\\", "\\\\").replace("|", "\\|")
                         .replace("\r\n", "\n").replace("\r", "\n").replace("\n", "<br>"))
             table = [[expected_cell(cell) for cell in row] for row in rows]
-            assert rendered[0] == "| " + " | ".join(table[0]) + " |"
-            assert rendered[1] == "| " + " | ".join(["---"] * len(table[0])) + " |"
-            assert rendered[2:] == ["| " + " | ".join(row) + " |" for row in table[1:]]
+            expected = ["| " + " | ".join(table[0]) + " |",
+                        "| " + " | ".join(["---"] * len(table[0])) + " |"] + [
+                        "| " + " | ".join(row) + " |" for row in table[1:]]
+            assert rendered == expected, ("CSV-to-Markdown changed structured values", expected, rendered, rows)
             return "all source CSV rows and cells retained with escaped pipes and multiline cells preserved in Markdown"
         data = json.loads(output.read_text(encoding="utf-8"))
         assert data["rows"] == len(rows)-1 and data["columns"] == len(rows[0])
