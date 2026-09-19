@@ -105,12 +105,16 @@ def _assert_table_columns_and_rows(page):
     ]
     for labels in expected_rows:
         bounds = []
+        # The heading and final paragraph may also contain "Course".
+        # Anchor the requested row on its unique middle-cell value instead
+        # of assuming the first/last text occurrence belongs to the table.
+        middle = page.search_for(labels[1])
+        assert middle, f"Table row anchor {labels[1]!r} is missing"
+        anchor_y = middle[0].y0
         for label in labels:
             regions = page.search_for(label)
             assert regions, f"Table cell {label!r} is missing in rendered PDF"
-            # Title text may also contain the word "Course". The table is
-            # below the heading, so select its last occurrence on this page.
-            rect = regions[-1]
+            rect = min(regions, key=lambda candidate: abs(candidate.y0 - anchor_y))
             assert rect.x0 >= -1 and rect.y0 >= -1, f"Table cell {label!r} starts off-page"
             assert rect.x1 <= page.rect.width + 1 and rect.y1 <= page.rect.height + 1, (
                 f"Table cell {label!r} is clipped by page boundary"
