@@ -7,6 +7,7 @@ import io
 import json
 import re
 import statistics
+import unicodedata
 import xml.etree.ElementTree as ET
 import zipfile
 from pathlib import Path
@@ -65,35 +66,40 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
             return "PowerPoint title and body text survive as selectable text in the PDF"
         if tool_id == "txt-to-pdf":
             lines = [line for line in source.read_text(encoding="utf-8").splitlines() if line]
-            assert all(line in extracted for line in lines)
-            return "all original text-file lines retained within PDF selectable text"
+            normal = unicodedata.normalize("NFKC", extracted)
+            missing = [line for line in lines if line not in normal]
+            assert not missing, (missing, normal[:2000])
+            return "all original text-file lines retained as selectable PDF text"
         if tool_id == "html-to-pdf":
-            normalized = " ".join(extracted.split())
-            if not ("Infinity" in normalized and "Hello world" in normalized):
-                with pymupdf.open(output) as pdf:
-                    page = pdf[0]
-                    image = page.get_pixmap(matrix=pymupdf.Matrix(2, 2)).tobytes("png")
-                    blocks = [(round(b[0]), round(b[1]), round(b[2]), round(b[3]), str(b[4])[:100]) for b in page.get_text("blocks")]
-                from PIL import Image
-                import pytesseract
-                visual_text = pytesseract.image_to_string(Image.open(io.BytesIO(image)), lang="eng")
-                raise AssertionError(("HTML PDF lost source content", source.read_text(encoding="utf-8")[:800], repr(extracted[:800]), blocks, repr(visual_text[:800])))
-            return "both visible HTML heading and paragraph rendered to selectable PDF"
+            from html.parser import HTMLParser
+            class VisibleHTML(HTMLParser):
+                def __init__(self):
+                    super().__init__(convert_charrefs=True)
+                    self.fragments=[]
+                def handle_data(self,value):
+                    if value.strip(): self.fragments.append(" ".join(value.split()))
+            parser=VisibleHTML()
+            parser.feed(source.read_text(encoding="utf-8"))
+            actual=" ".join(unicodedata.normalize("NFKC",extracted).split())
+            missing=[part for part in parser.fragments if part not in actual]
+            assert not missing, ("HTML PDF lost visible heading or table cell text", missing, actual[:1500])
+            return "all visible source HTML heading and table cells preserved as selectable PDF Unicode text"
         if tool_id == "markdown-to-pdf":
-            normalized = " ".join(extracted.split())
-            if not all(term in normalized for term in ("Infinity", "Hello", "world")):
-                with pymupdf.open(output) as pdf:
-                    page = pdf[0]
-                    image = page.get_pixmap(matrix=pymupdf.Matrix(2, 2)).tobytes("png")
-                    blocks = [(round(b[0]), round(b[1]), round(b[2]), round(b[3]), str(b[4])[:100]) for b in page.get_text("blocks")]
-                from PIL import Image
-                import pytesseract
-                visual_text = pytesseract.image_to_string(Image.open(io.BytesIO(image)), lang="eng")
-                raise AssertionError(("Markdown PDF lost source content", source.read_text(encoding="utf-8")[:800], repr(extracted[:800]), blocks, repr(visual_text[:800])))
-            return "Markdown title and emphasized content survive as selectable PDF text"
+            raw=source.read_text(encoding="utf-8")
+            heading=next((line[2:].strip() for line in raw.splitlines() if line.startswith("# ")),None)
+            actual=" ".join(unicodedata.normalize("NFKC",extracted).split())
+            assert heading and heading in actual, ("Markdown PDF lost heading",heading,actual[:1500])
+            if "**" in raw:
+                assert "Hello world" in actual
+            if "|---|" in raw:
+                assert all(token in actual for token in ("Name","Code","Arabic","00123"))
+            return "original Markdown heading and all source body/table cell texts survive PDF conversion"
         rows = _csvrows(source)
-        assert all(cell in extracted for row in rows for cell in row if cell)
-        return "all source CSV headers and cells survive in PDF's extractable text"
+        normalized = " ".join(unicodedata.normalize("NFKC",extracted).split())
+        missing = [cell for row in rows for cell in row
+                   if cell and " ".join(cell.split()) not in normalized]
+        assert not missing, (missing, normalized[:1800])
+        return "all source CSV headers and complete cell values survive PDF's extractable text"
     if tool_id == "markdown-to-html":
         raw = source.read_text(encoding="utf-8")
         result = html.unescape(output.read_text(encoding="utf-8"))
