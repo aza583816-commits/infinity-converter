@@ -80,9 +80,9 @@ def add_page_numbers(source: Path, output: Path, position: str = 'bottom-center'
     try:
         positions = {
             'bottom-center': lambda r: (r.x0, r.y1 - 24, r.x1, r.y1 - 8),
-            'bottom-right': lambda r: (r.x0, r.y1 - 24, r.x1 - 22, r.y1 - 8),
+            'bottom-right': lambda r: (r.x1 - 96, r.y1 - 24, r.x1 - 22, r.y1 - 8),
             'top-center': lambda r: (r.x0, r.y0 + 8, r.x1, r.y0 + 24),
-            'top-right': lambda r: (r.x0, r.y0 + 8, r.x1 - 22, r.y0 + 24),
+            'top-right': lambda r: (r.x1 - 96, r.y0 + 8, r.x1 - 22, r.y0 + 24),
         }
         if position not in positions:
             raise ValueError('موضع رقم الصفحة غير صالح.')
