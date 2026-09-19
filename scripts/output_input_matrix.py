@@ -92,7 +92,7 @@ def diversify(base: Path, profile: str) -> None:
         encoding="utf-8",
     )
 
-    width, height = ((500, 210) if profile == "mixed" else (211, 501))
+    width, height = ((1800, 1100) if profile == "mixed" else (1400, 1300))
     with Image.open(base / "image.png") as image:
         varied = image.resize((width, height))
         varied.save(base / "image.png")
