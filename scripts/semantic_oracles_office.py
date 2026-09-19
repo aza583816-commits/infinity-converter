@@ -69,11 +69,27 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
             return "all original text-file lines retained within PDF selectable text"
         if tool_id == "html-to-pdf":
             normalized = " ".join(extracted.split())
-            assert "Infinity" in normalized and "Hello world" in normalized, ("HTML PDF lost visible source content", repr(extracted[:1400]))
+            if not ("Infinity" in normalized and "Hello world" in normalized):
+                with pymupdf.open(output) as pdf:
+                    page = pdf[0]
+                    image = page.get_pixmap(matrix=pymupdf.Matrix(2, 2)).tobytes("png")
+                    blocks = [(round(b[0]), round(b[1]), round(b[2]), round(b[3]), str(b[4])[:100]) for b in page.get_text("blocks")]
+                from PIL import Image
+                import pytesseract
+                visual_text = pytesseract.image_to_string(Image.open(io.BytesIO(image)), lang="eng")
+                raise AssertionError(("HTML PDF lost source content", source.read_text(encoding="utf-8")[:800], repr(extracted[:800]), blocks, repr(visual_text[:800])))
             return "both visible HTML heading and paragraph rendered to selectable PDF"
         if tool_id == "markdown-to-pdf":
             normalized = " ".join(extracted.split())
-            assert all(term in normalized for term in ("Infinity", "Hello", "world")), ("Markdown PDF lost visible source content", repr(extracted[:1400]))
+            if not all(term in normalized for term in ("Infinity", "Hello", "world")):
+                with pymupdf.open(output) as pdf:
+                    page = pdf[0]
+                    image = page.get_pixmap(matrix=pymupdf.Matrix(2, 2)).tobytes("png")
+                    blocks = [(round(b[0]), round(b[1]), round(b[2]), round(b[3]), str(b[4])[:100]) for b in page.get_text("blocks")]
+                from PIL import Image
+                import pytesseract
+                visual_text = pytesseract.image_to_string(Image.open(io.BytesIO(image)), lang="eng")
+                raise AssertionError(("Markdown PDF lost source content", source.read_text(encoding="utf-8")[:800], repr(extracted[:800]), blocks, repr(visual_text[:800])))
             return "Markdown title and emphasized content survive as selectable PDF text"
         rows = _csvrows(source)
         assert all(cell in extracted for row in rows for cell in row if cell)
