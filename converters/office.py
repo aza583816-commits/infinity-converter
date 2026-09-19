@@ -158,7 +158,11 @@ def office_to_pdf(source: Path, output_dir: Path, timeout: int) -> Path:
         "--nofirststartwizard",
         "--norestore",
         f"-env:UserInstallation={profile.resolve().as_uri()}",
-        "--convert-to", "pdf",
+        # Writer/Web PDF export can omit HTML heading text in some packaged
+        # LibreOffice builds. Use the Writer PDF filter for HTML (including
+        # Markdown rendered as intermediate HTML), then enforce source-aware
+        # content checks in the independent acceptance suite.
+        "--convert-to", "pdf:writer_pdf_Export" if source.suffix.lower() in {".html", ".htm"} else "pdf",
         "--outdir", str(output_dir),
         str(source),
     ]
