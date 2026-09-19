@@ -145,18 +145,66 @@ def _expected_html_headings(source: Path) -> tuple[str, ...]:
 
 
 def _pdf_contains_headings(path: Path, headings: tuple[str, ...]) -> bool:
+    """Check actual PDF heading text, including Arabic visual rendering.
+
+    Some native PDF renderers store Arabic presentation glyphs with a broken
+    Unicode extraction map even when the printed glyphs are correct. For
+    these headings, require independently read-back Latin text AND Arabic
+    OCR on the rendered output; never declare headings preserved just
+    because an output file exists. Arabic visual OCR does not certify that
+    copying or searching its PDF text layer is lossless.
+    """
+    import re
     import unicodedata
     import pymupdf
 
+    def normalized(value: str) -> str:
+        return " ".join(unicodedata.normalize("NFKC", value).casefold().split())
+
     with pymupdf.open(path) as pdf:
-        text = unicodedata.normalize(
-            "NFKC", " ".join(page.get_text("text") for page in pdf)
-        ).casefold()
-    normalized = " ".join(text.split())
-    return all(
-        " ".join(unicodedata.normalize("NFKC", title).casefold().split()) in normalized
-        for title in headings
-    )
+        text = normalized(" ".join(page.get_text("text") for page in pdf))
+        pending_arabic = []
+        for title in headings:
+            expected = normalized(title)
+            if expected in text:
+                continue
+            if not re.search(r"[\u0600-\u06FF]", title):
+                return False
+            if not all(token in text for token in re.findall(r"[a-z0-9]+", expected)):
+                return False
+            pending_arabic.append(title)
+        if not pending_arabic:
+            return True
+        # The OCR branch is reached only when Unicode extraction does not
+        # reproduce an Arabic heading; it is not run on ordinary documents.
+        from PIL import Image
+        import pytesseract
+
+        snippets = []
+        for page in pdf:
+            pix = page.get_pixmap(
+                matrix=pymupdf.Matrix(2, 2),
+                colorspace=pymupdf.csRGB,
+                alpha=False,
+            )
+            image = Image.frombytes("RGB", (pix.width, pix.height), pix.samples)
+            try:
+                snippets.append(
+                    pytesseract.image_to_string(
+                        image, lang="ara+eng",
+                        timeout=min(settings.ocr_timeout_seconds, 20),
+                    )
+                )
+            except (RuntimeError, pytesseract.TesseractError):
+                return False
+            finally:
+                image.close()
+        visible = normalized(" ".join(snippets))
+        return all(
+            all(normalized(word) in visible
+                for word in re.findall(r"[\u0600-\u06FF]+", title))
+            for title in pending_arabic
+        )
 
 
 def _render_html_story_fallback(source: Path, output: Path) -> None:
