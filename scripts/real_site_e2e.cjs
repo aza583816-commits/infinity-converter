@@ -23,7 +23,7 @@ const samples = {
   'focus-timer': {minutes:'0.05'},
 };
 const known = {
-  'gpa-calculator': /GPA: 3\\.50/,
+  'gpa-calculator': /GPA: 3\.50/,
   'weighted-grade-calculator': /90%/,
   'temperature-converter': /32 F/,
   'percentage-change': /25%/,
@@ -32,8 +32,8 @@ const known = {
 const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jR30AAAAASUVORK5CYII=', 'base64');
 
 function validText(v) {
-  return Boolean(v) && !/\\b(?:ReferenceError|TypeError|SyntaxError):|\\bis not defined\\b|unavailable|Enter |Choose |Invalid|must be|Use grades|at least/.test(v) &&
-    !/(?:^|[\\s:=])(?:NaN|[-+]?Infinity)(?=$|[\\s,;])/.test(v);
+  return Boolean(v) && !/\b(?:ReferenceError|TypeError|SyntaxError):|\bis not defined\b|unavailable|Enter |Choose |Invalid|must be|Use grades|at least/.test(v) &&
+    !/(?:^|[\s:=])(?:NaN|[-+]?Infinity)(?=$|[\s,;])/.test(v);
 }
 async function main() {
   const browser = await chromium.launch({channel:'chrome',headless:true,args:['--no-sandbox']});
