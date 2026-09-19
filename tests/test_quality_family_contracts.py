@@ -75,6 +75,10 @@ def test_pdf_delete_pages_keeps_selected_text(tmp_path):
 def test_word_to_pdf_preserves_editable_original_text_and_a4_page(tmp_path):
     original = tmp_path / "original.docx"
     document = Document()
+    # The docx library defaults to US Letter. Select A4 explicitly and verify preservation.
+    from docx.shared import Mm
+    document.sections[0].page_width = Mm(210)
+    document.sections[0].page_height = Mm(297)
     document.add_heading("INFINITY OFFICE QUALITY", level=1)
     table = document.add_table(rows=2, cols=2)
     for cell, value in zip((table.cell(0, 0), table.cell(0, 1), table.cell(1, 0), table.cell(1, 1)), ("Course", "Hours", "Physics", "03")):
