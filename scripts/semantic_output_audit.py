@@ -73,6 +73,17 @@ def independent_oracle(tool_id: str, source: Path | None, output: Path, fixture:
         assert PDF_TEXT in extracted
         assert abs(doc.sections[0].page_width.inches - 595 / 72) < .25
         return "editable Word text retained and source page width reconstructed"
+    if tool_id == "pdf-grayscale":
+        with pymupdf.open(str(source)) as original, pymupdf.open(str(output)) as converted:
+            assert len(converted) == len(original)
+            for a, b in zip(original, converted):
+                assert abs(a.rect.width - b.rect.width) <= 1
+                assert abs(a.rect.height - b.rect.height) <= 1
+                pix = b.get_pixmap(matrix=pymupdf.Matrix(.4, .4), colorspace=pymupdf.csRGB)
+                samples = pix.samples
+                assert all(abs(samples[i]-samples[i+1]) <= 1 and abs(samples[i+1]-samples[i+2]) <= 1
+                    for i in range(0, len(samples), 3))
+        return "all pages retain their geometry and are visually grayscale; warning: renderer rasterizes searchable text"
     if tool_id in PDF_KEEP:
         with pymupdf.open(str(output)) as pdf:
             assert len(pdf) >= 1 and any(PDF_TEXT in p.get_text() for p in pdf)
@@ -148,9 +159,11 @@ def independent_oracle(tool_id: str, source: Path | None, output: Path, fixture:
         assert actual==expected
         return "first sheet values retain their row and column boundaries"
     if tool_id=="text-clean":
+        source_lines=source.read_text(encoding="utf-8").replace("\\r\\n","\\n").replace("\\r","\\n").splitlines()
+        expected="\\n".join(" ".join(line.split()) for line in source_lines).strip()+"\\n"
         actual=output.read_text(encoding="utf-8")
-        assert "Hello Infinity" in actual and "test@example.com" in actual
-        return "key original text preserved during cleanup"
+        assert actual==expected, (expected, actual)
+        return "whitespace normalized without losing or reordering original tokens"
     if tool_id=="docx-to-text":
         text=output.read_text(encoding="utf-8")
         assert "Infinity Converter" in text and "Hello world" in text and "Alice" in text
