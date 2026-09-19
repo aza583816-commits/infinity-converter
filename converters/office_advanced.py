@@ -9,6 +9,20 @@ from openpyxl import load_workbook, Workbook
 from pptx import Presentation
 
 
+def _validate_tabular_headers(headers):
+    """Reject ambiguous column names before converting rows to keyed JSON.
+
+    A dict silently overwrites earlier columns when headers repeat. Returning
+    superficially valid JSON in that case would lose the user's data.
+    """
+    names = [str(name).strip() if name is not None else "" for name in headers]
+    if any(not name for name in names):
+        raise ValueError('أسماء الأعمدة الفارغة غير مدعومة؛ سمِّ كل عمود أولًا.')
+    if len(names) != len(set(names)):
+        raise ValueError('توجد أسماء أعمدة مكررة؛ غيّر أسماء الأعمدة قبل التحويل.')
+    return names
+
+
 def docx_to_text(source: Path, output: Path):
     doc = Document(str(source))
     parts = []
@@ -68,7 +82,9 @@ def xlsx_to_json(source: Path, output: Path):
             if not rows:
                 result[name] = []
                 continue
-            headers = [str(v).strip() if v is not None else f'column_{i+1}' for i, v in enumerate(rows[0])]
+            headers = _validate_tabular_headers(
+                [str(v).strip() if v is not None else f'column_{i+1}' for i, v in enumerate(rows[0])]
+            )
             data = []
             for row in rows[1:]:
                 item = {headers[i]: (row[i] if i < len(row) else None) for i in range(len(headers))}
@@ -96,6 +112,7 @@ def csv_to_json(source: Path, output: Path):
         reader = csv.DictReader(fh)
         if reader.fieldnames is None:
             raise ValueError('ملف CSV لا يحتوي رؤوس أعمدة.')
+        reader.fieldnames = _validate_tabular_headers(reader.fieldnames)
         rows = list(reader)
     output.write_text(json.dumps(rows, ensure_ascii=False, indent=2), encoding='utf-8')
 
