@@ -11,10 +11,15 @@ from pptx import Presentation
 
 def docx_to_text(source: Path, output: Path):
     doc = Document(str(source))
-    parts = [p.text for p in doc.paragraphs if p.text.strip()]
-    for table in doc.tables:
-        for row in table.rows:
-            parts.append('\t'.join(cell.text.strip() for cell in row.cells))
+    parts = []
+    # Iterating paragraphs first and tables second silently rearranges real
+    # documents with paragraphs before, between and after their tables.
+    for block in doc.iter_inner_content():
+        if hasattr(block, 'rows'):
+            for row in block.rows:
+                parts.append('\t'.join(cell.text.strip() for cell in row.cells))
+        elif block.text.strip():
+            parts.append(block.text)
     text = '\n'.join(parts).strip()
     if not text:
         raise ValueError('لم يتم العثور على نص في مستند Word.')
@@ -24,16 +29,17 @@ def docx_to_text(source: Path, output: Path):
 def docx_to_html(source: Path, output: Path):
     doc = Document(str(source))
     chunks = ['<!doctype html><html><head><meta charset="utf-8"><title>Document</title></head><body>']
-    for p in doc.paragraphs:
-        text = p.text.strip()
-        if text:
-            tag = 'h2' if p.style and p.style.name and 'Heading' in p.style.name else 'p'
-            chunks.append(f'<{tag}>{_html_escape(text)}</{tag}>')
-    for table in doc.tables:
-        chunks.append('<table><tbody>')
-        for row in table.rows:
-            chunks.append('<tr>' + ''.join(f'<td>{_html_escape(c.text)}</td>' for c in row.cells) + '</tr>')
-        chunks.append('</tbody></table>')
+    for block in doc.iter_inner_content():
+        if hasattr(block, 'rows'):
+            chunks.append('<table><tbody>')
+            for row in block.rows:
+                chunks.append('<tr>' + ''.join(f'<td>{_html_escape(c.text)}</td>' for c in row.cells) + '</tr>')
+            chunks.append('</tbody></table>')
+        else:
+            text = block.text.strip()
+            if text:
+                tag = 'h2' if block.style and block.style.name and 'Heading' in block.style.name else 'p'
+                chunks.append(f'<{tag}>{_html_escape(text)}</{tag}>')
     chunks.append('</body></html>')
     output.write_text(''.join(chunks), encoding='utf-8')
 
