@@ -68,10 +68,12 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
             assert all(line in extracted for line in lines)
             return "all original text-file lines retained within PDF selectable text"
         if tool_id == "html-to-pdf":
-            assert all(term in extracted for term in ("Infinity", "Hello world"))
+            normalized = " ".join(extracted.split())
+            assert "Infinity" in normalized and "Hello world" in normalized, ("HTML PDF lost visible source content", repr(extracted[:1400]))
             return "both visible HTML heading and paragraph rendered to selectable PDF"
         if tool_id == "markdown-to-pdf":
-            assert all(term in extracted for term in ("Infinity", "Hello", "world"))
+            normalized = " ".join(extracted.split())
+            assert all(term in normalized for term in ("Infinity", "Hello", "world")), ("Markdown PDF lost visible source content", repr(extracted[:1400]))
             return "Markdown title and emphasized content survive as selectable PDF text"
         rows = _csvrows(source)
         assert all(cell in extracted for row in rows for cell in row if cell)
