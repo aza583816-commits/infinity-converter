@@ -104,7 +104,12 @@ def single(safe_input, output_dir, param, timeout, max_pdf_pages, tool_id, optio
         return [(path, "application/octet-stream") for path in paths]
     fn, filename, mime, args = mapping[tool_id]
     out = output_dir / filename
-    fn(safe_input["path"], out, *args)
+    if tool_id == "file-extension-report":
+        # The validated workspace path is a randomized storage filename, not the
+        # filename the user uploaded. Report original extension/MIME faithfully.
+        fn(safe_input["path"], out, safe_input["filename"])
+    else:
+        fn(safe_input["path"], out, *args)
     return [(out, mime)]
 
 
