@@ -32,6 +32,7 @@ from converters.engine import ConversionEngine
 from scripts import full_operation_smoke as smoke
 from scripts.output_input_matrix import diversify
 from scripts.semantic_oracles_extra import ORACLE_IDS, oracle as extra_oracle
+from scripts.semantic_oracles_archive_utility import ORACLE_IDS as ARCHIVE_UTILITY_IDS, oracle as archive_utility_oracle
 
 PDF_TEXT = "INFINITY CONVERTER"
 IMG_IDS = {"image-to-jpg", "image-to-png", "image-to-webp"}
@@ -55,6 +56,9 @@ def downloaded_payload(path: Path) -> Path:
 def independent_oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> str | None:
     """Return a description of a verified source-to-output property or None."""
     output = downloaded_payload(output)
+    checked = archive_utility_oracle(tool_id, source, output, fixture)
+    if checked is not None:
+        return checked
     checked = extra_oracle(tool_id, source, output, fixture)
     if checked is not None:
         return checked
@@ -233,7 +237,7 @@ def run():
                 "text-clean","docx-to-text","pptx-to-text","word-to-pdf",
                 "pdf-to-text","zip-create","gzip-compress","gzip-decompress",
                 "bzip2-compress","xz-compress","json-minify","uuid-list-generator",
-            } | IMG_IDS | PDF_KEEP | ORACLE_IDS:
+            } | IMG_IDS | PDF_KEEP | ORACLE_IDS | ARCHIVE_UTILITY_IDS:
                 unverified.append(tool.id)
                 continue
             with TempWorkspace() as workspace:
@@ -242,7 +246,7 @@ def run():
                     original=None
                     if tool.input_required:
                         original=smoke.choose_fixture(tool,fixture)
-                        count=2 if tool.id in {"pdf-merge","zip-create","image-to-pdf","checksum-compare"} else 1
+                        count=2 if tool.id in {"pdf-merge","zip-create","image-to-pdf","checksum-compare","tar-create","tar-gzip-create","tar-bzip2-create","text-diff"} else 1
                         for n in range(count):
                             up=smoke.Upload(original.name,original.read_bytes())
                             inputs.append(validate_upload(up,max_bytes=settings.max_file_bytes,inspect_only=False,
