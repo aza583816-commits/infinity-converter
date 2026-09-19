@@ -55,6 +55,7 @@ def ocr_pdf(source: Path, output: Path, lang: str = "ar+en", max_pages: int = 25
         zoom = dpi / 72
         matrix = pymupdf.Matrix(zoom, zoom)
         chunks = []
+        recognized = False
         for index, page in enumerate(doc, start=1):
             pixmap = page.get_pixmap(matrix=matrix, alpha=False)
             image = Image.frombytes("RGB", (pixmap.width, pixmap.height), pixmap.samples)
@@ -62,10 +63,12 @@ def ocr_pdf(source: Path, output: Path, lang: str = "ar+en", max_pages: int = 25
                 page_text = _ocr_string(image, lang=lang).strip()
             finally:
                 image.close()
+            recognized = recognized or bool(page_text)
             chunks.append(f"--- صفحة {index} ---\n{page_text}")
-        text = "\n\n".join(chunks).strip()
-        if not text:
+        # Headers are not OCR content: an image-only blank PDF must not be
+        # returned to the user as a successfully recognized document.
+        if not recognized:
             raise ValueError("لم يتم التعرف على أي نص في الملف.")
-        output.write_text(text, encoding="utf-8")
+        output.write_text("\n\n".join(chunks).strip(), encoding="utf-8")
     finally:
         doc.close()
