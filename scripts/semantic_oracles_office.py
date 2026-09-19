@@ -47,11 +47,14 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
                    "markdown-to-pdf", "csv-to-pdf"}:
         extracted = _pdftext(output)
         if tool_id == "excel-to-pdf":
-            with load_workbook(source, read_only=True, data_only=True) as workbook:
+            workbook = load_workbook(source, read_only=True, data_only=True)
+            try:
                 for row in workbook.active.iter_rows(values_only=True):
                     for cell in row:
                         if cell is not None:
                             assert str(cell) in extracted, (cell, extracted)
+            finally:
+                workbook.close()
             return "all original Excel worksheet cell values actually rendered as selectable PDF text"
         if tool_id == "ppt-to-pdf":
             presentation = Presentation(source)
