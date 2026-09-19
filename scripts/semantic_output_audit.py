@@ -242,7 +242,7 @@ def run():
                     original=None
                     if tool.input_required:
                         original=smoke.choose_fixture(tool,fixture)
-                        count=2 if tool.id in {"pdf-merge","zip-create"} else 1
+                        count=2 if tool.id in {"pdf-merge","zip-create","image-to-pdf","checksum-compare"} else 1
                         for n in range(count):
                             up=smoke.Upload(original.name,original.read_bytes())
                             inputs.append(validate_upload(up,max_bytes=settings.max_file_bytes,inspect_only=False,
