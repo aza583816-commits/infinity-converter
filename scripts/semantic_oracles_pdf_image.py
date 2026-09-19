@@ -34,8 +34,10 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
         assert source is not None
         result = html.unescape(output.read_text(encoding="utf-8"))
         with pymupdf.open(source) as doc:
-            for i, page in enumerate(doc, 1):
-                assert f"INFINITY CONVERTER Page {i}" in result
+            for page in doc:
+                for line in page.get_text("text").splitlines():
+                    if line.strip():
+                        assert html.escape(line.strip()) in result or line.strip() in result, line
             assert result.lower().count("<div") >= len(doc)
         return "original text of every PDF page present inside navigable HTML markup"
     if tool_id == "assignment-cover-page":
@@ -62,12 +64,13 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
         with pymupdf.open(source) as doc:
             for i, page in enumerate(doc, 1):
                 assert f"## Page {i}" in markdown
-                assert f"INFINITY CONVERTER Page {i}" in markdown
+                section = markdown.split(f"## Page {i}", 1)[1].split("## Page", 1)[0]
+                assert page.get_text("text").strip() in section, (i, page.get_text("text"), section)
         return "each PDF page's original textual marker survives in correct Markdown section"
     if tool_id == "pdf-compare":
         assert source is not None
         with pymupdf.open(source) as doc:
-            assert len(doc) >= 3 and all("INFINITY CONVERTER" in p.get_text() for p in doc)
+            assert len(doc) >= 3 and all(p.get_text("text").strip() for p in doc)
         assert output.read_text(encoding="utf-8") == "No differences found. The PDF texts are identical.\n"
         return "two identical PDF texts correctly yield no additions or deletions"
     if tool_id == "pdf-annotations-report":
