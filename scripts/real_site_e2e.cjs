@@ -29,7 +29,17 @@ const known = {
   'percentage-change': /25%/,
   'word-character-counter': /Words: 2/,
 };
-const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jR30AAAAASUVORK5CYII=', 'base64');
+async function generatedPng(page) {
+  const dataUrl = await page.evaluate(() => {
+    const canvas=document.createElement('canvas'); canvas.width=3; canvas.height=1;
+    const ctx=canvas.getContext('2d');
+    ctx.fillStyle='#ffffff';ctx.fillRect(0,0,1,1);
+    ctx.fillStyle='#000000';ctx.fillRect(1,0,1,1);
+    ctx.fillStyle='#dddddd';ctx.fillRect(2,0,1,1);
+    return canvas.toDataURL('image/png');
+  });
+  return Buffer.from(dataUrl.split(',')[1], 'base64');
+}
 
 function validText(v) {
   return Boolean(v) && !/\b(?:ReferenceError|TypeError|SyntaxError):|\bis not defined\b|unavailable|Enter |Choose |Invalid|must be|Use grades|at least/.test(v) &&
@@ -66,7 +76,7 @@ async function main() {
           const input=page.locator('#browser-'+field.key);
           assert.equal(await input.count(),1,'missing input '+field.key);
           if(field.type==='file') {
-            await input.setInputFiles({name:'pixel.png',mimeType:'image/png',buffer:png});
+            await input.setInputFiles({name:'pixels.png',mimeType:'image/png',buffer:await generatedPng(page)});
           } else if(field.type==='select') {
             const sample=samples[id]?.[field.key];
             if(sample && await input.locator('option[value="'+sample+'"]').count())await input.selectOption(sample);
@@ -81,7 +91,7 @@ async function main() {
         await page.waitForFunction(()=>Boolean(document.querySelector('#browser-output')?.value?.trim())||!document.querySelector('#browser-download')?.hidden,null,{timeout:9000});
         const value=await page.locator('#browser-output').inputValue();
         const downloaded=!(await page.locator('#browser-download').isHidden());
-        if(id==='light-background-cleanup') assert(downloaded,'image download link missing');
+        if(id==='light-background-cleanup') assert(downloaded,'image download link missing: '+value.slice(0,200));
         else assert(validText(value),'invalid output: '+value.slice(0,200));
         if(known[id]) { assert(known[id].test(value),'wrong expected value: '+value); report.browser_known_answers++; }
         report.browser_pass++;
