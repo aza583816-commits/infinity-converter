@@ -253,3 +253,53 @@ def test_pdf_to_docx_rejects_empty_scanned_document(tmp_path):
     with pytest.raises(ValueError, match="OCR"):
         mega_tools.pdf_to_docx(original, output)
     assert not output.exists()
+
+
+def test_mixed_arabic_english_landscape_table_roundtrip_content(tmp_path):
+    """Regression fixture for the reported failure class: bilingual wide course tables.
+
+    Generate a non-sensitive ORIGINAL Word document, make the PDF via Office,
+    reconstruct editable Word from that PDF, and render it again. This checks
+    content and basic page geometry; visual equivalence still needs human review.
+    """
+    from docx.shared import Mm
+    original = tmp_path / "bilingual-original.docx"
+    document = Document()
+    section = document.sections[0]
+    section.page_width = Mm(297)
+    section.page_height = Mm(210)
+    document.add_heading("BILINGUAL COURSE TABLE", level=1)
+    document.add_paragraph("English and Arabic: جدول المواد الدراسية")
+    table = document.add_table(rows=3, cols=4)
+    for row, values in enumerate([
+        ("Course", "القسم", "Hours", "Room"),
+        ("PHYSICS 101", "الفيزياء", "03", "A101"),
+        ("CHEMISTRY 102", "الكيمياء", "02", "B202"),
+    ]):
+        for column, value in enumerate(values):
+            table.cell(row, column).text = value
+    document.save(original)
+    source_pdf = office.office_to_pdf(original, tmp_path / "pdf-source", timeout=75)
+    with fitz.open(str(source_pdf)) as pdf_source:
+        assert len(pdf_source) == 1
+        assert pdf_source[0].rect.width > pdf_source[0].rect.height
+        source_text = pdf_source[0].get_text("text")
+        assert "PHYSICS 101" in source_text and "CHEMISTRY 102" in source_text
+
+    reconstructed = tmp_path / "bilingual-editable.docx"
+    mega_tools.pdf_to_docx(source_pdf, reconstructed)
+    result = Document(str(reconstructed))
+    pieces = [paragraph.text for paragraph in result.paragraphs]
+    pieces.extend(cell.text for t in result.tables for row in t.rows for cell in row.cells)
+    result_text = " ".join(pieces)
+    for marker in ("BILINGUAL COURSE TABLE", "PHYSICS 101", "CHEMISTRY 102", "A101", "B202"):
+        assert marker in result_text, f"PDF to Word lost important content: {marker}"
+    assert abs(result.sections[0].page_width.inches - 297 / 25.4) < 0.2
+    assert result.sections[0].page_width > result.sections[0].page_height
+
+    roundtrip = office.office_to_pdf(reconstructed, tmp_path / "pdf-roundtrip", timeout=75)
+    with fitz.open(str(roundtrip)) as converted:
+        assert len(converted) <= 2, "Single-page bilingual table exploded across multiple pages"
+        text = " ".join(page.get_text("text") for page in converted)
+        for marker in ("PHYSICS 101", "CHEMISTRY 102", "A101", "B202"):
+            assert marker in text
