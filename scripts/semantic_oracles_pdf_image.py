@@ -32,14 +32,24 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
         return None
     if tool_id == "pdf-to-html":
         assert source is not None
-        result = html.unescape(output.read_text(encoding="utf-8"))
+        from html.parser import HTMLParser
+        class TextCollector(HTMLParser):
+            def __init__(self):
+                super().__init__(convert_charrefs=True)
+                self.fragments = []
+            def handle_data(self, value):
+                if value.strip(): self.fragments.append(value)
+        result = output.read_text(encoding="utf-8")
+        parser = TextCollector()
+        parser.feed(result)
+        visible = " ".join(" ".join(parser.fragments).split())
         with pymupdf.open(source) as doc:
             for page in doc:
                 for line in page.get_text("text").splitlines():
                     if line.strip():
-                        assert html.escape(line.strip()) in result or line.strip() in result, line
+                        assert " ".join(line.split()) in visible, (line, visible[:600])
             assert result.lower().count("<div") >= len(doc)
-        return "original text of every PDF page present inside navigable HTML markup"
+        return "every source PDF page's text survives inside independently parsed HTML markup"
     if tool_id == "assignment-cover-page":
         assert source is None
         with pymupdf.open(output) as pdf:
