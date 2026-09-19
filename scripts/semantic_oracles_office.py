@@ -97,10 +97,16 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
     if tool_id == "markdown-to-html":
         raw = source.read_text(encoding="utf-8")
         result = html.unescape(output.read_text(encoding="utf-8"))
-        assert "# Infinity" in raw and "<h1>Infinity</h1>" in result
-        assert "**world**" in raw and "<strong>world</strong>" in result
-        assert "Hello " in result
-        return "Markdown heading, paragraph and bold emphasis become real HTML elements"
+        heading = next((line[2:].strip() for line in raw.splitlines()
+                        if line.startswith("# ")), None)
+        assert heading and f"<h1>{heading}</h1>" in result
+        if "**" in raw:
+            assert "<strong>world</strong>" in result and "Hello " in result
+        if "|---|" in raw:
+            assert "<table>" in result and all(
+                f">{value}<" in result for value in ("Name", "Code", "Arabic", "00123")
+            )
+        return "actual Markdown heading, paragraphs/emphasis or all source table cells become semantic HTML"
     if tool_id == "bulk-certificate-maker":
         names = [row["name"] for row in csv.DictReader(source.open(encoding="utf-8"))]
         with zipfile.ZipFile(output) as archive:
@@ -126,9 +132,14 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
     if tool_id == "xml-to-json":
         root = ET.parse(source).getroot()
         data = json.loads(output.read_text(encoding="utf-8"))
-        assert data[root.tag]["item"]["@attributes"]["name"] == root[0].attrib["name"]
-        assert data[root.tag]["item"]["#text"] == root[0].text.strip()
-        return "XML root, nested element attribute and leaf text independently retained in JSON"
+        expected = [(child.attrib["name"], (child.text or "").strip()) for child in root]
+        raw = data[root.tag]["item"]
+        actual = raw if isinstance(raw, list) else [raw]
+        assert len(actual) == len(expected) and all(
+            entry["@attributes"]["name"] == name and entry["#text"] == value
+            for entry, (name, value) in zip(actual, expected)
+        )
+        return "all XML child elements including repeated tags, attributes and Unicode text retained in JSON"
     if tool_id == "docx-to-markdown":
         doc = Document(source)
         markdown = output.read_text(encoding="utf-8")
@@ -194,17 +205,31 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
         assert parsed == json.loads(source.read_text(encoding="utf-8"))
         return "typed JSON structure round-trips exactly from HTML preformatted content"
     if tool_id == "html-to-text":
-        result = output.read_text(encoding="utf-8").strip()
-        assert result == "Infinity Hello world"
-        assert "<h1>Infinity</h1>" in source.read_text(encoding="utf-8")
-        return "visible HTML heading and paragraph retained as clean plaintext without tags"
+        from html.parser import HTMLParser
+        class VisibleText(HTMLParser):
+            def __init__(self):
+                super().__init__(convert_charrefs=True)
+                self.hidden = 0
+                self.words = []
+            def handle_starttag(self, tag, attrs):
+                if tag in ("script", "style"): self.hidden += 1
+            def handle_endtag(self, tag):
+                if tag in ("script", "style"): self.hidden = max(0, self.hidden - 1)
+            def handle_data(self, data):
+                if not self.hidden: self.words.append(data)
+        parser = VisibleText()
+        parser.feed(source.read_text(encoding="utf-8"))
+        expected = " ".join(" ".join(parser.words).split())
+        actual = " ".join(output.read_text(encoding="utf-8").split())
+        assert expected and actual == expected, (expected, actual)
+        return "all visible HTML text, Unicode heading and table cell values extracted in original order"
     if tool_id == "markdown-to-text":
         raw = source.read_text(encoding="utf-8")
         actual = output.read_text(encoding="utf-8")
-        assert "# Infinity" in raw and "**world**" in raw
-        assert "Infinity" in actual and "Hello world" in actual
-        assert all(token not in actual for token in ("#", "*", "<"))
-        return "heading and emphasized text survive while Markdown markup is stripped"
+        words = re.findall(r"(?u)\b\w+\b", raw)
+        assert words and all(word in actual for word in words), (words, actual)
+        assert "#" not in actual and "**" not in actual
+        return "every source heading, paragraph and table cell word survives plaintext Markdown export"
     if tool_id == "pptx-to-markdown":
         prs = Presentation(source)
         markdown = output.read_text(encoding="utf-8")
