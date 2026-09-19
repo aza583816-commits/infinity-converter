@@ -311,8 +311,8 @@ def _printable_text_html(source: Path, output_dir: Path) -> Path:
             rows = list(csv.reader(file))
         body = "<table border='1'>" + "".join(
             "<tr>" + "".join(
-                "<td>" + html.escape(cell).replace("\\r\\n", "\\n")
-                .replace("\\r", "\\n").replace("\\n", "<br/>") + "</td>"
+                "<td>" + html.escape(cell).replace("\r\n", "\n")
+                .replace("\r", "\n").replace("\n", "<br/>") + "</td>"
                 for cell in row
             ) + "</tr>" for row in rows
         ) + "</table>"
