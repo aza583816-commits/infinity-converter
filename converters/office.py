@@ -223,7 +223,8 @@ def _render_html_story_fallback(source: Path, output: Path) -> None:
         css = (
             "@font-face{font-family:InfinityArabic;"
             "src:url(NotoSansArabic-Regular.ttf)}"
-            "*{font-family:InfinityArabic,sans-serif}"
+            "html,body,p,span,pre,table,tr,td,th,h1,h2,h3,h4,h5,h6"
+            "{font-family:InfinityArabic !important}"
             "h1{font-size:24pt;font-weight:bold}"
         )
         font_archive = pymupdf.Archive(str(font_root))
