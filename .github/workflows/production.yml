@@ -100,7 +100,18 @@ jobs:
           retention-days: 14
       - name: Independent source-to-output semantic audit with explicit coverage report
         run: |
-          docker run --rm --network none infinity-verified python scripts/semantic_output_audit.py
+          mkdir -p semantic-audit
+          docker run --rm --network none -v "$PWD/semantic-audit:/quality-report" \
+            -e IC_SEMANTIC_REPORT=/quality-report/report.json \
+            infinity-verified python scripts/semantic_output_audit.py
+      - name: Upload per-tool semantic coverage and unresolved gaps
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: semantic-quality-coverage-${{ github.sha }}
+          path: semantic-audit/report.json
+          if-no-files-found: ignore
+          retention-days: 30
       - name: Every registered operation through the HTTP API
         run: docker run --rm --network none infinity-verified python scripts/api_operation_smoke.py
       - name: Every registered HTTP operation with two additional complex input profiles
