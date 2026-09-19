@@ -93,3 +93,42 @@ def test_pdf_to_word_roundtrip_retains_editable_information_and_landscape(tmp_pa
         all_text = "\n".join(page.get_text() for page in pdf)
         for token in ("BILINGUAL COURSE SCHEDULE", "Electrical Circuits", "Physics Lab", "Chemistry", "FINAL CHECK"):
             assert token in all_text, f"Roundtrip PDF omitted {token!r}"
+
+
+def _assert_table_columns_and_rows(page):
+    """Validate the rendered table's visual geometry, not only text presence."""
+    expected_rows = [
+        ("Course", "Time", "Room"),
+        ("Electrical Circuits", "09:00", "E074"),
+        ("Physics Lab", "11:00", "603"),
+        ("Chemistry", "13:20", "511"),
+    ]
+    for labels in expected_rows:
+        bounds = []
+        for label in labels:
+            regions = page.search_for(label)
+            assert regions, f"Table cell {label!r} is missing in rendered PDF"
+            rect = regions[0]
+            assert rect.x0 >= -1 and rect.y0 >= -1, f"Table cell {label!r} starts off-page"
+            assert rect.x1 <= page.rect.width + 1 and rect.y1 <= page.rect.height + 1, (
+                f"Table cell {label!r} is clipped by page boundary"
+            )
+            bounds.append(rect)
+        assert bounds[0].x0 < bounds[1].x0 < bounds[2].x0, (
+            f"Table columns are no longer ordered on the page: {labels}"
+        )
+        assert max(rect.y0 for rect in bounds) - min(rect.y0 for rect in bounds) < 24, (
+            f"Table cells have slipped into separate visual rows: {labels}"
+        )
+
+
+def test_editable_pdf_to_word_roundtrip_retains_visible_table_grid(tmp_path):
+    original = tmp_path / "source.docx"
+    _fixture(original)
+    source_pdf = office_to_pdf(original, tmp_path / "source-pdf", timeout=90)
+    reconstructed = tmp_path / "reconstructed.docx"
+    pdf_to_docx(source_pdf, reconstructed)
+    result = office_to_pdf(reconstructed, tmp_path / "final-pdf", timeout=90)
+    with pymupdf.open(str(result)) as doc:
+        assert len(doc) == 1, "One-page table spilled over multiple pages on roundtrip"
+        _assert_table_columns_and_rows(doc[0])
