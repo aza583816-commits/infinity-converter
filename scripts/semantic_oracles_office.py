@@ -48,15 +48,21 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
                    "markdown-to-pdf", "csv-to-pdf"}:
         extracted = _pdftext(output)
         if tool_id == "excel-to-pdf":
+            # PDF extractors may return Arabic presentation forms and typographic
+            # ligatures. NFKC is a Unicode-equivalent normalization, not a
+            # fuzzy match: every full source cell must still be present.
+            normalized = " ".join(unicodedata.normalize("NFKC", extracted).split())
             workbook = load_workbook(source, read_only=True, data_only=True)
             try:
-                for row in workbook.active.iter_rows(values_only=True):
-                    for cell in row:
-                        if cell is not None:
-                            assert str(cell) in extracted, (cell, extracted)
+                for sheet in workbook:
+                    for row in sheet.iter_rows(values_only=True):
+                        for cell in row:
+                            if cell is not None:
+                                expected = " ".join(unicodedata.normalize("NFKC", str(cell)).split())
+                                assert expected in normalized, (sheet.title, cell, normalized[:2200])
             finally:
                 workbook.close()
-            return "all original Excel worksheet cell values actually rendered as selectable PDF text"
+            return "every cell from every original worksheet survives as Unicode-equivalent selectable PDF text"
         if tool_id == "ppt-to-pdf":
             presentation = Presentation(source)
             assert len(presentation.slides) == 1
