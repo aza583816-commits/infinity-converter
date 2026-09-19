@@ -40,12 +40,15 @@ def _has_pdf_source_marker(text: str, source_pdf: pymupdf.Document, page_number:
     original = " ".join(source_pdf[page_number - 1].get_text("text").upper().split())
     normalized = " ".join(text.upper().split())
     if "INFINITY CONVERTER" in original:
-        _has_marker(text, page=page_number)
+        try:
+            _has_marker(text, page=page_number)
+        except AssertionError as error:
+            raise AssertionError(("source PDF heading vs OCR mismatch", page_number, original[:500], normalized[:500])) from error
     elif "LANDSCAPE PAGE FOUR" in original:
-        assert "LANDSCAPE PAGE FOUR" in normalized, normalized[:500]
+        assert "LANDSCAPE PAGE FOUR" in normalized, ("landscape page OCR mismatch", page_number, original[:500], normalized[:500])
     else:
         expected = f"EXTRA PAGE {page_number}"
-        assert expected in original and expected in normalized, (expected, normalized[:500])
+        assert expected in original and expected in normalized, ("additional PDF page OCR mismatch", page_number, original[:500], normalized[:500])
 
 
 def _has_invoice(text: str):
