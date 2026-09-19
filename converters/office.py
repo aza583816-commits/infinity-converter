@@ -323,6 +323,61 @@ def _printable_text_html(source: Path, output_dir: Path) -> Path:
     return temporary
 
 
+def _xlsx_pdf_fragments(source: Path) -> list[str]:
+    """Read each nonempty cell independently, across every original worksheet."""
+    from openpyxl import load_workbook
+
+    book = load_workbook(source, read_only=True, data_only=True)
+    try:
+        return [str(value) for sheet in book
+                for row in sheet.iter_rows(values_only=True)
+                for value in row if value is not None and str(value).strip()]
+    finally:
+        book.close()
+
+
+def _printable_simple_xlsx_html(source: Path, output_dir: Path) -> Path:
+    """Keep every data cell when the native PDF lost Unicode on a small, plain XLSX.
+
+    Do not silently flatten chart-heavy, formula-driven or styled workbooks:
+    those need a faithful office renderer rather than a plain HTML table.
+    """
+    from openpyxl import load_workbook
+    import html
+
+    book = load_workbook(source, read_only=False, data_only=False)
+    try:
+        sections = []
+        cells = 0
+        for sheet in book:
+            if sheet._charts or sheet._images or len(sheet.merged_cells.ranges):
+                raise ValueError("لا يمكن استخدام التصدير النصي البديل لجداول ذات رسوم أو خلايا مدمجة.")
+            rows = []
+            for row in sheet:
+                cells += len(row)
+                if cells > 2000:
+                    raise ValueError("تعذر ضمان كامل محتوى الجدول الكبير في تصدير PDF البديل.")
+                formatted = []
+                for cell in row:
+                    if cell.data_type == "f":
+                        raise ValueError("تتطلب الصيغ الرياضية إخراج PDF مباشرًا يحفظ نتائجها.")
+                    if cell.has_style and cell.style_id not in {0}:
+                        raise ValueError("لا يمكن استبدال تنسيق الجدول المعقد بإخراج مبسط دون موافقة المستخدم.")
+                    value = "" if cell.value is None else str(cell.value)
+                    formatted.append("<td>" + html.escape(value).replace("\n", "<br/>") + "</td>")
+                rows.append("<tr>" + "".join(formatted) + "</tr>")
+            sections.append("<h2>" + html.escape(sheet.title) + "</h2><table border='1'>" +
+                            "".join(rows) + "</table>")
+        target = output_dir / f"{source.stem}-text-fidelity.html"
+        target.write_text(
+            '<!doctype html><html><head><meta charset="utf-8"></head><body>' +
+            "".join(sections) + "</body></html>", encoding="utf-8"
+        )
+        return target
+    finally:
+        book.close()
+
+
 def office_to_pdf(source: Path, output_dir: Path, timeout: int) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
     _reject_remote_html_resources(source)
@@ -410,6 +465,15 @@ def office_to_pdf(source: Path, output_dir: Path, timeout: int) -> Path:
             _render_html_story_fallback(prepared, produced)
             if not _pdf_has_text_fragments(produced, fragments):
                 raise ValueError("تعذر الحفاظ على كامل النص الأصلي في ملف PDF الناتج.")
+    elif source.suffix.lower() == ".xlsx" and source.stat().st_size <= 128 * 1024:
+        fragments = _xlsx_pdf_fragments(source)
+        if fragments and not _pdf_has_text_fragments(produced, fragments):
+            # Restrict this to simple, unstyled, formula-free workbooks. Do not
+            # silently discard complex formatting or unsupported sheet objects.
+            prepared = _printable_simple_xlsx_html(source, output_dir)
+            _render_html_story_fallback(prepared, produced)
+            if not _pdf_has_text_fragments(produced, fragments):
+                raise ValueError("تعذر الحفاظ على جميع قيم خلايا Excel في ملف PDF الناتج.")
     return produced
 
 
