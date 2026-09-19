@@ -110,6 +110,75 @@ def _run_libreoffice(cmd: list[str], *, timeout: int, env: dict[str, str]) -> No
         raise RuntimeError("فشل محرك Office في تحويل الملف.")
 
 
+def _expected_html_headings(source: Path) -> tuple[str, ...]:
+    """Read headings from original HTML, never from renderer-produced output."""
+    from html.parser import HTMLParser
+    import re
+
+    class HeadingParser(HTMLParser):
+        def __init__(self):
+            super().__init__(convert_charrefs=True)
+            self.in_heading = False
+            self.fragments = []
+            self.headings = []
+
+        def handle_starttag(self, tag, attrs):
+            if re.fullmatch(r"h[1-6]", tag):
+                self.in_heading = True
+                self.fragments = []
+
+        def handle_data(self, value):
+            if self.in_heading:
+                self.fragments.append(value)
+
+        def handle_endtag(self, tag):
+            if self.in_heading and re.fullmatch(r"h[1-6]", tag):
+                title = " ".join(" ".join(self.fragments).split())
+                if title:
+                    self.headings.append(title)
+                self.in_heading = False
+
+    parser = HeadingParser()
+    parser.feed(source.read_text(encoding="utf-8"))
+    parser.close()
+    return tuple(parser.headings)
+
+
+def _pdf_contains_headings(path: Path, headings: tuple[str, ...]) -> bool:
+    import unicodedata
+    import pymupdf
+
+    with pymupdf.open(path) as pdf:
+        text = unicodedata.normalize(
+            "NFKC", " ".join(page.get_text("text") for page in pdf)
+        ).casefold()
+    normalized = " ".join(text.split())
+    return all(
+        " ".join(unicodedata.normalize("NFKC", title).casefold().split()) in normalized
+        for title in headings
+    )
+
+
+def _render_html_story_fallback(source: Path, output: Path) -> None:
+    """Use an independent paginated HTML renderer only when Writer lost text."""
+    import pymupdf
+
+    html_source = source.read_text(encoding="utf-8")
+    story = pymupdf.Story(
+        html_source,
+        user_css="h1,h2,h3,h4,h5,h6 { font-family: Courier, monospace; }",
+    )
+    temporary = output.with_name(output.stem + "-story.pdf")
+    writer = pymupdf.DocumentWriter(str(temporary))
+    page = pymupdf.Rect(0, 0, 595, 842)
+    frame = pymupdf.Rect(44, 44, 551, 798)
+    try:
+        story.write(writer, lambda _index, _filled: (page, frame, pymupdf.Identity))
+    finally:
+        writer.close()
+    temporary.replace(output)
+
+
 def _html_pdf_heading_fallback(source: Path, output_dir: Path) -> Path:
     """Render heading text as styled paragraphs for LibreOffice Writer/Web.
 
@@ -210,6 +279,15 @@ def office_to_pdf(source: Path, output_dir: Path, timeout: int) -> Path:
     produced = output_dir / f"{render_source.stem}.pdf"
     if not produced.exists() or produced.stat().st_size == 0:
         raise RuntimeError("لم يُنتج LibreOffice ملف PDF صالحًا.")
+    if source.suffix.lower() in {".html", ".htm"}:
+        headings = _expected_html_headings(source)
+        if headings and not _pdf_contains_headings(produced, headings):
+            # Do not report a conversion as successful when the native renderer
+            # dropped source headings. Render the *original* sanitized HTML via
+            # a separate engine, then verify the real output content again.
+            _render_html_story_fallback(source, produced)
+            if not _pdf_contains_headings(produced, headings):
+                raise ValueError("تعذر الحفاظ على عناوين HTML في ملف PDF الناتج.")
     return produced
 
 
