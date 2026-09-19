@@ -72,6 +72,32 @@ jobs:
             echo "QUALITY MATRIX: profile=$profile"
             docker run --rm --network none -e IC_TEST_FIXTURE_PROFILE="$profile" infinity-verified python scripts/output_input_matrix.py
           done
+      - name: All 263 tool pages and real browser actions in mobile Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/export_server_catalog.py /tmp/server-catalog.json
+          python scripts/export_browser_catalog.py /tmp/browser-catalog.json
+          docker run --rm -d --name infinity-site-e2e -p 127.0.0.1:5000:5000 \
+            -e PORT=5000 -e DATABASE_URL=sqlite:////tmp/infinity-site-e2e.db \
+            -e PUBLIC_AUTH_ENABLED=0 -e PUBLIC_BILLING_ENABLED=0 infinity-verified
+          trap 'docker rm -f infinity-site-e2e >/dev/null 2>&1 || true' EXIT
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:5000/api/v2/readyz > /dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:5000/api/v2/readyz
+          IC_E2E_BASE_URL=http://127.0.0.1:5000 \
+            IC_E2E_REPORT=site-e2e-report.json \
+            node scripts/real_site_e2e.cjs /tmp/browser-catalog.json /tmp/server-catalog.json
+      - name: Upload full-site browser acceptance report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-site-e2e-${{ github.sha }}
+          path: site-e2e-report.json
+          if-no-files-found: ignore
+          retention-days: 14
       - name: Every registered operation through the HTTP API
         run: docker run --rm --network none infinity-verified python scripts/api_operation_smoke.py
       - name: Every registered HTTP operation with two additional complex input profiles
