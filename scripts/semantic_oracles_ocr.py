@@ -58,10 +58,11 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
         return "each original PDF page yields its numbered heading in real OCR text"
     if tool_id in {"ocr-image-to-pdf", "ocr-pdf-to-searchable"}:
         with pymupdf.open(output) as pdf:
-            with pymupdf.open(source) as source_pdf if tool_id == "ocr-pdf-to-searchable" else Image.open(source) as opened:
-                if tool_id == "ocr-pdf-to-searchable":
+            if tool_id == "ocr-pdf-to-searchable":
+                with pymupdf.open(source) as source_pdf:
                     assert len(pdf) == len(source_pdf)
-                else:
+            else:
+                with Image.open(source) as opened:
                     assert len(pdf) == 1 and abs(pdf[0].rect.width/pdf[0].rect.height-opened.width/opened.height)<.01
             for page_no, page in enumerate(pdf, 1):
                 assert page.get_images(full=True), "OCR PDF lost the original visual background"
