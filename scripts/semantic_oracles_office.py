@@ -183,10 +183,14 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
         if tool_id == "csv-to-markdown":
             rendered = output.read_text(encoding="utf-8").splitlines()
             assert len(rendered) == len(rows) + 1
-            assert rendered[0] == "| " + " | ".join(rows[0]) + " |"
-            assert rendered[1] == "| " + " | ".join(["---"] * len(rows[0])) + " |"
-            assert rendered[2:] == ["| " + " | ".join(row) + " |" for row in rows[1:]]
-            return "all original CSV headers, cells and rows retained exactly in Markdown table"
+            def expected_cell(value: str) -> str:
+                return (value.replace("\\", "\\\\").replace("|", "\\|")
+                        .replace("\r\n", "\n").replace("\r", "\n").replace("\n", "<br>"))
+            table = [[expected_cell(cell) for cell in row] for row in rows]
+            assert rendered[0] == "| " + " | ".join(table[0]) + " |"
+            assert rendered[1] == "| " + " | ".join(["---"] * len(table[0])) + " |"
+            assert rendered[2:] == ["| " + " | ".join(row) + " |" for row in table[1:]]
+            return "all source CSV rows and cells retained with escaped pipes and multiline cells preserved in Markdown"
         data = json.loads(output.read_text(encoding="utf-8"))
         assert data["rows"] == len(rows)-1 and data["columns"] == len(rows[0])
         for idx, item in enumerate(data["columns_detail"]):
