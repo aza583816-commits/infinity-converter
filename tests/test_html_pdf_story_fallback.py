@@ -27,8 +27,9 @@ def test_missing_heading_falls_back_to_independent_pdf_renderer(
     monkeypatch.setattr(office, "_run_libreoffice", fake_libreoffice)
     result = office.office_to_pdf(source, out_dir, timeout=30)
 
+    import unicodedata
     with pymupdf.open(result) as document:
-        text = " ".join(page.get_text("text") for page in document)
+        text = unicodedata.normalize("NFKC", " ".join(page.get_text("text") for page in document))
         assert len(document) == 1
         assert "Infinity" in text
         assert "Hello world" in text
