@@ -1,4 +1,4 @@
-FROM python:3.11-slim-bookworm
+FROM python:3.11-slim-bookworm AS base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -22,26 +22,37 @@ RUN apt-get update && \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --create-home --uid 10001 --shell /usr/sbin/nologin appuser
 
-COPY requirements.txt .
+COPY requirements.txt constraints.txt ./
 
 RUN python -m pip install --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir -c constraints.txt -r requirements.txt && \
+    python -m pip check
 
 COPY --chown=appuser:appuser . .
 RUN mkdir -p /app/instance && chown appuser:appuser /app/instance
 USER appuser
 
-# Fail the image build early if architecture, routes, security gates, AdSense/SEO,
-# and representative real conversions do not match the shipped application.
+# Build/test stage: production code and native libraries are verified in the same
+# base image, while pytest itself does not ship in the final runtime stage.
+FROM base AS verification
+USER root
+RUN pip install --no-cache-dir -c constraints.txt -r requirements-test.txt
+USER appuser
+RUN python scripts/verify_constraints.py constraints.txt
 RUN python scripts/preflight.py
-
-# Run the complete regression suite in the same Python/system-library image that
-# Railway will execute. Test persistence stays in /tmp and is never shipped as
-# application data.
 RUN DATABASE_URL=sqlite:////tmp/infinity-tests.db \
     PUBLIC_AUTH_ENABLED=0 \
     PUBLIC_BILLING_ENABLED=0 \
-    python -m pytest -q -p no:cacheprovider && rm -f /tmp/infinity-tests.db*
+    python -m pytest -q -p no:cacheprovider && rm -f /tmp/infinity-tests.db* \
+    && touch /tmp/infinity-production-verified
+
+# The runtime starts from the dependency-minimal base, but copying the marker
+# forces Docker to build the verification stage first. No pytest/test runner is
+# installed in this final image.
+FROM base AS runtime
+COPY --from=verification --chown=appuser:appuser /tmp/infinity-production-verified /tmp/infinity-production-verified
+RUN python scripts/verify_constraints.py constraints.txt
+USER appuser
 
 # Two web workers keep health/navigation responsive if one process is busy or a
 # native library crashes. Expensive conversion capacity is still bounded across
