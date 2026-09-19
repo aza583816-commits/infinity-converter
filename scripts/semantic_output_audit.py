@@ -19,7 +19,7 @@ import zipfile
 from pathlib import Path
 
 import pymupdf
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 from docx import Document
 from openpyxl import load_workbook
 from pypdf import PdfReader
@@ -35,6 +35,7 @@ from scripts.semantic_oracles_extra import ORACLE_IDS, oracle as extra_oracle
 from scripts.semantic_oracles_archive_utility import ORACLE_IDS as ARCHIVE_UTILITY_IDS, oracle as archive_utility_oracle
 from scripts.semantic_oracles_pdf_image import ORACLE_IDS as PDF_IMAGE_IDS, oracle as pdf_image_oracle
 from scripts.semantic_oracles_office import ORACLE_IDS as OFFICE_IDS, oracle as office_oracle
+from scripts.semantic_oracles_ocr import ORACLE_IDS as OCR_IDS, oracle as ocr_oracle
 
 PDF_TEXT = "INFINITY CONVERTER"
 IMG_IDS = {"image-to-jpg", "image-to-png", "image-to-webp"}
@@ -58,6 +59,9 @@ def downloaded_payload(path: Path) -> Path:
 def independent_oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> str | None:
     """Return a description of a verified source-to-output property or None."""
     output = downloaded_payload(output)
+    checked = ocr_oracle(tool_id, source, output, fixture)
+    if checked is not None:
+        return checked
     checked = office_oracle(tool_id, source, output, fixture)
     if checked is not None:
         return checked
@@ -245,7 +249,7 @@ def run():
                 "text-clean","docx-to-text","pptx-to-text","word-to-pdf",
                 "pdf-to-text","zip-create","gzip-compress","gzip-decompress",
                 "bzip2-compress","xz-compress","json-minify","uuid-list-generator",
-            } | IMG_IDS | PDF_KEEP | ORACLE_IDS | ARCHIVE_UTILITY_IDS | PDF_IMAGE_IDS | OFFICE_IDS:
+            } | IMG_IDS | PDF_KEEP | ORACLE_IDS | ARCHIVE_UTILITY_IDS | PDF_IMAGE_IDS | OFFICE_IDS | OCR_IDS:
                 unverified.append(tool.id)
                 continue
             with TempWorkspace() as workspace:
@@ -262,6 +266,22 @@ def run():
                                 note.update()
                                 pdf.save(annotated)
                             original=annotated
+                        elif tool.id in {"ocr-receipt-fields", "ocr-text-deduplicate"}:
+                            adapted=fixture/("ocr-receipt.png" if tool.id == "ocr-receipt-fields" else "ocr-duplicates.png")
+                            if tool.id == "ocr-receipt-fields":
+                                with Image.open(original) as sample:
+                                    canvas=sample.convert("RGB")
+                                face=ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",54)
+                                ImageDraw.Draw(canvas).text((80,780),"SAR 1250.50",fill="black",font=face)
+                            else:
+                                canvas=Image.new("RGB",(1400,900),"white")
+                                face=ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",54)
+                                pen=ImageDraw.Draw(canvas)
+                                for y,content in [(80,"INFINITY CONVERTER"),(190,"INFINITY CONVERTER"),(300,"Invoice 12345"),(410,"Invoice 12345")]:
+                                    pen.text((80,y),content,fill="black",font=face)
+                            canvas.save(adapted)
+                            canvas.close()
+                            original=adapted
                         elif tool.id == "image-auto-orient":
                             oriented=fixture/"oriented.jpg"
                             with Image.open(original) as raw:
