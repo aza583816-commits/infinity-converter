@@ -101,6 +101,7 @@ jobs:
       - name: Independent source-to-output semantic audit with explicit coverage report
         run: |
           mkdir -p semantic-audit
+          chmod 777 semantic-audit # ephemeral CI output directory; container runs as non-root
           docker run --rm --network none -v "$PWD/semantic-audit:/quality-report" \
             -e IC_SEMANTIC_REPORT=/quality-report/report.json \
             infinity-verified python scripts/semantic_output_audit.py
