@@ -66,5 +66,85 @@ jobs:
         run: docker run --rm --network none infinity-verified sh -c 'command -v prlimit >/dev/null && prlimit --version'
       - name: Every registered operation through the real engine
         run: docker run --rm --network none infinity-verified python scripts/full_operation_smoke.py
+      - name: Every registered operation with two additional complex input profiles
+        run: |
+          for profile in mixed dense; do
+            echo "QUALITY MATRIX: profile=$profile"
+            docker run --rm --network none -e IC_TEST_FIXTURE_PROFILE="$profile" infinity-verified python scripts/output_input_matrix.py
+          done
+      - name: All 263 tool pages and real browser actions in mobile Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/export_server_catalog.py /tmp/server-catalog.json
+          python scripts/export_browser_catalog.py /tmp/browser-catalog.json
+          docker run --rm -d --name infinity-site-e2e -p 127.0.0.1:5000:5000 \
+            -e PORT=5000 -e DATABASE_URL=sqlite:////tmp/infinity-site-e2e.db \
+            -e PUBLIC_AUTH_ENABLED=0 -e PUBLIC_BILLING_ENABLED=0 infinity-verified
+          trap 'docker rm -f infinity-site-e2e >/dev/null 2>&1 || true' EXIT
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:5000/api/v2/readyz > /dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:5000/api/v2/readyz
+          IC_E2E_BASE_URL=http://127.0.0.1:5000 \
+            IC_E2E_REPORT=site-e2e-report.json \
+            node scripts/real_site_e2e.cjs /tmp/browser-catalog.json /tmp/server-catalog.json
+      - name: Upload full-site browser acceptance report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-site-e2e-${{ github.sha }}
+          path: site-e2e-report.json
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: Independent source-to-output semantic audit with explicit coverage report
+        run: |
+          mkdir -p semantic-audit
+          chmod 777 semantic-audit # ephemeral CI output directory; container runs as non-root
+          docker run --rm --network none -v "$PWD/semantic-audit:/quality-report" \
+            -e IC_SEMANTIC_REPORT=/quality-report/report.json \
+            infinity-verified python scripts/semantic_output_audit.py
+      - name: Independent semantic checks against second bilingual and complex input corpus
+        run: |
+          docker run --rm --network none -v "$PWD/semantic-audit:/quality-report" \
+            -e IC_TEST_FIXTURE_PROFILE=mixed \
+            -e IC_SEMANTIC_REPORT=/quality-report/mixed.json \
+            infinity-verified python scripts/semantic_output_audit.py
+      - name: Upload per-tool semantic coverage and unresolved gaps
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: semantic-quality-coverage-${{ github.sha }}
+          path: semantic-audit/*.json
+          if-no-files-found: ignore
+          retention-days: 30
       - name: Every registered operation through the HTTP API
         run: docker run --rm --network none infinity-verified python scripts/api_operation_smoke.py
+      - name: Every registered HTTP operation with two additional complex input profiles
+        run: |
+          for profile in mixed dense; do
+            echo "HTTP QUALITY MATRIX: profile=$profile"
+            docker run --rm --network none -e IC_TEST_FIXTURE_PROFILE="$profile" infinity-verified python scripts/api_output_input_matrix.py
+          done
+      - name: Block release until every tool has an independent output oracle
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for profile in ("report", "mixed"):
+              report = Path("semantic-audit") / f"{profile}.json"
+              if not report.is_file():
+                  raise SystemExit(f"BLOCK RELEASE: missing independent semantic report for {profile}")
+              result = json.loads(report.read_text(encoding="utf-8"))
+              total = result.get("total", 0)
+              verified = result.get("semantic_verified", 0)
+              failures = result.get("semantic_failures", [])
+              uncovered = result.get("unverified", [])
+              print(f"{profile} independent output oracles: {verified}/{total}; failures={len(failures)}; uncovered={len(uncovered)}")
+              if not total or verified != total or uncovered or failures or not result.get("quality_complete", False):
+                  print("BLOCK RELEASE: engine/API/browser smoke success cannot certify actual output semantics.")
+                  print("Missing independent oracles:", ", ".join(uncovered))
+                  raise SystemExit(1)
+          PY

@@ -327,6 +327,12 @@ def csv_to_markdown(source: Path, output: Path):
     with source.open("r",encoding="utf-8-sig",newline="") as f: rows=list(csv.reader(f))
     if not rows: raise ValueError("CSV فارغ.")
     width=len(rows[0]); rows=[r+['']*(width-len(r)) for r in rows]
+    def markdown_cell(value: str) -> str:
+        # Literal pipes and physical newlines would otherwise split cells/rows
+        # in the generated Markdown, silently corrupting structured CSV data.
+        return (value.replace("\\", "\\\\").replace("|", "\\|")
+                .replace("\r\n", "\n").replace("\r", "\n").replace("\n", "<br>"))
+    rows=[[markdown_cell(cell) for cell in row] for row in rows]
     lines=["| "+" | ".join(rows[0])+" |","| "+" | ".join(["---"]*width)+" |"]+["| "+" | ".join(r)+" |" for r in rows[1:]]
     _write_text(output,"\n".join(lines)+"\n")
 
@@ -597,8 +603,8 @@ def regex_extract(source: Path, output: Path, pattern: str):
         raise ValueError("نمط البحث غير صالح أو تجاوز الحدود الآمنة.")
 
 
-def rename_extension_report(source: Path, output: Path):
-    p=Path(source.name); _write_text(output,json.dumps({"filename":p.name,"extension":p.suffix.lower(),"stem":p.stem,"mime":mimetypes.guess_type(p.name)[0]},ensure_ascii=False,indent=2))
+def rename_extension_report(source: Path, output: Path, original_name: str | None = None):
+    p=Path(original_name or source.name); _write_text(output,json.dumps({"filename":p.name,"extension":p.suffix.lower(),"stem":p.stem,"mime":mimetypes.guess_type(p.name)[0]},ensure_ascii=False,indent=2))
 
 # IDs handled by the mega dispatcher.
 PDF_IDS={"pdf-to-docx","pdf-to-markdown","pdf-compare","pdf-repair","pdf-image-extract","pdf-links-report","pdf-annotations-report","pdf-page-size-report","pdf-redact","pdf-unlock"}

@@ -169,7 +169,7 @@ def create_app() -> Flask:
             object_src = "object-src 'none'"
         response.headers["Content-Security-Policy"] = (
             f"default-src 'self'; "
-            "img-src 'self' data: https:; "
+            "img-src 'self' data: blob: https:; "
             "style-src 'self' 'unsafe-inline'; "
             "font-src 'self'; "
             f"{connect_src}; "

@@ -17,6 +17,8 @@ RUN apt-get update && \
         tesseract-ocr-ara \
         tesseract-ocr-eng \
         fonts-noto-core \
+        fonts-dejavu-core \
+        fonts-liberation \
         ca-certificates \
         util-linux \
     && rm -rf /var/lib/apt/lists/* \
