@@ -125,6 +125,32 @@ def independent_oracle(tool_id: str, source: Path | None, output: Path, fixture:
                 assert all(abs(samples[i]-samples[i+1]) <= 1 and abs(samples[i+1]-samples[i+2]) <= 1
                     for i in range(0, len(samples), 3))
         return "all pages retain their geometry and are visually grayscale; warning: renderer rasterizes searchable text"
+    if tool_id == "pdf-page-numbers":
+        # Source page markers and generated page numbers are different: the
+        # former already exists on the original, and cannot prove that this
+        # tool added any visible number. Compare actual output word geometry.
+        with pymupdf.open(source) as before, pymupdf.open(output) as after:
+            assert len(before) == len(after) and len(after) > 1
+            for page_no, (old, new) in enumerate(zip(before, after), 1):
+                assert old.get_text("text").strip() in new.get_text("text")
+                strip_top = (new.rect.y0, new.rect.y0 + 36)
+                strip_bottom = (new.rect.y1 - 36, new.rect.y1)
+                expected_zone = strip_bottom  # default selected position
+                old_words = {(word[4], round(word[0]), round(word[1]))
+                             for word in old.get_text("words")}
+                numbered = [
+                    word for word in new.get_text("words")
+                    if word[4] == str(page_no)
+                    and expected_zone[0] <= word[1] <= word[3] <= expected_zone[1]
+                    and abs((word[0] + word[2]) / 2 - new.rect.width / 2)
+                         < new.rect.width * .15
+                    and (word[4], round(word[0]), round(word[1])) not in old_words
+                ]
+                assert len(numbered) == 1, (
+                    "Missing, duplicated or misplaced generated PDF page number",
+                    page_no, [(w[:5]) for w in new.get_text("words")][-12:],
+                )
+        return "exactly one NEW visible page number per page in the selected bottom-center area, with original source text intact"
     if tool_id in PDF_KEEP:
         import unicodedata
         norm = lambda value: " ".join(unicodedata.normalize("NFKC", value).split())
