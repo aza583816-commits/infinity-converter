@@ -70,7 +70,15 @@ def test_long_word_pdf_preserves_every_original_marker(tmp_path: Path, language:
     output = office_to_pdf(source, tmp_path / "output", timeout=120)
     actual = pdf_text_and_geometry(output)
     missing = [value for value in markers if normalized(value) not in actual]
-    assert not missing, ("Source Word content lost or reordered within fields", missing[:12])
+    assert not missing, (
+        "Source Word content lost or reordered within fields",
+        language,
+        missing[:12],
+        "Actual PDF extracted text around start:",
+        actual[:700],
+        "Source marker IDs still extractable:",
+        [tag for tag in ("ID0101X", "ID0201X", "ID0806X") if tag in actual],
+    )
     # Each distinct page's first paragraph must survive in original reading order.
     positions = [actual.find(normalized(markers[(n - 1) * 15])) for n in range(1, 9)]
     assert all(position >= 0 for position in positions)
@@ -102,4 +110,12 @@ def test_large_two_sheet_excel_pdf_keeps_unique_values(tmp_path: Path, language:
     output = office_to_pdf(source, tmp_path / "output", timeout=120)
     actual = pdf_text_and_geometry(output)
     missing = [value for value in expected if normalized(value) not in actual]
-    assert not missing, ("Excel-to-PDF dropped source cells", missing[:12])
+    assert not missing, (
+        "Excel-to-PDF dropped source cells",
+        language,
+        missing[:12],
+        "Actual PDF extracted text around start:",
+        actual[:700],
+        "Source first/last row IDs still extractable:",
+        [tag for tag in ("Q00001Z", "Q00200Z", "SECOND0001Z", "SECOND0050Z") if tag in actual],
+    )
