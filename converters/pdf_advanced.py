@@ -88,7 +88,18 @@ def add_page_numbers(source: Path, output: Path, position: str = 'bottom-center'
             raise ValueError('موضع رقم الصفحة غير صالح.')
         for number, page in enumerate(doc, start=1):
             rect = pymupdf.Rect(*positions[position](page.rect))
-            page.insert_textbox(rect, str(number), fontname='helv', fontsize=9, align=pymupdf.TEXT_ALIGN_CENTER, color=(0.3, 0.3, 0.3))
+            if (rect.is_empty or rect.x0 < page.rect.x0 or rect.x1 > page.rect.x1
+                    or rect.y0 < page.rect.y0 or rect.y1 > page.rect.y1):
+                raise ValueError('مساحة رقم الصفحة خارج حدود الصفحة.')
+            # PyMuPDF silently places NO text and returns a negative value
+            # when a textbox is too small; never return a success PDF missing
+            # one or more requested numbers.
+            available = page.insert_textbox(
+                rect, str(number), fontname='helv', fontsize=9,
+                align=pymupdf.TEXT_ALIGN_CENTER, color=(0.3, 0.3, 0.3),
+            )
+            if available < 0:
+                raise ValueError('لا توجد مساحة كافية لإظهار رقم الصفحة.')
         doc.save(str(output), garbage=4, deflate=True)
     finally:
         doc.close()
