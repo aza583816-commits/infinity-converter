@@ -35,6 +35,9 @@ async function calculate(id,values){
  assert.equal(await calculate('vat-calculator',{amount:100,rate:15}),'VAT: 15\nTotal: 115');
  assert.equal(await calculate('profit-margin-calculator',{cost:80,revenue:120}),'Profit: 40\nMargin: 33.33%');
  assert.equal(await calculate('break-even-calculator',{fixed:1000,price:25,variable:10}),'Break-even units: 67');
+ assert.match(await calculate('break-even-calculator',{fixed:1000,price:10,variable:10}),/Unit price must exceed/);
+ assert.match(await calculate('break-even-calculator',{fixed:1000,price:9,variable:10}),/Unit price must exceed/);
+ assert.match(await calculate('break-even-calculator',{fixed:1000,price:25,variable:-1}),/nonnegative variable unit cost/);
  assert.equal(await calculate('expense-splitter',{amount:250,people:5}),'Each person pays: 50');
  assert.equal(await calculate('discount-calculator',{price:100,rate:20}),'Discount: 20\nFinal price: 80');
  assert.equal(await calculate('commission-calculator',{sales:5000,rate:5}),'Commission: 250');
