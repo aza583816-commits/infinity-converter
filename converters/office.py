@@ -462,12 +462,69 @@ def _render_simple_xlsx_paginated_fallback(prepared: Path, output: Path) -> None
             part.unlink(missing_ok=True)
 
 
+def _docx_pdf_bidi_spacing_copy(source: Path, output_dir: Path) -> Path:
+    """Render-only DOCX copy preserving Arabic-number spaces in extracted PDF.
+
+    LibreOffice sometimes drops ordinary U+0020 between RTL Arabic and an ASCII
+    digit from its PDF Unicode map. Replacing only that boundary with U+00A0
+    in the *private render copy* preserves the visible space and produces an
+    extractable whitespace character; the uploaded original is never changed.
+    Keep XML structure, all run styling, images and relationships byte-for-byte.
+    """
+    import zipfile
+
+    if source.suffix.lower() != ".docx":
+        return source
+
+    text_node = re.compile(r"(<w:t\b[^>]*>)([^<]*)(</w:t>)")
+    arabic_digit_space = re.compile(r"(?<=[\u0600-\u06FF]) (?=[0-9])")
+
+    def protect_node(match: re.Match[str]) -> str:
+        return (match.group(1)
+                + arabic_digit_space.sub("\u00a0", match.group(2))
+                + match.group(3))
+
+    with zipfile.ZipFile(source) as original:
+        changed_parts: dict[str, bytes] = {}
+        for name in original.namelist():
+            if not (name.startswith("word/") and name.endswith(".xml")):
+                continue
+            raw = original.read(name)
+            try:
+                content = raw.decode("utf-8")
+            except UnicodeDecodeError:
+                continue
+            updated = text_node.sub(protect_node, content)
+            if updated != content:
+                changed_parts[name] = updated.encode("utf-8")
+        if not changed_parts:
+            return source
+
+        private = output_dir / f".lo-word-input-{uuid4().hex}"
+        private.mkdir(mode=0o700)
+        render_copy = private / source.name
+        try:
+            with zipfile.ZipFile(render_copy, "w") as copied:
+                for member in original.infolist():
+                    copied.writestr(member, changed_parts.get(
+                        member.filename, original.read(member.filename)))
+        except Exception:
+            shutil.rmtree(private, ignore_errors=True)
+            raise
+        return render_copy
+
+
 def office_to_pdf(source: Path, output_dir: Path, timeout: int) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
     _reject_remote_html_resources(source)
     render_source = (
         _html_pdf_heading_fallback(source, output_dir)
-        if source.suffix.lower() in {".html", ".htm"} else source
+        if source.suffix.lower() in {".html", ".htm"} else
+        _docx_pdf_bidi_spacing_copy(source, output_dir)
+    )
+    private_docx_dir = (
+        render_source.parent if render_source != source
+        and source.suffix.lower() == ".docx" else None
     )
 
     # A private LibreOffice profile prevents cross-request state leakage and
@@ -527,6 +584,8 @@ def office_to_pdf(source: Path, output_dir: Path, timeout: int) -> Path:
         _run_libreoffice(cmd, timeout=timeout, env=env)
     finally:
         shutil.rmtree(profile, ignore_errors=True)
+        if private_docx_dir is not None:
+            shutil.rmtree(private_docx_dir, ignore_errors=True)
 
     produced = output_dir / f"{render_source.stem}.pdf"
     if not produced.exists() or produced.stat().st_size == 0:
