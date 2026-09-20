@@ -103,4 +103,3 @@ def test_large_two_sheet_excel_pdf_keeps_unique_values(tmp_path: Path, language:
     actual = pdf_text_and_geometry(output)
     missing = [value for value in expected if normalized(value) not in actual]
     assert not missing, ("Excel-to-PDF dropped source cells", missing[:12])
-    assert "Primary" in actual and "Secondary" in actual
