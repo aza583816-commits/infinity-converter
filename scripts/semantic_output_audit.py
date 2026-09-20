@@ -126,9 +126,29 @@ def independent_oracle(tool_id: str, source: Path | None, output: Path, fixture:
                     for i in range(0, len(samples), 3))
         return "all pages retain their geometry and are visually grayscale; warning: renderer rasterizes searchable text"
     if tool_id in PDF_KEEP:
-        with pymupdf.open(str(output)) as pdf:
-            assert len(pdf) >= 1 and any(PDF_TEXT in p.get_text() for p in pdf)
-        return "source PDF text survives transformation"
+        import unicodedata
+        norm = lambda value: " ".join(unicodedata.normalize("NFKC", value).split())
+        with pymupdf.open(source) as original, pymupdf.open(output) as converted:
+            before = [norm(page.get_text("text")) for page in original]
+            after = [norm(page.get_text("text")) for page in converted]
+            assert before and all(before), "The input fixture must contain text on every page"
+            assert after and all(after), "A converted page is blank or has no selectable text"
+            if tool_id == "pdf-booklet":
+                # A booklet places multiple source pages per sheet and can
+                # change the final sheet count and page order.
+                joined = " ".join(after)
+                for number in range(1, len(original) + 1):
+                    assert f"Page {number}" in joined, ("booklet lost a source page", number)
+                assert len(converted) <= len(original) + 1
+            else:
+                assert len(converted) == len(original), (tool_id, len(original), len(converted))
+                for index, (before_text, after_text) in enumerate(zip(before, after), 1):
+                    for line in before_text.splitlines():
+                        if line.strip():
+                            assert norm(line) in after_text, (tool_id, index, line[:300], after_text[:700])
+                    # NFKC normalizes text but does not waive a lost line.
+                    assert all(norm(line) in after_text for line in original[index - 1].get_text("text").splitlines() if line.strip()), (tool_id, index)
+        return "every source PDF page and its original text survives the requested PDF transformation; booklet preserves all source page markers"
     if tool_id == "pdf-unlock":
         locked = PdfReader(str(source))
         assert locked.is_encrypted and locked.decrypt("secret")
