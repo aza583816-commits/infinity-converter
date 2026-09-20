@@ -75,11 +75,18 @@ def independent_oracle(tool_id: str, source: Path | None, output: Path, fixture:
     if checked is not None:
         return checked
     if tool_id == "pdf-merge":
-        with pymupdf.open(str(source)) as original, pymupdf.open(str(output)) as pdf:
-            expected = [p.get_text("text") for p in original]
-            actual = [p.get_text("text") for p in pdf]
-            assert len(expected) >= 3 and actual == expected + expected
-        return "merged both entire input PDFs in source page order with exact extractable text"
+        distinct_second = fixture / "second-merge.pdf"
+        assert distinct_second.is_file()
+        with pymupdf.open(source) as first, pymupdf.open(distinct_second) as second, pymupdf.open(output) as merged:
+            before_first = [page.get_text("text") for page in first]
+            before_second = [page.get_text("text") for page in second]
+            actual = [page.get_text("text") for page in merged]
+            assert len(before_first) >= 3 and len(before_second) == len(before_first) + 1
+            assert "SECOND INPUT UNIQUE" in before_second[-1]
+            assert actual == before_first + before_second
+            expected_sizes = [(page.rect.width, page.rect.height) for pdf in (first,second) for page in pdf]
+            assert [(page.rect.width, page.rect.height) for page in merged] == expected_sizes
+        return "two distinct PDF inputs merged without lost/duplicated pages, preserving exact source order, text and geometry"
     if tool_id == "pdf-extract-pages":
         with pymupdf.open(str(source)) as before, pymupdf.open(str(output)) as after:
             assert len(before) >= 3 and len(after) == 2
@@ -243,12 +250,15 @@ def independent_oracle(tool_id: str, source: Path | None, output: Path, fixture:
         assert "Page 1" in text and "Page 3" in text and text.index("Page 1")<text.index("Page 3")
         return "all page text retained in source sequence"
     if tool_id=="zip-create":
+        second = fixture / "second-zip.txt"
+        assert second.is_file() and second.read_bytes() != source.read_bytes()
         with zipfile.ZipFile(output) as z:
             assert z.testzip() is None
             members = [entry for entry in z.infolist() if not entry.is_dir()]
             assert len(members) == 2 and len({entry.filename for entry in members}) == 2
-            assert all(z.read(entry.filename) == source.read_bytes() for entry in members)
-        return "both uploaded files survive as separate ZIP members, each byte-exact with valid CRC"
+            content = [z.read(entry.filename) for entry in members]
+            assert content == [source.read_bytes(), second.read_bytes()]
+        return "two distinct uploaded files each survive byte-exact in original order as separate ZIP members"
     if tool_id=="gzip-compress":
         assert gzip.decompress(output.read_bytes())==source.read_bytes()
         return "compressed original bytes round-trip exactly"
@@ -334,7 +344,21 @@ def run():
                             original=oriented
                         count=2 if tool.id in {"pdf-merge","zip-create","image-to-pdf","checksum-compare","tar-create","tar-gzip-create","tar-bzip2-create","text-diff","csv-merge-deduplicate","pdf-compare"} else 1
                         for n in range(count):
-                            up=smoke.Upload(original.name,original.read_bytes())
+                            member = original
+                            if n == 1 and tool.id == "pdf-merge":
+                                member = fixture / "second-merge.pdf"
+                                with pymupdf.open(original) as second:
+                                    extra = second.new_page(width=420, height=600)
+                                    extra.insert_text((55, 70), "SECOND INPUT UNIQUE Page 4", fontsize=16)
+                                    second.save(member)
+                            elif n == 1 and tool.id == "zip-create":
+                                member = fixture / "second-zip.txt"
+                                member.write_text(
+                                    "SECOND INPUT UNIQUE — سلامة 00123\n"
+                                    "CSV, PDF and image conversion smoke fixture\n",
+                                    encoding="utf-8",
+                                )
+                            up=smoke.Upload(member.name,member.read_bytes())
                             inputs.append(validate_upload(up,max_bytes=settings.max_file_bytes,inspect_only=False,
                                 workspace=workspace.path,max_pdf_pages=settings.max_pdf_pages))
                     requested_param = smoke.param_for(tool)
