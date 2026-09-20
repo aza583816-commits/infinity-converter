@@ -64,12 +64,35 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
                 workbook.close()
             return "every cell from every original worksheet survives as Unicode-equivalent selectable PDF text"
         if tool_id == "ppt-to-pdf":
+            # Distinct synthetic slides in mixed/dense corpora expose silently
+            # omitted, interchanged or extra PDF pages that a one-slide smoke
+            # fixture cannot detect. Review each rendered slide separately.
             presentation = Presentation(source)
-            assert len(presentation.slides) == 1
-            all_text = [shape.text for slide in presentation.slides for shape in slide.shapes
-                        if getattr(shape, "has_text_frame", False) and shape.text.strip()]
-            assert all_text and all(text in extracted for text in all_text)
-            return "PowerPoint title and body text survive as selectable text in the PDF"
+            assert len(presentation.slides) >= 1
+            with pymupdf.open(output) as pdf:
+                assert len(pdf) == len(presentation.slides), (
+                    "PowerPoint slide count differs from rendered PDF pages",
+                    len(presentation.slides), len(pdf),
+                )
+                for slide_number, (slide, page) in enumerate(zip(presentation.slides, pdf), 1):
+                    expected = [shape.text.strip() for shape in slide.shapes
+                                if getattr(shape, "has_text_frame", False) and shape.text.strip()]
+                    assert expected, ("empty PowerPoint fixture slide", slide_number)
+                    rendered = " ".join(unicodedata.normalize(
+                        "NFKC", page.get_text("text")).split())
+                    for value in expected:
+                        wanted = " ".join(unicodedata.normalize("NFKC", value).split())
+                        assert wanted in rendered, (
+                            "Slide lost title/body or text was rendered out of source slide order",
+                            slide_number, value, rendered[:1300],
+                        )
+                    words = page.get_text("words")
+                    assert words and all(
+                        -2 <= word[0] < word[2] <= page.rect.width + 2
+                        and -2 <= word[1] < word[3] <= page.rect.height + 2
+                        for word in words
+                    ), ("Slide has clipped/off-page rendered text", slide_number)
+            return "each PowerPoint slide maps to exactly one PDF page in source order, with all slide text inside visible page bounds"
         if tool_id == "txt-to-pdf":
             lines = [line for line in source.read_text(encoding="utf-8").splitlines() if line]
             normal = unicodedata.normalize("NFKC", extracted)
