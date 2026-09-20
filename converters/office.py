@@ -302,8 +302,18 @@ def _pdf_has_text_fragments(output: Path, fragments: list[str]) -> bool:
             for page in document
         )
     actual = " ".join(actual.split())
+    # PDF text extraction may concatenate neighboring table cells when their
+    # scripts differ (e.g. Arabic name immediately followed by an ASCII ID).
+    # Restore only Arabic/ASCII script boundaries; do NOT split ASCII letters
+    # from digits, which could make a truncated identifier pass the audit.
+    script_boundary = (
+        r"(?<=[\\u0600-\\u06FF])(?=[A-Za-z0-9])"
+        r"|(?<=[A-Za-z0-9])(?=[\\u0600-\\u06FF])"
+    )
+    actual = re.sub(script_boundary, " ", actual)
     for fragment in fragments:
         expected = " ".join(unicodedata.normalize("NFKC", fragment).split())
+        expected = re.sub(script_boundary, " ", expected)
         if not expected:
             continue
         # Delimit only word-like ends. This permits ordinary punctuation around
