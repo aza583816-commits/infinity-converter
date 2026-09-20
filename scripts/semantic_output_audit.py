@@ -233,22 +233,59 @@ def independent_oracle(tool_id: str, source: Path | None, output: Path, fixture:
         assert actual==expected, (expected, actual)
         return "whitespace normalized without losing or reordering original tokens"
     if tool_id=="docx-to-text":
-        text=output.read_text(encoding="utf-8")
-        assert "Infinity Converter" in text and "Hello world" in text and "Alice" in text
-        return "original Word paragraphs and table cell content retained"
+        word = Document(source)
+        expected = []
+        for block in word.iter_inner_content():
+            if hasattr(block, "rows"):
+                for row in block.rows:
+                    expected.append("\t".join(cell.text.strip() for cell in row.cells))
+            elif block.text.strip():
+                expected.append(block.text)
+        actual = output.read_text(encoding="utf-8").splitlines()
+        assert actual == expected, ("Word-to-text changed paragraph/table values or original reading order", expected, actual)
+        return "all Word paragraphs and every table cell retained in original reading order, including trailing paragraphs and bilingual content"
     if tool_id=="pptx-to-text":
-        text=output.read_text(encoding="utf-8")
-        assert "Infinity Converter" in text and "Presentation test" in text
-        return "slide title and body text retained"
+        from pptx import Presentation
+        slides = Presentation(source)
+        text = output.read_text(encoding="utf-8")
+        expected_sections = []
+        for index, slide in enumerate(slides.slides, 1):
+            values = [shape.text.strip() for shape in slide.shapes
+                      if hasattr(shape, "text") and shape.text.strip()]
+            expected_sections.append(f"--- Slide {index} ---\n" + "\n".join(values))
+        assert text == "\n\n".join(expected_sections)
+        return "every original presentation slide and text-bearing shape survives exactly in source slide order"
     if tool_id=="word-to-pdf":
-        with pymupdf.open(str(output)) as pdf:
-            text=" ".join(p.get_text() for p in pdf)
-            assert "Infinity Converter" in text and "Alice" in text and "100" in text
-        return "rendered Word paragraph and table cells visible in PDF"
+        import unicodedata
+        word = Document(source)
+        expected = []
+        for block in word.iter_inner_content():
+            if hasattr(block, "rows"):
+                expected.extend(cell.text.strip() for row in block.rows for cell in row.cells)
+            elif block.text.strip():
+                expected.append(block.text.strip())
+        with pymupdf.open(output) as pdf:
+            assert len(pdf) >= 1
+            text = " ".join(unicodedata.normalize("NFKC", page.get_text("text"))
+                            for page in pdf)
+        normalized = " ".join(text.split())
+        for value in expected:
+            wanted = " ".join(unicodedata.normalize("NFKC", value).split())
+            assert wanted in normalized, ("Word-to-PDF lost actual original content", value, normalized[:1800])
+        return "all source Word paragraph and table cell strings across the entire document survive in PDF Unicode text"
     if tool_id=="pdf-to-text":
-        text=output.read_text(encoding="utf-8")
-        assert "Page 1" in text and "Page 3" in text and text.index("Page 1")<text.index("Page 3")
-        return "all page text retained in source sequence"
+        import unicodedata
+        text = " ".join(unicodedata.normalize("NFKC", output.read_text(encoding="utf-8")).split())
+        previous = -1
+        with pymupdf.open(source) as pdf:
+            assert len(pdf) >= 3
+            for index, page in enumerate(pdf, 1):
+                expected = " ".join(unicodedata.normalize("NFKC", page.get_text("text")).split())
+                assert expected and expected in text, (index, expected[:400], text[:1200])
+                position = text.find(expected, previous + 1)
+                assert position >= 0 and position > previous, ("PDF page text reordered", index)
+                previous = position
+        return "every PDF page's independently extracted full Unicode text survives in original page order"
     if tool_id=="zip-create":
         second = fixture / "second-zip.txt"
         assert second.is_file() and second.read_bytes() != source.read_bytes()
