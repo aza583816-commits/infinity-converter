@@ -68,7 +68,17 @@ def test_long_word_pdf_preserves_every_original_marker(tmp_path: Path, language:
                 markers.append(value)
     doc.save(source)
     output = office_to_pdf(source, tmp_path / "output", timeout=120)
-    actual = pdf_text_and_geometry(output)
+    # Independently validate visual text geometry with PyMuPDF, then use
+    # pypdf's logical Unicode extraction for source-string fidelity. Some
+    # valid RTL PDFs expose visually-correct Arabic in reversed glyph order
+    # through PyMuPDF's extractor; pypdf recovers the logical source order.
+    # Both independent PDF parsers must recognize all pages.
+    pdf_text_and_geometry(output)
+    from pypdf import PdfReader
+    reader = PdfReader(str(output))
+    with pymupdf.open(output) as visual:
+        assert len(reader.pages) == len(visual), "PDF parsers disagree on page count"
+    actual = normalized(" ".join(page.extract_text() or "" for page in reader.pages))
     missing = [value for value in markers if normalized(value) not in actual]
     assert not missing, (
         "Source Word content lost or reordered within fields",
