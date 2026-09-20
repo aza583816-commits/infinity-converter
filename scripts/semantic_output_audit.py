@@ -121,6 +121,7 @@ def independent_oracle(tool_id: str, source: Path | None, output: Path, fixture:
                           else None)
                 assert marker, ("PDF fixture page has no independently known marker", page_no, source_text[:300])
                 expected_page_markers.append(marker)
+                assert marker in actual, ("PDF source page missing from DOCX", page_no, marker, actual[:900])
                 # All unique source-page fields, not only their page number,
                 # must survive the editable Word conversion.
                 for field in ("Columns Alpha 00123", "Beta 00999"):
