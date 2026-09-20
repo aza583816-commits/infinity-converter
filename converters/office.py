@@ -627,6 +627,18 @@ def markdown_to_html(source: Path, output: Path):
         body = markdown_lib.markdown(text, extensions=["extra", "tables", "sane_lists"])
     else:
         body = _basic_markdown(text)
+    # LibreOffice Writer/Web can collapse an un-sized Markdown table into
+    # extremely narrow columns and break even short fields into one glyph per
+    # line. Supply the HTML width attribute (not CSS width alone): Writer's
+    # HTML importer honors this attribute when creating the printable table.
+    # Keep any explicit width already supplied by a raw HTML table.
+    def _printable_table(match):
+        attributes = match.group(1)
+        if re.search(r"\\bwidth\\s*=", attributes, flags=re.I):
+            return match.group(0)
+        return '<table width="100%"' + attributes + ">"
+
+    body = re.sub(r"<table\\b([^>]*)>", _printable_table, body, flags=re.I)
     html = (
         "<!doctype html><html><head><meta charset=\"utf-8\">"
         "<style>body{font-family:sans-serif;max-width:800px;margin:40px auto;line-height:1.6}"
