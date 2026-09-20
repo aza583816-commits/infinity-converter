@@ -358,10 +358,26 @@ def independent_oracle(tool_id: str, source: Path | None, output: Path, fixture:
         assert len(parsed.pages) == page_count, "Independent PDF parsers disagree on page count"
         text = " ".join(unicodedata.normalize("NFKC", page.extract_text() or "")
                         for page in parsed.pages)
-        normalized = " ".join(text.split())
+        import re
+
+        def preserve_arabic_numeric_word_boundaries(value: str) -> str:
+            # Independent PDF extractors can omit whitespace at script changes
+            # despite separate, non-overlapping visible words in the PDF.
+            # Restore only Arabic<->digit boundaries. Never split one numeric
+            # identifier into two tokens or drop an expected source word.
+            return re.sub(
+                r"(?<=[\\u0600-\\u06FF])(?=[0-9])|(?<=[0-9])(?=[\\u0600-\\u06FF])",
+                " ", " ".join(unicodedata.normalize("NFKC", value).split())
+            )
+
+        normalized = preserve_arabic_numeric_word_boundaries(text)
         for value in expected:
-            wanted = " ".join(unicodedata.normalize("NFKC", value).split())
-            assert wanted in normalized, ("Word-to-PDF lost actual original content", value, normalized[:1800])
+            wanted = preserve_arabic_numeric_word_boundaries(value)
+            # Match the complete source field: a truncated numeric ID cannot
+            # pass by matching a prefix of a longer extracted identifier.
+            assert re.search(r"(?<!\\w)" + re.escape(wanted) + r"(?!\\w)", normalized), (
+                "Word-to-PDF lost actual original content", value, normalized[:1800]
+            )
         return "all source Word paragraph and table cell strings across the entire document survive in PDF Unicode text"
     if tool_id=="pdf-to-text":
         import unicodedata
