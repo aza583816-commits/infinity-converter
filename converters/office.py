@@ -405,6 +405,63 @@ def _printable_simple_xlsx_html(source: Path, output_dir: Path) -> Path:
         book.close()
 
 
+def _render_simple_xlsx_paginated_fallback(prepared: Path, output: Path) -> None:
+    """Render small plain worksheets in bounded table sections without lost rows.
+
+    A single long HTML table can silently stop at the final page in PyMuPDF
+    Story, even when the original source contains additional rows. Give each
+    short section an independent Story and merge every resulting PDF page.
+    The caller still checks *all* original source cell values afterwards.
+    """
+    import pymupdf
+
+    source_html = prepared.read_text(encoding="utf-8")
+    sections = re.findall(
+        r"(<h2>.*?</h2>)<table border='1'>(.*?)</table>",
+        source_html, flags=re.S,
+    )
+    if not sections or len(sections) != source_html.count("<table border='1'>"):
+        raise ValueError("تعذر تقسيم صفحات جدول Excel دون فقدان بيانات.")
+
+    temporary = output.with_name(output.stem + "-assembled.pdf")
+    generated = []
+    part_index = 0
+    try:
+        with pymupdf.open() as assembled:
+            for title, body in sections:
+                rows = re.findall(r"<tr>.*?</tr>", body, flags=re.S)
+                if len(rows) != body.count("<tr>"):
+                    raise ValueError("تعذر الحفاظ على جميع صفوف جدول Excel.")
+                for start in range(0, len(rows), 20):
+                    part_index += 1
+                    part_html = output.with_name(
+                        f"{output.stem}-sheet-part-{part_index:04d}.html"
+                    )
+                    part_pdf = part_html.with_suffix(".pdf")
+                    generated.extend((part_html, part_pdf))
+                    part_html.write_text(
+                        '<!doctype html><html><head><meta charset="utf-8">'
+                        '<style>table{border-collapse:collapse;width:100%}'
+                        'td{padding:3px;overflow-wrap:anywhere}</style></head>'
+                        '<body>' + title + "<table border='1'>" +
+                        "".join(rows[start:start + 20]) + "</table></body></html>",
+                        encoding="utf-8",
+                    )
+                    _render_html_story_fallback(part_html, part_pdf)
+                    with pymupdf.open(part_pdf) as part:
+                        if len(part) == 0:
+                            raise ValueError("أنتج تصدير Excel صفحة PDF فارغة.")
+                        assembled.insert_pdf(part)
+            if len(assembled) == 0:
+                raise ValueError("تعذر إخراج صفحات Excel إلى PDF.")
+            assembled.save(temporary)
+        temporary.replace(output)
+    finally:
+        temporary.unlink(missing_ok=True)
+        for part in generated:
+            part.unlink(missing_ok=True)
+
+
 def office_to_pdf(source: Path, output_dir: Path, timeout: int) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
     _reject_remote_html_resources(source)
@@ -498,7 +555,7 @@ def office_to_pdf(source: Path, output_dir: Path, timeout: int) -> Path:
             # Restrict this to simple, unstyled, formula-free workbooks. Do not
             # silently discard complex formatting or unsupported sheet objects.
             prepared = _printable_simple_xlsx_html(source, output_dir)
-            _render_html_story_fallback(prepared, produced)
+            _render_simple_xlsx_paginated_fallback(prepared, produced)
             if not _pdf_has_text_fragments(produced, fragments):
                 raise ValueError("تعذر الحفاظ على جميع قيم خلايا Excel في ملف PDF الناتج.")
     return produced
