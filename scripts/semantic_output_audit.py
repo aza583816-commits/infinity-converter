@@ -19,7 +19,7 @@ import zipfile
 from pathlib import Path
 
 import pymupdf
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageChops, ImageDraw, ImageFont, ImageOps, ImageStat
 from docx import Document
 from openpyxl import load_workbook
 from pypdf import PdfReader
@@ -81,9 +81,13 @@ def independent_oracle(tool_id: str, source: Path | None, output: Path, fixture:
             assert len(expected) >= 3 and actual == expected + expected
         return "merged both entire input PDFs in source page order with exact extractable text"
     if tool_id == "pdf-extract-pages":
-        with pymupdf.open(str(output)) as pdf:
-            assert len(pdf) == 2 and "Page 1" in pdf[0].get_text() and "Page 2" in pdf[1].get_text()
-        return "requested page count, original order and text"
+        with pymupdf.open(str(source)) as before, pymupdf.open(str(output)) as after:
+            assert len(before) >= 3 and len(after) == 2
+            for i in range(2):
+                assert after[i].get_text("text") == before[i].get_text("text"), (i, "Extracted PDF page content differs from source")
+                assert abs(after[i].rect.width - before[i].rect.width) < .02
+                assert abs(after[i].rect.height - before[i].rect.height) < .02
+        return "only the requested two PDF pages retain exact source text, original sequence and physical dimensions"
     if tool_id == "pdf-delete-pages":
         with pymupdf.open(str(source)) as original, pymupdf.open(str(output)) as pdf:
             expected = [p.get_text("text") for p in original]
@@ -92,10 +96,17 @@ def independent_oracle(tool_id: str, source: Path | None, output: Path, fixture:
         return "deleted exactly requested third page while preserving every other source page and text"
     if tool_id == "pdf-to-docx":
         doc = Document(str(output))
-        extracted = " ".join([p.text for p in doc.paragraphs] + [c.text for t in doc.tables for row in t.rows for c in row.cells])
-        assert PDF_TEXT in extracted
-        assert abs(doc.sections[0].page_width.inches - 595 / 72) < .25
-        return "editable Word text retained and source page width reconstructed"
+        import unicodedata
+        extracted = " ".join(unicodedata.normalize("NFKC", p.text) for p in doc.paragraphs)
+        extracted += " " + " ".join(unicodedata.normalize("NFKC", c.text) for t in doc.tables for row in t.rows for c in row.cells)
+        actual = " ".join(extracted.split())
+        with pymupdf.open(source) as before:
+            for page_no, page in enumerate(before, 1):
+                assert f"Page {page_no}" in actual, (page_no, actual[:900])
+                assert "INFINITY CONVERTER" in page.get_text("text")
+            assert abs(doc.sections[0].page_width.inches - before[0].rect.width / 72) < .25
+        assert "test@example.com" in actual and "1250.50" in actual
+        return "all source PDF page markers and key text fields retained as editable Word text with original page width"
     if tool_id == "pdf-grayscale":
         with pymupdf.open(str(source)) as original, pymupdf.open(str(output)) as converted:
             assert len(converted) == len(original)
@@ -112,25 +123,52 @@ def independent_oracle(tool_id: str, source: Path | None, output: Path, fixture:
             assert len(pdf) >= 1 and any(PDF_TEXT in p.get_text() for p in pdf)
         return "source PDF text survives transformation"
     if tool_id == "pdf-unlock":
+        locked = PdfReader(str(source))
+        assert locked.is_encrypted and locked.decrypt("secret")
         reader = PdfReader(str(output))
-        assert not reader.is_encrypted and len(reader.pages) >= 1
-        return "encrypted source unlocked"
+        assert not reader.is_encrypted and len(reader.pages) == len(locked.pages)
+        for old, new in zip(locked.pages, reader.pages):
+            assert abs(float(old.mediabox.width) - float(new.mediabox.width)) < 1
+            assert abs(float(old.mediabox.height) - float(new.mediabox.height)) < 1
+        return "encrypted source becomes unencrypted and preserves exact page count and geometry"
     if tool_id == "pdf-password-protect":
+        before = PdfReader(str(source))
         reader = PdfReader(str(output))
-        assert reader.is_encrypted and reader.decrypt("secret")
-        return "password actually protects output and requested secret unlocks it"
+        assert reader.is_encrypted and not reader.decrypt("definitely-not-the-user-password")
+        assert reader.decrypt("secret") and len(reader.pages) == len(before.pages)
+        for old, new in zip(before.pages, reader.pages):
+            assert (new.extract_text() or "").strip() == (old.extract_text() or "").strip()
+        return "incorrect password denied; correct password unlocks every original PDF page and exact text"
     if tool_id in IMG_IDS:
         with Image.open(source) as before, Image.open(output) as after:
-            assert before.size == after.size
+            expected = ImageOps.exif_transpose(before).convert("RGB")
+            actual = after.convert("RGB")
+            assert expected.size == actual.size
             assert after.format == {"image-to-jpg":"JPEG", "image-to-png":"PNG", "image-to-webp":"WEBP"}[tool_id]
-        return "correct image format without changing input dimensions"
+            # Compare the *actual* foreground where source ink exists; a blank
+            # white image would otherwise pass a whole-image mean error on a
+            # white-backed document with relatively little black text.
+            source_gray = expected.convert("L")
+            foreground = Image.new("L", expected.size, 0)
+            foreground.paste(255, mask=source_gray.point(lambda v: 255 if v < 160 else 0))
+            assert foreground.getbbox(), "the image fixture must contain visible foreground"
+            diff = ImageChops.difference(expected, actual)
+            ink_error = max(ImageStat.Stat(diff.getchannel(ch), mask=foreground).mean[0] for ch in ("R", "G", "B"))
+            assert ink_error < (1 if tool_id == "image-to-png" else 30), (tool_id, ink_error)
+        return "requested encoded image format, dimensions and actual dark foreground pixels match source within lossless/lossy tolerance"
     if tool_id == "image-grayscale":
-        with Image.open(output) as img:
-            rgb=img.convert("RGB")
-            for p in [(0,0),(rgb.width//2,rgb.height//2)]:
-                a,b,c=rgb.getpixel(p)
-                assert max(a,b,c)-min(a,b,c)<=1
-        return "output pixels really grayscale"
+        with Image.open(source) as original, Image.open(output) as img:
+            expected = ImageOps.grayscale(ImageOps.exif_transpose(original).convert("RGB"))
+            actual = img.convert("RGB")
+            assert actual.size == expected.size
+            channels = actual.split()
+            assert ImageChops.difference(channels[0], channels[1]).getbbox() is None
+            assert ImageChops.difference(channels[1], channels[2]).getbbox() is None
+            actual_luma = actual.convert("L")
+            error = ImageStat.Stat(ImageChops.difference(expected, actual_luma)).mean[0]
+            assert error < 5, ("grayscale output lost source visual content", error)
+            assert ImageStat.Stat(actual_luma).stddev[0] > 1
+        return "every output pixel is grayscale and source visual information survives independent luminance comparison"
     if tool_id == "file-hash":
         expected=hashlib.sha256(source.read_bytes()).hexdigest()
         assert expected in output.read_text(encoding="utf-8").lower()
@@ -206,9 +244,11 @@ def independent_oracle(tool_id: str, source: Path | None, output: Path, fixture:
         return "all page text retained in source sequence"
     if tool_id=="zip-create":
         with zipfile.ZipFile(output) as z:
-            assert z.testzip() is None and len(z.infolist())>=2
-            assert any(source.read_bytes()==z.read(name) for name in z.namelist() if not name.endswith("/"))
-        return "at least one original member survives exactly, and ZIP CRCs pass"
+            assert z.testzip() is None
+            members = [entry for entry in z.infolist() if not entry.is_dir()]
+            assert len(members) == 2 and len({entry.filename for entry in members}) == 2
+            assert all(z.read(entry.filename) == source.read_bytes() for entry in members)
+        return "both uploaded files survive as separate ZIP members, each byte-exact with valid CRC"
     if tool_id=="gzip-compress":
         assert gzip.decompress(output.read_bytes())==source.read_bytes()
         return "compressed original bytes round-trip exactly"
