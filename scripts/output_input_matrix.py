@@ -15,6 +15,7 @@ import pymupdf
 from PIL import Image, ImageDraw
 from docx import Document
 from openpyxl import Workbook
+from pptx import Presentation
 
 import scripts.full_operation_smoke as smoke
 
@@ -60,6 +61,19 @@ def diversify(base: Path, profile: str) -> None:
     secondary.append(["English", "Arabic"])
     secondary.append(["Safety", "سلامة"])
     workbook.save(base / "sheet.xlsx")
+
+    # A one-slide smoke presentation cannot catch missing/reordered slides or
+    # broken PowerPoint pagination. Use distinct synthetic slides in both
+    # complex profiles and verify every slide against its PDF page.
+    slides = Presentation(base / "slides.pptx")
+    for index in range(2, 3 if profile == "mixed" else 5):
+        slide = slides.slides.add_slide(slides.slide_layouts[1])
+        slide.shapes.title.text = f"INFINITY SAFETY SLIDE {index} / 00123"
+        slide.placeholders[1].text = (
+            f"Slide {index} content: Safety & Fire Protection.\\n"
+            f"Reference 00{index} and classroom 603."
+        )
+    slides.save(base / "slides.pptx")
 
     (base / "data.csv").write_text(
         'name,code,note\n'
