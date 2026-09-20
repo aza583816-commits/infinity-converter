@@ -1,0 +1,17 @@
+name: GitHub runner diagnostic
+on:
+  push:
+    branches: ['quality/full-site-output-matrix']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  runner-diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Verify GitHub-hosted runner can execute a basic command
+        run: |
+          echo "GitHub-hosted runner started"
+          echo "Commit $GITHUB_SHA"
+          uname -a
