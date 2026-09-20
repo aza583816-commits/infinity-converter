@@ -74,10 +74,16 @@ def test_800_version_and_worker_cache_are_consistent():
     assert '"version": "8.0.0"' in read('manifest.json')
     worker = read('static/sw.js')
     assert "infinity-static-v8.0.0" in worker
+    # The stylesheet cache policy changed after Safari displayed an unstyled
+    # production page. CSS must be fetched fresh, not precached alongside JS.
+    assert "url.pathname.startsWith('/static/css/')" in worker
+    assert "fetch(request, {cache: 'no-store'})" in worker
     for asset in (
-        "/static/css/app.css?v=8.0.0",
-        "/static/css/a11y.css?v=8.0.0",
         "/static/js/app.js?v=8.0.0",
         "/static/js/smart-flow.js?v=8.0.0",
     ):
         assert asset in worker
+    template = read('templates/base.html')
+    for asset in ('app.css', 'a11y.css'):
+        assert f"/static/css/{asset}?v={{" in template
+        assert 'css-recovery-20260920' in template
