@@ -23,7 +23,12 @@ on_exit() {
 trap on_exit EXIT
 
 echo "Building the exact production Dockerfile with native tools and pytest."
-docker build --progress=plain -t "$IMAGE" . 2>&1 | tee "$REPORTS/docker-build.log"
+if docker buildx version >/dev/null 2>&1; then
+  docker buildx build --progress=plain --load -t "$IMAGE" . 2>&1 | tee "$REPORTS/docker-build.log"
+else
+  # Minimal sandbox Docker installations may provide only the legacy builder.
+  docker build -t "$IMAGE" . 2>&1 | tee "$REPORTS/docker-build.log"
+fi
 docker run --rm --network none "$IMAGE" python -m pip check \
   2>&1 | tee "$REPORTS/dependency-check.log"
 docker run --rm --network none "$IMAGE" sh -c \
