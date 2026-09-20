@@ -31,8 +31,8 @@
   <script type="application/ld+json" nonce="{{ csp_nonce }}">{{ organization_schema|tojson }}</script>
   <script type="application/ld+json" nonce="{{ csp_nonce }}">{{ website_schema|tojson }}</script>
   <link rel="manifest" href="/manifest.json?v={{ app_version }}">
-  <link rel="stylesheet" href="/static/css/app.css?v={{ app_version }}">
-  <link rel="stylesheet" href="/static/css/a11y.css?v={{ app_version }}">
+  <link rel="stylesheet" href="/static/css/app.css?v={{ app_version }}-css-recovery-20260920">
+  <link rel="stylesheet" href="/static/css/a11y.css?v={{ app_version }}-css-recovery-20260920">
   {% block head %}{% endblock %}
 </head>
 <body class="infinity-shell v7-shell" data-max-file-bytes="{{ plan_max_file_mb * 1024 * 1024 }}" data-direction="{{ 'ltr' if lang == 'en' else 'rtl' }}" data-billing-enabled="{{ '1' if public_billing_enabled else '0' }}" data-page-path="{{ request.path }}" data-release="{{ app_version }}" data-request-timeout-seconds="{{ request_timeout_seconds }}">
