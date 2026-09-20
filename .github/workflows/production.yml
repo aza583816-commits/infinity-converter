@@ -9,7 +9,9 @@ permissions:
 jobs:
   production:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    # Six independent conversion corpora plus two extra confirmation rounds
+    # need sufficient runtime; GitHub's normal fail-fast steps remain active.
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
