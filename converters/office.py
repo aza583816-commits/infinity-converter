@@ -286,7 +286,14 @@ def _source_pdf_text_fragments(source: Path) -> list[str]:
 
 
 def _pdf_has_text_fragments(output: Path, fragments: list[str]) -> bool:
+    """Require every source field as a complete token sequence, not a substring.
+
+    A PDF containing 000012 must not be accepted as preserving source ID
+    00001; likewise an Arabic prefix inside a longer word is not equivalent
+    to the original field. Normalize compatibility glyphs on both sides.
+    """
     import pymupdf
+    import re
     import unicodedata
 
     with pymupdf.open(output) as document:
@@ -295,7 +302,17 @@ def _pdf_has_text_fragments(output: Path, fragments: list[str]) -> bool:
             for page in document
         )
     actual = " ".join(actual.split())
-    return all(" ".join(fragment.split()) in actual for fragment in fragments)
+    for fragment in fragments:
+        expected = " ".join(unicodedata.normalize("NFKC", fragment).split())
+        if not expected:
+            continue
+        # Delimit only word-like ends. This permits ordinary punctuation around
+        # a complete source cell, without accepting a prefix of another cell.
+        prefix = r"(?<!\\w)" if expected[0].isalnum() or expected[0] == "_" else ""
+        suffix = r"(?!\\w)" if expected[-1].isalnum() or expected[-1] == "_" else ""
+        if re.search(prefix + re.escape(expected) + suffix, actual) is None:
+            return False
+    return True
 
 
 def _printable_text_html(source: Path, output_dir: Path) -> Path:
