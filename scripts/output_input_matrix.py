@@ -70,7 +70,7 @@ def diversify(base: Path, profile: str) -> None:
         slide = slides.slides.add_slide(slides.slide_layouts[1])
         slide.shapes.title.text = f"INFINITY SAFETY SLIDE {index} / 00123"
         slide.placeholders[1].text = (
-            f"Slide {index} content: Safety & Fire Protection.\\n"
+            f"Slide {index} content: Safety & Fire Protection.\n"
             f"Reference 00{index} and classroom 603."
         )
     slides.save(base / "slides.pptx")
