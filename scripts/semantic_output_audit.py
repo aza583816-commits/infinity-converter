@@ -108,12 +108,31 @@ def independent_oracle(tool_id: str, source: Path | None, output: Path, fixture:
         extracted += " " + " ".join(unicodedata.normalize("NFKC", c.text) for t in doc.tables for row in t.rows for c in row.cells)
         actual = " ".join(extracted.split())
         with pymupdf.open(source) as before:
+            expected_page_markers = []
             for page_no, page in enumerate(before, 1):
-                assert f"Page {page_no}" in actual, (page_no, actual[:900])
-                assert "INFINITY CONVERTER" in page.get_text("text")
+                source_text = " ".join(unicodedata.normalize("NFKC", page.get_text("text")).split())
+                assert source_text, ("Empty source PDF fixture page", page_no)
+                # Independently derive a distinctive marker for *each* page.
+                # The mixed corpus adds a landscape page labeled LANDSCAPE PAGE
+                # FOUR rather than Page 4: never silently drop that source page.
+                marker = (f"Page {page_no}" if f"Page {page_no}" in source_text
+                          else f"EXTRA PAGE {page_no}" if f"EXTRA PAGE {page_no}" in source_text
+                          else "LANDSCAPE PAGE FOUR" if "LANDSCAPE PAGE FOUR" in source_text
+                          else None)
+                assert marker, ("PDF fixture page has no independently known marker", page_no, source_text[:300])
+                expected_page_markers.append(marker)
+                # All unique source-page fields, not only their page number,
+                # must survive the editable Word conversion.
+                for field in ("Columns Alpha 00123", "Beta 00999"):
+                    if field in source_text:
+                        assert field in actual, ("PDF source field lost in DOCX", page_no, field)
+                assert marker in actual, ("PDF source page missing from DOCX", page_no, marker, actual[:900])
             assert abs(doc.sections[0].page_width.inches - before[0].rect.width / 72) < .25
+        positions = [actual.find(marker) for marker in expected_page_markers]
+        assert all(pos >= 0 for pos in positions) and positions == sorted(positions), (
+            "PDF source page markers missing or out of order in DOCX", expected_page_markers, positions)
         assert "test@example.com" in actual and "1250.50" in actual
-        return "all source PDF page markers and key text fields retained as editable Word text with original page width"
+        return "all source PDF page markers including landscape/mixed pages, unique source fields and original order retained as editable Word text"
     if tool_id == "pdf-grayscale":
         with pymupdf.open(str(source)) as original, pymupdf.open(str(output)) as converted:
             assert len(converted) == len(original)
