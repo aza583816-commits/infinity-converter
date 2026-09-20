@@ -308,8 +308,8 @@ def _pdf_has_text_fragments(output: Path, fragments: list[str]) -> bool:
             continue
         # Delimit only word-like ends. This permits ordinary punctuation around
         # a complete source cell, without accepting a prefix of another cell.
-        prefix = r"(?<!\\w)" if expected[0].isalnum() or expected[0] == "_" else ""
-        suffix = r"(?!\\w)" if expected[-1].isalnum() or expected[-1] == "_" else ""
+        prefix = r"(?<!\w)" if expected[0].isalnum() or expected[0] == "_" else ""
+        suffix = r"(?!\w)" if expected[-1].isalnum() or expected[-1] == "_" else ""
         if re.search(prefix + re.escape(expected) + suffix, actual) is None:
             return False
     return True
