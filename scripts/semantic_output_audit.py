@@ -366,7 +366,7 @@ def independent_oracle(tool_id: str, source: Path | None, output: Path, fixture:
             # Restore only Arabic<->digit boundaries. Never split one numeric
             # identifier into two tokens or drop an expected source word.
             return re.sub(
-                r"(?<=[\\u0600-\\u06FF])(?=[0-9])|(?<=[0-9])(?=[\\u0600-\\u06FF])",
+                r"(?<=[\u0600-\u06FF])(?=[0-9])|(?<=[0-9])(?=[\u0600-\u06FF])",
                 " ", " ".join(unicodedata.normalize("NFKC", value).split())
             )
 
@@ -375,7 +375,7 @@ def independent_oracle(tool_id: str, source: Path | None, output: Path, fixture:
             wanted = preserve_arabic_numeric_word_boundaries(value)
             # Match the complete source field: a truncated numeric ID cannot
             # pass by matching a prefix of a longer extracted identifier.
-            assert re.search(r"(?<!\\w)" + re.escape(wanted) + r"(?!\\w)", normalized), (
+            assert re.search(r"(?<!\w)" + re.escape(wanted) + r"(?!\w)", normalized), (
                 "Word-to-PDF lost actual original content", value, normalized[:1800]
             )
         return "all source Word paragraph and table cell strings across the entire document survive in PDF Unicode text"
