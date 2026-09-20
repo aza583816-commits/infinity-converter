@@ -307,8 +307,8 @@ def _pdf_has_text_fragments(output: Path, fragments: list[str]) -> bool:
     # Restore only Arabic/ASCII script boundaries; do NOT split ASCII letters
     # from digits, which could make a truncated identifier pass the audit.
     script_boundary = (
-        r"(?<=[\\u0600-\\u06FF])(?=[A-Za-z0-9])"
-        r"|(?<=[A-Za-z0-9])(?=[\\u0600-\\u06FF])"
+        r"(?<=[\u0600-\u06FF])(?=[A-Za-z0-9])"
+        r"|(?<=[A-Za-z0-9])(?=[\u0600-\u06FF])"
     )
     actual = re.sub(script_boundary, " ", actual)
     for fragment in fragments:
