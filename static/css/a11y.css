@@ -148,3 +148,42 @@
     border: 1px solid CanvasText;
   }
 }
+
+/* Direct conversion choices remain usable before any assistant is initialized. */
+.v8-quick-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .65rem;
+  margin: 1.3rem 0;
+  align-items: stretch;
+}
+.v8-quick-tools a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: .7rem 1rem;
+  border: 1px solid currentColor;
+  border-radius: .85rem;
+  text-decoration: none;
+  font-weight: 650;
+  max-width: 100%;
+  background: var(--surface, #fff);
+  color: var(--ink, #102019);
+}
+.v8-quick-tools a:hover,
+.v8-quick-tools a:focus-visible {
+  border-color: var(--green, #18a85a);
+  text-decoration: underline;
+}
+@media (max-width: 760px) {
+  .v8-quick-tools {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .5rem;
+  }
+  .v8-quick-tools a {
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
+}
