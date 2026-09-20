@@ -634,11 +634,11 @@ def markdown_to_html(source: Path, output: Path):
     # Keep any explicit width already supplied by a raw HTML table.
     def _printable_table(match):
         attributes = match.group(1)
-        if re.search(r"\\bwidth\\s*=", attributes, flags=re.I):
+        if re.search(r"\bwidth\s*=", attributes, flags=re.I):
             return match.group(0)
         return '<table width="100%"' + attributes + ">"
 
-    body = re.sub(r"<table\\b([^>]*)>", _printable_table, body, flags=re.I)
+    body = re.sub(r"<table\b([^>]*)>", _printable_table, body, flags=re.I)
     html = (
         "<!doctype html><html><head><meta charset=\"utf-8\">"
         "<style>body{font-family:sans-serif;max-width:800px;margin:40px auto;line-height:1.6}"
