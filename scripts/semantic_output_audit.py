@@ -183,8 +183,25 @@ def independent_oracle(tool_id: str, source: Path | None, output: Path, fixture:
                 # A booklet places multiple source pages per sheet and can
                 # change the final sheet count and page order.
                 joined = " ".join(after)
-                for number in range(1, len(original) + 1):
-                    assert f"Page {number}" in joined, ("booklet lost a source page", number)
+                # The input corpus may append a landscape page whose source
+                # title is LANDSCAPE PAGE FOUR, rather than "Page 4".
+                # Derive each page marker from the *actual source page*;
+                # never accept a generic marker that was not in that page.
+                markers = []
+                for number, source_page in enumerate(original, 1):
+                    source_text = norm(source_page.get_text("text"))
+                    candidates = (f"Page {number}", f"EXTRA PAGE {number}",
+                                  "LANDSCAPE PAGE FOUR")
+                    marker = next((item for item in candidates
+                                   if item in source_text), None)
+                    if marker is None:
+                        lines = [norm(line) for line in source_page.get_text("text").splitlines()
+                                 if norm(line)]
+                        assert lines, ("booklet source page has no text marker", number)
+                        marker = lines[0]
+                    assert marker not in markers, ("booklet markers not unique", number, marker)
+                    markers.append(marker)
+                    assert marker in joined, ("booklet lost a source page", number, marker)
                 assert len(converted) <= len(original) + 1
             else:
                 assert len(converted) == len(original), (tool_id, len(original), len(converted))
@@ -332,8 +349,15 @@ def independent_oracle(tool_id: str, source: Path | None, output: Path, fixture:
                 expected.append(block.text.strip())
         with pymupdf.open(output) as pdf:
             assert len(pdf) >= 1
-            text = " ".join(unicodedata.normalize("NFKC", page.get_text("text"))
-                            for page in pdf)
+            page_count = len(pdf)
+            assert all(page.get_text("words") for page in pdf), "Blank Word PDF page"
+        # PyMuPDF can reorder Arabic glyphs in a valid Unicode PDF. Read the
+        # *same output* using an independent logical-text parser, rather than
+        # dropping Arabic assertions or tolerating changed source strings.
+        parsed = PdfReader(str(output))
+        assert len(parsed.pages) == page_count, "Independent PDF parsers disagree on page count"
+        text = " ".join(unicodedata.normalize("NFKC", page.extract_text() or "")
+                        for page in parsed.pages)
         normalized = " ".join(text.split())
         for value in expected:
             wanted = " ".join(unicodedata.normalize("NFKC", value).split())
