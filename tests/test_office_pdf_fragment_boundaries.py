@@ -38,7 +38,7 @@ def test_pdf_extractor_joined_arabic_and_ascii_cells_do_not_trigger_false_loss(m
     class FakePage:
         def get_text(self, kind: str) -> str:
             assert kind == "text"
-            return "name\\ncode\\nاسم، عربي00123\\n"
+            return "name\ncode\nاسم، عربي00123\n"
 
     class FakeDocument:
         def __enter__(self):
