@@ -15,6 +15,8 @@ except ImportError:  # Optional at import time; requirements install it in produ
     markdown_lib = None
 from openpyxl import Workbook
 
+from config.settings import settings
+
 
 _REMOTE_HTML_PATTERNS = (
     re.compile(r"\b(?:src|poster)\s*=\s*['\"]\s*(?:https?|ftp|file):", re.I),
@@ -110,9 +112,279 @@ def _run_libreoffice(cmd: list[str], *, timeout: int, env: dict[str, str]) -> No
         raise RuntimeError("فشل محرك Office في تحويل الملف.")
 
 
+def _expected_html_headings(source: Path) -> tuple[str, ...]:
+    """Read headings from original HTML, never from renderer-produced output."""
+    from html.parser import HTMLParser
+    import re
+
+    class HeadingParser(HTMLParser):
+        def __init__(self):
+            super().__init__(convert_charrefs=True)
+            self.in_heading = False
+            self.fragments = []
+            self.headings = []
+
+        def handle_starttag(self, tag, attrs):
+            if re.fullmatch(r"h[1-6]", tag):
+                self.in_heading = True
+                self.fragments = []
+
+        def handle_data(self, value):
+            if self.in_heading:
+                self.fragments.append(value)
+
+        def handle_endtag(self, tag):
+            if self.in_heading and re.fullmatch(r"h[1-6]", tag):
+                title = " ".join(" ".join(self.fragments).split())
+                if title:
+                    self.headings.append(title)
+                self.in_heading = False
+
+    parser = HeadingParser()
+    parser.feed(source.read_text(encoding="utf-8"))
+    parser.close()
+    return tuple(parser.headings)
+
+
+def _pdf_contains_headings(path: Path, headings: tuple[str, ...]) -> bool:
+    """Check actual PDF heading text, including Arabic visual rendering.
+
+    Some native PDF renderers store Arabic presentation glyphs with a broken
+    Unicode extraction map even when the printed glyphs are correct. For
+    these headings, require independently read-back Latin text AND Arabic
+    OCR on the rendered output; never declare headings preserved just
+    because an output file exists. Arabic visual OCR does not certify that
+    copying or searching its PDF text layer is lossless.
+    """
+    import re
+    import unicodedata
+    import pymupdf
+
+    def normalized(value: str) -> str:
+        return " ".join(unicodedata.normalize("NFKC", value).casefold().split())
+
+    with pymupdf.open(path) as pdf:
+        text = normalized(" ".join(page.get_text("text") for page in pdf))
+        pending_arabic = []
+        for title in headings:
+            expected = normalized(title)
+            if expected in text:
+                continue
+            if not re.search(r"[\u0600-\u06FF]", title):
+                return False
+            if not all(token in text for token in re.findall(r"[a-z0-9]+", expected)):
+                return False
+            pending_arabic.append(title)
+        if not pending_arabic:
+            return True
+        # The OCR branch is reached only when Unicode extraction does not
+        # reproduce an Arabic heading; it is not run on ordinary documents.
+        from PIL import Image
+        import pytesseract
+
+        snippets = []
+        for page in pdf:
+            pix = page.get_pixmap(
+                matrix=pymupdf.Matrix(2, 2),
+                colorspace=pymupdf.csRGB,
+                alpha=False,
+            )
+            image = Image.frombytes("RGB", (pix.width, pix.height), pix.samples)
+            try:
+                snippets.append(
+                    pytesseract.image_to_string(
+                        image, lang="ara+eng",
+                        timeout=min(settings.ocr_timeout_seconds, 20),
+                    )
+                )
+            except (RuntimeError, pytesseract.TesseractError):
+                return False
+            finally:
+                image.close()
+        visible = normalized(" ".join(snippets))
+        return all(
+            all(normalized(word) in visible
+                for word in re.findall(r"[\u0600-\u06FF]+", title))
+            for title in pending_arabic
+        )
+
+
+def _render_html_story_fallback(source: Path, output: Path) -> None:
+    """Use an independent paginated HTML renderer only when Writer lost text."""
+    import pymupdf
+
+    html_source = source.read_text(encoding="utf-8")
+    # Native fallback fonts can corrupt Arabic glyph mapping (for example,
+    # producing Ǆ/ǂ characters instead of an Arabic title). Embed an Arabic-
+    # capable font with a correct PDF Unicode map and a bundled font archive.
+    font_root = Path("/usr/share/fonts/truetype/noto")
+    font_file = font_root / "NotoSansArabic-Regular.ttf"
+    if font_file.is_file():
+        css = (
+            "@font-face{font-family:InfinityArabic;"
+            "src:url(NotoSansArabic-Regular.ttf)}"
+            "html,body,p,span,pre,table,tr,td,th,h1,h2,h3,h4,h5,h6"
+            "{font-family:InfinityArabic !important}"
+            "h1{font-size:24pt;font-weight:bold}"
+        )
+        font_archive = pymupdf.Archive(str(font_root))
+    else:
+        css = "h1{font-size:24pt;font-weight:bold}"
+        font_archive = None
+    story = pymupdf.Story(html_source, user_css=css, archive=font_archive)
+    temporary = output.with_name(output.stem + "-story.pdf")
+    writer = pymupdf.DocumentWriter(str(temporary))
+    page = pymupdf.Rect(0, 0, 595, 842)
+    frame = pymupdf.Rect(44, 44, 551, 798)
+    try:
+        story.write(writer, lambda _index, _filled: (page, frame, pymupdf.Identity))
+    finally:
+        writer.close()
+    temporary.replace(output)
+
+
+def _html_pdf_heading_fallback(source: Path, output_dir: Path) -> Path:
+    """Render heading text as styled paragraphs for LibreOffice Writer/Web.
+
+    Some lean LibreOffice installs produce an empty page in place of an HTML
+    heading while still converting the rest of the text. A print-only copy
+    keeps heading text visible without modifying the uploaded document.
+    The independently checked PDF output must still include source headings.
+    """
+    import re
+
+    html_text = source.read_text(encoding="utf-8")
+    if not re.search(r"<h[1-6]\b", html_text, flags=re.I):
+        return source
+
+    def open_heading(match):
+        level = int(match.group(1))
+        attributes = match.group(2)
+        size = {1: 24, 2: 20, 3: 17, 4: 15, 5: 13, 6: 12}[level]
+        # Preserve existing style/class/id attributes while applying a
+        # print-visible bold heading to the PDF-rendering copy only.
+        return f'<p{attributes} style="font-size:{size}pt;font-weight:bold">'
+
+    adapted = re.sub(r"<h([1-6])\b([^>]*)>", open_heading, html_text, flags=re.I)
+    adapted = re.sub(r"</h[1-6]\s*>", "</p>", adapted, flags=re.I)
+    if adapted == html_text:
+        return source
+    copy = output_dir / f"{source.stem}-pdf-headings.html"
+    copy.write_text(adapted, encoding="utf-8")
+    return copy
+
+
+def _source_pdf_text_fragments(source: Path) -> list[str]:
+    """Independent expected text from a small plain text / CSV source."""
+    if source.suffix.lower() == ".txt":
+        return [line.strip() for line in source.read_text(encoding="utf-8").splitlines()
+                if line.strip()]
+    if source.suffix.lower() == ".csv":
+        with source.open(encoding="utf-8-sig", newline="") as file:
+            return [cell for row in csv.reader(file) for cell in row if cell.strip()]
+    return []
+
+
+def _pdf_has_text_fragments(output: Path, fragments: list[str]) -> bool:
+    import pymupdf
+    import unicodedata
+
+    with pymupdf.open(output) as document:
+        actual = " ".join(
+            unicodedata.normalize("NFKC", page.get_text("text"))
+            for page in document
+        )
+    actual = " ".join(actual.split())
+    return all(" ".join(fragment.split()) in actual for fragment in fragments)
+
+
+def _printable_text_html(source: Path, output_dir: Path) -> Path:
+    """Generate bounded, escaped local HTML without loading external resources."""
+    import html
+
+    temporary = output_dir / f"{source.stem}-source-print.html"
+    if source.suffix.lower() == ".txt":
+        text = html.escape(source.read_text(encoding="utf-8"))
+        body = '<pre style="white-space:pre-wrap">' + text + "</pre>"
+    else:
+        with source.open(encoding="utf-8-sig", newline="") as file:
+            rows = list(csv.reader(file))
+        body = "<table border='1'>" + "".join(
+            "<tr>" + "".join(
+                "<td>" + html.escape(cell).replace("\r\n", "\n")
+                .replace("\r", "\n").replace("\n", "<br/>") + "</td>"
+                for cell in row
+            ) + "</tr>" for row in rows
+        ) + "</table>"
+    temporary.write_text(
+        '<!doctype html><html><head><meta charset="utf-8"></head>'
+        "<body>" + body + "</body></html>", encoding="utf-8"
+    )
+    return temporary
+
+
+def _xlsx_pdf_fragments(source: Path) -> list[str]:
+    """Read each nonempty cell independently, across every original worksheet."""
+    from openpyxl import load_workbook
+
+    book = load_workbook(source, read_only=True, data_only=True)
+    try:
+        return [str(value) for sheet in book
+                for row in sheet.iter_rows(values_only=True)
+                for value in row if value is not None and str(value).strip()]
+    finally:
+        book.close()
+
+
+def _printable_simple_xlsx_html(source: Path, output_dir: Path) -> Path:
+    """Keep every data cell when the native PDF lost Unicode on a small, plain XLSX.
+
+    Do not silently flatten chart-heavy, formula-driven or styled workbooks:
+    those need a faithful office renderer rather than a plain HTML table.
+    """
+    from openpyxl import load_workbook
+    import html
+
+    book = load_workbook(source, read_only=False, data_only=False)
+    try:
+        sections = []
+        cells = 0
+        for sheet in book:
+            if sheet._charts or sheet._images or len(sheet.merged_cells.ranges):
+                raise ValueError("لا يمكن استخدام التصدير النصي البديل لجداول ذات رسوم أو خلايا مدمجة.")
+            rows = []
+            for row in sheet:
+                cells += len(row)
+                if cells > 2000:
+                    raise ValueError("تعذر ضمان كامل محتوى الجدول الكبير في تصدير PDF البديل.")
+                formatted = []
+                for cell in row:
+                    if cell.data_type == "f":
+                        raise ValueError("تتطلب الصيغ الرياضية إخراج PDF مباشرًا يحفظ نتائجها.")
+                    if cell.has_style and cell.style_id not in {0}:
+                        raise ValueError("لا يمكن استبدال تنسيق الجدول المعقد بإخراج مبسط دون موافقة المستخدم.")
+                    value = "" if cell.value is None else str(cell.value)
+                    formatted.append("<td>" + html.escape(value).replace("\n", "<br/>") + "</td>")
+                rows.append("<tr>" + "".join(formatted) + "</tr>")
+            sections.append("<h2>" + html.escape(sheet.title) + "</h2><table border='1'>" +
+                            "".join(rows) + "</table>")
+        target = output_dir / f"{source.stem}-text-fidelity.html"
+        target.write_text(
+            '<!doctype html><html><head><meta charset="utf-8"></head><body>' +
+            "".join(sections) + "</body></html>", encoding="utf-8"
+        )
+        return target
+    finally:
+        book.close()
+
+
 def office_to_pdf(source: Path, output_dir: Path, timeout: int) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
     _reject_remote_html_resources(source)
+    render_source = (
+        _html_pdf_heading_fallback(source, output_dir)
+        if source.suffix.lower() in {".html", ".htm"} else source
+    )
 
     # A private LibreOffice profile prevents cross-request state leakage and
     # avoids sharing locks/extensions/preferences between concurrent users.
@@ -158,9 +430,13 @@ def office_to_pdf(source: Path, output_dir: Path, timeout: int) -> Path:
         "--nofirststartwizard",
         "--norestore",
         f"-env:UserInstallation={profile.resolve().as_uri()}",
-        "--convert-to", "pdf",
+        # Writer/Web PDF export can omit HTML heading text in some packaged
+        # LibreOffice builds. Use the Writer PDF filter for HTML (including
+        # Markdown rendered as intermediate HTML), then enforce source-aware
+        # content checks in the independent acceptance suite.
+        "--convert-to", "pdf:writer_pdf_Export" if source.suffix.lower() in {".html", ".htm"} else "pdf",
         "--outdir", str(output_dir),
-        str(source),
+        str(render_source),
     ]
 
     try:
@@ -168,9 +444,36 @@ def office_to_pdf(source: Path, output_dir: Path, timeout: int) -> Path:
     finally:
         shutil.rmtree(profile, ignore_errors=True)
 
-    produced = output_dir / f"{source.stem}.pdf"
+    produced = output_dir / f"{render_source.stem}.pdf"
     if not produced.exists() or produced.stat().st_size == 0:
         raise RuntimeError("لم يُنتج LibreOffice ملف PDF صالحًا.")
+    if source.suffix.lower() in {".html", ".htm"}:
+        headings = _expected_html_headings(source)
+        if headings and not _pdf_contains_headings(produced, headings):
+            # Do not report a conversion as successful when the native renderer
+            # dropped source headings. Render the *original* sanitized HTML via
+            # a separate engine, then verify the real output content again.
+            _render_html_story_fallback(source, produced)
+            if not _pdf_contains_headings(produced, headings):
+                raise ValueError("تعذر الحفاظ على عناوين HTML في ملف PDF الناتج.")
+    elif source.suffix.lower() in {".txt", ".csv"} and source.stat().st_size <= 128 * 1024:
+        fragments = _source_pdf_text_fragments(source)
+        if fragments and not _pdf_has_text_fragments(produced, fragments):
+            # Writer may silently omit Arabic text / split quoted CSV cells.
+            # Re-render the escaped original with a Unicode-capable font.
+            prepared = _printable_text_html(source, output_dir)
+            _render_html_story_fallback(prepared, produced)
+            if not _pdf_has_text_fragments(produced, fragments):
+                raise ValueError("تعذر الحفاظ على كامل النص الأصلي في ملف PDF الناتج.")
+    elif source.suffix.lower() == ".xlsx" and source.stat().st_size <= 128 * 1024:
+        fragments = _xlsx_pdf_fragments(source)
+        if fragments and not _pdf_has_text_fragments(produced, fragments):
+            # Restrict this to simple, unstyled, formula-free workbooks. Do not
+            # silently discard complex formatting or unsupported sheet objects.
+            prepared = _printable_simple_xlsx_html(source, output_dir)
+            _render_html_story_fallback(prepared, produced)
+            if not _pdf_has_text_fragments(produced, fragments):
+                raise ValueError("تعذر الحفاظ على جميع قيم خلايا Excel في ملف PDF الناتج.")
     return produced
 
 

@@ -6,10 +6,11 @@ import unicodedata
 from pathlib import Path
 
 
-def mime_report(source: Path, output: Path):
-    mime, _ = mimetypes.guess_type(source.name)
+def mime_report(source: Path, output: Path, original_name: str | None = None):
+    display_name = Path(original_name or source.name).name
+    mime, _ = mimetypes.guess_type(display_name)
     raw = source.read_bytes()[:32]
-    output.write_text(json.dumps({'filename': source.name, 'extension': source.suffix.lower(), 'mime_type_guess': mime or 'application/octet-stream', 'signature_hex': raw.hex(), 'size_bytes': source.stat().st_size}, ensure_ascii=False, indent=2), encoding='utf-8')
+    output.write_text(json.dumps({'filename': display_name, 'extension': Path(display_name).suffix.lower(), 'mime_type_guess': mime or 'application/octet-stream', 'signature_hex': raw.hex(), 'size_bytes': source.stat().st_size}, ensure_ascii=False, indent=2), encoding='utf-8')
 
 
 def text_statistics(source: Path, output: Path):
@@ -48,12 +49,14 @@ def sort_text(source: Path, output: Path, descending: str = '0'):
     output.write_text('\n'.join(lines) + '\n', encoding='utf-8')
 
 
-def normalize_filename(source: Path, output: Path):
-    cleaned = unicodedata.normalize('NFKC', source.stem)
+def normalize_filename(source: Path, output: Path, original_name: str | None = None):
+    original = Path(original_name or source.name).name
+    original_path = Path(original)
+    cleaned = unicodedata.normalize('NFKC', original_path.stem)
     cleaned = re.sub(r'[^\w\-. ]+', '', cleaned, flags=re.UNICODE)
     cleaned = re.sub(r'\s+', '-', cleaned).strip('-_.') or 'file'
-    name = (cleaned[:90] + source.suffix.lower())
-    output.write_text(json.dumps({'original': source.name, 'normalized': name}, ensure_ascii=False, indent=2), encoding='utf-8')
+    name = (cleaned[:90] + original_path.suffix.lower())
+    output.write_text(json.dumps({'original': original, 'normalized': name}, ensure_ascii=False, indent=2), encoding='utf-8')
 
 
 def csv_validate(source: Path, output: Path):
