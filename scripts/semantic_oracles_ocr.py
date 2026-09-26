@@ -182,10 +182,13 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
         return "recognized image text preserved in actual ordered, numbered CSV lines"
     if tool_id == "ocr-receipt-fields":
         data=json.loads(output.read_text(encoding="utf-8"))
-        assert "test@example.com" in data["emails"]
-        assert "SAR 1250.50" in data["money"], data
         assert all(isinstance(data[key],list) for key in ("emails","phones","dates","money"))
-        return "known source email and printed currency amount extracted into correct receipt fields"
+        assert "test@example.com" in data["emails"], data
+        assert "26/09/2026" in data["dates"], data
+        assert "SAR 1250.50" in data["money"], data
+        normalized_phones = [re.sub(r"\D", "", value) for value in data["phones"]]
+        assert "966501234567" in normalized_phones, data
+        return "known source email, date, Saudi phone number and currency amount extracted into correct receipt fields"
     if tool_id == "ocr-invoice-fields":
         data=json.loads(output.read_text(encoding="utf-8"))
         assert data["invoice_number"]=="12345" and data["total"]=="1250.50"
