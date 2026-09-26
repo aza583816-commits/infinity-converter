@@ -467,19 +467,26 @@ def run():
                             if tool.id == "ocr-receipt-fields":
                                 with Image.open(original) as sample:
                                     canvas=sample.convert("RGB")
-                                face=ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",54)
+                                face=ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",48)
                                 pen = ImageDraw.Draw(canvas)
-                                # Keep the synthetic known-answer amount distinct
-                                # from the fixture's existing table/text. A clean
-                                # background still exercises real OCR while avoiding
-                                # accidental overlap that makes the fixture invalid.
-                                y = min(900, max(80, canvas.height - 180))
-                                box = pen.textbbox((80, y), "SAR 1250.50", font=face)
-                                pen.rectangle(
-                                    (box[0] - 5, box[1] - 5, box[2] + 5, box[3] + 5),
-                                    fill="white",
+                                # Add an unambiguous known-answer receipt block so
+                                # OCR quality is checked across email, date, phone,
+                                # and currency rather than only a single amount.
+                                start_y = max(70, canvas.height - 340)
+                                known_fields = (
+                                    "Email test@example.com",
+                                    "Date 26/09/2026",
+                                    "Phone +966501234567",
+                                    "SAR 1250.50",
                                 )
-                                pen.text((80, y), "SAR 1250.50", fill="black", font=face)
+                                for offset, content in enumerate(known_fields):
+                                    y = start_y + offset * 78
+                                    box = pen.textbbox((80, y), content, font=face)
+                                    pen.rectangle(
+                                        (box[0] - 8, box[1] - 6, box[2] + 8, box[3] + 6),
+                                        fill="white",
+                                    )
+                                    pen.text((80, y), content, fill="black", font=face)
                             else:
                                 canvas=Image.new("RGB",(1400,900),"white")
                                 face=ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",54)
