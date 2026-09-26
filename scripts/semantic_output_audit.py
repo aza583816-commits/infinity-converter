@@ -468,7 +468,18 @@ def run():
                                 with Image.open(original) as sample:
                                     canvas=sample.convert("RGB")
                                 face=ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",54)
-                                ImageDraw.Draw(canvas).text((80,780),"SAR 1250.50",fill="black",font=face)
+                                pen = ImageDraw.Draw(canvas)
+                                # Keep the synthetic known-answer amount distinct
+                                # from the fixture's existing table/text. A clean
+                                # background still exercises real OCR while avoiding
+                                # accidental overlap that makes the fixture invalid.
+                                y = min(900, max(80, canvas.height - 180))
+                                box = pen.textbbox((80, y), "SAR 1250.50", font=face)
+                                pen.rectangle(
+                                    (box[0] - 5, box[1] - 5, box[2] + 5, box[3] + 5),
+                                    fill="white",
+                                )
+                                pen.text((80, y), "SAR 1250.50", fill="black", font=face)
                             else:
                                 canvas=Image.new("RGB",(1400,900),"white")
                                 face=ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",54)
