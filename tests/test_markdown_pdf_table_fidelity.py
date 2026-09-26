@@ -7,7 +7,7 @@ import pymupdf
 import pytest
 from pypdf import PdfReader
 
-from converters.office import markdown_to_html, markdown_to_pdf
+from converters.office import _pdf_contains_headings, markdown_to_html, markdown_to_pdf
 
 
 _PRESENTATION_FORMS = re.compile(r"[\uFB50-\uFDFF\uFE70-\uFEFF]")
@@ -59,9 +59,15 @@ def test_markdown_pdf_table_preserves_complete_cells_without_vertical_letter_wra
 
     reader = PdfReader(str(pdf_path))
     actual = _logical_pdf_text(" ".join(page.extract_text() or "" for page in reader.pages))
-    assert _logical_pdf_text("Infinity / السلامة") in actual, actual[:350]
+    # Arabic PDF text layers can expose visual-order glyphs even when the page
+    # itself is correct. Validate Arabic through rendered-page OCR, while
+    # requiring ordinary ASCII/numeric cells to remain complete selectable text.
+    assert _pdf_contains_headings(pdf_path, ("Infinity / السلامة",)), actual[:350]
     for expected in (*headers, *values):
-        assert _logical_pdf_text(expected) in actual, (expected, actual[:500])
+        if re.search(r"[\u0600-\u06FF]", expected):
+            assert _pdf_contains_headings(pdf_path, (expected,)), (expected, actual[:500])
+        else:
+            assert _logical_pdf_text(expected) in actual, (expected, actual[:500])
 
     with pymupdf.open(pdf_path) as rendered:
         assert len(rendered) >= 1
