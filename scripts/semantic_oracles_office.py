@@ -13,6 +13,7 @@ import zipfile
 from pathlib import Path
 
 import pymupdf
+from pypdf import PdfReader
 from docx import Document
 from openpyxl import load_workbook
 from pptx import Presentation
@@ -78,14 +79,23 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
                     expected = [shape.text.strip() for shape in slide.shapes
                                 if getattr(shape, "has_text_frame", False) and shape.text.strip()]
                     assert expected, ("empty PowerPoint fixture slide", slide_number)
-                    rendered = " ".join(unicodedata.normalize(
-                        "NFKC", page.get_text("text")).split())
+                    # LibreOffice may insert visible bullets between source
+                    # paragraph lines. Every original line still has to appear
+                    # in the correct *slide* and original reading sequence.
+                    logical = PdfReader(str(output)).pages[slide_number - 1].extract_text() or ""
+                    rendered = " ".join(unicodedata.normalize("NFKC", logical).split())
+                    cursor = -1
                     for value in expected:
-                        wanted = " ".join(unicodedata.normalize("NFKC", value).split())
-                        assert wanted in rendered, (
-                            "Slide lost title/body or text was rendered out of source slide order",
-                            slide_number, value, rendered[:1300],
-                        )
+                        for line in value.splitlines():
+                            wanted = " ".join(unicodedata.normalize("NFKC", line).split())
+                            if not wanted:
+                                continue
+                            at = rendered.find(wanted, cursor + 1)
+                            assert at >= 0, (
+                                "Slide lost title/body or text was rendered out of source slide order",
+                                slide_number, line, rendered[:1300],
+                            )
+                            cursor = at
                     words = page.get_text("words")
                     assert words and all(
                         -2 <= word[0] < word[2] <= page.rect.width + 2
@@ -109,15 +119,25 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
                     if value.strip(): self.fragments.append(" ".join(value.split()))
             parser=VisibleHTML()
             parser.feed(source.read_text(encoding="utf-8"))
-            actual=" ".join(unicodedata.normalize("NFKC",extracted).split())
-            missing=[part for part in parser.fragments if part not in actual]
+            # Independently read the original Unicode strings from the PDF.
+            # PyMuPDF can reconstruct Arabic glyphs in visual, non-logical
+            # order even when pypdf independently recovers the full heading.
+            actual=" ".join(unicodedata.normalize(
+                "NFKC", " ".join(page.extract_text() or ""
+                                for page in PdfReader(str(output)).pages)).split())
+            missing=[part for part in parser.fragments
+                     if " ".join(unicodedata.normalize("NFKC", part).split()) not in actual]
             assert not missing, ("HTML PDF lost visible heading or table cell text", missing, actual[:1500])
             return "all visible source HTML heading and table cells preserved as selectable PDF Unicode text"
         if tool_id == "markdown-to-pdf":
             raw=source.read_text(encoding="utf-8")
             heading=next((line[2:].strip() for line in raw.splitlines() if line.startswith("# ")),None)
-            actual=" ".join(unicodedata.normalize("NFKC",extracted).split())
-            assert heading and heading in actual, ("Markdown PDF lost heading",heading,actual[:1500])
+            actual=" ".join(unicodedata.normalize(
+                "NFKC", " ".join(page.extract_text() or ""
+                                for page in PdfReader(str(output)).pages)).split())
+            wanted_heading = " ".join(unicodedata.normalize("NFKC", heading or "").split())
+            assert wanted_heading and wanted_heading in actual, (
+                "Markdown PDF lost heading", heading, actual[:1500])
             if "**" in raw:
                 assert "Hello world" in actual
             if "|---|" in raw:
