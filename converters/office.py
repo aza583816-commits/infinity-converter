@@ -686,22 +686,38 @@ def markdown_to_html(source: Path, output: Path):
         body = markdown_lib.markdown(text, extensions=["extra", "tables", "sane_lists"])
     else:
         body = _basic_markdown(text)
-    # LibreOffice Writer/Web can collapse an un-sized Markdown table into
-    # extremely narrow columns and break even short fields into one glyph per
-    # line. Supply the HTML width attribute (not CSS width alone): Writer's
-    # HTML importer honors this attribute when creating the printable table.
-    # Keep any explicit width already supplied by a raw HTML table.
-    def _printable_table(match):
-        attributes = match.group(1)
-        if re.search(r"\bwidth\s*=", attributes, flags=re.I):
-            return match.group(0)
-        return '<table width="100%"' + attributes + ">"
+    # LibreOffice Writer/Web can collapse a Markdown table into extremely
+    # narrow columns, especially when the first column is RTL. Give Writer an
+    # explicit table width AND explicit per-column widths derived from the
+    # source table's first row. This prevents short values such as 00123 from
+    # being rendered one glyph per line while preserving ordinary wrapping.
+    def _printable_table_block(match):
+        attributes, inner = match.group(1), match.group(2)
+        if not re.search(r"\bwidth\s*=", attributes, flags=re.I):
+            attributes = ' width="100%"' + attributes
+        first_row = re.search(r"<tr\b[^>]*>(.*?)</tr>", inner, flags=re.I | re.S)
+        column_count = 0
+        if first_row:
+            column_count = len(re.findall(r"<(?:th|td)\b", first_row.group(1), flags=re.I))
+        colgroup = ""
+        if column_count:
+            share = 100 / column_count
+            colgroup = "<colgroup>" + "".join(
+                f'<col width="{share:.3f}%">' for _ in range(column_count)
+            ) + "</colgroup>"
+        return "<table" + attributes + ">" + colgroup + inner + "</table>"
 
-    body = re.sub(r"<table\b([^>]*)>", _printable_table, body, flags=re.I)
+    body = re.sub(
+        r"<table\b([^>]*)>(.*?)</table>",
+        _printable_table_block,
+        body,
+        flags=re.I | re.S,
+    )
     html = (
         "<!doctype html><html><head><meta charset=\"utf-8\">"
         "<style>body{font-family:sans-serif;max-width:800px;margin:40px auto;line-height:1.6}"
-        "table{border-collapse:collapse}td,th{border:1px solid #ccc;padding:6px}</style>"
+        "table{border-collapse:collapse;width:100%;table-layout:fixed}"
+        "td,th{border:1px solid #ccc;padding:6px;white-space:normal;word-break:normal}</style>"
         f"</head><body>{body}</body></html>"
     )
     output.write_text(html, encoding="utf-8")
