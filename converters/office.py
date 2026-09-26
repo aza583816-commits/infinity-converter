@@ -286,7 +286,14 @@ def _source_pdf_text_fragments(source: Path) -> list[str]:
 
 
 def _pdf_has_text_fragments(output: Path, fragments: list[str]) -> bool:
+    """Require every source field as a complete token sequence, not a substring.
+
+    A PDF containing 000012 must not be accepted as preserving source ID
+    00001; likewise an Arabic prefix inside a longer word is not equivalent
+    to the original field. Normalize compatibility glyphs on both sides.
+    """
     import pymupdf
+    import re
     import unicodedata
 
     with pymupdf.open(output) as document:
@@ -295,7 +302,27 @@ def _pdf_has_text_fragments(output: Path, fragments: list[str]) -> bool:
             for page in document
         )
     actual = " ".join(actual.split())
-    return all(" ".join(fragment.split()) in actual for fragment in fragments)
+    # PDF text extraction may concatenate neighboring table cells when their
+    # scripts differ (e.g. Arabic name immediately followed by an ASCII ID).
+    # Restore only Arabic/ASCII script boundaries; do NOT split ASCII letters
+    # from digits, which could make a truncated identifier pass the audit.
+    script_boundary = (
+        r"(?<=[\u0600-\u06FF])(?=[A-Za-z0-9])"
+        r"|(?<=[A-Za-z0-9])(?=[\u0600-\u06FF])"
+    )
+    actual = re.sub(script_boundary, " ", actual)
+    for fragment in fragments:
+        expected = " ".join(unicodedata.normalize("NFKC", fragment).split())
+        expected = re.sub(script_boundary, " ", expected)
+        if not expected:
+            continue
+        # Delimit only word-like ends. This permits ordinary punctuation around
+        # a complete source cell, without accepting a prefix of another cell.
+        prefix = r"(?<!\w)" if expected[0].isalnum() or expected[0] == "_" else ""
+        suffix = r"(?!\w)" if expected[-1].isalnum() or expected[-1] == "_" else ""
+        if re.search(prefix + re.escape(expected) + suffix, actual) is None:
+            return False
+    return True
 
 
 def _printable_text_html(source: Path, output_dir: Path) -> Path:
@@ -378,12 +405,126 @@ def _printable_simple_xlsx_html(source: Path, output_dir: Path) -> Path:
         book.close()
 
 
+def _render_simple_xlsx_paginated_fallback(prepared: Path, output: Path) -> None:
+    """Render small plain worksheets in bounded table sections without lost rows.
+
+    A single long HTML table can silently stop at the final page in PyMuPDF
+    Story, even when the original source contains additional rows. Give each
+    short section an independent Story and merge every resulting PDF page.
+    The caller still checks *all* original source cell values afterwards.
+    """
+    import pymupdf
+
+    source_html = prepared.read_text(encoding="utf-8")
+    sections = re.findall(
+        r"(<h2>.*?</h2>)<table border='1'>(.*?)</table>",
+        source_html, flags=re.S,
+    )
+    if not sections or len(sections) != source_html.count("<table border='1'>"):
+        raise ValueError("تعذر تقسيم صفحات جدول Excel دون فقدان بيانات.")
+
+    temporary = output.with_name(output.stem + "-assembled.pdf")
+    generated = []
+    part_index = 0
+    try:
+        with pymupdf.open() as assembled:
+            for title, body in sections:
+                rows = re.findall(r"<tr>.*?</tr>", body, flags=re.S)
+                if len(rows) != body.count("<tr>"):
+                    raise ValueError("تعذر الحفاظ على جميع صفوف جدول Excel.")
+                for start in range(0, len(rows), 20):
+                    part_index += 1
+                    part_html = output.with_name(
+                        f"{output.stem}-sheet-part-{part_index:04d}.html"
+                    )
+                    part_pdf = part_html.with_suffix(".pdf")
+                    generated.extend((part_html, part_pdf))
+                    part_html.write_text(
+                        '<!doctype html><html><head><meta charset="utf-8">'
+                        '<style>table{border-collapse:collapse;width:100%}'
+                        'td{padding:3px;overflow-wrap:anywhere}</style></head>'
+                        '<body>' + title + "<table border='1'>" +
+                        "".join(rows[start:start + 20]) + "</table></body></html>",
+                        encoding="utf-8",
+                    )
+                    _render_html_story_fallback(part_html, part_pdf)
+                    with pymupdf.open(part_pdf) as part:
+                        if len(part) == 0:
+                            raise ValueError("أنتج تصدير Excel صفحة PDF فارغة.")
+                        assembled.insert_pdf(part)
+            if len(assembled) == 0:
+                raise ValueError("تعذر إخراج صفحات Excel إلى PDF.")
+            assembled.save(temporary)
+        temporary.replace(output)
+    finally:
+        temporary.unlink(missing_ok=True)
+        for part in generated:
+            part.unlink(missing_ok=True)
+
+
+def _docx_pdf_bidi_spacing_copy(source: Path, output_dir: Path) -> Path:
+    """Render-only DOCX copy preserving Arabic-number spaces in extracted PDF.
+
+    LibreOffice sometimes drops ordinary U+0020 between RTL Arabic and an ASCII
+    digit from its PDF Unicode map. Replacing only that boundary with U+00A0
+    in the *private render copy* preserves the visible space and produces an
+    extractable whitespace character; the uploaded original is never changed.
+    Keep XML structure, all run styling, images and relationships byte-for-byte.
+    """
+    import zipfile
+
+    if source.suffix.lower() != ".docx":
+        return source
+
+    text_node = re.compile(r"(<w:t\b[^>]*>)([^<]*)(</w:t>)")
+    arabic_digit_space = re.compile(r"(?<=[\u0600-\u06FF]) (?=[0-9])")
+
+    def protect_node(match: re.Match[str]) -> str:
+        return (match.group(1)
+                + arabic_digit_space.sub("\u00a0", match.group(2))
+                + match.group(3))
+
+    with zipfile.ZipFile(source) as original:
+        changed_parts: dict[str, bytes] = {}
+        for name in original.namelist():
+            if not (name.startswith("word/") and name.endswith(".xml")):
+                continue
+            raw = original.read(name)
+            try:
+                content = raw.decode("utf-8")
+            except UnicodeDecodeError:
+                continue
+            updated = text_node.sub(protect_node, content)
+            if updated != content:
+                changed_parts[name] = updated.encode("utf-8")
+        if not changed_parts:
+            return source
+
+        private = output_dir / f".lo-word-input-{uuid4().hex}"
+        private.mkdir(mode=0o700)
+        render_copy = private / source.name
+        try:
+            with zipfile.ZipFile(render_copy, "w") as copied:
+                for member in original.infolist():
+                    copied.writestr(member, changed_parts.get(
+                        member.filename, original.read(member.filename)))
+        except Exception:
+            shutil.rmtree(private, ignore_errors=True)
+            raise
+        return render_copy
+
+
 def office_to_pdf(source: Path, output_dir: Path, timeout: int) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
     _reject_remote_html_resources(source)
     render_source = (
         _html_pdf_heading_fallback(source, output_dir)
-        if source.suffix.lower() in {".html", ".htm"} else source
+        if source.suffix.lower() in {".html", ".htm"} else
+        _docx_pdf_bidi_spacing_copy(source, output_dir)
+    )
+    private_docx_dir = (
+        render_source.parent if render_source != source
+        and source.suffix.lower() == ".docx" else None
     )
 
     # A private LibreOffice profile prevents cross-request state leakage and
@@ -443,6 +584,8 @@ def office_to_pdf(source: Path, output_dir: Path, timeout: int) -> Path:
         _run_libreoffice(cmd, timeout=timeout, env=env)
     finally:
         shutil.rmtree(profile, ignore_errors=True)
+        if private_docx_dir is not None:
+            shutil.rmtree(private_docx_dir, ignore_errors=True)
 
     produced = output_dir / f"{render_source.stem}.pdf"
     if not produced.exists() or produced.stat().st_size == 0:
@@ -471,7 +614,7 @@ def office_to_pdf(source: Path, output_dir: Path, timeout: int) -> Path:
             # Restrict this to simple, unstyled, formula-free workbooks. Do not
             # silently discard complex formatting or unsupported sheet objects.
             prepared = _printable_simple_xlsx_html(source, output_dir)
-            _render_html_story_fallback(prepared, produced)
+            _render_simple_xlsx_paginated_fallback(prepared, produced)
             if not _pdf_has_text_fragments(produced, fragments):
                 raise ValueError("تعذر الحفاظ على جميع قيم خلايا Excel في ملف PDF الناتج.")
     return produced
@@ -543,6 +686,18 @@ def markdown_to_html(source: Path, output: Path):
         body = markdown_lib.markdown(text, extensions=["extra", "tables", "sane_lists"])
     else:
         body = _basic_markdown(text)
+    # LibreOffice Writer/Web can collapse an un-sized Markdown table into
+    # extremely narrow columns and break even short fields into one glyph per
+    # line. Supply the HTML width attribute (not CSS width alone): Writer's
+    # HTML importer honors this attribute when creating the printable table.
+    # Keep any explicit width already supplied by a raw HTML table.
+    def _printable_table(match):
+        attributes = match.group(1)
+        if re.search(r"\bwidth\s*=", attributes, flags=re.I):
+            return match.group(0)
+        return '<table width="100%"' + attributes + ">"
+
+    body = re.sub(r"<table\b([^>]*)>", _printable_table, body, flags=re.I)
     html = (
         "<!doctype html><html><head><meta charset=\"utf-8\">"
         "<style>body{font-family:sans-serif;max-width:800px;margin:40px auto;line-height:1.6}"
