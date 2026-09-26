@@ -36,6 +36,21 @@ def _pdftext(path: Path) -> str:
         return "\n".join(page.get_text("text") for page in doc)
 
 
+_PRESENTATION_FORMS = re.compile(r"[\uFB50-\uFDFF\uFE70-\uFEFF]")
+_ARABIC_RUN = re.compile(r"[\u0600-\u06FF]+")
+
+
+def _logical_pdf_text(text: str) -> str:
+    """Normalize PDF extractor presentation glyphs without weakening checks."""
+    pieces = []
+    for token in text.split():
+        normalized = unicodedata.normalize("NFKC", token)
+        if _PRESENTATION_FORMS.search(token):
+            normalized = _ARABIC_RUN.sub(lambda match: match.group(0)[::-1], normalized)
+        pieces.append(normalized)
+    return " ".join(pieces)
+
+
 def _csvrows(path: Path) -> list[list[str]]:
     with path.open(encoding="utf-8-sig", newline="") as f:
         return list(csv.reader(f))
@@ -83,7 +98,7 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
                     # paragraph lines. Every original line still has to appear
                     # in the correct *slide* and original reading sequence.
                     logical = PdfReader(str(output)).pages[slide_number - 1].extract_text() or ""
-                    rendered = " ".join(unicodedata.normalize("NFKC", logical).split())
+                    rendered = _logical_pdf_text(logical)
                     cursor = -1
                     for value in expected:
                         for line in value.splitlines():
@@ -122,20 +137,20 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
             # Independently read the original Unicode strings from the PDF.
             # PyMuPDF can reconstruct Arabic glyphs in visual, non-logical
             # order even when pypdf independently recovers the full heading.
-            actual=" ".join(unicodedata.normalize(
-                "NFKC", " ".join(page.extract_text() or ""
-                                for page in PdfReader(str(output)).pages)).split())
+            actual=_logical_pdf_text(" ".join(
+                page.extract_text() or "" for page in PdfReader(str(output)).pages
+            ))
             missing=[part for part in parser.fragments
-                     if " ".join(unicodedata.normalize("NFKC", part).split()) not in actual]
+                     if _logical_pdf_text(part) not in actual]
             assert not missing, ("HTML PDF lost visible heading or table cell text", missing, actual[:1500])
             return "all visible source HTML heading and table cells preserved as selectable PDF Unicode text"
         if tool_id == "markdown-to-pdf":
             raw=source.read_text(encoding="utf-8")
             heading=next((line[2:].strip() for line in raw.splitlines() if line.startswith("# ")),None)
-            actual=" ".join(unicodedata.normalize(
-                "NFKC", " ".join(page.extract_text() or ""
-                                for page in PdfReader(str(output)).pages)).split())
-            wanted_heading = " ".join(unicodedata.normalize("NFKC", heading or "").split())
+            actual=_logical_pdf_text(" ".join(
+                page.extract_text() or "" for page in PdfReader(str(output)).pages
+            ))
+            wanted_heading = _logical_pdf_text(heading or "")
             assert wanted_heading and wanted_heading in actual, (
                 "Markdown PDF lost heading", heading, actual[:1500])
             if "**" in raw:
