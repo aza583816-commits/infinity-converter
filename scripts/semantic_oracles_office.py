@@ -185,7 +185,7 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
         if "**" in raw:
             assert "<strong>world</strong>" in result and "Hello " in result
         if "|---|" in raw:
-            assert "<table>" in result and all(
+            assert re.search(r"<table\b[^>]*>", result, flags=re.I) and all(
                 f">{value}<" in result for value in ("Name", "Code", "Arabic", "00123")
             )
         return "actual Markdown heading, paragraphs/emphasis or all source table cells become semantic HTML"
