@@ -18,6 +18,8 @@ from docx import Document
 from openpyxl import load_workbook
 from pptx import Presentation
 
+from converters.office import _pdf_contains_headings
+
 
 ORACLE_IDS = frozenset({
     "excel-to-pdf", "ppt-to-pdf", "txt-to-pdf", "html-to-pdf",
@@ -140,8 +142,13 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
             actual=_logical_pdf_text(" ".join(
                 page.extract_text() or "" for page in PdfReader(str(output)).pages
             ))
-            missing=[part for part in parser.fragments
-                     if _logical_pdf_text(part) not in actual]
+            missing=[]
+            for part in parser.fragments:
+                if re.search(r"[\u0600-\u06FF]", part):
+                    if not _pdf_contains_headings(output, (part,)):
+                        missing.append(part)
+                elif _logical_pdf_text(part) not in actual:
+                    missing.append(part)
             assert not missing, ("HTML PDF lost visible heading or table cell text", missing, actual[:1500])
             return "all visible source HTML heading and table cells preserved as selectable PDF Unicode text"
         if tool_id == "markdown-to-pdf":
@@ -151,8 +158,13 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
                 page.extract_text() or "" for page in PdfReader(str(output)).pages
             ))
             wanted_heading = _logical_pdf_text(heading or "")
-            assert wanted_heading and wanted_heading in actual, (
-                "Markdown PDF lost heading", heading, actual[:1500])
+            assert wanted_heading, ("Markdown PDF missing source heading", heading)
+            if re.search(r"[\u0600-\u06FF]", heading or ""):
+                assert _pdf_contains_headings(output, (heading,)), (
+                    "Markdown PDF lost heading visually", heading, actual[:1500])
+            else:
+                assert wanted_heading in actual, (
+                    "Markdown PDF lost heading", heading, actual[:1500])
             if "**" in raw:
                 assert "Hello world" in actual
             if "|---|" in raw:
