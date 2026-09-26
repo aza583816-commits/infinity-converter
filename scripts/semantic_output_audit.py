@@ -108,12 +108,32 @@ def independent_oracle(tool_id: str, source: Path | None, output: Path, fixture:
         extracted += " " + " ".join(unicodedata.normalize("NFKC", c.text) for t in doc.tables for row in t.rows for c in row.cells)
         actual = " ".join(extracted.split())
         with pymupdf.open(source) as before:
+            expected_page_markers = []
             for page_no, page in enumerate(before, 1):
-                assert f"Page {page_no}" in actual, (page_no, actual[:900])
-                assert "INFINITY CONVERTER" in page.get_text("text")
+                source_text = " ".join(unicodedata.normalize("NFKC", page.get_text("text")).split())
+                assert source_text, ("Empty source PDF fixture page", page_no)
+                # Independently derive a distinctive marker for *each* page.
+                # The mixed corpus adds a landscape page labeled LANDSCAPE PAGE
+                # FOUR rather than Page 4: never silently drop that source page.
+                marker = (f"Page {page_no}" if f"Page {page_no}" in source_text
+                          else f"EXTRA PAGE {page_no}" if f"EXTRA PAGE {page_no}" in source_text
+                          else "LANDSCAPE PAGE FOUR" if "LANDSCAPE PAGE FOUR" in source_text
+                          else None)
+                assert marker, ("PDF fixture page has no independently known marker", page_no, source_text[:300])
+                expected_page_markers.append(marker)
+                assert marker in actual, ("PDF source page missing from DOCX", page_no, marker, actual[:900])
+                # All unique source-page fields, not only their page number,
+                # must survive the editable Word conversion.
+                for field in ("Columns Alpha 00123", "Beta 00999"):
+                    if field in source_text:
+                        assert field in actual, ("PDF source field lost in DOCX", page_no, field)
+                assert marker in actual, ("PDF source page missing from DOCX", page_no, marker, actual[:900])
             assert abs(doc.sections[0].page_width.inches - before[0].rect.width / 72) < .25
+        positions = [actual.find(marker) for marker in expected_page_markers]
+        assert all(pos >= 0 for pos in positions) and positions == sorted(positions), (
+            "PDF source page markers missing or out of order in DOCX", expected_page_markers, positions)
         assert "test@example.com" in actual and "1250.50" in actual
-        return "all source PDF page markers and key text fields retained as editable Word text with original page width"
+        return "all source PDF page markers including landscape/mixed pages, unique source fields and original order retained as editable Word text"
     if tool_id == "pdf-grayscale":
         with pymupdf.open(str(source)) as original, pymupdf.open(str(output)) as converted:
             assert len(converted) == len(original)
@@ -163,8 +183,25 @@ def independent_oracle(tool_id: str, source: Path | None, output: Path, fixture:
                 # A booklet places multiple source pages per sheet and can
                 # change the final sheet count and page order.
                 joined = " ".join(after)
-                for number in range(1, len(original) + 1):
-                    assert f"Page {number}" in joined, ("booklet lost a source page", number)
+                # The input corpus may append a landscape page whose source
+                # title is LANDSCAPE PAGE FOUR, rather than "Page 4".
+                # Derive each page marker from the *actual source page*;
+                # never accept a generic marker that was not in that page.
+                markers = []
+                for number, source_page in enumerate(original, 1):
+                    source_text = norm(source_page.get_text("text"))
+                    candidates = (f"Page {number}", f"EXTRA PAGE {number}",
+                                  "LANDSCAPE PAGE FOUR")
+                    marker = next((item for item in candidates
+                                   if item in source_text), None)
+                    if marker is None:
+                        lines = [norm(line) for line in source_page.get_text("text").splitlines()
+                                 if norm(line)]
+                        assert lines, ("booklet source page has no text marker", number)
+                        marker = lines[0]
+                    assert marker not in markers, ("booklet markers not unique", number, marker)
+                    markers.append(marker)
+                    assert marker in joined, ("booklet lost a source page", number, marker)
                 assert len(converted) <= len(original) + 1
             else:
                 assert len(converted) == len(original), (tool_id, len(original), len(converted))
@@ -312,12 +349,35 @@ def independent_oracle(tool_id: str, source: Path | None, output: Path, fixture:
                 expected.append(block.text.strip())
         with pymupdf.open(output) as pdf:
             assert len(pdf) >= 1
-            text = " ".join(unicodedata.normalize("NFKC", page.get_text("text"))
-                            for page in pdf)
-        normalized = " ".join(text.split())
+            page_count = len(pdf)
+            assert all(page.get_text("words") for page in pdf), "Blank Word PDF page"
+        # PyMuPDF can reorder Arabic glyphs in a valid Unicode PDF. Read the
+        # *same output* using an independent logical-text parser, rather than
+        # dropping Arabic assertions or tolerating changed source strings.
+        parsed = PdfReader(str(output))
+        assert len(parsed.pages) == page_count, "Independent PDF parsers disagree on page count"
+        text = " ".join(unicodedata.normalize("NFKC", page.extract_text() or "")
+                        for page in parsed.pages)
+        import re
+
+        def preserve_arabic_numeric_word_boundaries(value: str) -> str:
+            # Independent PDF extractors can omit whitespace at script changes
+            # despite separate, non-overlapping visible words in the PDF.
+            # Restore only Arabic<->digit boundaries. Never split one numeric
+            # identifier into two tokens or drop an expected source word.
+            return re.sub(
+                r"(?<=[\u0600-\u06FF])(?=[0-9])|(?<=[0-9])(?=[\u0600-\u06FF])",
+                " ", " ".join(unicodedata.normalize("NFKC", value).split())
+            )
+
+        normalized = preserve_arabic_numeric_word_boundaries(text)
         for value in expected:
-            wanted = " ".join(unicodedata.normalize("NFKC", value).split())
-            assert wanted in normalized, ("Word-to-PDF lost actual original content", value, normalized[:1800])
+            wanted = preserve_arabic_numeric_word_boundaries(value)
+            # Match the complete source field: a truncated numeric ID cannot
+            # pass by matching a prefix of a longer extracted identifier.
+            assert re.search(r"(?<!\w)" + re.escape(wanted) + r"(?!\w)", normalized), (
+                "Word-to-PDF lost actual original content", value, normalized[:1800]
+            )
         return "all source Word paragraph and table cell strings across the entire document survive in PDF Unicode text"
     if tool_id=="pdf-to-text":
         import unicodedata
@@ -408,7 +468,18 @@ def run():
                                 with Image.open(original) as sample:
                                     canvas=sample.convert("RGB")
                                 face=ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",54)
-                                ImageDraw.Draw(canvas).text((80,780),"SAR 1250.50",fill="black",font=face)
+                                pen = ImageDraw.Draw(canvas)
+                                # Keep the synthetic known-answer amount distinct
+                                # from the fixture's existing table/text. A clean
+                                # background still exercises real OCR while avoiding
+                                # accidental overlap that makes the fixture invalid.
+                                y = min(900, max(80, canvas.height - 180))
+                                box = pen.textbbox((80, y), "SAR 1250.50", font=face)
+                                pen.rectangle(
+                                    (box[0] - 5, box[1] - 5, box[2] + 5, box[3] + 5),
+                                    fill="white",
+                                )
+                                pen.text((80, y), "SAR 1250.50", fill="black", font=face)
                             else:
                                 canvas=Image.new("RGB",(1400,900),"white")
                                 face=ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",54)

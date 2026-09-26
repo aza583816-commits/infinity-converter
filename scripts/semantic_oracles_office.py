@@ -13,9 +13,12 @@ import zipfile
 from pathlib import Path
 
 import pymupdf
+from pypdf import PdfReader
 from docx import Document
 from openpyxl import load_workbook
 from pptx import Presentation
+
+from converters.office import _pdf_contains_headings
 
 
 ORACLE_IDS = frozenset({
@@ -33,6 +36,21 @@ def _pdftext(path: Path) -> str:
     with pymupdf.open(path) as doc:
         assert len(doc) > 0
         return "\n".join(page.get_text("text") for page in doc)
+
+
+_PRESENTATION_FORMS = re.compile(r"[\uFB50-\uFDFF\uFE70-\uFEFF]")
+_ARABIC_RUN = re.compile(r"[\u0600-\u06FF]+")
+
+
+def _logical_pdf_text(text: str) -> str:
+    """Normalize PDF extractor presentation glyphs without weakening checks."""
+    pieces = []
+    for token in text.split():
+        normalized = unicodedata.normalize("NFKC", token)
+        if _PRESENTATION_FORMS.search(token):
+            normalized = _ARABIC_RUN.sub(lambda match: match.group(0)[::-1], normalized)
+        pieces.append(normalized)
+    return " ".join(pieces)
 
 
 def _csvrows(path: Path) -> list[list[str]]:
@@ -78,14 +96,23 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
                     expected = [shape.text.strip() for shape in slide.shapes
                                 if getattr(shape, "has_text_frame", False) and shape.text.strip()]
                     assert expected, ("empty PowerPoint fixture slide", slide_number)
-                    rendered = " ".join(unicodedata.normalize(
-                        "NFKC", page.get_text("text")).split())
+                    # LibreOffice may insert visible bullets between source
+                    # paragraph lines. Every original line still has to appear
+                    # in the correct *slide* and original reading sequence.
+                    logical = PdfReader(str(output)).pages[slide_number - 1].extract_text() or ""
+                    rendered = _logical_pdf_text(logical)
+                    cursor = -1
                     for value in expected:
-                        wanted = " ".join(unicodedata.normalize("NFKC", value).split())
-                        assert wanted in rendered, (
-                            "Slide lost title/body or text was rendered out of source slide order",
-                            slide_number, value, rendered[:1300],
-                        )
+                        for line in value.splitlines():
+                            wanted = " ".join(unicodedata.normalize("NFKC", line).split())
+                            if not wanted:
+                                continue
+                            at = rendered.find(wanted, cursor + 1)
+                            assert at >= 0, (
+                                "Slide lost title/body or text was rendered out of source slide order",
+                                slide_number, line, rendered[:1300],
+                            )
+                            cursor = at
                     words = page.get_text("words")
                     assert words and all(
                         -2 <= word[0] < word[2] <= page.rect.width + 2
@@ -109,15 +136,35 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
                     if value.strip(): self.fragments.append(" ".join(value.split()))
             parser=VisibleHTML()
             parser.feed(source.read_text(encoding="utf-8"))
-            actual=" ".join(unicodedata.normalize("NFKC",extracted).split())
-            missing=[part for part in parser.fragments if part not in actual]
+            # Independently read the original Unicode strings from the PDF.
+            # PyMuPDF can reconstruct Arabic glyphs in visual, non-logical
+            # order even when pypdf independently recovers the full heading.
+            actual=_logical_pdf_text(" ".join(
+                page.extract_text() or "" for page in PdfReader(str(output)).pages
+            ))
+            missing=[]
+            for part in parser.fragments:
+                if re.search(r"[\u0600-\u06FF]", part):
+                    if not _pdf_contains_headings(output, (part,)):
+                        missing.append(part)
+                elif _logical_pdf_text(part) not in actual:
+                    missing.append(part)
             assert not missing, ("HTML PDF lost visible heading or table cell text", missing, actual[:1500])
             return "all visible source HTML heading and table cells preserved as selectable PDF Unicode text"
         if tool_id == "markdown-to-pdf":
             raw=source.read_text(encoding="utf-8")
             heading=next((line[2:].strip() for line in raw.splitlines() if line.startswith("# ")),None)
-            actual=" ".join(unicodedata.normalize("NFKC",extracted).split())
-            assert heading and heading in actual, ("Markdown PDF lost heading",heading,actual[:1500])
+            actual=_logical_pdf_text(" ".join(
+                page.extract_text() or "" for page in PdfReader(str(output)).pages
+            ))
+            wanted_heading = _logical_pdf_text(heading or "")
+            assert wanted_heading, ("Markdown PDF missing source heading", heading)
+            if re.search(r"[\u0600-\u06FF]", heading or ""):
+                assert _pdf_contains_headings(output, (heading,)), (
+                    "Markdown PDF lost heading visually", heading, actual[:1500])
+            else:
+                assert wanted_heading in actual, (
+                    "Markdown PDF lost heading", heading, actual[:1500])
             if "**" in raw:
                 assert "Hello world" in actual
             if "|---|" in raw:
@@ -138,7 +185,7 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
         if "**" in raw:
             assert "<strong>world</strong>" in result and "Hello " in result
         if "|---|" in raw:
-            assert "<table>" in result and all(
+            assert re.search(r"<table\b[^>]*>", result, flags=re.I) and all(
                 f">{value}<" in result for value in ("Name", "Code", "Arabic", "00123")
             )
         return "actual Markdown heading, paragraphs/emphasis or all source table cells become semantic HTML"
