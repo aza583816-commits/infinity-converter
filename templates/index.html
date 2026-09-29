@@ -8,6 +8,13 @@
       <div class="v7-status-pill"><span class="signal-pulse"></span><span>{{ 'INTELLIGENT FILE WORKSPACE' if lang == 'en' else 'مساحة ملفات ذكية' }}</span><i>∞</i></div>
       <h1 id="v7-hero-title">{{ 'Tell Infinity the result.' if lang == 'en' else 'قل لـ Infinity النتيجة.' }}<br><em>{{ 'It finds the path.' if lang == 'en' else 'وهو يجد لك الطريق.' }}</em></h1>
       <p>{{ 'A free-first workspace for PDF, images, documents, OCR, archives and data. Use a tool directly, or let Infinity Intelligence choose the shortest useful workflow from the real tools already inside the site.' if lang == 'en' else 'مساحة عمل مجانية للـ PDF والصور والمستندات وOCR والأرشيف والبيانات. استخدم أي أداة مباشرة، أو خلّ Infinity Intelligence يختار لك أقصر مسار مفيد من الأدوات الموجودة فعليًا في الموقع.' }}</p>
+      <nav class="v8-quick-tools" aria-label="{{ 'Popular converters' if lang == 'en' else 'التحويلات الشائعة' }}">
+        <a href="/tools/pdf-to-docx">{{ 'PDF to Word' if lang == 'en' else 'PDF إلى Word' }}</a>
+        <a href="/tools/word-to-pdf">{{ 'Word to PDF' if lang == 'en' else 'Word إلى PDF' }}</a>
+        <a href="/tools/merge-pdf">{{ 'Merge PDF' if lang == 'en' else 'دمج PDF' }}</a>
+        <a href="/tools/compress-pdf">{{ 'Compress PDF' if lang == 'en' else 'ضغط PDF' }}</a>
+        <a href="/tools">{{ 'All converters' if lang == 'en' else 'كل أدوات التحويل' }} ↗</a>
+      </nav>
       <div class="v7-hero-metrics" aria-label="{{ 'Product facts' if lang == 'en' else 'حقائق المنتج' }}">
         <span><b>{{ tool_count }}</b><small>{{ 'real tools' if lang == 'en' else 'أداة فعلية' }}</small></span>
         <span><b>{{ reviewed_count }}</b><small>{{ 'deeply reviewed' if lang == 'en' else 'صفحة مراجعة بعمق' }}</small></span>
