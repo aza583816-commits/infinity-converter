@@ -11,7 +11,7 @@ import base64, bz2, difflib, hashlib, html, io, json, lzma, mimetypes, re, tarfi
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-import fitz
+import pymupdf as fitz
 from PIL import Image, ImageChops, ImageEnhance, ImageFilter, ImageOps, ImageDraw
 from docx import Document
 from openpyxl import load_workbook
