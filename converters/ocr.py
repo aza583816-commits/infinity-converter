@@ -1,4 +1,7 @@
 import shutil
+import csv
+import io
+import re
 from pathlib import Path
 
 import pymupdf
@@ -24,11 +27,37 @@ def ocr_available() -> bool:
 
 def _ocr_string(image: Image.Image, *, lang: str) -> str:
     try:
-        return pytesseract.image_to_string(
+        text, tsv = pytesseract.run_and_get_multiple_output(
             image,
+            extensions=['txt', 'tsv'],
             lang=_tesseract_lang(lang),
             timeout=settings.ocr_timeout_seconds,
         )
+        rows = [row for row in csv.DictReader(io.StringIO(tsv), delimiter='\t')
+                if row.get('text', '').strip() and float(row['conf']) >= 0]
+        # Mixed-script headings can be segmented incorrectly by PSM 3. Retry
+        # only observed low-confidence Arabic words; retain the original pass
+        # unless confidence improves and every confident source token survives.
+        if rows and any(float(row['conf']) < 35 and re.search(r'[\u0600-\u06ff]', row['text'])
+                        for row in rows):
+            alternative = pytesseract.image_to_data(
+                image, lang=_tesseract_lang(lang), config='--psm 6',
+                output_type=pytesseract.Output.DICT,
+                timeout=settings.ocr_timeout_seconds,
+            )
+            words = [(i, value) for i, value in enumerate(alternative['text']) if value.strip()]
+            mean = lambda values: sum(values) / len(values) if values else 0
+            certain = {row['text'] for row in rows if float(row['conf']) >= 75}
+            found = {value for _, value in words}
+            if (certain <= found and
+                    mean([float(alternative['conf'][i]) for i, _ in words]) >
+                    mean([float(row['conf']) for row in rows])):
+                lines = {}
+                for i, value in words:
+                    key = tuple(alternative[name][i] for name in ('block_num', 'par_num', 'line_num'))
+                    lines.setdefault(key, []).append(value)
+                return '\n'.join(' '.join(values) for values in lines.values())
+        return text
     except RuntimeError as exc:
         # pytesseract raises RuntimeError when the subprocess exceeds timeout.
         raise RuntimeError("استغرق OCR وقتًا أطول من المسموح.") from exc
@@ -60,7 +89,8 @@ def ocr_pdf(source: Path, output: Path, lang: str = "ar+en", max_pages: int = 25
             pixmap = page.get_pixmap(matrix=matrix, alpha=False)
             image = Image.frombytes("RGB", (pixmap.width, pixmap.height), pixmap.samples)
             try:
-                page_text = _ocr_string(image, lang=lang).strip()
+                native = page.get_text('text').strip()
+                page_text = native if native and not page.get_images() else _ocr_string(image, lang=lang).strip()
             finally:
                 image.close()
             recognized = recognized or bool(page_text)

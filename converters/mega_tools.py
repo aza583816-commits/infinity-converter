@@ -401,7 +401,8 @@ def ocr_pdf_to_markdown(source: Path, output: Path, lang: str = "ar+eng"):
         for i,p in enumerate(pdf,1):
             pix=p.get_pixmap(dpi=160,alpha=False)
             with Image.open(io.BytesIO(pix.tobytes("png"))) as img:
-                text=pytesseract.image_to_string(img, lang=_ocr_lang(lang), timeout=settings.ocr_timeout_seconds)
+                native=p.get_text("text").strip()
+                text=native if native and not p.get_images() else pytesseract.image_to_string(img, lang=_ocr_lang(lang), timeout=settings.ocr_timeout_seconds)
             pages.append(f"## Page {i}\n\n{text.strip()}")
     finally: pdf.close()
     _write_text(output,"\n\n".join(pages)+"\n")
@@ -416,7 +417,8 @@ def ocr_pdf_to_csv(source: Path, output: Path, lang: str = "ar+eng"):
         for i,p in enumerate(pdf,1):
             pix=p.get_pixmap(dpi=150,alpha=False)
             with Image.open(io.BytesIO(pix.tobytes("png"))) as img:
-                text=pytesseract.image_to_string(img, lang=_ocr_lang(lang), timeout=settings.ocr_timeout_seconds)
+                native=p.get_text("text").strip()
+                text=native if native and not p.get_images() else pytesseract.image_to_string(img, lang=_ocr_lang(lang), timeout=settings.ocr_timeout_seconds)
             text=text.replace('"','""').replace("\n"," ").strip(); rows.append(f'{i},"{text}"')
     finally: pdf.close()
     _write_text(output,"\n".join(rows)+"\n")
@@ -430,9 +432,84 @@ def ocr_image_to_csv(source: Path, output: Path, lang: str = "ar+eng"):
         w=csv.writer(f); w.writerow(["line","text"]); w.writerows((i+1,r) for i,r in enumerate(rows))
 
 
+def _receipt_fields_from_text(text: str) -> dict[str, list[str]]:
+    """Extract receipt entities from OCR text without hiding OCR uncertainty."""
+    email_pattern = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+", re.I)
+    phone_pattern = re.compile(r"(?:\+?\d[\d\s().-]{6,}\d)")
+    date_pattern = re.compile(r"\b\d{1,4}[/-]\d{1,2}[/-]\d{1,4}\b")
+    money_pattern = re.compile(r"(?:[$€£﷼]|SAR|USD|EUR)\s?\d+(?:[.,]\d+)?", re.I)
+    phones = []
+    for line in text.splitlines():
+        # A slash can separate printed/OCR phone digit groups. Permit it only
+        # on an explicitly phone-labelled line, retaining the observed text
+        # rather than truncating the final digit or guessing a replacement.
+        labelled = re.search(r"(?:phone|tel(?:ephone)?|هاتف|جوال)\s*[:：]?", line, re.I)
+        if labelled:
+            phones.extend(re.findall(r"(?:\+?\d[\d\s()./\-]{6,}\d)", line[labelled.end():]))
+        else:
+            phones.extend(phone_pattern.findall(line))
+
+    emails = []
+    for line in text.splitlines():
+        for match in email_pattern.finditer(line):
+            candidate = match.group(0)
+            # OCR can concatenate a common receipt label with the address
+            # (for example "Emailtest@example.com"). Strip that label only
+            # when it occurs at the start of the physical OCR line and the
+            # remainder is independently a valid email address.
+            if match.start() == 0:
+                lowered = candidate.casefold()
+                for label in ("email", "e-mail"):
+                    if lowered.startswith(label):
+                        remainder = candidate[len(label):]
+                        if email_pattern.fullmatch(remainder):
+                            candidate = remainder
+                            break
+            emails.append(candidate)
+
+    def unique(values):
+        return list(dict.fromkeys(value.strip() for value in values if value.strip()))
+
+    return {
+        "emails": unique(emails),
+        "phones": unique(phones),
+        "dates": unique(date_pattern.findall(text)),
+        "money": unique(money_pattern.findall(text)),
+    }
+
+
+def _ocr_receipt_text(source: Path, lang: str = "ar+eng") -> tuple[str, dict[str, list[str]]]:
+    """Use a second, enhanced OCR pass only when a receipt field is missing."""
+    import pytesseract
+
+    primary = _ocr_text_file(source, lang)
+    fields = _receipt_fields_from_text(primary)
+    if all(fields[key] for key in ("emails", "phones", "dates", "money")):
+        return primary, fields
+
+    with Image.open(source) as opened:
+        image = ImageOps.exif_transpose(opened).convert("L")
+        enhanced = ImageOps.autocontrast(image)
+        width, height = enhanced.size
+        # Upscaling improves small printed digits while bounding memory use.
+        if max(width, height) <= 2200:
+            enhanced = enhanced.resize((width * 2, height * 2), Image.Resampling.LANCZOS)
+        secondary = pytesseract.image_to_string(
+            enhanced,
+            lang=_ocr_lang(lang),
+            config="--psm 6",
+            timeout=settings.ocr_timeout_seconds,
+        )
+        enhanced.close()
+        image.close()
+
+    combined = primary.rstrip() + "\n" + secondary.strip()
+    return combined, _receipt_fields_from_text(combined)
+
+
 def ocr_receipt_fields(source: Path, output: Path, lang: str = "ar+eng"):
-    text=_ocr_text_file(source,lang); patterns={"emails":r"[\w.+-]+@[\w-]+\.[\w.-]+","phones":r"(?:\+?\d[\d\s().-]{6,}\d)","dates":r"\b\d{1,4}[/-]\d{1,2}[/-]\d{1,4}\b","money":r"(?:[$€£﷼]|SAR|USD|EUR)\s?\d+(?:[.,]\d+)?"}
-    out={k:re.findall(v,text,re.I) for k,v in patterns.items()}; _write_text(output,json.dumps(out,ensure_ascii=False,indent=2))
+    _text, fields = _ocr_receipt_text(source, lang)
+    _write_text(output, json.dumps(fields, ensure_ascii=False, indent=2))
 
 
 def ocr_invoice_fields(source: Path, output: Path, lang: str = "ar+eng"):

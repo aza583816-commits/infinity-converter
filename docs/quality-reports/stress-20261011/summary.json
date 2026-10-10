@@ -1,0 +1,86 @@
+{
+  "base_commit": "42a5a42c74c168cab04fd607927464ccc496dc98",
+  "excluded_native_office_tools": [
+    "csv-to-pdf",
+    "excel-to-pdf",
+    "html-to-pdf",
+    "markdown-to-pdf",
+    "ppt-to-pdf",
+    "txt-to-pdf",
+    "word-to-pdf"
+  ],
+  "full_162_tool_gate_passed": false,
+  "production_tested": false,
+  "results": {
+    "english": {
+      "verified": 155,
+      "total": 155,
+      "failures": [],
+      "ocr_final_confirmation": 22,
+      "fixture_sizes": {
+        "pdf_pages": 10,
+        "docx_paragraphs_added": 200,
+        "docx_table_cells_added": 160,
+        "xlsx_rows_added_per_sheet": 500,
+        "pptx_slides": 20,
+        "csv_json_rows": 300,
+        "text_rows_added": 1000,
+        "image_pixels": [
+          2400,
+          2100
+        ]
+      }
+    },
+    "arabic": {
+      "verified": 155,
+      "total": 155,
+      "failures": [],
+      "ocr_final_confirmation": 22,
+      "fixture_sizes": {
+        "pdf_pages": 10,
+        "docx_paragraphs_added": 200,
+        "docx_table_cells_added": 160,
+        "xlsx_rows_added_per_sheet": 500,
+        "pptx_slides": 20,
+        "csv_json_rows": 300,
+        "text_rows_added": 1000,
+        "image_pixels": [
+          2400,
+          2100
+        ]
+      }
+    },
+    "mixed": {
+      "verified": 155,
+      "total": 155,
+      "failures": [],
+      "ocr_final_confirmation": 22,
+      "fixture_sizes": {
+        "pdf_pages": 10,
+        "docx_paragraphs_added": 200,
+        "docx_table_cells_added": 160,
+        "xlsx_rows_added_per_sheet": 500,
+        "pptx_slides": 20,
+        "csv_json_rows": 300,
+        "text_rows_added": 1000,
+        "image_pixels": [
+          2400,
+          2100
+        ]
+      }
+    }
+  },
+  "focused_regressions": "12 passed",
+  "limitations": [
+    "Synthetic samples only; not a guarantee for every possible input",
+    "OCR shared audit image remains English; separate degraded receipts cover English, Arabic and mixed headings",
+    "Incremental confirmation: unchanged non-OCR tool results reused; all 22 OCR operations rerun after fixes"
+  ],
+  "tested_code_sha256": {
+    "converters/mega_tools.py": "4811d2ecdbf9f792a54940adae6af84ac2be98294121d56634f1063ec448343e",
+    "converters/ocr.py": "fa4a90bb0fe897112d21edf1f4f51133076ddf6775e3f5f73d0dc41c5478c4c9",
+    "converters/ocr_advanced.py": "41f266934444f47fed54e3db3c9e7cff54b1c4cb07a44bde4047b944ebc125be",
+    "scripts/semantic_output_audit.py": "952f04722de4def2fbb335e004bf63c0e63daab26cd5873d4e4be00337900342",
+    "scripts/stress_semantic_audit.py": "2e28271f1dff6f7a7e219f172969b00692eb663913248292e44e12cc7655d184"
+  }
+}
