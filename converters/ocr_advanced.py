@@ -22,6 +22,24 @@ def _fontfile() -> str | None:
     return None
 
 
+def _insert_searchable_text(page, text: str, fontsize: float) -> None:
+    """Never silently discard an overflowing invisible OCR text layer."""
+    # MuPDF extracts unshaped Arabic runs in reverse order. Preorder only the
+    # Arabic letters (never numbers) and isolate the following Latin boundary.
+    arabic_letters = r'[\u0621-\u065f\u066e-\u06d3]'
+    text = re.sub(arabic_letters + r'+(?: +' + arabic_letters + r'+)*',
+                  lambda match: match.group(0)[::-1] + '\u200e', text)
+    fontfile = _fontfile()
+    kwargs = dict(fontname='OCRUnicode' if fontfile else 'helv',
+                  color=(1, 1, 1), render_mode=3, overlay=True)
+    if fontfile:
+        kwargs['fontfile'] = fontfile
+    for size in (fontsize, fontsize * .75, fontsize * .5, fontsize * .25, 1):
+        if page.insert_textbox(page.rect, text, fontsize=size, **kwargs) >= 0:
+            return
+    raise ValueError('تعذر إدراج طبقة النص كاملة في PDF القابل للبحث.')
+
+
 def _ocr_text(image: Image.Image, lang: str) -> str:
     if not ocr_available():
         raise RuntimeError('محرك OCR غير مثبت على الخادم.')
@@ -55,11 +73,7 @@ def image_to_searchable_pdf(source: Path, output: Path, lang: str = 'ar+en'):
                 page = doc.new_page(width=img.width * 72 / 96, height=img.height * 72 / 96)
                 page.insert_image(page.rect, filename=str(png))
                 if text:
-                    fontfile = _fontfile()
-                    kwargs = dict(fontname='helv', fontsize=8, color=(1, 1, 1), render_mode=3, overlay=True)
-                    if fontfile:
-                        kwargs['fontfile'] = fontfile
-                    page.insert_textbox(page.rect, text, **kwargs)
+                    _insert_searchable_text(page, text, 8)
                 doc.save(str(output), garbage=4, deflate=True)
             finally:
                 doc.close()
@@ -78,20 +92,26 @@ def pdf_to_searchable_pdf(source: Path, output: Path, lang: str = 'ar+en', dpi: 
         zoom = dpi / 72
         matrix = pymupdf.Matrix(zoom, zoom)
         for page in source_doc:
+            native = page.get_text('text').strip()
+            if native and not page.get_images():
+                # Copy the original text layer byte-for-byte rather than
+                # reconstructing shaped Arabic / mixed-script glyphs.
+                result.insert_pdf(source_doc, from_page=page.number, to_page=page.number)
+                background = page.get_pixmap(matrix=matrix, alpha=False)
+                result[-1].insert_image(result[-1].rect, pixmap=background, overlay=False)
+                continue
             pix = page.get_pixmap(matrix=matrix, alpha=False)
             image = Image.frombytes('RGB', (pix.width, pix.height), pix.samples)
             try:
+                # Digital PDF text is already exact; OCR is needed only when
+                # the page has no selectable source text.
                 text = _ocr_text(image, lang)
             finally:
                 image.close()
             new_page = result.new_page(width=page.rect.width, height=page.rect.height)
             new_page.insert_image(new_page.rect, pixmap=pix)
             if text:
-                fontfile = _fontfile()
-                kwargs = dict(fontname='helv', fontsize=7, color=(1, 1, 1), render_mode=3, overlay=True)
-                if fontfile:
-                    kwargs['fontfile'] = fontfile
-                new_page.insert_textbox(new_page.rect, text, **kwargs)
+                _insert_searchable_text(new_page, text, 7)
         if result.page_count == 0:
             raise ValueError('ملف PDF فارغ.')
         result.save(str(output), garbage=4, deflate=True)

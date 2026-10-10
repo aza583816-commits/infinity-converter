@@ -540,6 +540,18 @@ def run():
                     print(f"SEMANTIC PASS {tool.id}: {assertion}",flush=True)
                 except Exception as error:
                     failures.append({"id":tool.id,"error":f"{type(error).__name__}: {error}"})
+                    evidence_root = os.environ.get("IC_SEMANTIC_FAILURE_DIR")
+                    if evidence_root:
+                        import shutil
+                        evidence = Path(evidence_root) / tool.id
+                        evidence.mkdir(parents=True, exist_ok=True)
+                        if original is not None and original.is_file():
+                            shutil.copy2(original, evidence / ("source" + original.suffix))
+                        for candidate in workspace.path.rglob("*"):
+                            if candidate.is_file():
+                                destination = evidence / "workspace" / candidate.relative_to(workspace.path)
+                                destination.parent.mkdir(parents=True, exist_ok=True)
+                                shutil.copy2(candidate, destination)
                     print(f"SEMANTIC FAIL {tool.id}: {type(error).__name__}: {error}",flush=True)
         report={"profile":profile,"total":len(TOOLS),"semantic_verified":len(verified),
             "semantic_failures":failures,"unverified":unverified,"verifications":verified,
