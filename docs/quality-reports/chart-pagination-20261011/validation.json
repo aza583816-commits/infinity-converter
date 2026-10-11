@@ -1,0 +1,14 @@
+{
+  "base_commit": "02c81468bc57fa555e180c0713ede2d288008448",
+  "full_pytest": "374 passed + 16 subtests",
+  "focused": "14 passed",
+  "local_renderer": "LibreOffice Dev 26.8; production Debian LibreOffice 7.4 verified via live API on safe-pagebreak synthetic variant",
+  "semantic_audits": "Reuse unchanged prior production baseline/mixed/dense 162/162 each; new helper returns original on all three fixtures (no charts). Mandatory production Docker gates rerun before activation.",
+  "raster_oracle": "Rejects cached production clipped chart; accepts actual production-rendered safe-break variant, 240 formula results and 30 fully visible bars.",
+  "production_candidate_verified": false,
+  "sha256": {
+    "converters/office.py": "ad3b6c397687ae50a7a121abf9ae448cba3fb4221a276f80e9ccd40cf616b161",
+    "tests/test_complex_office_structure.py": "a2f08126fb07343be3fd07fb6c5cb9e11352c65c1598af903d6e4ca39926c76d",
+    "tests/test_xlsx_chart_print_copy.py": "dc034c6ed04f5fd421aced80015cd0562ef75b052095d31493056a8df8cd0686"
+  }
+}

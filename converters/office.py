@@ -559,17 +559,152 @@ def _docx_pdf_bidi_spacing_copy(source: Path, output_dir: Path) -> Path:
         return render_copy
 
 
+def _xlsx_pdf_tail_chart_copy(source: Path, output_dir: Path) -> Path:
+    """Keep bounded tail charts together without rewriting workbook objects.
+
+    Only adapt small worksheets whose author chose width fitting and left row
+    breaks unspecified. Charts embedded inside data, oversized charts, hidden
+    rows, explicit breaks and ambiguous drawing anchors keep native behavior.
+    All package members except affected worksheet print-break XML stay intact.
+    """
+    import posixpath
+    import re
+    import zipfile
+    import xml.etree.ElementTree as ET
+    from openpyxl import load_workbook
+
+    if source.suffix.lower() != '.xlsx' or source.stat().st_size > 128 * 1024:
+        return source
+    main = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
+    rel = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
+    with zipfile.ZipFile(source) as original:
+        if not any(name.startswith('xl/charts/') and name.endswith('.xml')
+                   for name in original.namelist()):
+            return source
+        workbook_xml = ET.fromstring(original.read('xl/workbook.xml'))
+        if workbook_xml.tag != f'{{{main}}}workbook':
+            return source
+        relationships = ET.fromstring(original.read('xl/_rels/workbook.xml.rels'))
+        targets = {item.attrib['Id']: item.attrib.get('Target', '')
+                   for item in relationships if item.attrib.get('TargetMode') != 'External'}
+        sheet_parts = []
+        for item in workbook_xml.find(f'{{{main}}}sheets'):
+            target = targets.get(item.attrib.get(f'{{{rel}}}id'), '')
+            sheet_parts.append(target.lstrip('/') if target.startswith('/')
+                               else posixpath.normpath(posixpath.join('xl', target)))
+        try:
+            book = load_workbook(source, data_only=False)
+        except (OSError, ValueError, TypeError, KeyError, IndexError, NotImplementedError):
+            return source  # Optional pagination metadata must not block native export.
+        changed_parts = {}
+        try:
+            for sheet, part in zip(book._sheets, sheet_parts):
+                if (not hasattr(sheet, '_cells') or not sheet._charts
+                        or len(sheet._cells) > 10000 or sheet.row_breaks.brk
+                        or any(row.hidden for row in sheet.row_dimensions.values())
+                        or sheet.page_setup.fitToWidth != 1
+                        or sheet.page_setup.fitToHeight not in (None, 0)):
+                    continue
+                default_height = sheet.sheet_format.defaultRowHeight or 15
+                def row_y(end):
+                    return end * default_height + sum(
+                        (row.height - default_height) for index, row in sheet.row_dimensions.items()
+                        if index <= end and row.height is not None)
+                titles = re.fullmatch(r'\$?(\d+):\$?(\d+)', sheet.print_title_rows or '')
+                if titles and int(titles[2]) - int(titles[1]) > 32:
+                    continue
+                repeated_height = (row_y(int(titles[2])) - row_y(int(titles[1])-1)
+                                   if titles else 0)
+                last_data = max((cell.row for cell in sheet._cells.values()
+                                 if cell.value is not None), default=0)
+                paper = {1: (612, 792), 5: (612, 1008),
+                         8: (841.89, 1190.55), 9: (595.28, 841.89)}.get(sheet.page_setup.paperSize)
+                if paper is None:
+                    continue
+                page_height = paper[0] if sheet.page_setup.orientation == 'landscape' else paper[1]
+                body_height = page_height - 72 * (sheet.page_margins.top + sheet.page_margins.bottom)
+                def bounds(drawing):
+                    anchor = drawing.anchor
+                    if not hasattr(anchor, '_from'):
+                        return None
+                    start = row_y(anchor._from.row) + anchor._from.rowOff / 12700
+                    if hasattr(anchor, 'ext'):
+                        end = start + anchor.ext.cy / 12700
+                    elif hasattr(anchor, 'to'):
+                        end = row_y(anchor.to.row) + anchor.to.rowOff / 12700
+                    else:
+                        return None
+                    return start, end
+                drawings = sheet._charts + sheet._images
+                positions = [bounds(drawing) for drawing in drawings]
+                if any(position is None for position in positions):
+                    continue
+                cuts = set()
+                for chart in sheet._charts:
+                    start, end = bounds(chart)
+                    row = chart.anchor._from.row
+                    if (row <= last_data or row > 10000
+                            or end-start + repeated_height + default_height > body_height):
+                        continue
+                    cut = row
+                    # Leave a header-sized blank gap before the tail drawing.
+                    # Calc repeats title rows above the new page's source rows.
+                    while cut > last_data and start-row_y(cut) < repeated_height+default_height:
+                        cut -= 1
+                    if cut <= last_data:
+                        continue
+                    if any(a < row_y(cut) < b-.01 for a, b in positions):
+                        continue  # Do not split another image or chart to fix this one.
+                    cuts.add(cut)
+                if not cuts or part not in original.namelist():
+                    continue
+                content = original.read(part).decode('utf-8')
+                if not re.search(r'<worksheet\b', content):
+                    continue  # Preserve unfamiliar namespace/prefix serialization.
+                content = re.sub(r'<rowBreaks\b[^>]*(?:/>|>.*?</rowBreaks>)', '', content, flags=re.S)
+                breaks = (f'<rowBreaks count="{len(cuts)}" manualBreakCount="{len(cuts)}">'
+                          + ''.join(f'<brk id="{cut}" min="0" max="16383" man="1"/>'
+                                    for cut in sorted(cuts)) + '</rowBreaks>')
+                after_breaks = (r'<(?:colBreaks|customProperties|cellWatches|ignoredErrors|smartTags|'
+                                r'drawing|legacyDrawing|legacyDrawingHF|picture|oleObjects|controls|'
+                                r'webPublishItems|tableParts|extLst)\b')
+                match = re.search(after_breaks, content)
+                if match:
+                    content = content[:match.start()] + breaks + content[match.start():]
+                else:
+                    content = content.replace('</worksheet>', breaks+'</worksheet>', 1)
+                changed_parts[part] = content.encode('utf-8')
+        finally:
+            book.close()
+        if not changed_parts:
+            return source
+        private = output_dir / f'.lo-sheet-input-{uuid4().hex}'
+        private.mkdir(mode=0o700)
+        copy = private / source.name
+        try:
+            with zipfile.ZipFile(copy, 'w') as destination:
+                for member in original.infolist():
+                    destination.writestr(member, changed_parts.get(member.filename,
+                                         original.read(member.filename)))
+        except Exception:
+            shutil.rmtree(private, ignore_errors=True)
+            raise
+        return copy
+
+
 def office_to_pdf(source: Path, output_dir: Path, timeout: int) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
     _reject_remote_html_resources(source)
     render_source = (
         _html_pdf_heading_fallback(source, output_dir)
         if source.suffix.lower() in {".html", ".htm"} else
+        _xlsx_pdf_tail_chart_copy(source, output_dir)
+        if source.suffix.lower() == '.xlsx' else
         _docx_pdf_bidi_spacing_copy(source, output_dir)
     )
-    private_docx_dir = (
+    private_office_dir = (
         render_source.parent if render_source != source
-        and source.suffix.lower() == ".docx" else None
+        and source.suffix.lower() in {".docx", ".xlsx"} else None
     )
 
     # A private LibreOffice profile prevents cross-request state leakage and
@@ -629,8 +764,8 @@ def office_to_pdf(source: Path, output_dir: Path, timeout: int) -> Path:
         _run_libreoffice(cmd, timeout=timeout, env=env)
     finally:
         shutil.rmtree(profile, ignore_errors=True)
-        if private_docx_dir is not None:
-            shutil.rmtree(private_docx_dir, ignore_errors=True)
+        if private_office_dir is not None:
+            shutil.rmtree(private_office_dir, ignore_errors=True)
 
     produced = output_dir / f"{render_source.stem}.pdf"
     if not produced.exists() or produced.stat().st_size == 0:
