@@ -1,0 +1,25 @@
+{
+  "deployment": "2b8effc2-e593-48f2-9030-9ab19ea8adf2",
+  "commit": "32b3fbe2de822e73465f810d7e6eb7e8f0c0377e",
+  "status": "SUCCESS",
+  "production_image_verified": true,
+  "pytest": [
+    "366 passed, 4 warnings, 16 subtests passed in 68.55s (0:01:08)"
+  ],
+  "semantic_results": [
+    "SEMANTIC RESULT 162/162 verified, 0 failures, 0 not yet independently checked",
+    "SEMANTIC RESULT 162/162 verified, 0 failures, 0 not yet independently checked",
+    "SEMANTIC RESULT 162/162 verified, 0 failures, 0 not yet independently checked",
+    "SEMANTIC RESULT 7/7 verified, 0 failures, 0 not yet independently checked",
+    "SEMANTIC RESULT 7/7 verified, 0 failures, 0 not yet independently checked",
+    "SEMANTIC RESULT 7/7 verified, 0 failures, 0 not yet independently checked"
+  ],
+  "scope": [
+    "baseline",
+    "mixed",
+    "dense",
+    "native-english",
+    "native-arabic",
+    "native-mixed"
+  ]
+}

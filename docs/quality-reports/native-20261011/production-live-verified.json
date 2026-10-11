@@ -1,0 +1,125 @@
+{
+  "deployment": "2b8effc2-e593-48f2-9030-9ab19ea8adf2",
+  "commit": "32b3fbe2de822e73465f810d7e6eb7e8f0c0377e",
+  "checks": [
+    {
+      "tool": "word-to-pdf",
+      "input_sha256": "82f0ff72e2963e39233c8f69f5e79e2d339fa8a79a17b91660209cbacdacf0dd",
+      "output_sha256": "0f2ddd20350f5fb23a5437de00e4d98aa8062081c2f9ac243a66ed3b0408a394",
+      "verified": "all source Word paragraph and table cell strings across the entire document survive in PDF Unicode text"
+    },
+    {
+      "tool": "excel-to-pdf",
+      "input_sha256": "e14f01a686810f5f0c9db52b656cf482433a586e67967218f263e176eb7286e5",
+      "output_sha256": "ba19a6d66cc916e759d67e3f31bf524b253fb64f0e9a446dc8d89cb8c76d6470",
+      "verified": "every cell from every original worksheet survives as Unicode-equivalent selectable PDF text"
+    },
+    {
+      "tool": "ppt-to-pdf",
+      "input_sha256": "5f925b41104333a57a83362cef4820d3c125e8862367ad0eaa77916796e75748",
+      "output_sha256": "ae4a0d44b6b53c8df3ce2b851cb4cbaac6ad11b68c2d7ca3e43d16b85a14ae4d",
+      "verified": "each PowerPoint slide maps to exactly one PDF page in source order, with all slide text inside visible page bounds"
+    },
+    {
+      "tool": "txt-to-pdf",
+      "input_sha256": "2f3a6ca104a7b1d992e31216623177720d36fb5054d9d08e78f3ae033d902625",
+      "output_sha256": "98a98db91127e1deca16b9299a82851315eef34b52dd58262e057dc270576eae",
+      "verified": "all original text-file lines retained as selectable PDF text"
+    },
+    {
+      "tool": "html-to-pdf",
+      "input_sha256": "0a5417bc55b0f0400a45362720913c46189156a01d1e20aa8f169a4e1a2e0180",
+      "output_sha256": "cda489f7db5475f39919a86b735332fa9c936c6a9c90f3bd3780ddcf4ae83727",
+      "verified": "all visible source HTML heading and table cells preserved as selectable PDF Unicode text"
+    },
+    {
+      "tool": "markdown-to-pdf",
+      "input_sha256": "945405a1a91b1cb1b181ccbdccc8254d93bafa77d6d2113a47f36286d8f59004",
+      "output_sha256": "e21e05e078ae379a45c694e58f51b6f26a5425c4d0efc99c2c63aaa7c07cd6c8",
+      "verified": "original Markdown heading and all source body/table cell texts survive PDF conversion"
+    },
+    {
+      "tool": "csv-to-pdf",
+      "input_sha256": "27e12161b83732262cf8547abc847532f75528a71122e86536049844fd4d4d82",
+      "output_sha256": "cc2d0b52c676c3b054ad6960f32147466ccd0bc510535097386f72d04fda3110",
+      "verified": "all source CSV headers and complete cell values survive PDF's extractable text"
+    },
+    {
+      "tool": "ocr-receipt-fields + image-ocr",
+      "language": "english",
+      "fields": {
+        "emails": [
+          "test@example.com"
+        ],
+        "phones": [
+          "+96650123456/7"
+        ],
+        "dates": [
+          "26/09/2026"
+        ],
+        "money": [
+          "SAR 1250.50"
+        ]
+      },
+      "plain_text": "safety equipment receipt\n\nemail test@example.com\ndate 26/09/2026\n\nphone +96650123456/7\ntotal sar 1250.50\n\nitem 00123 | qty 02 | unit 625.25"
+    },
+    {
+      "tool": "ocr-receipt-fields + image-ocr",
+      "language": "arabic",
+      "fields": {
+        "emails": [
+          "test@example.com"
+        ],
+        "phones": [
+          "+96650123456/7"
+        ],
+        "dates": [
+          "26/09/2026"
+        ],
+        "money": [
+          "SAR 1250.50"
+        ]
+      },
+      "plain_text": "فاتورة معدات السلامة\n‎email test@example.com‏\n‎date 26/09/2026‏\n\nphone +96650123456/7\ntotal sar 1250.50\n\nitem 00123 | qty 02 | unit 625.25"
+    },
+    {
+      "tool": "ocr-receipt-fields + image-ocr",
+      "language": "mixed",
+      "fields": {
+        "emails": [
+          "test@example.com"
+        ],
+        "phones": [
+          "+96650123456/7"
+        ],
+        "dates": [
+          "26/09/2026"
+        ],
+        "money": [
+          "SAR 1250.50"
+        ]
+      },
+      "plain_text": "safety equipment فاتورة معدات السلامة‎\nemail test@example.com\ndate 26/09/2026\nphone +96650123456/7\ntotal sar 1250.50\nitem 00123 | qty 02 | unit 625.25"
+    },
+    {
+      "tool": "image-to-png",
+      "pixel_exact": true
+    }
+  ],
+  "readyz": {
+    "architecture": {
+      "healthy": true,
+      "operations": 162,
+      "tools": 162
+    },
+    "status": "ok",
+    "version": "8.0.0"
+  },
+  "complete": true,
+  "live_conversion_requests_verified": 14,
+  "readyz_http_status": 200,
+  "visual_qa": {
+    "word_table_boundaries": "last two pages of 23-page output visually inspected: complete cells and final marker",
+    "mixed_pptx": "pages 19 and 20 of 20: all five bilingual records per slide visible"
+  }
+}

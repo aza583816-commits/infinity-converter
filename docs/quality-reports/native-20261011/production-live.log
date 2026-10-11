@@ -1,0 +1,13 @@
+warning: The `fitz` API is deprecated and will be removed in future. Use `import pymupdf` instead.
+readyz PASS
+word-to-pdf PASS
+excel-to-pdf PASS
+ppt-to-pdf PASS
+txt-to-pdf PASS
+html-to-pdf PASS
+markdown-to-pdf PASS
+csv-to-pdf PASS
+OCR english PASS
+OCR arabic PASS
+OCR mixed PASS
+ALL LIVE CHECKS PASS
