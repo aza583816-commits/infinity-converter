@@ -1,0 +1,26 @@
+{
+  "readyz_http_status": 200,
+  "readyz": {
+    "architecture": {
+      "healthy": true,
+      "operations": 162,
+      "tools": 162
+    },
+    "status": "ok",
+    "version": "8.0.0"
+  },
+  "checks": [
+    {
+      "tool": "txt-to-pdf",
+      "verified": "all original text-file lines retained as selectable PDF text",
+      "input_sha256": "2f3a6ca104a7b1d992e31216623177720d36fb5054d9d08e78f3ae033d902625",
+      "output_sha256": "d94e83db4620072b1e2931256ab31710a044b2afffb29cd1fecd038fd6c44126"
+    },
+    {
+      "tool": "csv-to-pdf",
+      "verified": "all source CSV headers and complete cell values survive PDF's extractable text",
+      "input_sha256": "27e12161b83732262cf8547abc847532f75528a71122e86536049844fd4d4d82",
+      "output_sha256": "cc2d0b52c676c3b054ad6960f32147466ccd0bc510535097386f72d04fda3110"
+    }
+  ]
+}

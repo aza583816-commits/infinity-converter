@@ -1,0 +1,19 @@
+{
+  "tool": "excel-to-pdf",
+  "actual_live_api": "https://infinityconverter.com/api/v2/convert",
+  "output_pages": 21,
+  "chart_pages": [
+    7,
+    14,
+    21
+  ],
+  "source_sheets": 3,
+  "formula_values_verified_on_exact_rows": 240,
+  "chart_bars_verified_by_value_proportions_and_five_raster_samples_each": 30,
+  "actual_drawn_diagrams_verified": 3,
+  "all_original_bilingual_fields_verified": true,
+  "landscape_pages_and_sheet_order_verified": true,
+  "original_source_unchanged": true,
+  "input_sha256": "21c79569485fa1917e7c15ae29ee6aa5863078a98bb518a3796183d13320d6e6",
+  "output_sha256": "5d7fa6d2c841cd073b80f8c2361aab140846ddfa145e24913411185aa9eff12a"
+}

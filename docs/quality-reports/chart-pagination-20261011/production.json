@@ -1,0 +1,294 @@
+{
+  "deployment": {
+    "id": "5ea2b9dd-6a3e-4acd-953a-6a5ccbbd847c",
+    "status": "SUCCESS",
+    "createdAt": "2026-10-11T08:29:33.946Z",
+    "updatedAt": "2026-10-11T08:37:03.888Z",
+    "serviceId": "202d8baa-d540-4ac0-a15e-c37e07bac74b",
+    "environmentId": "fda75754-4ad5-4e1a-950e-58e8d8cba716",
+    "url": null,
+    "snapshotId": "451a4eb8-78d7-4949-99c3-0fa31e85296e",
+    "creator": {
+      "id": "b0ff5e4b-ddab-4390-bfd5-eddad70b6105",
+      "name": null,
+      "email": "aza583816@gmail.com"
+    },
+    "canRollback": true,
+    "canRedeploy": true,
+    "regions": [
+      "ams"
+    ],
+    "meta": {
+      "reason": "deploy",
+      "commitMessage": "Merge pull request #36 from aza583816-commits/quality/chart-print-pagination-20261011\n\nPreserve complete Excel tail charts across PDF print pages",
+      "commitHash": "854ddad62bc4859ce013eafabbe24a3c00d23333",
+      "branch": "main"
+    }
+  },
+  "pytest": {
+    "scope": "deployment",
+    "deploymentId": "5ea2b9dd-6a3e-4acd-953a-6a5ccbbd847c",
+    "serviceId": "202d8baa-d540-4ac0-a15e-c37e07bac74b",
+    "environmentId": "fda75754-4ad5-4e1a-950e-58e8d8cba716",
+    "status": "BUILDING",
+    "build": [
+      {
+        "timestamp": "2026-10-11T08:30:45.376483308Z",
+        "severity": "info",
+        "message": "374 passed, 4 warnings, 16 subtests passed in 73.64s (0:01:13)\n",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          },
+          {
+            "key": "source",
+            "value": "\"buildkit\""
+          },
+          {
+            "key": "type",
+            "value": "\"log\""
+          },
+          {
+            "key": "vertex",
+            "value": "\"sha256:dd5771ddc19d5bc9be39ff3a871e57f0160d62ae65e6f80a8d9a732eac527513\""
+          },
+          {
+            "key": "stream",
+            "value": "1"
+          },
+          {
+            "key": "data",
+            "value": "\"Mzc0IHBhc3NlZCwgNCB3YXJuaW5ncywgMTYgc3VidGVzdHMgcGFzc2VkIGluIDczLjY0cyAoMDowMToxMykK\""
+          },
+          {
+            "key": "timestamp",
+            "value": "\"2026-10-11T08:30:45.376267705Z\""
+          }
+        ]
+      }
+    ]
+  },
+  "semantic": {
+    "scope": "deployment",
+    "deploymentId": "5ea2b9dd-6a3e-4acd-953a-6a5ccbbd847c",
+    "serviceId": "202d8baa-d540-4ac0-a15e-c37e07bac74b",
+    "environmentId": "fda75754-4ad5-4e1a-950e-58e8d8cba716",
+    "status": "SUCCESS",
+    "build": [
+      {
+        "timestamp": "2026-10-11T08:31:14.154849069Z",
+        "severity": "info",
+        "message": "SEMANTIC RESULT 162/162 verified, 0 failures, 0 not yet independently checked\n",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          },
+          {
+            "key": "source",
+            "value": "\"buildkit\""
+          },
+          {
+            "key": "type",
+            "value": "\"log\""
+          },
+          {
+            "key": "vertex",
+            "value": "\"sha256:416b656d886fbd3ea901aa597e1a3f67760622dff6eca1904d9f73bad905f775\""
+          },
+          {
+            "key": "stream",
+            "value": "1"
+          },
+          {
+            "key": "data",
+            "value": "\"U0VNQU5USUMgUkVTVUxUIDE2Mi8xNjIgdmVyaWZpZWQsIDAgZmFpbHVyZXMsIDAgbm90IHlldCBpbmRlcGVuZGVudGx5IGNoZWNrZWQK\""
+          },
+          {
+            "key": "timestamp",
+            "value": "\"2026-10-11T08:31:14.154453155Z\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-11T08:31:47.797047092Z",
+        "severity": "info",
+        "message": "SEMANTIC RESULT 162/162 verified, 0 failures, 0 not yet independently checked\n",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          },
+          {
+            "key": "source",
+            "value": "\"buildkit\""
+          },
+          {
+            "key": "type",
+            "value": "\"log\""
+          },
+          {
+            "key": "vertex",
+            "value": "\"sha256:416b656d886fbd3ea901aa597e1a3f67760622dff6eca1904d9f73bad905f775\""
+          },
+          {
+            "key": "stream",
+            "value": "1"
+          },
+          {
+            "key": "data",
+            "value": "\"U0VNQU5USUMgUkVTVUxUIDE2Mi8xNjIgdmVyaWZpZWQsIDAgZmFpbHVyZXMsIDAgbm90IHlldCBpbmRlcGVuZGVudGx5IGNoZWNrZWQK\""
+          },
+          {
+            "key": "timestamp",
+            "value": "\"2026-10-11T08:31:47.796915565Z\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-11T08:32:22.029267300Z",
+        "severity": "info",
+        "message": "SEMANTIC RESULT 162/162 verified, 0 failures, 0 not yet independently checked\n",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          },
+          {
+            "key": "source",
+            "value": "\"buildkit\""
+          },
+          {
+            "key": "type",
+            "value": "\"log\""
+          },
+          {
+            "key": "vertex",
+            "value": "\"sha256:416b656d886fbd3ea901aa597e1a3f67760622dff6eca1904d9f73bad905f775\""
+          },
+          {
+            "key": "stream",
+            "value": "1"
+          },
+          {
+            "key": "data",
+            "value": "\"U0VNQU5USUMgUkVTVUxUIDE2Mi8xNjIgdmVyaWZpZWQsIDAgZmFpbHVyZXMsIDAgbm90IHlldCBpbmRlcGVuZGVudGx5IGNoZWNrZWQK\""
+          },
+          {
+            "key": "timestamp",
+            "value": "\"2026-10-11T08:32:22.029142303Z\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-11T08:33:18.093642461Z",
+        "severity": "info",
+        "message": "SEMANTIC RESULT 7/7 verified, 0 failures, 0 not yet independently checked\n",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          },
+          {
+            "key": "source",
+            "value": "\"buildkit\""
+          },
+          {
+            "key": "type",
+            "value": "\"log\""
+          },
+          {
+            "key": "vertex",
+            "value": "\"sha256:416b656d886fbd3ea901aa597e1a3f67760622dff6eca1904d9f73bad905f775\""
+          },
+          {
+            "key": "stream",
+            "value": "1"
+          },
+          {
+            "key": "data",
+            "value": "\"U0VNQU5USUMgUkVTVUxUIDcvNyB2ZXJpZmllZCwgMCBmYWlsdXJlcywgMCBub3QgeWV0IGluZGVwZW5kZW50bHkgY2hlY2tlZAo=\""
+          },
+          {
+            "key": "timestamp",
+            "value": "\"2026-10-11T08:33:18.093461319Z\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-11T08:34:28.436938580Z",
+        "severity": "info",
+        "message": "SEMANTIC RESULT 7/7 verified, 0 failures, 0 not yet independently checked\n",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          },
+          {
+            "key": "source",
+            "value": "\"buildkit\""
+          },
+          {
+            "key": "type",
+            "value": "\"log\""
+          },
+          {
+            "key": "vertex",
+            "value": "\"sha256:416b656d886fbd3ea901aa597e1a3f67760622dff6eca1904d9f73bad905f775\""
+          },
+          {
+            "key": "stream",
+            "value": "1"
+          },
+          {
+            "key": "data",
+            "value": "\"U0VNQU5USUMgUkVTVUxUIDcvNyB2ZXJpZmllZCwgMCBmYWlsdXJlcywgMCBub3QgeWV0IGluZGVwZW5kZW50bHkgY2hlY2tlZAo=\""
+          },
+          {
+            "key": "timestamp",
+            "value": "\"2026-10-11T08:34:28.436748715Z\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-11T08:36:19.277456676Z",
+        "severity": "info",
+        "message": "SEMANTIC RESULT 7/7 verified, 0 failures, 0 not yet independently checked\n",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          },
+          {
+            "key": "source",
+            "value": "\"buildkit\""
+          },
+          {
+            "key": "type",
+            "value": "\"log\""
+          },
+          {
+            "key": "vertex",
+            "value": "\"sha256:416b656d886fbd3ea901aa597e1a3f67760622dff6eca1904d9f73bad905f775\""
+          },
+          {
+            "key": "stream",
+            "value": "1"
+          },
+          {
+            "key": "data",
+            "value": "\"U0VNQU5USUMgUkVTVUxUIDcvNyB2ZXJpZmllZCwgMCBmYWlsdXJlcywgMCBub3QgeWV0IGluZGVwZW5kZW50bHkgY2hlY2tlZAo=\""
+          },
+          {
+            "key": "timestamp",
+            "value": "\"2026-10-11T08:36:19.277269415Z\""
+          }
+        ]
+      }
+    ]
+  },
+  "live_excel": "verified-live.json",
+  "readyz": "readyz.json",
+  "unchanged_live_checks": "Cached Word, TXT and CSV proofs reused because corresponding conversion code unchanged; prior live OCR/image evidence remains unchanged."
+}

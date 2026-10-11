@@ -1,0 +1,13 @@
+{
+  "tool": "word-to-pdf",
+  "production_output_reused": true,
+  "reason": "Word converter unchanged by this fix; strengthen image/visible-bounds checks on the already captured live output rather than upload again.",
+  "output_pages": 16,
+  "all_original_body_and_table_fields_verified": true,
+  "diagram_color_circle_samples_verified": true,
+  "input_sha256": "77c9eefb97eb4670c0c18952fe3ab1748cf26e0aa0847fdd0e6918414156d02b",
+  "output_sha256": "9a07d4f425740f24d441c03d0e1a3a19e0fad8633605a8a57857e92ed7b72b4c",
+  "source_diagrams_verified": 8,
+  "image_resource_entries": 16,
+  "source_diagrams_verified_by_actual_draw_positions": true
+}
