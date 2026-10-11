@@ -102,6 +102,11 @@ def _field_present(field: str, actual: str) -> bool:
     boundary = r"(?<=[\u0600-\u06FF])(?=[A-Za-z0-9])|(?<=[A-Za-z0-9])(?=[\u0600-\u06FF])"
     wanted = re.sub(boundary, " ", " ".join(unicodedata.normalize('NFKC', field).split()))
     actual = re.sub(boundary, " ", " ".join(unicodedata.normalize('NFKC', actual).split()))
+    # Writer can omit an extractable space before a printed pipe when an RTL
+    # heading wraps. Preserve every delimiter and digit, treating only its
+    # surrounding layout whitespace as equivalent (including soft line wraps).
+    wanted = re.sub(r'\s*\|\s*', ' | ', wanted)
+    actual = re.sub(r'\s*\|\s*', ' | ', actual)
     prefix = r'(?<!\w)' if wanted and wanted[0].isalnum() else ''
     suffix = r'(?!\w)' if wanted and wanted[-1].isalnum() else ''
     return bool(wanted and re.search(prefix + re.escape(wanted) + suffix, actual))
