@@ -1,0 +1,40 @@
+{
+  "base_commit": "32b3fbe2de822e73465f810d7e6eb7e8f0c0377e",
+  "tested_source_sha256": {
+    "converters/office.py": "da12f4f6a8a0024cef27f60853c81226bb1347c44ba9d1d465cd622e7fa7a715",
+    "tests/test_office_pdf_fragment_boundaries.py": "38efb2cac38430c5283a5a4e2fa06176b8aa3287b7f897df94a8f50b69f2267b",
+    "tests/test_complex_office_structure.py": "0fa5cf98c35398338c94628d88a253ed05321b617d59a820557359eea1671a84"
+  },
+  "full_pytest": "369 passed +16 subtests",
+  "focused": "9 passed",
+  "semantic_profiles": {
+    "baseline": "162/162",
+    "mixed": "162/162",
+    "dense": "162/162"
+  },
+  "affected_native_stress": {
+    "english": "3/3",
+    "arabic": "3/3",
+    "mixed": "3/3"
+  },
+  "word_fixture": {
+    "sections": 8,
+    "complete_table_cells": 448,
+    "merged_headers": 8,
+    "diagrams": 8,
+    "orientation": "alternating portrait/landscape",
+    "local_output_pages": 12
+  },
+  "excel_fixture": {
+    "worksheets": 3,
+    "rows_per_sheet": 80,
+    "formula_results_verified_on_corresponding_rows": 240,
+    "diagrams": 3,
+    "chart_bars_verified_with_numeric_proportions": 30,
+    "merged_headers": 3,
+    "local_output_pages": 21
+  },
+  "root_cause": "Live excel-to-pdf returned 400 on a faithful native styled workbook. MuPDF extracts السلامة as السالمة from a lam-alef ligature while pypdf independently recovers every complete original field. Verify all fields through one independent parser before considering a plain fallback. Real content loss still fails closed.",
+  "production_candidate_verified": false,
+  "local_libreoffice": "26.8 alpha; production Docker gates remain mandatory"
+}
