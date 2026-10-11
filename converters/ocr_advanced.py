@@ -7,7 +7,7 @@ import pytesseract
 from PIL import Image
 
 from config.settings import settings
-from converters.ocr import _ocr_string, _tesseract_lang, ocr_available
+from converters.ocr import _load_display_image, _ocr_string, _tesseract_lang, ocr_available
 
 FONT_CANDIDATES = (
     '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
@@ -61,8 +61,7 @@ def _ocr_data(image: Image.Image, lang: str) -> dict:
 
 
 def image_to_searchable_pdf(source: Path, output: Path, lang: str = 'ar+en'):
-    with Image.open(source) as opened:
-        img = opened.convert('RGB')
+    img = _load_display_image(source)
     try:
         text = _ocr_text(img, lang)
         png = Path(output).with_suffix('.source.png')
@@ -121,8 +120,7 @@ def pdf_to_searchable_pdf(source: Path, output: Path, lang: str = 'ar+en', dpi: 
 
 
 def image_ocr_json(source: Path, output: Path, lang: str = 'ar+en'):
-    with Image.open(source) as opened:
-        img = opened.convert('RGB')
+    img = _load_display_image(source)
     try:
         data = _ocr_data(img, lang)
     finally:
@@ -179,8 +177,7 @@ def pdf_page_texts(source: Path, output_dir: Path, lang: str = 'ar+en') -> list[
 
 
 def ocr_extract_pattern(source: Path, output: Path, lang: str, pattern: str):
-    with Image.open(source) as opened:
-        img = opened.convert('RGB')
+    img = _load_display_image(source)
     try:
         text = _ocr_text(img, lang)
     finally:
@@ -205,8 +202,7 @@ def ocr_urls(source: Path, output: Path, lang: str = 'ar+en'):
 
 
 def ocr_tables_csv(source: Path, output: Path, lang: str = 'ar+en'):
-    with Image.open(source) as opened:
-        img = opened.convert('RGB')
+    img = _load_display_image(source)
     try:
         data = _ocr_data(img, lang)
     finally:
@@ -233,8 +229,7 @@ def ocr_tables_csv(source: Path, output: Path, lang: str = 'ar+en'):
 
 def ocr_clean_text(source: Path, output: Path, lang: str = 'ar+en'):
     from converters.utility_advanced import clean_text
-    with Image.open(source) as opened:
-        img = opened.convert('RGB')
+    img = _load_display_image(source)
     try:
         text = _ocr_text(img, lang)
     finally:

@@ -1,0 +1,96 @@
+[
+  {
+    "path": "/privacy",
+    "status": 200,
+    "title": [
+      "Privacy policy | Infinity Converter"
+    ],
+    "adsense_client_present": true,
+    "cmp_script_observed": false,
+    "body": null
+  },
+  {
+    "path": "/terms",
+    "status": 200,
+    "title": [
+      "Terms &amp; conditions | Infinity Converter"
+    ],
+    "adsense_client_present": true,
+    "cmp_script_observed": false,
+    "body": null
+  },
+  {
+    "path": "/cookies",
+    "status": 200,
+    "title": [
+      "Cookie policy | Infinity Converter"
+    ],
+    "adsense_client_present": true,
+    "cmp_script_observed": false,
+    "body": null
+  },
+  {
+    "path": "/about",
+    "status": 200,
+    "title": [
+      "About us | Infinity Converter"
+    ],
+    "adsense_client_present": true,
+    "cmp_script_observed": false,
+    "body": null
+  },
+  {
+    "path": "/contact",
+    "status": 200,
+    "title": [
+      "Contact us | Infinity Converter"
+    ],
+    "adsense_client_present": true,
+    "cmp_script_observed": false,
+    "body": null
+  },
+  {
+    "path": "/trust",
+    "status": 200,
+    "title": [
+      "Trust &amp; security center | Infinity Converter"
+    ],
+    "adsense_client_present": true,
+    "cmp_script_observed": false,
+    "body": null
+  },
+  {
+    "path": "/editorial",
+    "status": 200,
+    "title": [
+      "Editorial &amp; quality policy | Infinity Converter"
+    ],
+    "adsense_client_present": true,
+    "cmp_script_observed": false,
+    "body": null
+  },
+  {
+    "path": "/robots.txt",
+    "status": 200,
+    "title": [],
+    "adsense_client_present": false,
+    "cmp_script_observed": false,
+    "body": "User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /login\nDisallow: /register\nDisallow: /account\nDisallow: /set-language/\nSitemap: https://infinityconverter.com/sitemap.xml\n"
+  },
+  {
+    "path": "/sitemap.xml",
+    "status": 200,
+    "title": [],
+    "adsense_client_present": false,
+    "cmp_script_observed": false,
+    "body": null
+  },
+  {
+    "path": "/ads.txt",
+    "status": 200,
+    "title": [],
+    "adsense_client_present": false,
+    "cmp_script_observed": false,
+    "body": "google.com, pub-4343857922748618, DIRECT, f08c47fec0942fa0\n"
+  }
+]

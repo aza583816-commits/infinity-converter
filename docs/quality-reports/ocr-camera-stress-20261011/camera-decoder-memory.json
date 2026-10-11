@@ -1,0 +1,41 @@
+{
+  "scope": "24 megapixel synthetic image, isolated decoder process only; not total service capacity or Railway memory limit",
+  "measurements": [
+    {
+      "size": [
+        4000,
+        6000
+      ],
+      "top_right_pixel": [
+        255,
+        0,
+        0
+      ],
+      "bottom_left_pixel": [
+        255,
+        255,
+        255
+      ],
+      "peak_rss_kib": 385512,
+      "profile": "before"
+    },
+    {
+      "size": [
+        4000,
+        6000
+      ],
+      "top_right_pixel": [
+        255,
+        0,
+        0
+      ],
+      "bottom_left_pixel": [
+        255,
+        255,
+        255
+      ],
+      "peak_rss_kib": 292264,
+      "profile": "after"
+    }
+  ]
+}

@@ -110,10 +110,29 @@ def _ocr_string(image: Image.Image, *, lang: str) -> str:
         raise RuntimeError("استغرق OCR وقتًا أطول من المسموح.") from exc
 
 
+def _load_display_image(source: Path) -> Image.Image:
+    """Decode camera pixels in their declared display orientation, privately."""
+    with Image.open(source) as opened:
+        ImageOps.exif_transpose(opened, in_place=True)
+        if opened.mode == 'RGBA' or 'transparency' in opened.info:
+            # Tesseract displays alpha-backed text on white. Preserve that
+            # behavior while normalizing camera orientation and RGB mode.
+            with opened.convert('RGBA') as rgba:
+                decoded = Image.new('RGB', rgba.size, 'white')
+                with rgba.getchannel('A') as alpha:
+                    decoded.paste(rgba, mask=alpha)
+        else:
+            decoded = opened.convert('RGB')
+        # The pixels now carry the displayed orientation. Do not pass a
+        # stale EXIF transform to downstream PDF/image encoders.
+        decoded.info.pop('exif', None)
+        return decoded
+
+
 def ocr_image(source: Path, output: Path, lang: str = "ar+en"):
     if not ocr_available():
         raise RuntimeError("محرك OCR غير مثبت على الخادم.")
-    with Image.open(source) as img:
+    with _load_display_image(source) as img:
         text = _ocr_string(img, lang=lang)
     text = text.strip()
     if not text:

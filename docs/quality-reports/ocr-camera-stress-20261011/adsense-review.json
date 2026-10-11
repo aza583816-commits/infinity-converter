@@ -1,0 +1,13 @@
+{
+  "scope": "HTTP/source foundations only; no claim of Google approval or full policy compliance",
+  "live_pages_report": "adsense-live-foundations.json",
+  "foundations": "privacy, terms, cookies, about, contact, trust, editorial, robots, sitemap and real-publisher ads.txt HTTP 200",
+  "source_ad_placement": "Loader restricted to indexable home/tool/blog content; noindex thin/private surfaces excluded",
+  "open_account_check": "No certified CMP bootstrap observed in fetched HTML. This is not proof of missing consent: Google may inject through its own scripts/account settings. AdSense Privacy & messaging configuration and region behavior are not verified. Need certified TCF CMP verification for personalized ads in EEA/UK/Switzerland.",
+  "approval_status": "Not independently verified; no account submission or ad activation performed",
+  "official_sources": [
+    "https://support.google.com/adsense/answer/9724?hl=en",
+    "https://support.google.com/adsense/answer/7299563?hl=en",
+    "https://support.google.com/adsense/answer/13554116?hl=en"
+  ]
+}
