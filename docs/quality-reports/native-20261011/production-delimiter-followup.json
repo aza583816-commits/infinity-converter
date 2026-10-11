@@ -1,0 +1,22 @@
+{
+  "failed_deployment": "aba59826-9978-4ca0-b082-be2a011678f1",
+  "production_converter_unchanged_for_markdown": true,
+  "actual_pdf_pages": 15,
+  "observed_extracted_text": "فحص السلامة ومعدات الوقاية سجل 00000 | 00123| 00999",
+  "expected_source_text": "فحص السلامة ومعدات الوقاية سجل 00000 | 00123 | 00999",
+  "root_cause": "Printed pipe-delimiter spacing omitted in selectable text on a wrapped RTL heading; source words, identifiers and delimiters are intact. Confirmed on the production PDF and page raster.",
+  "fix": "Normalize only layout whitespace surrounding literal pipe delimiters on both sides of exact field comparison. Never remove or reorder letters, numbers or delimiters.",
+  "focused_tests": "8 passed",
+  "actual_production_pdf_full_oracle": "PASS: original heading + every Markdown source fragment, including all 150 Arabic stress headings",
+  "input_sha256": "df2db84b749ca38847b035a9998888a75cf8ffdb6ab16d83a5951101c1330d32",
+  "actual_pdf_sha256": "2ef58081d8b055d7a3feb87ec8ca24b71860d342df7346586081a3e1386980c0",
+  "initial_production_gates": {
+    "pytest": "364 passed +16 subtests",
+    "baseline": "162/162",
+    "mixed": "162/162",
+    "dense": "162/162",
+    "native_english": "7/7",
+    "native_arabic": "6/7 blocked on extracted spacing",
+    "native_mixed": "not run because build failed closed"
+  }
+}
