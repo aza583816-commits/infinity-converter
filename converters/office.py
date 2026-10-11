@@ -301,7 +301,6 @@ def _pdf_has_text_fragments(output: Path, fragments: list[str]) -> bool:
             unicodedata.normalize("NFKC", page.get_text("text"))
             for page in document
         )
-    actual = " ".join(actual.split())
     # PDF text extraction may concatenate neighboring table cells when their
     # scripts differ (e.g. Arabic name immediately followed by an ASCII ID).
     # Restore only Arabic/ASCII script boundaries; do NOT split ASCII letters
@@ -310,18 +309,36 @@ def _pdf_has_text_fragments(output: Path, fragments: list[str]) -> bool:
         r"(?<=[\u0600-\u06FF])(?=[A-Za-z0-9])"
         r"|(?<=[A-Za-z0-9])(?=[\u0600-\u06FF])"
     )
-    actual = re.sub(script_boundary, " ", actual)
-    for fragment in fragments:
-        expected = " ".join(unicodedata.normalize("NFKC", fragment).split())
-        expected = re.sub(script_boundary, " ", expected)
-        if not expected:
-            continue
-        # Delimit only word-like ends. This permits ordinary punctuation around
-        # a complete source cell, without accepting a prefix of another cell.
-        prefix = r"(?<!\w)" if expected[0].isalnum() or expected[0] == "_" else ""
-        suffix = r"(?!\w)" if expected[-1].isalnum() or expected[-1] == "_" else ""
-        if re.search(prefix + re.escape(expected) + suffix, actual) is None:
-            return False
+    def contains_every_fragment(extracted: str) -> bool:
+        actual = re.sub(script_boundary, " ", " ".join(
+            unicodedata.normalize("NFKC", extracted).split()))
+        for fragment in fragments:
+            expected = " ".join(unicodedata.normalize("NFKC", fragment).split())
+            expected = re.sub(script_boundary, " ", expected)
+            if not expected:
+                continue
+            # Keep complete token boundaries, including numeric identifiers.
+            prefix = r"(?<!\w)" if expected[0].isalnum() or expected[0] == "_" else ""
+            suffix = r"(?!\w)" if expected[-1].isalnum() or expected[-1] == "_" else ""
+            if re.search(prefix + re.escape(expected) + suffix, actual) is None:
+                return False
+        return True
+
+    if contains_every_fragment(actual):
+        return True
+    # MuPDF can reverse the letters inside a printed Arabic lam-alef ligature
+    # (السلامة -> السالمة). Check an independent logical Unicode parser before
+    # rejecting a faithful native PDF or flattening its spreadsheet objects.
+    # ONE parser must retain EVERY field; never mix partial successful fields
+    # from different parsers or repair extracted text with source values.
+    from pypdf import PdfReader
+    from pypdf.errors import PdfReadError
+    try:
+        logical = " ".join(page.extract_text() or "" for page in PdfReader(output).pages)
+    except (PdfReadError, ValueError, TypeError, OSError):
+        return False
+    if not contains_every_fragment(logical):
+        return False
     return True
 
 

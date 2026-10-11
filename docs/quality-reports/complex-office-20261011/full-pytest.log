@@ -1,0 +1,22 @@
+...................................................................... [ 18%]
+.......................................................... [ 34%]
+........................................................................ [ 54%]
+........................................................................ [ 73%]
+........................................................................ [ 93%]
+.........................                                                [100%]
+=============================== warnings summary ===============================
+tests/test_image_conversion_pixel_fidelity.py::test_image_to_png_preserves_all_rgba_pixel_values
+tests/test_image_conversion_pixel_fidelity.py::test_image_to_png_preserves_all_rgba_pixel_values
+  /workspace/scratch/4ce53dfe28ed/infinity-converter/tests/test_image_conversion_pixel_fidelity.py:43: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+    assert list(actual.getdata()) == list(image.getdata())
+
+tests/test_image_conversion_pixel_fidelity.py::test_jpeg_exif_orientation_is_applied_before_png_conversion
+  /workspace/scratch/4ce53dfe28ed/infinity-converter/tests/test_image_conversion_pixel_fidelity.py:58: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+    expected_pixels = list(expected.getdata())
+
+tests/test_image_conversion_pixel_fidelity.py::test_jpeg_exif_orientation_is_applied_before_png_conversion
+  /workspace/scratch/4ce53dfe28ed/infinity-converter/tests/test_image_conversion_pixel_fidelity.py:63: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+    assert list(actual.getdata()) == expected_pixels
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+369 passed, 4 warnings, 16 subtests passed in 120.33s (0:02:00)

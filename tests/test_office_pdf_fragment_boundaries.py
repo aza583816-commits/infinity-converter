@@ -52,3 +52,31 @@ def test_pdf_extractor_joined_arabic_and_ascii_cells_do_not_trigger_false_loss(m
     assert _pdf_has_text_fragments(Path("unused.pdf"), source_fields)
     assert not _pdf_has_text_fragments(Path("unused.pdf"), ["0012"])
     assert not _pdf_has_text_fragments(Path("unused.pdf"), ["اسم، عر"])
+
+
+def test_independent_logical_parser_requires_every_complete_original_field(monkeypatch):
+    import pypdf
+
+    class VisualPage:
+        def get_text(self, kind):
+            return 'السالمة Safety 00123'
+    class VisualDocument:
+        def __enter__(self):
+            return [VisualPage()]
+        def __exit__(self, *args):
+            return False
+    logical = ['السلامة Safety 00123']
+    class LogicalPage:
+        def extract_text(self):
+            return logical[0]
+    class LogicalDocument:
+        pages = [LogicalPage()]
+
+    monkeypatch.setattr(pymupdf, 'open', lambda _: VisualDocument())
+    monkeypatch.setattr(pypdf, 'PdfReader', lambda _: LogicalDocument())
+    fields = ['السلامة', 'Safety 00123']
+    assert _pdf_has_text_fragments(Path('unused.pdf'), fields)
+    logical[0] = 'السلامة'
+    assert not _pdf_has_text_fragments(Path('unused.pdf'), fields), 'Partial parsers must not be combined'
+    logical[0] = 'السلامة Safety 001234'
+    assert not _pdf_has_text_fragments(Path('unused.pdf'), fields), 'Numeric prefixes are not complete identifiers'

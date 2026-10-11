@@ -1,0 +1,42 @@
+{
+  "profile": "baseline",
+  "total": 3,
+  "semantic_verified": 3,
+  "semantic_failures": [],
+  "unverified": [],
+  "verifications": {
+    "excel-to-pdf": "every cell from every original worksheet survives as Unicode-equivalent selectable PDF text",
+    "txt-to-pdf": "all original text-file lines retained as selectable PDF text",
+    "csv-to-pdf": "all source CSV headers and complete cell values survive PDF's extractable text"
+  },
+  "quality_complete": true,
+  "stress_language": "mixed",
+  "selected_tools": [
+    "csv-to-pdf",
+    "excel-to-pdf",
+    "txt-to-pdf"
+  ],
+  "excluded_native_office_tools": [],
+  "full_registry_verified": false,
+  "source_commit": "32b3fbe2de822e73465f810d7e6eb7e8f0c0377e",
+  "tested_source_sha256": {
+    "converters/office.py": "da12f4f6a8a0024cef27f60853c81226bb1347c44ba9d1d465cd622e7fa7a715",
+    "converters/ocr.py": "4a4a56621fbc8e86dc82a04e92c7a1388056b426a831992fc6102c6d6efe94d5",
+    "scripts/semantic_oracles_office.py": "659758f685c9ec84d2aac2fea16ca84227d97f9223fe1f3af8cec1ef5a7b076e",
+    "scripts/semantic_output_audit.py": "e8349accbc285184c6374297b6dbf6c2eca64a57ae0b51b0200a776613ea9d7e",
+    "scripts/stress_semantic_audit.py": "86d121f1e963db33926d18378c80a82bd77ab36774cc28bd175c7f59a3c3fa68"
+  },
+  "fixture_sizes": {
+    "pdf_pages": 10,
+    "docx_paragraphs_added": 200,
+    "docx_table_cells_added": 160,
+    "xlsx_rows_added_per_sheet": 500,
+    "pptx_slides": 20,
+    "csv_json_rows": 300,
+    "text_rows_added": 1000,
+    "image_pixels": [
+      2400,
+      2100
+    ]
+  }
+}

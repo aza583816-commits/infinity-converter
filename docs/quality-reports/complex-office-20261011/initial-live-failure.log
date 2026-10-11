@@ -1,0 +1,65 @@
+.F                                                                       [100%]
+=================================== FAILURES ===================================
+_____ test_styled_excel_formulas_merged_headers_chart_images_and_all_rows ______
+
+tmp_path = PosixPath('/workspace/scratch/4ce53dfe28ed/complex-office-fixtures/test_styled_excel_formulas_mer0')
+
+    def test_styled_excel_formulas_merged_headers_chart_images_and_all_rows(tmp_path):
+        photo=tmp_path/'diagram.png';diagram(photo)
+        book=Workbook();expected=[];row_values=[]
+        for s in range(3):
+            sheet=book.active if not s else book.create_sheet()
+            sheet.title=f'Ledger{s+1}'
+            title=f'LEDGER{s+1} / السلامة Safety';sheet.merge_cells('A1:E1');sheet['A1']=title
+            sheet['A1'].font=Font(size=16,bold=True);expected.append(title)
+            sheet.append(['ID','Safety / السلامة','Qty','Price','Total'])
+            for i in range(1,81):
+                r=i+2; marker=f'L{s+1}R{i:03d}X';label=f'معدات Safety {i:03d}'
+                qty=i%5+1;price=i+.25
+                sheet.append([marker,label,qty,price,f'=C{r}*D{r}'])
+                sheet.cell(r,4).number_format=sheet.cell(r,5).number_format='0.00'
+                expected.extend((marker,label));row_values.append((marker,f'{qty*price:.2f}'))
+                sheet.row_dimensions[r].height=28
+                for cell in sheet[r]:
+                    cell.alignment=Alignment(wrap_text=True,vertical='center')
+                    cell.fill=PatternFill('solid',fgColor='EAF5F4' if i%2 else 'FFFFFF')
+            for col,width in [('A',18),('B',32),('C',8),('D',12),('E',14)]:sheet.column_dimensions[col].width=width
+            image=SheetImage(str(photo));image.width=320;image.height=120;sheet.add_image(image,'A85')
+            chart=BarChart();chart.title=f'CHART{s+1} SAFETY TOTALS'
+            chart.add_data(Reference(sheet,min_col=5,min_row=2,max_row=12),titles_from_data=True)
+            chart.width=16;chart.height=7;sheet.add_chart(chart,'A94')
+            sheet.print_area='A1:E110';sheet.print_title_rows='1:2'
+            sheet.sheet_properties.pageSetUpPr.fitToPage=True
+            sheet.page_setup.orientation='landscape';sheet.page_setup.paperSize=sheet.PAPERSIZE_A4
+            sheet.page_setup.fitToWidth=1;sheet.page_setup.fitToHeight=0
+        source=tmp_path/'complex.xlsx';book.save(source);book.close();before=source.read_bytes()
+>       output=convert(source,tmp_path/'excel-output','excel-to-pdf')
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_complex_office_structure.py:131: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source = PosixPath('/workspace/scratch/4ce53dfe28ed/complex-office-fixtures/test_styled_excel_formulas_mer0/complex.xlsx')
+output_dir = PosixPath('/workspace/scratch/4ce53dfe28ed/complex-office-fixtures/test_styled_excel_formulas_mer0/excel-output')
+tool = 'excel-to-pdf'
+
+    def convert(source, output_dir, tool):
+        output_dir.mkdir(exist_ok=True)
+        url = os.environ.get('IC_COMPLEX_LIVE_URL')
+        if not url:
+            return office_to_pdf(source, output_dir, timeout=120)
+        output = output_dir / 'actual.pdf'
+        status = subprocess.check_output(['curl', '-sS', '--max-time', '240', '-o', str(output),
+            '-w', '%{http_code}', '-F', 'tool='+tool, '-F', 'files=@'+str(source), url], text=True)
+>       assert status == '200', (tool, status, output.read_bytes()[:1500])
+E       AssertionError: ('excel-to-pdf', '400', b'{"error":"\\u0644\\u0627 \\u064a\\u0645\\u0643\\u0646 \\u0627\\u0633\\u062a\\u062e\\u062f\\u...0631\\u0633\\u0648\\u0645 \\u0623\\u0648 \\u062e\\u0644\\u0627\\u064a\\u0627 \\u0645\\u062f\\u0645\\u062c\\u0629."}
+E         ')
+E       assert '400' == '200'
+E         
+E         - 200
+E         + 400
+
+tests/test_complex_office_structure.py:44: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_complex_office_structure.py::test_styled_excel_formulas_merged_headers_chart_images_and_all_rows
+1 failed, 1 passed in 16.65s
