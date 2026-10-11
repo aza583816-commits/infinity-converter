@@ -1,0 +1,279 @@
+{
+  "revision": "aa6ab54946856d528240bfc0dd43ee64606beb41",
+  "deployment": {
+    "id": "f803cb90-b42f-4062-86b8-428d8e36bdb7",
+    "status": "SUCCESS",
+    "commit": "aa6ab54946856d528240bfc0dd43ee64606beb41",
+    "updatedAt": "2026-10-11T14:35:22.348Z"
+  },
+  "pytest": {
+    "scope": "deployment",
+    "deploymentId": "f803cb90-b42f-4062-86b8-428d8e36bdb7",
+    "serviceId": "202d8baa-d540-4ac0-a15e-c37e07bac74b",
+    "environmentId": "fda75754-4ad5-4e1a-950e-58e8d8cba716",
+    "status": "BUILDING",
+    "build": [
+      {
+        "timestamp": "2026-10-11T14:28:20.154440517Z",
+        "severity": "info",
+        "message": "394 passed, 4 warnings, 16 subtests passed in 104.23s (0:01:44)\n",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          },
+          {
+            "key": "source",
+            "value": "\"buildkit\""
+          },
+          {
+            "key": "type",
+            "value": "\"log\""
+          },
+          {
+            "key": "vertex",
+            "value": "\"sha256:7e7efd89ea45f177cbb98a98c95b0d02336ced66a344b0adb47b880e397641b7\""
+          },
+          {
+            "key": "stream",
+            "value": "1"
+          },
+          {
+            "key": "data",
+            "value": "\"Mzk0IHBhc3NlZCwgNCB3YXJuaW5ncywgMTYgc3VidGVzdHMgcGFzc2VkIGluIDEwNC4yM3MgKDA6MDE6NDQpCg==\""
+          },
+          {
+            "key": "timestamp",
+            "value": "\"2026-10-11T14:28:20.154255289Z\""
+          }
+        ]
+      }
+    ]
+  },
+  "semantic": {
+    "scope": "deployment",
+    "deploymentId": "f803cb90-b42f-4062-86b8-428d8e36bdb7",
+    "serviceId": "202d8baa-d540-4ac0-a15e-c37e07bac74b",
+    "environmentId": "fda75754-4ad5-4e1a-950e-58e8d8cba716",
+    "status": "SUCCESS",
+    "build": [
+      {
+        "timestamp": "2026-10-11T14:28:52.564775671Z",
+        "severity": "info",
+        "message": "SEMANTIC RESULT 162/162 verified, 0 failures, 0 not yet independently checked\n",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          },
+          {
+            "key": "source",
+            "value": "\"buildkit\""
+          },
+          {
+            "key": "type",
+            "value": "\"log\""
+          },
+          {
+            "key": "vertex",
+            "value": "\"sha256:daf790c71322b545bb76218e083960daba5bf9a33fabe0c98de0e4065d30b2ea\""
+          },
+          {
+            "key": "stream",
+            "value": "1"
+          },
+          {
+            "key": "data",
+            "value": "\"U0VNQU5USUMgUkVTVUxUIDE2Mi8xNjIgdmVyaWZpZWQsIDAgZmFpbHVyZXMsIDAgbm90IHlldCBpbmRlcGVuZGVudGx5IGNoZWNrZWQK\""
+          },
+          {
+            "key": "timestamp",
+            "value": "\"2026-10-11T14:28:52.564651414Z\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-11T14:29:28.519708175Z",
+        "severity": "info",
+        "message": "SEMANTIC RESULT 162/162 verified, 0 failures, 0 not yet independently checked\n",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          },
+          {
+            "key": "source",
+            "value": "\"buildkit\""
+          },
+          {
+            "key": "type",
+            "value": "\"log\""
+          },
+          {
+            "key": "vertex",
+            "value": "\"sha256:daf790c71322b545bb76218e083960daba5bf9a33fabe0c98de0e4065d30b2ea\""
+          },
+          {
+            "key": "stream",
+            "value": "1"
+          },
+          {
+            "key": "data",
+            "value": "\"U0VNQU5USUMgUkVTVUxUIDE2Mi8xNjIgdmVyaWZpZWQsIDAgZmFpbHVyZXMsIDAgbm90IHlldCBpbmRlcGVuZGVudGx5IGNoZWNrZWQK\""
+          },
+          {
+            "key": "timestamp",
+            "value": "\"2026-10-11T14:29:28.519415576Z\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-11T14:30:07.600575873Z",
+        "severity": "info",
+        "message": "SEMANTIC RESULT 162/162 verified, 0 failures, 0 not yet independently checked\n",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          },
+          {
+            "key": "source",
+            "value": "\"buildkit\""
+          },
+          {
+            "key": "type",
+            "value": "\"log\""
+          },
+          {
+            "key": "vertex",
+            "value": "\"sha256:daf790c71322b545bb76218e083960daba5bf9a33fabe0c98de0e4065d30b2ea\""
+          },
+          {
+            "key": "stream",
+            "value": "1"
+          },
+          {
+            "key": "data",
+            "value": "\"U0VNQU5USUMgUkVTVUxUIDE2Mi8xNjIgdmVyaWZpZWQsIDAgZmFpbHVyZXMsIDAgbm90IHlldCBpbmRlcGVuZGVudGx5IGNoZWNrZWQK\""
+          },
+          {
+            "key": "timestamp",
+            "value": "\"2026-10-11T14:30:07.600172888Z\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-11T14:31:08.532590006Z",
+        "severity": "info",
+        "message": "SEMANTIC RESULT 7/7 verified, 0 failures, 0 not yet independently checked\n",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          },
+          {
+            "key": "source",
+            "value": "\"buildkit\""
+          },
+          {
+            "key": "type",
+            "value": "\"log\""
+          },
+          {
+            "key": "vertex",
+            "value": "\"sha256:daf790c71322b545bb76218e083960daba5bf9a33fabe0c98de0e4065d30b2ea\""
+          },
+          {
+            "key": "stream",
+            "value": "1"
+          },
+          {
+            "key": "data",
+            "value": "\"U0VNQU5USUMgUkVTVUxUIDcvNyB2ZXJpZmllZCwgMCBmYWlsdXJlcywgMCBub3QgeWV0IGluZGVwZW5kZW50bHkgY2hlY2tlZAo=\""
+          },
+          {
+            "key": "timestamp",
+            "value": "\"2026-10-11T14:31:08.532338359Z\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-11T14:32:20.331743365Z",
+        "severity": "info",
+        "message": "SEMANTIC RESULT 7/7 verified, 0 failures, 0 not yet independently checked",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          },
+          {
+            "key": "source",
+            "value": "\"buildkit\""
+          },
+          {
+            "key": "type",
+            "value": "\"log\""
+          },
+          {
+            "key": "vertex",
+            "value": "\"sha256:daf790c71322b545bb76218e083960daba5bf9a33fabe0c98de0e4065d30b2ea\""
+          },
+          {
+            "key": "stream",
+            "value": "1"
+          },
+          {
+            "key": "data",
+            "value": "\"U0VNQU5USUMgUkVTVUxUIDcvNyB2ZXJpZmllZCwgMCBmYWlsdXJlcywgMCBub3QgeWV0IGluZGVwZW5kZW50bHkgY2hlY2tlZA==\""
+          },
+          {
+            "key": "timestamp",
+            "value": "\"2026-10-11T14:32:20.331382083Z\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-11T14:34:35.290638364Z",
+        "severity": "info",
+        "message": "SEMANTIC RESULT 7/7 verified, 0 failures, 0 not yet independently checked\n",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          },
+          {
+            "key": "source",
+            "value": "\"buildkit\""
+          },
+          {
+            "key": "type",
+            "value": "\"log\""
+          },
+          {
+            "key": "vertex",
+            "value": "\"sha256:daf790c71322b545bb76218e083960daba5bf9a33fabe0c98de0e4065d30b2ea\""
+          },
+          {
+            "key": "stream",
+            "value": "1"
+          },
+          {
+            "key": "data",
+            "value": "\"U0VNQU5USUMgUkVTVUxUIDcvNyB2ZXJpZmllZCwgMCBmYWlsdXJlcywgMCBub3QgeWV0IGluZGVwZW5kZW50bHkgY2hlY2tlZAo=\""
+          },
+          {
+            "key": "timestamp",
+            "value": "\"2026-10-11T14:34:35.290480277Z\""
+          }
+        ]
+      }
+    ]
+  },
+  "live": {
+    "camera_requests": 14,
+    "large_pdf_requests": 2,
+    "readyz_http": 200,
+    "searchable_pdf_visual_inspection": "upright bilingual receipt, fully visible fields; actual embedded background pixel-identical to displayed source"
+  },
+  "limits": "8-process admission contention and decoder RSS are local measured checks. The two live streams are a small concurrency check, not a large-scale production capacity certification. AdSense CMP/account/region configuration and Google approval are not independently verified."
+}

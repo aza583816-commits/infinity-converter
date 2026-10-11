@@ -1,0 +1,14 @@
+[
+  {
+    "tool": "pdf-reorder-pages",
+    "output_sha256": "2a0fbba2f6bc0d2a9f60a53af474249553f7c479ea9ad8d21c228446a3e79406",
+    "all_120_pages_and_2400_records_verified": true,
+    "eight_page_rasters_pixel_identical_to_source": true
+  },
+  {
+    "tool": "pdf-compress",
+    "output_sha256": "a9e6eb89ccedce0f3230954e3feb8b99f6cdd96cff0d8c988f25d403c49b02ae",
+    "all_120_pages_and_2400_records_verified": true,
+    "eight_page_rasters_pixel_identical_to_source": true
+  }
+]

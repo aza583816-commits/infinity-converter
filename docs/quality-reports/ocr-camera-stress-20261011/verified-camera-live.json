@@ -1,0 +1,76 @@
+{
+  "all_original_test_assertions_passed": true,
+  "requests": [
+    {
+      "tool": "ocr-receipt-fields",
+      "input_sha256": "5dddbf505255ce733e0040e8a46e42cc3799506b579ec25a3b4b190272db68b0",
+      "output_sha256": "db54b3de39011ccf90eeb7cd63da01efe95303dd8677666ecc309cf55fbff676"
+    },
+    {
+      "tool": "image-ocr",
+      "input_sha256": "5dddbf505255ce733e0040e8a46e42cc3799506b579ec25a3b4b190272db68b0",
+      "output_sha256": "989627847ab7c403a80032c41c40b549413a8ba73c85289070125c54c4d32973"
+    },
+    {
+      "tool": "ocr-receipt-fields",
+      "input_sha256": "b919b3f8fb83670a9f549abc3b8e015511f489609399ef6387b168b07e150d1a",
+      "output_sha256": "db54b3de39011ccf90eeb7cd63da01efe95303dd8677666ecc309cf55fbff676"
+    },
+    {
+      "tool": "image-ocr",
+      "input_sha256": "b919b3f8fb83670a9f549abc3b8e015511f489609399ef6387b168b07e150d1a",
+      "output_sha256": "d9d62a6b5621344764fa8ee89e5d08b44956e0f45aefa238e423b2cdcea94e91"
+    },
+    {
+      "tool": "ocr-receipt-fields",
+      "input_sha256": "41fe01ce87f31f00a06eea2f620e00ca54063fd57f1c4fcd9ebbcf4bce21a44f",
+      "output_sha256": "db54b3de39011ccf90eeb7cd63da01efe95303dd8677666ecc309cf55fbff676"
+    },
+    {
+      "tool": "image-ocr",
+      "input_sha256": "41fe01ce87f31f00a06eea2f620e00ca54063fd57f1c4fcd9ebbcf4bce21a44f",
+      "output_sha256": "c5b207fa6b3da68f67e05f44baa0e63fb8a2bd61ddeb1d69834df75d87cbcd2e"
+    },
+    {
+      "tool": "ocr-receipt-fields",
+      "input_sha256": "560478756d4286a4c512efcfb3894a689157e8194e60f0dfdd8d2f4d7b968fa8",
+      "output_sha256": "db54b3de39011ccf90eeb7cd63da01efe95303dd8677666ecc309cf55fbff676"
+    },
+    {
+      "tool": "image-ocr",
+      "input_sha256": "560478756d4286a4c512efcfb3894a689157e8194e60f0dfdd8d2f4d7b968fa8",
+      "output_sha256": "c5b207fa6b3da68f67e05f44baa0e63fb8a2bd61ddeb1d69834df75d87cbcd2e"
+    },
+    {
+      "tool": "ocr-image-to-pdf",
+      "input_sha256": "41fe01ce87f31f00a06eea2f620e00ca54063fd57f1c4fcd9ebbcf4bce21a44f",
+      "output_sha256": "776d774af20e015157d4d09ee587a5db56b80f3c41d86c1f9ae225a08123a947"
+    },
+    {
+      "tool": "ocr-image-to-json",
+      "input_sha256": "41fe01ce87f31f00a06eea2f620e00ca54063fd57f1c4fcd9ebbcf4bce21a44f",
+      "output_sha256": "d948cb72b6393bcc68d6562e1f484ae7fb440cd6f7db410e28e89e25c946985f"
+    },
+    {
+      "tool": "ocr-image-emails",
+      "input_sha256": "41fe01ce87f31f00a06eea2f620e00ca54063fd57f1c4fcd9ebbcf4bce21a44f",
+      "output_sha256": "98632fe64caee49516d3891bdeac44ac6abfbdf8f29e99d578cba698d9bcf012"
+    },
+    {
+      "tool": "ocr-image-table-csv",
+      "input_sha256": "41fe01ce87f31f00a06eea2f620e00ca54063fd57f1c4fcd9ebbcf4bce21a44f",
+      "output_sha256": "f3e2b54ce07fe6e230577c35aa9ce8d81cfb6f749e9059594e76324833c3e740"
+    },
+    {
+      "tool": "pdf-ocr",
+      "input_sha256": "46ac65ffd45e8f412f63fb808cf884c6d6d8aa0ab007eee30554c238ea511ee2",
+      "output_sha256": "f949d6ce20265497949b226e2005e08f14615a7306a0fe44843314447e288287"
+    },
+    {
+      "tool": "image-ocr",
+      "input_sha256": "51fae2c65d33500e5f5b8b27cc2f00e37ab86b8087ef77f39f8fccddddbed692",
+      "output_sha256": "f15ec62c80b64f11283663bd2cf2a24d9324e84e0100cf4f4a225acb76cde3de"
+    }
+  ],
+  "scope": "3-language EXIF receipts/plain OCR; compressed skew mixed receipt; searchable PDF pixel-exact camera background/text; JSON words/boxes; email; CSV; 12-page scanned PDF every page/record/Arabic word"
+}
