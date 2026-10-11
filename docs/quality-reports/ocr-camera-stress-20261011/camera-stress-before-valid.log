@@ -1,0 +1,107 @@
+...FFF                                                                   [100%]
+=================================== FAILURES ===================================
+______ test_camera_receipt_exact_fields_and_bilingual_words[exif-english] ______
+
+tmp_path = PosixPath('/workspace/scratch/4ce53dfe28ed/camera-stress-before-valid/test_camera_receipt_exact_fiel3')
+language = 'english', profile = 'exif'
+
+    @pytest.mark.parametrize('language',('english','arabic','mixed'))
+    @pytest.mark.parametrize('profile',('skew','exif'))
+    def test_camera_receipt_exact_fields_and_bilingual_words(tmp_path,language,profile):
+        source=tmp_path/'camera.jpg';headings=camera_receipt(source,language,profile)
+        before=source.read_bytes();fields_path=tmp_path/'fields.json';text_path=tmp_path/'plain.txt'
+        ocr_receipt_fields(source,fields_path,'ara+eng')
+        fields=json.loads(fields_path.read_text())
+        assert fields['emails']==['test@example.com'],fields
+        assert '26/09/2026' in fields['dates'],fields
+        assert 'SAR 1250.50' in fields['money'],fields
+        assert '966501234567' in [re.sub(r'\D','',p) for p in fields['phones']],fields
+        ocr_image(source,text_path,lang='ar+en')
+        text=unicodedata.normalize('NFKC',text_path.read_text()).casefold()
+        for line in headings:
+>           for word in line.casefold().split():assert word in text,(word,text)
+                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AssertionError: ('safety', '62:629 \u200f(ملااح\u200e zo aio eztoo wea}|
+E             0959:0521 hvs 601
+E             \u200fللاملاة +21095996ع99578/\u200e
+E             
+E             9702/60/92 0
+E             
+E             \u200e|iewyz\u200f 011223603533 03:3|0للا
+E             
+E             \u200e1013338 lnawdinoa \u200fلم\u200e')
+E           assert 'safety' in '62:629 \u200f(ملااح\u200e zo aio eztoo wea}|\n0959:0521 hvs 601\n\u200fللاملاة +21095996ع99578/\u200e\n\n9702/60/92 0\n\n\u200e|iewyz\u200f 011223603533 03:3|0للا\n\n\u200e1013338 lnawdinoa \u200fلم\u200e'
+
+tests/test_ocr_camera_stress.py:52: AssertionError
+______ test_camera_receipt_exact_fields_and_bilingual_words[exif-arabic] _______
+
+tmp_path = PosixPath('/workspace/scratch/4ce53dfe28ed/camera-stress-before-valid/test_camera_receipt_exact_fiel4')
+language = 'arabic', profile = 'exif'
+
+    @pytest.mark.parametrize('language',('english','arabic','mixed'))
+    @pytest.mark.parametrize('profile',('skew','exif'))
+    def test_camera_receipt_exact_fields_and_bilingual_words(tmp_path,language,profile):
+        source=tmp_path/'camera.jpg';headings=camera_receipt(source,language,profile)
+        before=source.read_bytes();fields_path=tmp_path/'fields.json';text_path=tmp_path/'plain.txt'
+        ocr_receipt_fields(source,fields_path,'ara+eng')
+        fields=json.loads(fields_path.read_text())
+        assert fields['emails']==['test@example.com'],fields
+        assert '26/09/2026' in fields['dates'],fields
+        assert 'SAR 1250.50' in fields['money'],fields
+        assert '966501234567' in [re.sub(r'\D','',p) for p in fields['phones']],fields
+        ocr_image(source,text_path,lang='ar+en')
+        text=unicodedata.normalize('NFKC',text_path.read_text()).casefold()
+        for line in headings:
+>           for word in line.casefold().split():assert word in text,(word,text)
+                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AssertionError: ('فاتورة', '62:629 \u200f(ملااح\u200e zo aio eztoo wea}|
+E             0959:0521 hvs 601
+E             \u200fللاملاة +21095996ع99578/\u200e
+E             
+E             9702/60/92 0
+E             
+E             \u200e|iewyz\u200f 011223603533 03:3|0للا
+E             
+E             \u200fنف نيد | سا كدي كتدان')
+E           assert 'فاتورة' in '62:629 \u200f(ملااح\u200e zo aio eztoo wea}|\n0959:0521 hvs 601\n\u200fللاملاة +21095996ع99578/\u200e\n\n9702/60/92 0\n\n\u200e|iewyz\u200f 011223603533 03:3|0للا\n\n\u200fنف نيد | سا كدي كتدان'
+
+tests/test_ocr_camera_stress.py:52: AssertionError
+_______ test_camera_receipt_exact_fields_and_bilingual_words[exif-mixed] _______
+
+tmp_path = PosixPath('/workspace/scratch/4ce53dfe28ed/camera-stress-before-valid/test_camera_receipt_exact_fiel5')
+language = 'mixed', profile = 'exif'
+
+    @pytest.mark.parametrize('language',('english','arabic','mixed'))
+    @pytest.mark.parametrize('profile',('skew','exif'))
+    def test_camera_receipt_exact_fields_and_bilingual_words(tmp_path,language,profile):
+        source=tmp_path/'camera.jpg';headings=camera_receipt(source,language,profile)
+        before=source.read_bytes();fields_path=tmp_path/'fields.json';text_path=tmp_path/'plain.txt'
+        ocr_receipt_fields(source,fields_path,'ara+eng')
+        fields=json.loads(fields_path.read_text())
+        assert fields['emails']==['test@example.com'],fields
+        assert '26/09/2026' in fields['dates'],fields
+        assert 'SAR 1250.50' in fields['money'],fields
+        assert '966501234567' in [re.sub(r'\D','',p) for p in fields['phones']],fields
+        ocr_image(source,text_path,lang='ar+en')
+        text=unicodedata.normalize('NFKC',text_path.read_text()).casefold()
+        for line in headings:
+>           for word in line.casefold().split():assert word in text,(word,text)
+                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AssertionError: ('safety', '62:629 \u200f(ملااح\u200e zo aio eztoo wea}|
+E             0959:0521 hvs 601
+E             \u200fللاملاة +21095996ع99578/\u200e
+E             
+E             9702/60/92 0
+E             
+E             \u200e|iewyz\u200f 011223603533 03:3|0للا
+E             
+E             \u200e"62
+E             \u200fاه تحب كيدان\u200e [ptr juawdinba ajayes')
+E           assert 'safety' in '62:629 \u200f(ملااح\u200e zo aio eztoo wea}|\n0959:0521 hvs 601\n\u200fللاملاة +21095996ع99578/\u200e\n\n9702/60/92 0\n\n\u200e|iewyz\u200f 011223603533 03:3|0للا\n\n\u200e"62\n\u200fاه تحب كيدان\u200e [ptr juawdinba ajayes'
+
+tests/test_ocr_camera_stress.py:52: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_ocr_camera_stress.py::test_camera_receipt_exact_fields_and_bilingual_words[exif-english]
+FAILED tests/test_ocr_camera_stress.py::test_camera_receipt_exact_fields_and_bilingual_words[exif-arabic]
+FAILED tests/test_ocr_camera_stress.py::test_camera_receipt_exact_fields_and_bilingual_words[exif-mixed]
+3 failed, 3 passed in 24.63s

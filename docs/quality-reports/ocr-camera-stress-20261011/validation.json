@@ -1,0 +1,28 @@
+{
+  "base_commit": "854ddad62bc4859ce013eafabbe24a3c00d23333",
+  "local_full_suite": "393 passed +16 subtests on orientation candidate",
+  "incremental_final_changes": "New alpha regression test and white compositing: final affected OCR group 25 passed. Final memory copy reduction: decoder/transparent group 9 passed; all 8 declared orientations preserve pixels; 24MP isolated subprocess probe. Unchanged full-suite results reused instead of rerunning all tests after bounded decoder delta. Final production Docker suite must collect 394 +16.",
+  "semantic_profiles": {
+    "baseline": "162/162",
+    "mixed": "162/162",
+    "dense": "162/162"
+  },
+  "native_stress": "Office converter and fixtures unchanged; reuse prior production English/Arabic/mixed 7/7 each; mandatory production image gates rerun all three after merge",
+  "hard_inputs": {
+    "pdf_pages": 120,
+    "complete_bilingual_pdf_records": 2400,
+    "scanned_ocr_pages": 12,
+    "camera_profiles": "2.5 degree skew, JPEG quality45/blur/low contrast; camera EXIF orientation; transparent black lettering",
+    "concurrency": "8 processes competing for 3 slots, peak3, zero leaks; crashed child slot recovered"
+  },
+  "environment": "Local Python 3.11, Tesseract5.3.4 with eng/ara, bundled LibreOffice Dev26.8 differs from production Debian7.4. Docker unavailable locally; Railway gates are enforced before activation.",
+  "production_candidate_verified": false,
+  "sha256": {
+    "converters/ocr.py": "1973bb4cbe0f9b033c2b3da6679b537f668e45390b97cfbc33371f47c39279a4",
+    "converters/ocr_advanced.py": "3f2a34948a7fb974cb9505078f79280afd698068ed3a8c51b8a52265684e1bfc",
+    "tests/test_ocr_camera_stress.py": "74177379222dda4e2236a14cbd4c0e5fc6278a33292388f06cd39f5d39f9eda9",
+    "tests/test_ocr_transparent_camera.py": "b1c8ea2fafa378bc9f51d63f091f59c0f09e5a8e9a1ef04aaac43a4cad4cfa15",
+    "tests/test_large_pdf_content_stress.py": "25291c72f9d019431451a00088841ce271ec4c96305d3b1804c80f4c21192275",
+    "tests/test_process_admission.py": "86be47f06eea3881250065b20f0178165b4d1df54a217d06ec35eefdddf22b21"
+  }
+}

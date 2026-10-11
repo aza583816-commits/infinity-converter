@@ -1,0 +1,36 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+__ test_transparent_black_camera_letters_are_read_against_display_background ___
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3/test_transparent_black_camera_0')
+
+    def test_transparent_black_camera_letters_are_read_against_display_background(tmp_path):
+        source=tmp_path/'transparent.png';output=tmp_path/'text.txt'
+        image=Image.new('RGBA',(1700,380),(0,0,0,0))
+        draw=ImageDraw.Draw(image);font=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',66)
+        draw.text((70,45),'SAFETY REPORT 00123',font=font,fill=(0,0,0,255))
+        draw.text((70,160),'AMOUNT 1250.50 SAR',font=font,fill=(0,0,0,255))
+        image.save(source);image.close();before=source.read_bytes()
+>       ocr_image(source,output,'en')
+
+tests/test_ocr_transparent_camera.py:13: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source = PosixPath('/tmp/pytest-of-root/pytest-3/test_transparent_black_camera_0/transparent.png')
+output = PosixPath('/tmp/pytest-of-root/pytest-3/test_transparent_black_camera_0/text.txt')
+lang = 'en'
+
+    def ocr_image(source: Path, output: Path, lang: str = "ar+en"):
+        if not ocr_available():
+            raise RuntimeError("محرك OCR غير مثبت على الخادم.")
+        with _load_display_image(source) as img:
+            text = _ocr_string(img, lang=lang)
+        text = text.strip()
+        if not text:
+>           raise ValueError("لم يتم التعرف على أي نص في الصورة.")
+E           ValueError: لم يتم التعرف على أي نص في الصورة.
+
+converters/ocr.py:131: ValueError
+=========================== short test summary info ============================
+FAILED tests/test_ocr_transparent_camera.py::test_transparent_black_camera_letters_are_read_against_display_background
+1 failed in 2.23s
