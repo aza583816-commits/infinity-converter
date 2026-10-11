@@ -1,0 +1,78 @@
+{
+  "scope": "Small real production smoke with synthetic files; isolated wide pressure proof is separate.",
+  "health": [
+    {
+      "stage": "before",
+      "seconds": 5.987,
+      "body": {
+        "architecture": {
+          "healthy": true,
+          "operations": 162,
+          "tools": 162
+        },
+        "status": "ok",
+        "version": "8.0.0"
+      }
+    },
+    {
+      "stage": "during_accepted_ocr",
+      "seconds": 6.274,
+      "body": {
+        "architecture": {
+          "healthy": true,
+          "operations": 162,
+          "tools": 162
+        },
+        "status": "ok",
+        "version": "8.0.0"
+      }
+    },
+    {
+      "stage": "after",
+      "seconds": 6.214,
+      "body": {
+        "architecture": {
+          "healthy": true,
+          "operations": 162,
+          "tools": 162
+        },
+        "status": "ok",
+        "version": "8.0.0"
+      }
+    }
+  ],
+  "requests": [
+    {
+      "tool": "image-to-png",
+      "status": 200,
+      "seconds": 7.294,
+      "input_sha256": "e9a6455d1bcc82e50ed219e91f4b0480cc1cdbf46c1b472a536ce1150b442c5f",
+      "output_sha256": "1256a38ce6d822ff4ff274c2bd878c6f518305b8e962801e7f89abc60bbb38d1"
+    },
+    {
+      "tool": "pdf-ocr",
+      "status": 200,
+      "pages": 12,
+      "all_exact_records_and_arabic_words": true
+    },
+    {
+      "tool": "ocr-receipt-fields",
+      "status": 200,
+      "seconds": 5.401,
+      "input_sha256": "41fe01ce87f31f00a06eea2f620e00ca54063fd57f1c4fcd9ebbcf4bce21a44f",
+      "output_sha256": "db54b3de39011ccf90eeb7cd63da01efe95303dd8677666ecc309cf55fbff676"
+    },
+    {
+      "tool": "word-to-pdf",
+      "status": 200,
+      "seconds": 6.837,
+      "input_sha256": "82f0ff72e2963e39233c8f69f5e79e2d339fa8a79a17b91660209cbacdacf0dd",
+      "output_sha256": "a3c6cb152fa8d17e6ba06c84bc190d5c20244f90c6ebfa201802b365a715bd66"
+    }
+  ],
+  "busy_status": 503,
+  "busy_retry_after": "3",
+  "image_pixels_identical": true,
+  "receipt_email_date_money_normalized_phone_verified": true,
+  "word_content_assertion": "all source Word paragraph and table cell strings across the entire document survive in PDF Unicode text"
+}

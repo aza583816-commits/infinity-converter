@@ -1,0 +1,99 @@
+{
+  "deployment": {
+    "id": "82f09807-3a86-493b-b1db-dac398675a08",
+    "status": "SUCCESS",
+    "commit": "59b418501d44de99bc5f78927245c164081b3c24",
+    "createdAt": "2026-10-11T15:15:34.032Z",
+    "updatedAt": "2026-10-11T15:23:58.249Z"
+  },
+  "full_suite": [
+    {
+      "timestamp": "2026-10-11T15:17:21.862565518Z",
+      "message": "399 passed, 4 warnings, 16 subtests passed in 104.86s (0:01:44)\n"
+    }
+  ],
+  "semantic_summaries": [
+    {
+      "timestamp": "2026-10-11T15:17:51.839221647Z",
+      "message": "SEMANTIC RESULT 162/162 verified, 0 failures, 0 not yet independently checked\n"
+    },
+    {
+      "timestamp": "2026-10-11T15:18:26.248083196Z",
+      "message": "SEMANTIC RESULT 162/162 verified, 0 failures, 0 not yet independently checked\n"
+    },
+    {
+      "timestamp": "2026-10-11T15:19:00.365100004Z",
+      "message": "SEMANTIC RESULT 162/162 verified, 0 failures, 0 not yet independently checked\n"
+    },
+    {
+      "timestamp": "2026-10-11T15:19:56.851180088Z",
+      "message": "SEMANTIC RESULT 7/7 verified, 0 failures, 0 not yet independently checked\n"
+    },
+    {
+      "timestamp": "2026-10-11T15:21:06.503241764Z",
+      "message": "SEMANTIC PASS csv-to-pdf: all source CSV headers and complete cell values survive PDF's extractable text\nSEMANTIC RESULT 7/7 verified, 0 failures, 0 not yet independently checked\n"
+    },
+    {
+      "timestamp": "2026-10-11T15:23:07.071947648Z",
+      "message": "SEMANTIC RESULT 7/7 verified, 0 failures, 0 not yet independently checked\n"
+    }
+  ],
+  "gate_order": [
+    "baseline",
+    "mixed",
+    "dense",
+    "native-english",
+    "native-arabic",
+    "native-mixed"
+  ],
+  "gate_results": [
+    {
+      "verified": 162,
+      "total": 162,
+      "failures": 0
+    },
+    {
+      "verified": 162,
+      "total": 162,
+      "failures": 0
+    },
+    {
+      "verified": 162,
+      "total": 162,
+      "failures": 0
+    },
+    {
+      "verified": 7,
+      "total": 7,
+      "failures": 0
+    },
+    {
+      "verified": 7,
+      "total": 7,
+      "failures": 0
+    },
+    {
+      "verified": 7,
+      "total": 7,
+      "failures": 0
+    }
+  ],
+  "live_readyz_proxy": [
+    {
+      "timestamp": "2026-10-11T15:24:15.690379143Z",
+      "status": 200,
+      "totalDuration": 2
+    },
+    {
+      "timestamp": "2026-10-11T15:24:28.472728865Z",
+      "status": 200,
+      "totalDuration": 2
+    },
+    {
+      "timestamp": "2026-10-11T15:24:56.315606905Z",
+      "status": 200,
+      "totalDuration": 2
+    }
+  ],
+  "proxy_metric_note": "totalDuration retained in Railway's raw units; client measurements include the network/proxy round trip."
+}
