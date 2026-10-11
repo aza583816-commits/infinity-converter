@@ -43,6 +43,7 @@ class Settings:
     max_image_pixels: int = _int("MAX_IMAGE_PIXELS", 80_000_000, 1_000_000)
     subprocess_timeout: int = _int("SUBPROCESS_TIMEOUT", 180, 5)
     ocr_timeout_seconds: int = _int("OCR_TIMEOUT_SECONDS", 60, 5)
+    admission_wait_milliseconds: int = _int("ADMISSION_WAIT_MILLISECONDS", 250, 0)
     max_concurrent_conversions: int = _int("MAX_CONCURRENT_CONVERSIONS", 2, 1)
     # Native renderers are materially heavier than text/hash utilities. Keep
     # separate gates so a burst of Office/OCR work cannot consume every

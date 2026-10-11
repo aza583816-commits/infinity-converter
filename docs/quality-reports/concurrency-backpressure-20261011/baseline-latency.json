@@ -1,0 +1,17 @@
+{
+  "base_commit": "aa6ab54946856d528240bfc0dd43ee64606beb41",
+  "readyz_during_four_ocr_requests": {
+    "status": 200,
+    "seconds": 41.547,
+    "body": {
+      "architecture": {
+        "healthy": true,
+        "operations": 162,
+        "tools": 162
+      },
+      "status": "ok",
+      "version": "8.0.0"
+    }
+  },
+  "limitations": "Only readiness latency is used for the comparison. The initial image fixture used an unsupported same-format PNG and the initial process sampler used the wrong PID namespace; neither metric is valid baseline evidence."
+}

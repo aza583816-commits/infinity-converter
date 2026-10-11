@@ -1,0 +1,7 @@
+{
+  "command": "python -m pytest -q -p no:cacheprovider",
+  "exit_status": 0,
+  "exit_status_evidence": "FULL_STATUS=0 emitted by the running quality-gate shell after pytest completed",
+  "collection": "399 tests collected in 2.41s",
+  "limitation": "Workspace-backed stdout log is truncated at 50% despite successful shell exit. It is not used as a passing-count summary. Docker full-suite summary will be recorded from Railway build logs."
+}

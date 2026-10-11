@@ -25,14 +25,14 @@ def workload_class(operation: Operation) -> str:
     return "default"
 
 
-def _acquire_required_slot(name: str, slots: int, timeout: int, message: str) -> AdmissionToken:
+def _acquire_required_slot(name: str, slots: int, timeout: float, message: str) -> AdmissionToken:
     token = acquire_slot(name, slots, timeout)
     if token is None:
         raise ConversionBusyError(message)
     return token
 
 
-def _acquire_workload_limit(operation: Operation, timeout: int) -> AdmissionToken | None:
+def _acquire_workload_limit(operation: Operation, timeout: float) -> AdmissionToken | None:
     kind = workload_class(operation)
     if kind == "office":
         return _acquire_required_slot(
@@ -124,20 +124,23 @@ class ConversionEngine:
         if workspace.path is None or workspace.output_dir is None:
             raise RuntimeError("مساحة المعالجة غير مهيأة.")
 
-        # This gate is process-shared on Linux, so multiplying Gunicorn web
-        # workers does not accidentally multiply expensive conversion capacity.
-        conversion_slot = _acquire_required_slot(
-            "conversion",
-            settings.max_concurrent_conversions,
-            timeout,
-            "عدد عمليات التحويل الحالية تجاوز الحد المؤقت.",
-        )
+        # Waiting HTTP requests occupy Gunicorn threads. Keep one bounded
+        # admission budget independent of the native conversion timeout, and
+        # obtain scarce workload capacity before reserving a general slot.
+        deadline = time.monotonic() + min(max(0.0, float(timeout)), settings.admission_wait_milliseconds / 1000.0)
+        conversion_slot = None
         workload_limit = None
         started = time.perf_counter()
         options = options or {}
         input_bytes = sum(int(item.get("size_bytes", 0)) for item in safe_inputs)
         try:
-            workload_limit = _acquire_workload_limit(operation, timeout)
+            workload_limit = _acquire_workload_limit(operation, max(0.0, deadline - time.monotonic()))
+            conversion_slot = _acquire_required_slot(
+                "conversion",
+                settings.max_concurrent_conversions,
+                max(0.0, deadline - time.monotonic()),
+                "عدد عمليات التحويل الحالية تجاوز الحد المؤقت.",
+            )
             _safe_input_paths(safe_inputs, workspace)
             output_dir = workspace.output_dir
 
@@ -191,7 +194,8 @@ class ConversionEngine:
         finally:
             if workload_limit is not None:
                 workload_limit.release()
-            conversion_slot.release()
+            if conversion_slot is not None:
+                conversion_slot.release()
 
     @staticmethod
     def _run_single(operation: Operation, safe_inputs, output_dir, param, timeout, max_pdf_pages, options, workspace):

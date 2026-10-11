@@ -1,0 +1,107 @@
+{
+  "scope": "Local isolated Gunicorn 2 workers x 2 threads; real API/OCR, existing synthetic scanned fixtures. Not Railway capacity certification.",
+  "revision": "aa6ab54946856d528240bfc0dd43ee64606beb41",
+  "readyz_during_burst": {
+    "status": 200,
+    "seconds": 0.742,
+    "body": {
+      "architecture": {
+        "healthy": true,
+        "operations": 162,
+        "tools": 162
+      },
+      "status": "ok",
+      "version": "8.0.0"
+    }
+  },
+  "cheap_conversion_during_burst": {
+    "tool": "image-to-png",
+    "status": 200,
+    "seconds": 0.805,
+    "retry_after": null,
+    "output": "image-output.png"
+  },
+  "burst_results": [
+    {
+      "tool": "pdf-ocr",
+      "status": 503,
+      "seconds": 0.588,
+      "retry_after": "3",
+      "output": "ocr-12.txt"
+    },
+    {
+      "tool": "pdf-ocr",
+      "status": 503,
+      "seconds": 1.129,
+      "retry_after": "3",
+      "output": "ocr-10.txt"
+    },
+    {
+      "tool": "pdf-ocr",
+      "status": 503,
+      "seconds": 0.855,
+      "retry_after": "3",
+      "output": "ocr-8.txt"
+    },
+    {
+      "tool": "pdf-ocr",
+      "status": 200,
+      "seconds": 22.271,
+      "retry_after": null,
+      "output": "ocr-6.txt"
+    }
+  ],
+  "sequential_retry_results": [
+    {
+      "tool": "pdf-ocr",
+      "status": 200,
+      "seconds": 20.413,
+      "retry_after": null,
+      "output": "ocr-12.txt"
+    },
+    {
+      "tool": "pdf-ocr",
+      "status": 200,
+      "seconds": 15.107,
+      "retry_after": null,
+      "output": "ocr-10.txt"
+    },
+    {
+      "tool": "pdf-ocr",
+      "status": 200,
+      "seconds": 15.38,
+      "retry_after": null,
+      "output": "ocr-8.txt"
+    }
+  ],
+  "all_36_scanned_pages_exact_records_and_arabic_words_verified": true,
+  "image_pixels_identical": true,
+  "readyz_after_burst": {
+    "status": 200,
+    "seconds": 0.021,
+    "body": {
+      "architecture": {
+        "healthy": true,
+        "operations": 162,
+        "tools": 162
+      },
+      "status": "ok",
+      "version": "8.0.0"
+    }
+  },
+  "health_within_two_seconds": true,
+  "cheap_conversion_within_two_seconds": true,
+  "peak_service_and_child_pss_kib": 736400,
+  "peak_tesseract_processes": 1,
+  "parent_namespace_workspaces_after_shutdown": 0,
+  "worker_namespace_cleanup": [
+    {
+      "worker": 10,
+      "workspaces": 0
+    },
+    {
+      "worker": 9,
+      "workspaces": 0
+    }
+  ]
+}
