@@ -1,0 +1,43 @@
+{
+  "profile": "baseline",
+  "total": 7,
+  "semantic_verified": 7,
+  "semantic_failures": [],
+  "unverified": [],
+  "verifications": {
+    "word-to-pdf": "all source Word paragraph and table cell strings across the entire document survive in PDF Unicode text",
+    "excel-to-pdf": "every cell from every original worksheet survives as Unicode-equivalent selectable PDF text",
+    "ppt-to-pdf": "each PowerPoint slide maps to exactly one PDF page in source order, with all slide text inside visible page bounds",
+    "txt-to-pdf": "all original text-file lines retained as selectable PDF text",
+    "html-to-pdf": "all visible source HTML heading and table cells preserved as selectable PDF Unicode text",
+    "markdown-to-pdf": "original Markdown heading and all source body/table cell texts survive PDF conversion",
+    "csv-to-pdf": "all source CSV headers and complete cell values survive PDF's extractable text"
+  },
+  "quality_complete": true,
+  "stress_language": "mixed",
+  "selected_tools": [
+    "csv-to-pdf",
+    "excel-to-pdf",
+    "html-to-pdf",
+    "markdown-to-pdf",
+    "ppt-to-pdf",
+    "txt-to-pdf",
+    "word-to-pdf"
+  ],
+  "excluded_native_office_tools": [],
+  "full_registry_verified": false,
+  "source_commit": "d0dbf924c7e0e256f3f4fd227c6a8f6687ed40f5",
+  "fixture_sizes": {
+    "pdf_pages": 10,
+    "docx_paragraphs_added": 200,
+    "docx_table_cells_added": 160,
+    "xlsx_rows_added_per_sheet": 500,
+    "pptx_slides": 20,
+    "csv_json_rows": 300,
+    "text_rows_added": 1000,
+    "image_pixels": [
+      2400,
+      2100
+    ]
+  }
+}

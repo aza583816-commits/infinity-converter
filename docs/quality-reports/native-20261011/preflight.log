@@ -1,0 +1,40 @@
+Python 3.11 syntax OK: 158 files
+external engine libreoffice OK: /workspace/scratch/4ce53dfe28ed/native-results/bin/libreoffice
+external engine tesseract OK: /usr/bin/tesseract
+Tesseract ara+eng language packs OK
+LibreOffice runtime OK: LibreOfficeDev 26.8.0.0.alpha0 2c87e51eeaa2b413ff4ae097b2705eea1995d8e5
+warning: The `fitz` API is deprecated and will be removed in future. Use `import pymupdf` instead.
+2026-10-10 19:43:59,627 INFO converters.engine conversion_completed tool=file-hash engine=hashlib workload=default duration_ms=1 input_bytes=19 output_bytes=178 batch_total=1 batch_succeeded=1
+2026-10-10 19:43:59,723 INFO converters.engine conversion_completed tool=image-to-jpg engine=pillow workload=default duration_ms=22 input_bytes=8692 output_bytes=17363 batch_total=1 batch_succeeded=1
+2026-10-10 19:43:59,738 INFO converters.engine conversion_completed tool=image-compress engine=pillow workload=default duration_ms=14 input_bytes=17363 output_bytes=13204 batch_total=1 batch_succeeded=1
+2026-10-10 19:43:59,820 INFO converters.engine conversion_completed tool=pdf-merge engine=pymupdf+pypdf workload=default duration_ms=2 input_bytes=2066 output_bytes=1842 batch_total=2 batch_succeeded=2
+2026-10-10 19:43:59,861 INFO converters.engine conversion_completed tool=image-to-png engine=pillow workload=default duration_ms=38 input_bytes=16505 output_bytes=33863 batch_total=1 batch_succeeded=1
+2026-10-10 19:44:08,999 INFO converters.engine conversion_completed tool=word-to-pdf engine=libreoffice workload=office duration_ms=9132 input_bytes=36774 output_bytes=22939 batch_total=1 batch_succeeded=1
+2026-10-10 19:44:10,328 INFO converters.engine conversion_completed tool=image-ocr engine=tesseract+pymupdf workload=ocr duration_ms=1325 input_bytes=10658 output_bytes=123 batch_total=1 batch_succeeded=1
+2026-10-10 19:44:10,333 INFO converters.engine conversion_completed tool=zip-create engine=python-archive workload=default duration_ms=1 input_bytes=5449 output_bytes=5407 batch_total=2 batch_succeeded=2
+runtime registry 162/162 OK
+startup route /api/v2/healthz OK
+startup route / OK
+startup route /assistant OK
+startup route /tools OK
+startup route /blog OK
+startup route /blog/word-to-pdf-without-losing-formatting OK
+startup route /about OK
+startup route /trust OK
+startup route /editorial OK
+startup route /contact OK
+startup route /privacy OK
+startup route /robots.txt OK
+startup route /sitemap.xml OK
+startup route /ads.txt OK
+startup route /sw.js OK
+startup route /tools/word-to-pdf OK
+all 162 public tool pages resolve OK
+inspect -> convert -> validate -> download smoke path OK
+AdSense/search quality + 8.0.0 experience guards OK
+representative conversion pdf-merge OK (1842 bytes)
+representative conversion image-to-png OK (33863 bytes)
+representative conversion word-to-pdf OK (22939 bytes)
+representative conversion image-ocr OK (123 bytes)
+representative conversion zip-create OK (5407 bytes)
+Production preflight PASS

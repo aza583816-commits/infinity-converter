@@ -45,6 +45,21 @@ RUN DATABASE_URL=sqlite:////tmp/infinity-tests.db \
     PUBLIC_BILLING_ENABLED=0 \
     python -m pytest -q -p no:cacheprovider && rm -f /tmp/infinity-tests.db*
 
+# Verify actual source-to-output semantics before the new image can go live.
+# These reports stay in /tmp and do not contain customer files.
+RUN for profile in baseline mixed dense; do \
+      IC_TEST_FIXTURE_PROFILE=$profile \
+      IC_SEMANTIC_REPORT=/tmp/semantic-$profile.json \
+      python scripts/semantic_output_audit.py || exit 1; \
+    done && \
+    for language in english arabic mixed; do \
+      IC_STRESS_INCLUDE_NATIVE=1 \
+      IC_STRESS_TOOLS=word-to-pdf,excel-to-pdf,ppt-to-pdf,txt-to-pdf,html-to-pdf,markdown-to-pdf,csv-to-pdf \
+      IC_STRESS_LANGUAGE=$language \
+      IC_SEMANTIC_REPORT=/tmp/native-$language.json \
+      python scripts/stress_semantic_audit.py || exit 1; \
+    done && rm -f /tmp/semantic-*.json /tmp/native-*.json
+
 # Two web workers keep health/navigation responsive if one process is busy or a
 # native library crashes. Expensive conversion capacity is still bounded across
 # workers by the process-shared admission slots in core/admission.py. Both values

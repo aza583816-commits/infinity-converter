@@ -19,6 +19,9 @@ pandas>=2.2,<3
 python-pptx>=1,<2
 pytesseract>=0.3,<0.4
 markdown>=3.7,<4
+# Independent visual-order Unicode comparison in multilingual PDF audits.
+arabic-reshaper==3.0.0
+python-bidi==0.6.6
 
 # PYSEC-2026-1845 is fixed in pytest 9.0.3. Pin the test runner exactly so
 # security gates and Docker builds use the reviewed patched version.

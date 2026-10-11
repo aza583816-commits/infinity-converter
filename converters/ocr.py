@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pymupdf
 import pytesseract
-from PIL import Image
+from PIL import Image, ImageOps
 
 from config.settings import settings
 
@@ -23,6 +23,53 @@ def _tesseract_lang(lang: str) -> str:
 
 def ocr_available() -> bool:
     return shutil.which("tesseract") is not None
+
+
+def _recover_truncated_phone_line(image: Image.Image, text: str, rows: list[dict], lang: str) -> str:
+    """Re-read an observed short phone line, without replacing other content."""
+    pattern = re.compile(r"^(\s*(?:Phone|Tel|Telephone)\s*:?\s*)([+\d /().-]+)\s*$", re.I)
+    lines = text.splitlines()
+    groups = {}
+    for row in rows:
+        key = tuple(row[name] for name in ('block_num', 'par_num', 'line_num'))
+        groups.setdefault(key, []).append(row)
+    candidates = []
+    for group in groups.values():
+        observed_line = pattern.fullmatch(' '.join(row['text'] for row in group))
+        if observed_line:
+            candidates.append((re.sub(r'\D', '', observed_line[2]), group))
+    for index, line in enumerate(lines):
+        matched = pattern.fullmatch(line)
+        if not matched or len(re.sub(r"\D", "", matched[2])) >= 8:
+            continue
+        found = next((entry for entry in candidates
+                      if entry[0] == re.sub(r'\D', '', matched[2])), None)
+        if found is None:
+            continue
+        candidates.remove(found)
+        observed = found[1]
+        left = max(0, min(int(r['left']) for r in observed) - 25)
+        top = max(0, min(int(r['top']) for r in observed) - 20)
+        right = min(image.width, max(int(r['left']) + int(r['width']) for r in observed) + 25)
+        bottom = min(image.height, max(int(r['top']) + int(r['height']) for r in observed) + 20)
+        with image.crop((left, top, right, bottom)) as crop:
+            grayscale = ImageOps.grayscale(crop)
+            enhanced = ImageOps.autocontrast(grayscale)
+            grayscale.close()
+            try:
+                if max(enhanced.size) <= 2200:
+                    enlarged = enhanced.resize((enhanced.width * 2, enhanced.height * 2), Image.Resampling.LANCZOS)
+                    enhanced.close()
+                    enhanced = enlarged
+                candidate = pytesseract.image_to_string(
+                    enhanced, lang=_tesseract_lang(lang), config='--psm 7',
+                    timeout=settings.ocr_timeout_seconds).strip()
+            finally:
+                enhanced.close()
+        recovered = pattern.fullmatch(candidate)
+        if recovered and 8 <= len(re.sub(r"\D", "", recovered[2])) <= 15:
+            lines[index] = matched[1] + recovered[2].strip()
+    return '\n'.join(lines)
 
 
 def _ocr_string(image: Image.Image, *, lang: str) -> str:
@@ -56,8 +103,8 @@ def _ocr_string(image: Image.Image, *, lang: str) -> str:
                 for i, value in words:
                     key = tuple(alternative[name][i] for name in ('block_num', 'par_num', 'line_num'))
                     lines.setdefault(key, []).append(value)
-                return '\n'.join(' '.join(values) for values in lines.values())
-        return text
+                text = '\n'.join(' '.join(values) for values in lines.values())
+        return _recover_truncated_phone_line(image, text, rows, lang)
     except RuntimeError as exc:
         # pytesseract raises RuntimeError when the subprocess exceeds timeout.
         raise RuntimeError("استغرق OCR وقتًا أطول من المسموح.") from exc

@@ -365,10 +365,14 @@ def independent_oracle(tool_id: str, source: Path | None, output: Path, fixture:
             # despite separate, non-overlapping visible words in the PDF.
             # Restore only Arabic<->digit boundaries. Never split one numeric
             # identifier into two tokens or drop an expected source word.
-            return re.sub(
+            value = re.sub(
                 r"(?<=[\u0600-\u06FF])(?=[0-9])|(?<=[0-9])(?=[\u0600-\u06FF])",
                 " ", " ".join(unicodedata.normalize("NFKC", value).split())
             )
+            # A wrapped bracketed cell ID can extract as [000: 0]. Only
+            # remove layout whitespace inside this complete numeric syntax;
+            # every digit, colon and bracket must still match the source.
+            return re.sub(r"\[\s*(\d+)\s*:\s*(\d+)\s*\]", r"[\1:\2]", value)
 
         normalized = preserve_arabic_numeric_word_boundaries(text)
         for value in expected:
