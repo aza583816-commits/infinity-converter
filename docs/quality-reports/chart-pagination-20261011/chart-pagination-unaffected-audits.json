@@ -1,0 +1,17 @@
+[
+  {
+    "profile": "baseline",
+    "chart_members": [],
+    "new_pagination_helper_returns_original_source": true
+  },
+  {
+    "profile": "mixed",
+    "chart_members": [],
+    "new_pagination_helper_returns_original_source": true
+  },
+  {
+    "profile": "dense",
+    "chart_members": [],
+    "new_pagination_helper_returns_original_source": true
+  }
+]

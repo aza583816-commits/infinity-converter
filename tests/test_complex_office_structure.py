@@ -71,7 +71,8 @@ def pdf_evidence(output):
                                              (30+i*155,200,ImageColor.getrgb(color))):
                             assert max(abs(a-b) for a,b in zip(decoded.getpixel((x,y)),expected)) < 20
                     decoded.close()
-        images = sum(len(p.get_images()) for p in pdf)
+        images = sum(len(p.get_image_rects(xref)) for p in pdf
+                     for xref in {image[0] for image in p.get_images()})
         sizes = [(p.rect.width, p.rect.height) for p in pdf]
     return text, images, sizes
 
@@ -107,7 +108,7 @@ def test_complex_word_sections_merged_tables_images_and_every_record(tmp_path):
     output=convert(source,tmp_path/'word-output','word-to-pdf')
     text, images, sizes=pdf_evidence(output)
     assert all(_field_present(s,text) for s in expected), [s for s in expected if not _field_present(s,text)][:8]
-    assert images >= 8, ('missing embedded diagrams', images)
+    assert images == 8, ('missing or duplicated visible diagrams', images)
     assert any(w>h for w,h in sizes) and any(h>w for w,h in sizes)
     positions=[text.find(normal(s)) for s in starts]
     assert all(p>=0 for p in positions) and positions == sorted(positions)
@@ -149,7 +150,7 @@ def test_styled_excel_formulas_merged_headers_chart_images_and_all_rows(tmp_path
     output=convert(source,tmp_path/'excel-output','excel-to-pdf')
     text,images,sizes=pdf_evidence(output)
     assert all(_field_present(s,text) for s in expected), [s for s in expected if not _field_present(s,text)][:8]
-    assert images >= 3, ('missing embedded diagrams',images)
+    assert images == 3, ('missing or duplicated visible diagrams',images)
     for s in range(3):assert _field_present(f'CHART{s+1} SAFETY TOTALS',text)
     # Formula values must appear on the actual geometric row of their unique ID.
     with pymupdf.open(output) as pdf:
@@ -166,8 +167,18 @@ def test_styled_excel_formulas_merged_headers_chart_images_and_all_rows(tmp_path
             bars.sort(key=lambda box:box.x0)
             assert len(bars)==10, ('missing chart data bars',s+1,len(bars))
             tallest=max(box.height for box in bars)
+            pix=pages[0].get_pixmap(matrix=pymupdf.Matrix(3,3))
+            pixels=Image.frombytes('RGB',(pix.width,pix.height),pix.samples)
             for box,value in zip(bars,expected_bars):
                 assert abs(box.height/tallest-value/max(expected_bars)) < .01
+                # Vector paths can survive underneath a PDF clipping mask.
+                # Require the bars to be actually printed in the page raster.
+                for fraction in (.15,.35,.55,.75,.85):
+                    x=int((box.x0+box.x1)/2*3);y=int((box.y0+box.height*fraction)*3)
+                    assert 0<=x<pixels.width and 0<=y<pixels.height
+                    assert max(abs(a-b) for a,b in zip(pixels.getpixel((x,y)),(0,127,163)))<20, (
+                        'Chart bar clipped or hidden in actual rendering',s+1,value,fraction)
+            pixels.close()
         for marker,amount in row_values:
             matches=[(page,box) for page in pdf for box in page.search_for(marker)]
             assert len(matches)==1, (marker,len(matches))
@@ -178,3 +189,4 @@ def test_styled_excel_formulas_merged_headers_chart_images_and_all_rows(tmp_path
     positions=[text.find(f'LEDGER{i}') for i in (1,2,3)]
     assert all(p>=0 for p in positions) and positions==sorted(positions)
     assert source.read_bytes()==before
+    assert not list((tmp_path/'excel-output').glob('.lo-sheet-input-*')), 'private render copy leaked'
