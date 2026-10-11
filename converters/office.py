@@ -382,7 +382,11 @@ def _printable_simple_xlsx_html(source: Path, output_dir: Path) -> Path:
             rows = []
             for row in sheet:
                 cells += len(row)
-                if cells > 2000:
+                # Render bounded 20-row sections below, not one large Story.
+                # Two ordinary 500-row sheets already exceed 2,000 cells.
+                # Keep a finite budget while supporting these larger ledgers;
+                # all original cell values are checked after rendering.
+                if cells > 10000:
                     raise ValueError("تعذر ضمان كامل محتوى الجدول الكبير في تصدير PDF البديل.")
                 formatted = []
                 for cell in row:
@@ -469,7 +473,9 @@ def _docx_pdf_bidi_spacing_copy(source: Path, output_dir: Path) -> Path:
     digit from its PDF Unicode map. Replacing only that boundary with U+00A0
     in the *private render copy* preserves the visible space and produces an
     extractable whitespace character; the uploaded original is never changed.
-    Keep XML structure, all run styling, images and relationships byte-for-byte.
+    Keep run styling, images and relationships intact. Keep default table rows
+    together so a cell's text is not interleaved with other columns at a page
+    boundary. Explicit source row-splitting settings remain authoritative.
     """
     import zipfile
 
@@ -480,9 +486,28 @@ def _docx_pdf_bidi_spacing_copy(source: Path, output_dir: Path) -> Path:
     arabic_digit_space = re.compile(r"(?<=[\u0600-\u06FF]) (?=[0-9])")
 
     def protect_node(match: re.Match[str]) -> str:
+        value = arabic_digit_space.sub("\u00a0", match.group(2))
+        if re.search(r"[\u0600-\u06FF]", value):
+            # Keep bracketed record identifiers attached to their visible
+            # separating space in RTL cells; Writer otherwise moves/drops it.
+            value = re.sub(r"(?<=[0-9]) (?=\[)", "\u00a0", value)
         return (match.group(1)
-                + arabic_digit_space.sub("\u00a0", match.group(2))
+                + value
                 + match.group(3))
+
+    def keep_default_row_together(match: re.Match[str]) -> str:
+        row = match.group(0)
+        properties = re.search(r"<w:trPr\b[^>]*>.*?</w:trPr>|<w:trPr\s*/>", row, re.S)
+        if properties:
+            if re.search(r"<w:cantSplit\b", properties.group(0)):
+                return row
+            updated = properties.group(0)
+            if updated.endswith("/>"):
+                updated = "<w:trPr><w:cantSplit/></w:trPr>"
+            else:
+                updated = updated.replace("</w:trPr>", "<w:cantSplit/></w:trPr>")
+            return row[:properties.start()] + updated + row[properties.end():]
+        return re.sub(r"(<w:tr\b[^>]*>)", r"\1<w:trPr><w:cantSplit/></w:trPr>", row, count=1)
 
     with zipfile.ZipFile(source) as original:
         changed_parts: dict[str, bytes] = {}
@@ -495,6 +520,9 @@ def _docx_pdf_bidi_spacing_copy(source: Path, output_dir: Path) -> Path:
             except UnicodeDecodeError:
                 continue
             updated = text_node.sub(protect_node, content)
+            if name == "word/document.xml":
+                updated = re.sub(r"<w:tr\b[^>]*>.*?</w:tr>", keep_default_row_together,
+                                 updated, flags=re.S)
             if updated != content:
                 changed_parts[name] = updated.encode("utf-8")
         if not changed_parts:

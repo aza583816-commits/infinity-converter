@@ -1,0 +1,38 @@
+{
+  "profile": "baseline",
+  "total": 1,
+  "semantic_verified": 1,
+  "semantic_failures": [],
+  "unverified": [],
+  "verifications": {
+    "ppt-to-pdf": "each PowerPoint slide maps to exactly one PDF page in source order, with all slide text inside visible page bounds"
+  },
+  "quality_complete": true,
+  "stress_language": "english",
+  "selected_tools": [
+    "ppt-to-pdf"
+  ],
+  "excluded_native_office_tools": [],
+  "full_registry_verified": false,
+  "source_commit": "d0dbf924c7e0e256f3f4fd227c6a8f6687ed40f5",
+  "tested_source_sha256": {
+    "converters/office.py": "6d1bead0f461d83cabe6b9d3797c991659d217243badf39bfb4874085ce9e978",
+    "converters/ocr.py": "4a4a56621fbc8e86dc82a04e92c7a1388056b426a831992fc6102c6d6efe94d5",
+    "scripts/semantic_oracles_office.py": "dc54c10dcf4f56c6a5bbb1f869d2e8744bcbfa83a6d2ac298ca8454580c35bb0",
+    "scripts/semantic_output_audit.py": "e8349accbc285184c6374297b6dbf6c2eca64a57ae0b51b0200a776613ea9d7e",
+    "scripts/stress_semantic_audit.py": "86d121f1e963db33926d18378c80a82bd77ab36774cc28bd175c7f59a3c3fa68"
+  },
+  "fixture_sizes": {
+    "pdf_pages": 10,
+    "docx_paragraphs_added": 200,
+    "docx_table_cells_added": 160,
+    "xlsx_rows_added_per_sheet": 500,
+    "pptx_slides": 20,
+    "csv_json_rows": 300,
+    "text_rows_added": 1000,
+    "image_pixels": [
+      2400,
+      2100
+    ]
+  }
+}

@@ -46,3 +46,7 @@ def test_degraded_multilingual_receipt_retains_words_and_all_fields(tmp_path, la
     actual = unicodedata.normalize("NFKC", text_path.read_text(encoding="utf-8")).casefold()
     for word in reference.casefold().split():
         assert word in actual, (word, actual)
+    assert 'test@example.com' in actual and '26/09/2026' in actual, actual
+    assert '1250.50' in actual, actual
+    phone_line = next(line for line in actual.splitlines() if line.startswith('phone'))
+    assert re.sub(r'\D', '', phone_line) == '966501234567', actual

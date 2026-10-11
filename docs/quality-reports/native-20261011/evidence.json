@@ -1,0 +1,39 @@
+{
+  "base_commit": "d0dbf924c7e0e256f3f4fd227c6a8f6687ed40f5",
+  "tested_working_tree_sha256": {
+    "Dockerfile": "0ded8ee9acb1ecfc98ed03af595f3bfe2d35c0be523006e782f308cb19d0d63a",
+    "converters/ocr.py": "4a4a56621fbc8e86dc82a04e92c7a1388056b426a831992fc6102c6d6efe94d5",
+    "converters/office.py": "6d1bead0f461d83cabe6b9d3797c991659d217243badf39bfb4874085ce9e978",
+    "requirements.txt": "463ec330cecca55bc7ea3c14d07e3c1f8fe2bf4833c1220cdbc7c7fb26d2a098",
+    "scripts/semantic_oracles_office.py": "dc54c10dcf4f56c6a5bbb1f869d2e8744bcbfa83a6d2ac298ca8454580c35bb0",
+    "scripts/semantic_output_audit.py": "e8349accbc285184c6374297b6dbf6c2eca64a57ae0b51b0200a776613ea9d7e",
+    "scripts/stress_semantic_audit.py": "86d121f1e963db33926d18378c80a82bd77ab36774cc28bd175c7f59a3c3fa68",
+    "tests/test_multilingual_receipt_stress.py": "f1b589ea21733167a48ff363bbb9722730147995313bdb8644ec0eee3709c277",
+    "tests/test_pdf_semantic_geometric_spaces.py": "8f6dcc4473dd1b0074aea23e995e01b54959d94c25571cf281e24db83ae3246f",
+    "tests/test_word_pdf_table_row_fidelity.py": "f8935a4d331e2d0eed9360f19c5ae5b1712348735fb19cb06374130eef68ef29"
+  },
+  "full_pytest": "364 passed, 16 subtests passed",
+  "semantic_audits": {
+    "baseline": "162/162",
+    "mixed": "162/162",
+    "dense": "162/162"
+  },
+  "native_stress": {
+    "english": "7/7",
+    "arabic": "7/7",
+    "mixed": "7/7"
+  },
+  "environment": {
+    "python": "3.11.17",
+    "libreoffice": "26.8 alpha (local bundled runtime; differs from production Debian package)",
+    "tesseract": "5.3.4, eng+ara",
+    "pymupdf": "1.28.2"
+  },
+  "production_image_verified": false,
+  "notes": [
+    "Local native reports reference the base commit while testing its modified working tree; hashes identify final candidate source.",
+    "Final ordered-PowerPoint reports verify the strengthened ordering oracle for all three languages.",
+    "Docker build enforces full pytest, all three semantic profiles, and all three seven-tool native stress runs before deployment.",
+    "Earlier Arabic PDF extraction spelling discrepancies and English heading boxes in a bad receipt fixture were parser/fixture defects; actual live plain OCR phone truncation was reproduced and fixed."
+  ]
+}

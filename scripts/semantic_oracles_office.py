@@ -44,13 +44,77 @@ _ARABIC_RUN = re.compile(r"[\u0600-\u06FF]+")
 
 def _logical_pdf_text(text: str) -> str:
     """Normalize PDF extractor presentation glyphs without weakening checks."""
-    pieces = []
-    for token in text.split():
-        normalized = unicodedata.normalize("NFKC", token)
-        if _PRESENTATION_FORMS.search(token):
-            normalized = _ARABIC_RUN.sub(lambda match: match.group(0)[::-1], normalized)
-        pieces.append(normalized)
-    return " ".join(pieces)
+    # Reverse visual glyph clusters BEFORE expanding presentation ligatures.
+    # Reversing after NFKC swaps the two letters of lam-alef incorrectly.
+    def logical_glyphs(match):
+        value = match.group(0)
+        return value[::-1] if _PRESENTATION_FORMS.search(value) else value
+    text = re.sub(r'[\u0600-\u06ff\uFB50-\uFDFF\uFE70-\uFEFF]+(?:[ \t]+[\u0600-\u06ff\uFB50-\uFDFF\uFE70-\uFEFF]+)*',
+                  logical_glyphs, text)
+    return " ".join(unicodedata.normalize('NFKC', text).split())
+
+
+def _visual_source_text(text: str) -> str:
+    """Expected printed Unicode glyph sequence, including ligature clusters."""
+    import arabic_reshaper
+    from bidi.algorithm import get_display
+    return " ".join(unicodedata.normalize("NFKC", get_display(
+        arabic_reshaper.reshape(text))).split())
+
+
+def _logical_text_with_geometric_spaces(page) -> str:
+    """Reconcile logical letters with independently extracted printed spaces.
+
+    No source/reference text participates in reconstruction. A reconstructed
+    Arabic phrase is accepted only when its shaped glyph sequence exactly
+    matches the layout parser's phrase, including every letter and space.
+    """
+    logical = _logical_pdf_text(page.extract_text() or '')
+    layout = unicodedata.normalize('NFKC', page.extract_text(extraction_mode='layout') or '')
+    chunks = list(dict.fromkeys(re.findall(
+        r'[\u0600-\u06ff]+(?:[ \t]+[\u0600-\u06ff]+)+', layout)))
+    from functools import lru_cache
+
+    @lru_cache(maxsize=512)
+    def recover(letters):
+        for chunk in chunks:
+            visual_words = chunk.split()
+            lengths = [len(w) for w in reversed(visual_words)]
+            if sum(lengths) != len(letters):
+                continue
+            parts = []
+            at = 0
+            for length in lengths:
+                parts.append(letters[at:at + length])
+                at += length
+            recovered = ' '.join(parts)
+            if _visual_source_text(recovered) == ' '.join(visual_words):
+                return recovered
+        return None
+
+    def restore(match):
+        return recover(re.sub(r'\s+', '', match.group(0))) or match.group(0)
+
+    return re.sub(r'[\u0600-\u06ff]+(?:[ \t]+[\u0600-\u06ff]+)*', restore, logical)
+
+
+def _field_present(field: str, actual: str) -> bool:
+    boundary = r"(?<=[\u0600-\u06FF])(?=[A-Za-z0-9])|(?<=[A-Za-z0-9])(?=[\u0600-\u06FF])"
+    wanted = re.sub(boundary, " ", " ".join(unicodedata.normalize('NFKC', field).split()))
+    actual = re.sub(boundary, " ", " ".join(unicodedata.normalize('NFKC', actual).split()))
+    prefix = r'(?<!\w)' if wanted and wanted[0].isalnum() else ''
+    suffix = r'(?!\w)' if wanted and wanted[-1].isalnum() else ''
+    return bool(wanted and re.search(prefix + re.escape(wanted) + suffix, actual))
+
+
+def _ordered_fields_present(fields: list[str], actual: str) -> bool:
+    cursor = 0
+    for field in fields:
+        at = actual.find(field, cursor)
+        if at < 0:
+            return False
+        cursor = at + len(field)
+    return True
 
 
 def _csvrows(path: Path) -> list[list[str]]:
@@ -99,20 +163,22 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
                     # LibreOffice may insert visible bullets between source
                     # paragraph lines. Every original line still has to appear
                     # in the correct *slide* and original reading sequence.
-                    logical = PdfReader(str(output)).pages[slide_number - 1].extract_text() or ""
+                    logical = _logical_text_with_geometric_spaces(PdfReader(str(output)).pages[slide_number - 1])
                     rendered = _logical_pdf_text(logical)
-                    cursor = -1
-                    for value in expected:
-                        for line in value.splitlines():
-                            wanted = " ".join(unicodedata.normalize("NFKC", line).split())
-                            if not wanted:
-                                continue
-                            at = rendered.find(wanted, cursor + 1)
-                            assert at >= 0, (
-                                "Slide lost title/body or text was rendered out of source slide order",
-                                slide_number, line, rendered[:1300],
-                            )
-                            cursor = at
+                    # Default pypdf extraction can relocate all RTL spaces to
+                    # the beginning of a line. Its independent layout parser
+                    # retains their geometric positions. Compare the complete
+                    # expected printed glyph sequence, never a bag of words.
+                    layout = " ".join(unicodedata.normalize('NFKC',
+                        PdfReader(str(output)).pages[slide_number - 1].extract_text(
+                            extraction_mode='layout') or '').split())
+                    lines = [line for value in expected for line in value.splitlines() if line.strip()]
+                    wanted = [' '.join(unicodedata.normalize('NFKC', line).split()) for line in lines]
+                    visual = [_visual_source_text(line) for line in lines]
+                    assert (_ordered_fields_present(wanted, rendered)
+                            or _ordered_fields_present(visual, layout)), (
+                        'Slide lost title/body or text was rendered out of source slide order',
+                        slide_number, wanted, rendered[:1300])
                     words = page.get_text("words")
                     assert words and all(
                         -2 <= word[0] < word[2] <= page.rect.width + 2
@@ -122,8 +188,9 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
             return "each PowerPoint slide maps to exactly one PDF page in source order, with all slide text inside visible page bounds"
         if tool_id == "txt-to-pdf":
             lines = [line for line in source.read_text(encoding="utf-8").splitlines() if line]
-            normal = unicodedata.normalize("NFKC", extracted)
-            missing = [line for line in lines if line not in normal]
+            normal = ' '.join(_logical_text_with_geometric_spaces(p) for p in PdfReader(str(output)).pages)
+            normal = _logical_pdf_text(normal)
+            missing = [line for line in lines if not _field_present(line, normal)]
             assert not missing, (missing, normal[:2000])
             return "all original text-file lines retained as selectable PDF text"
         if tool_id == "html-to-pdf":
@@ -140,22 +207,20 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
             # PyMuPDF can reconstruct Arabic glyphs in visual, non-logical
             # order even when pypdf independently recovers the full heading.
             actual=_logical_pdf_text(" ".join(
-                page.extract_text() or "" for page in PdfReader(str(output)).pages
+                _logical_text_with_geometric_spaces(page) for page in PdfReader(str(output)).pages
             ))
-            missing=[]
-            for part in parser.fragments:
-                if re.search(r"[\u0600-\u06FF]", part):
-                    if not _pdf_contains_headings(output, (part,)):
-                        missing.append(part)
-                elif _logical_pdf_text(part) not in actual:
-                    missing.append(part)
+            layout=' '.join(unicodedata.normalize('NFKC', page.extract_text(
+                extraction_mode='layout') or '') for page in PdfReader(str(output)).pages)
+            missing=[part for part in parser.fragments
+                     if not _field_present(part, actual)
+                     and not _field_present(_visual_source_text(part), layout)]
             assert not missing, ("HTML PDF lost visible heading or table cell text", missing, actual[:1500])
             return "all visible source HTML heading and table cells preserved as selectable PDF Unicode text"
         if tool_id == "markdown-to-pdf":
             raw=source.read_text(encoding="utf-8")
             heading=next((line[2:].strip() for line in raw.splitlines() if line.startswith("# ")),None)
             actual=_logical_pdf_text(" ".join(
-                page.extract_text() or "" for page in PdfReader(str(output)).pages
+                _logical_text_with_geometric_spaces(page) for page in PdfReader(str(output)).pages
             ))
             wanted_heading = _logical_pdf_text(heading or "")
             assert wanted_heading, ("Markdown PDF missing source heading", heading)
@@ -169,6 +234,22 @@ def oracle(tool_id: str, source: Path | None, output: Path, fixture: Path) -> st
                 assert "Hello world" in actual
             if "|---|" in raw:
                 assert all(token in actual for token in ("Name","Code","Arabic","00123"))
+            import markdown
+            from html.parser import HTMLParser
+            class SourceFragments(HTMLParser):
+                def __init__(self):
+                    super().__init__(convert_charrefs=True)
+                    self.parts = []
+                def handle_data(self, value):
+                    if value.strip():
+                        self.parts.append(' '.join(value.split()))
+            parser = SourceFragments()
+            parser.feed(markdown.markdown(raw, extensions=['tables', 'fenced_code']))
+            layout = ' '.join(unicodedata.normalize('NFKC', page.extract_text(
+                extraction_mode='layout') or '') for page in PdfReader(str(output)).pages)
+            missing = [part for part in parser.parts if not _field_present(part, actual)
+                       and not _field_present(_visual_source_text(part), layout)]
+            assert not missing, ('Markdown PDF lost source body, heading or table text', missing)
             return "original Markdown heading and all source body/table cell texts survive PDF conversion"
         rows = _csvrows(source)
         normalized = " ".join(unicodedata.normalize("NFKC",extracted).split())

@@ -1,6 +1,6 @@
 """Larger multilingual corpora; preserve all existing semantic assertions.
 
-The seven unavailable native Office renderers are explicitly outside this run.
+Native Office renderers can be included explicitly in a runnable environment.
 No result from this script certifies those tools or all possible input files.
 """
 from __future__ import annotations
@@ -8,6 +8,7 @@ from __future__ import annotations
 import bz2
 import csv
 import gzip
+import hashlib
 import json
 import lzma
 import os
@@ -20,12 +21,15 @@ from docx import Document
 from openpyxl import load_workbook
 from PIL import Image, ImageDraw, ImageFont
 from pptx import Presentation
+from pptx.util import Pt
 
 from scripts import semantic_output_audit as audit
 from scripts.output_input_matrix import diversify
 
 EXCLUDED = frozenset({"word-to-pdf", "excel-to-pdf", "ppt-to-pdf", "txt-to-pdf",
                       "html-to-pdf", "markdown-to-pdf", "csv-to-pdf"})
+if os.environ.get("IC_STRESS_INCLUDE_NATIVE") == "1":
+    EXCLUDED = frozenset()
 ORIGINAL = audit.smoke.make_fixtures
 LANGUAGE = os.environ.get("IC_STRESS_LANGUAGE", "mixed")
 if LANGUAGE not in {"arabic", "english", "mixed"}:
@@ -81,6 +85,10 @@ def fixtures(base: Path) -> None:
         slide = presentation.slides.add_slide(presentation.slide_layouts[1])
         slide.shapes.title.text = f"STRESS SLIDE {index:02d} / 00123"
         slide.placeholders[1].text = "\n".join(wording(index * 10 + row) for row in range(5))
+        # Five bilingual records must fit on the authored slide before export;
+        # default 32pt text puts its last line outside the slide canvas.
+        for paragraph in slide.placeholders[1].text_frame.paragraphs:
+            paragraph.font.size = Pt(24)
     presentation.save(base / "slides.pptx")
 
     rows = [{"name": wording(i), "code": f"{i:06d}",
@@ -94,10 +102,18 @@ def fixtures(base: Path) -> None:
     with (base / "text.txt").open("a", encoding="utf-8") as stream:
         for i in range(1000):
             stream.write(wording(i) + f" | amount 1250.50 | ID {i:06d}\n")
-    for filename, heading in (("notes.md", "##"), ("page.html", "")):
-        with (base / filename).open("a", encoding="utf-8") as stream:
-            for i in range(150):
-                stream.write(f"\n{heading} {wording(i)} | 00123 | 00999\n")
+    with (base / 'notes.md').open('a', encoding='utf-8') as stream:
+        for i in range(150):
+            stream.write(f'\n## {wording(i)} | 00123 | 00999\n')
+    # Add real paragraph elements inside the body, not stray text after the
+    # closing HTML element. This keeps every stress record independently
+    # meaningful and makes the input valid for different HTML renderers.
+    import html
+    target = base / 'page.html'
+    content = target.read_text(encoding='utf-8')
+    paragraphs = ''.join(f'<p>{html.escape(wording(i))} | 00123 | 00999</p>' for i in range(150))
+    assert '</body>' in content
+    target.write_text(content.replace('</body>', paragraphs + '</body>'), encoding='utf-8')
 
     # High-resolution image transformations; keep the OCR oracle's English-only
     # recognition fixture separate from multilingual image pixel tests.
@@ -143,11 +159,23 @@ def main() -> None:
     finally:
         if report.exists():
             data = json.loads(report.read_text())
+            # Production images deliberately omit Git metadata and the Git
+            # executable. Fingerprint tested source in both local and Docker runs.
+            try:
+                commit = subprocess.check_output(
+                    ["git", "rev-parse", "HEAD"], text=True, stderr=subprocess.DEVNULL).strip()
+            except (OSError, subprocess.CalledProcessError):
+                commit = None
+            source_files = ["converters/office.py", "converters/ocr.py",
+                            "scripts/semantic_oracles_office.py",
+                            "scripts/semantic_output_audit.py", "scripts/stress_semantic_audit.py"]
             data.update({"stress_language": LANGUAGE,
                          "selected_tools": sorted(selection) if selection else None,
                          "excluded_native_office_tools": sorted(EXCLUDED),
                          "full_registry_verified": False,
-                         "source_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
+                         "source_commit": commit,
+                         "tested_source_sha256": {path: hashlib.sha256(Path(path).read_bytes()).hexdigest()
+                                                   for path in source_files},
                          "fixture_sizes": {"pdf_pages": 10, "docx_paragraphs_added": 200,
                                            "docx_table_cells_added": 160, "xlsx_rows_added_per_sheet": 500,
                                            "pptx_slides": 20, "csv_json_rows": 300,
