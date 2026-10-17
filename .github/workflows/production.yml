@@ -41,7 +41,7 @@ jobs:
           pip-audit -r requirements.txt -f cyclonedx-json -o sbom.cdx.json
           pip-compile --resolver=backtracking --generate-hashes --output-file=requirements.lock requirements.txt
       - name: Upload dependency lock and SBOM
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: python-supply-chain-${{ github.sha }}
           path: |
@@ -57,7 +57,7 @@ jobs:
           docker build --progress=plain -t infinity-verified . 2>&1 | tee docker-build.log
       - name: Upload Docker build log
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: docker-build-${{ github.sha }}
           path: docker-build.log
@@ -94,7 +94,7 @@ jobs:
             node scripts/real_site_e2e.cjs /tmp/browser-catalog.json /tmp/server-catalog.json
       - name: Upload full-site browser acceptance report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: full-site-e2e-${{ github.sha }}
           path: site-e2e-report.json
@@ -115,7 +115,7 @@ jobs:
             infinity-verified python scripts/semantic_output_audit.py
       - name: Upload per-tool semantic coverage and unresolved gaps
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: semantic-quality-coverage-${{ github.sha }}
           path: semantic-audit/*.json
@@ -173,7 +173,7 @@ jobs:
           node scripts/browser_real_quality.cjs
       - name: Upload final independent verification evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: final-quality-replay-${{ github.sha }}
           path: semantic-audit/*.json
