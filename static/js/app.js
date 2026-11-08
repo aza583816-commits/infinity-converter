@@ -507,6 +507,7 @@ document.addEventListener("keydown", (event) => {
       const arrow = document.createElement("span"); arrow.textContent = "↗"; a.append(icon, copy, arrow); output.append(a);
     });
   };
+  document.getElementById("journey-attach")?.addEventListener("click", () => picker.click());
   drop.addEventListener("click", () => picker.click());
   picker.addEventListener("change", () => choose(picker.files?.[0]));
   ["dragenter", "dragover"].forEach((type) => drop.addEventListener(type, (event) => { event.preventDefault(); drop.classList.add("is-dragging"); }));
@@ -997,6 +998,16 @@ if (browserWorkspace) {
   }));
   if (homeForm && homePrompt && homeAnswer) homeForm.addEventListener('submit', async (event) => {
     event.preventDefault();
+    if (!homePrompt.value.trim()) {
+      if (runtime.smartFile) {
+        homeStatus.textContent = ar ? 'اختر أداة متوافقة أدناه، أو اكتب النتيجة المطلوبة.' : 'Choose a compatible tool below, or describe your goal.';
+        document.getElementById('smart-tool-results')?.scrollIntoView({block: 'nearest'});
+      } else {
+        homeStatus.textContent = ar ? 'اكتب النتيجة المطلوبة أو اختر ملفًا أولًا.' : 'Describe your goal or choose a file first.';
+        homePrompt.focus();
+      }
+      return;
+    }
     const button = homeForm.querySelector('[type="submit"]'); if (button) button.disabled = true;
     await requestPlan(homePrompt.value, 'plan', homeAnswer, homeStatus);
     if (button) button.disabled = false;

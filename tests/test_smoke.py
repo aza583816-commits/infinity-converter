@@ -14,8 +14,10 @@ def test_health():
 def test_homepage_has_intelligence_workspace_and_filterable_tools():
     page = create_app().test_client().get("/?lang=en")
     assert page.status_code == 200
-    assert b"v7-intelligence-console" in page.data
-    assert b"SMART FILE ROUTER" in page.data
+    assert b'data-surface="intelligence-console"' in page.data
+    assert b'data-surface="file-router"' in page.data
+    assert page.data.count(b'id="ai-form"') == 1
+    assert page.data.count(b'id="smart-file-input"') == 1
     assert b"INFINITY FLOW" in page.data
     assert b'id="tool-search"' in page.data
     assert b"Infinity Intelligence" in page.data

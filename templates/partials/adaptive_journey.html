@@ -1,0 +1,27 @@
+{% macro icon(name) %}<img class="journey-icon" src="/static/icons/{{ name }}.svg" alt="" width="32" height="32">{% endmacro %}
+<section class="journey" aria-labelledby="journey-title" data-surface="adaptive-journey">
+  <div class="journey-badge" lang="en">Adaptive Journey <span aria-hidden="true">∞</span></div>
+  <h1 id="journey-title">{{ 'What would you like to do with your file?' if lang == 'en' else 'وش تبي تسوي بملفك؟' }}</h1>
+  <p class="journey-subtitle">{{ 'Choose a file or describe the result — Infinity finds your shortest path.' if lang == 'en' else 'ارفع الملف أو اكتب النتيجة — Infinity يرتب لك أقصر مسار.' }}</p>
+  <div class="journey-console" data-surface="intelligence-console" id="infinity-ai">
+    <form id="ai-form" class="journey-command">
+      <input id="smart-file-input" type="file" hidden>
+      <button id="smart-drop" class="journey-drop" type="button" data-surface="file-router">{{ icon('cloud-arrow-up') }}<span>{{ 'Drop your file here' if lang == 'en' else 'اسحب ملفك هنا' }}</span></button>
+      <button class="journey-attach" type="button" id="journey-attach" aria-label="{{ 'Choose a file' if lang == 'en' else 'اختيار ملف' }}">{{ icon('paperclip') }}</button>
+      <label class="sr-only" for="ai-prompt">{{ 'Describe your goal' if lang == 'en' else 'اكتب النتيجة المطلوبة' }}</label>
+      <input id="ai-prompt" maxlength="24000" autocomplete="off" placeholder="{{ 'Example: convert a PDF to high-quality PNG images' if lang == 'en' else 'مثال: حوّل ملف PDF إلى صور PNG عالية الجودة' }}">
+      <button class="journey-submit" type="submit">{{ icon('sparkle') }}<span>{{ 'Build my path' if lang == 'en' else 'أنشئ المسار' }}</span></button>
+    </form>
+    <div id="ai-status" class="journey-status" role="status" aria-live="polite"></div>
+    <div class="smart-file-summary" id="smart-file-summary" hidden></div>
+    <div class="smart-tool-results" id="smart-tool-results" hidden></div>
+    <div class="v7-ai-answer ai-answer" id="ai-answer" hidden aria-live="polite"></div>
+  </div>
+  <ol class="journey-steps" aria-label="{{ 'How it works' if lang == 'en' else 'كيف يعمل' }}">
+    <li><span class="journey-step-icon">{{ icon('shield-check') }}</span><h2>{{ 'Safe check' if lang == 'en' else 'فحص آمن' }}</h2><p>{{ 'File checks before conversion.' if lang == 'en' else 'التحقق من الملف قبل تحويله.' }}</p></li>
+    <li><span class="journey-step-icon journey-step-blue">{{ icon('arrows-left-right') }}</span><h2>{{ 'The right conversion' if lang == 'en' else 'تحويل مناسب' }}</h2><p>{{ 'Choose a suitable format and settings.' if lang == 'en' else 'اختيار أفضل صيغة وإعدادات.' }}</p></li>
+    <li><span class="journey-step-icon">{{ icon('check') }}</span><h2>{{ 'Ready to download' if lang == 'en' else 'نتيجة جاهزة' }}</h2><p>{{ 'Download your processed file.' if lang == 'en' else 'ملفك المعالج جاهز للتحميل.' }}</p></li>
+  </ol>
+  <div class="journey-links"><a href="/tools">{{ icon('stack') }}{{ 'Browse tools' if lang == 'en' else 'تصفح الأدوات' }}{{ icon('arrow-left') }}</a><a href="/workflows">{{ icon('stack') }}{{ 'Popular workflows' if lang == 'en' else 'مسارات شائعة' }}</a></div>
+  <p class="journey-privacy">{{ icon('shield-check') }}{{ 'File content is never sent to AI automatically' if lang == 'en' else 'لا يرسل محتوى الملف للذكاء تلقائيًا' }}</p>
+</section>
