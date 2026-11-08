@@ -9,6 +9,7 @@ __pycache__/
 !.env.example
 instance/
 .venv/
+.venv
 venv/
 
 # Local tooling and OS files

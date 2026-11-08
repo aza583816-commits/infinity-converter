@@ -104,7 +104,10 @@ def test_trust_editorial_pwa_and_premium_experience_are_wired():
     assert '"/trust"' in pages and '"/editorial"' in pages
     assert '@pages_bp.get("/sw.js")' in pages
     assert "INFINITY QUICK JUMP" in base
-    assert "SMART FILE ROUTER" in index
+    assert '{% include "partials/adaptive_journey.html" %}' in index
+    journey = _read("templates/partials/adaptive_journey.html")
+    assert 'data-surface="file-router"' in journey
+    assert 'id="smart-file-input"' in journey
     assert "INFINITY FLOW" in index
     assert "PROCESSING TRANSPARENCY" in tool
     assert "Try safe sample" in tool
